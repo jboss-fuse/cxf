@@ -1,0 +1,231 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements. See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership. The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License. You may obtain a copy of the License at
+ 
+  http://www.apache.org/licenses/LICENSE-2.0
+ 
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied. See the License for the
+  specific language governing permissions and limitations
+  under the License.
+-->
+<project name="CXF">
+
+    <!-- Targets for cruisecontrol to use  -->
+    <target name="cruisecontrol.build">
+        <delete file="build.out"/>
+        <delete file="build.out.clean"/>
+        <delete file="tandoori.build.result"/>
+        <delete file="cxf.build.result"/>
+
+        <exec executable="mvn" dir="${basedir}" failonerror="false" output="build.out.clean" logError="true">
+            <arg line="-U clean -Dmaven.repo.local=${user.home}/.m2/repository_ospcxf"/>
+        </exec>
+
+        <exec executable="mvn" dir="${basedir}/../tandoori" failonerror="false" output="build.out.clean" logError="true" append="true">
+            <arg line="-U clean -Dmaven.repo.local=${user.home}/.m2/repository_ospcxf"/>
+        </exec>
+
+<!--
+        <delete includeemptydirs="true">
+            <fileset dir="${user.home}/.m2/repository_ospcxf" includes="**/*"/>
+        </delete>
+-->
+
+        <echo message="*************************************************" file="build.out" append="true"/>
+        <echo message="Building CXF" file="build.out" append="true"/>
+        <echo message="*************************************************" file="build.out" append="true"/>
+
+        <exec executable="mvn" dir="${basedir}" failonerror="false" resultproperty="cxf.build.result" output="build.out" logError="true" append="true">
+            <arg line="-U -Dmaven.repo.local=${user.home}/.m2/repository_ospcxf install"/>
+        </exec>
+
+        <condition property="build.failed">
+            <not>
+                <equals arg1="${cxf.build.result}" arg2="0"/>
+            </not>
+        </condition>
+
+        <echo message="*************************************************" file="build.out" append="true"/>
+        <echo message="Building Tandoori" file="build.out" append="true"/>
+        <echo message="*************************************************" file="build.out" append="true"/>
+
+        <antcall target="test.tandoori"/>
+
+        <loadfile property="tandoori.build.result" srcFile="tandoori.build.result" failonerror="false"/>
+
+        <condition property="build.failed">
+            <not>
+                <equals arg1="${tandoori.build.result}" arg2="0"/>
+            </not>
+        </condition>
+
+        <echo message="*************************************************" file="build.out" append="true"/>
+        <echo message="Deploy CXF" file="build.out" append="true"/>
+        <echo message="*************************************************" file="build.out" append="true"/>
+
+        <antcall target="deploy.cxf"/>
+        <antcall target="deploy.cxf.cpi"/>
+
+        <loadfile property="cxf.deploy.result" srcFile="cxf.deploy.result" failonerror="false"/>
+
+        <condition property="build.failed">
+            <not>
+                <equals arg1="${cxf.deploy.result}" arg2="0"/>
+            </not>
+        </condition>
+        
+        <copy todir="target/surefire-reports">
+            <fileset dir="${basedir}" includes="**/target/surefire-reports/*.xml"/>
+            <!-- <fileset dir="${basedir}/../tandoori" includes="**/target/surefire-reports/*.xml"/> -->
+            <regexpmapper handledirsep="true" from="(.*)/target/surefire-reports/(.*)" to="\1/\2"/>
+        </copy>
+
+        <loadfile property="build.out" srcFile="build.out">
+            <filterchain>
+                <tailfilter lines="50"/>
+            </filterchain>
+        </loadfile>
+        <antcall target="echo.failure"/>
+        <fail if="build.failed">Build Failed</fail>
+    </target>
+
+    <target name="test.tandoori" unless="build.failed">
+        <!-- Test Tandoori against local copy of IONA CXF -->
+        <exec executable="mvn" dir="${basedir}/../tandoori" failonerror="false" resultproperty="tandoori.build.result" output="build.out" logError="true" append="true">
+            <arg line="-U -fae -Dmaven.repo.local=${user.home}/.m2/repository_ospcxf install -Dmaven.test.skip.exec=true -Pnochecks"/>
+        </exec>
+
+        <echo message="${tandoori.build.result}" file="tandoori.build.result"/>
+
+    </target>
+
+    <target name="deploy.cxf" unless="build.failed">
+        <!-- Now that CXF and Tandoori tests have passed, deploy IONA CXF -->
+        <exec executable="mvn" dir="${basedir}" failonerror="false" resultproperty="cxf.deploy.result" output="build.out" logError="true" append="true">
+            <arg line=" -Pdeploy,fastinstall -Dmaven.repo.local=${user.home}/.m2/repository_ospcxf"/>
+        </exec>
+
+        <echo message="${cxf.deploy.result}" file="cxf.deploy.result"/>
+
+    </target>
+
+    <target name="deploy.cxf.cpi" unless="build.failed">
+        <exec executable="mvn" dir="${basedir}/iona_cpi" failonerror="false" resultproperty="cxf.deploy.cpi.result" output="build.out" logError="true" append="true">
+            <arg line=" deploy -Dmaven.test.skip=true -Dmaven.repo.local=${user.home}/.m2/repository_ospcxf"/>
+        </exec>
+
+        <echo message="${cxf.deploy.cpi.result}" file="cxf.deploy.cpi.result"/>
+    </target>
+
+    <target name="cruisecontrol.build.distribution">
+        <delete file="distribution/build.out"/>
+        <delete file="distribution/build.out.clean"/>
+        <exec executable="mvn" dir="${basedir}/distribution" failonerror="false" output="distribution/build.out.clean" logError="true">
+            <arg line="clean -Drelease -Dmaven.repo.local=${user.home}/.m2/repository_ospcxf"/>
+        </exec>
+        <exec executable="mvn" dir="${basedir}/distribution" failonerror="false" resultproperty="build.result"
+            output="distribution/build.out" logError="true">
+            <arg line="install -Drelease -Dmaven.repo.local=${user.home}/.m2/repository_ospcxf"/>
+        </exec>
+
+        <condition property="build.failed">
+            <not>
+                <equals arg1="${build.result}" arg2="0"/>
+            </not>
+        </condition>
+        <loadfile property="build.out" srcFile="distribution/build.out">
+            <filterchain>
+                <tailfilter lines="25"/>
+            </filterchain>
+        </loadfile>
+        <antcall target="echo.failure"/>
+        <fail if="build.failed">Build Failed</fail>
+    </target>
+
+    <target name="cruisecontrol.deploy.distribution" depends="cruisecontrol.build">
+        <delete file="distribution/deploy.out"/>
+        <delete file="distribution/deploy.out.clean"/>
+        <exec executable="mvn" dir="${basedir}/distribution" failonerror="false" output="distribution/deploy.out.clean" logError="true">
+            <arg line="clean -Drelease"/>
+        </exec>
+        <exec executable="mvn" dir="${basedir}/distribution" failonerror="false" resultproperty="build.result"
+            output="distribution/deploy.out" logError="true">
+            <arg line="deploy"/>
+        </exec>
+
+        <condition property="build.failed">
+            <not>
+                <equals arg1="${build.result}" arg2="0"/>
+            </not>
+        </condition>
+        <loadfile property="deploy.out" srcFile="distribution/deploy.out">
+            <filterchain>
+                <tailfilter lines="25"/>
+            </filterchain>
+        </loadfile>
+        <antcall target="echo.deploy.failure"/>
+        <fail if="build.failed">Build Failed</fail>
+    </target>
+
+    <target name="echo.failure" if="build.failed">
+        <echo level="error" message="Tail of log: ${build.out}"/>
+    </target>
+
+    <target name="echo.deploy.failure" if="build.failed">
+        <echo level="error" message="Tail of log: ${deploy.out}"/>
+    </target>
+
+    <!-- Target to just build osp_cxf against iona saaj -->
+    <target name="cruisecontrol.build.with.iona.saaj">
+        <delete file="build.out"/>
+        <delete file="build.out.clean"/>
+        <delete file="tandoori.build.result"/>
+        <delete file="cxf.build.result"/>
+        <property name="saaj.args" value="-Dsaaj.impl.artifactId=it_saaj -Dsaaj.impl.groupId=com.iona.ws_common -Dsaaj.impl.version=1.3.5"/>
+
+        <exec executable="mvn" dir="${basedir}" failonerror="false" output="build.out.clean" logError="true">
+            <arg line="-U clean -Dmaven.repo.local=${user.home}/.m2/repository_ospcxf ${saaj.args}"/>
+        </exec>
+
+        <exec executable="mvn" dir="${basedir}/../tandoori" failonerror="false" output="build.out.clean" logError="true" append="true">
+            <arg line="-U clean -Dmaven.repo.local=${user.home}/.m2/repository_ospcxf ${saaj.args}"/>
+        </exec>
+
+        <echo message="*************************************************" file="build.out" append="true"/>
+        <echo message="Building CXF" file="build.out" append="true"/>
+        <echo message="*************************************************" file="build.out" append="true"/>
+
+        <!-- Install local version of CXF. Do not deploy. -->
+        <exec executable="mvn" dir="${basedir}" failonerror="false" resultproperty="cxf.build.result" output="build.out" logError="true" append="true">
+            <arg line="-U install -Dmaven.repo.local=${user.home}/.m2/repository_ospcxf ${saaj.args}"/>
+        </exec>
+
+        <condition property="build.failed">
+            <not>
+                <equals arg1="${cxf.build.result}" arg2="0"/>
+            </not>
+        </condition>
+
+        <copy todir="target/surefire-reports">
+            <fileset dir="${basedir}" includes="**/target/surefire-reports/*.xml"/>
+            <fileset dir="${basedir}/../tandoori" includes="**/target/surefire-reports/*.xml"/>
+            <regexpmapper handledirsep="true" from="(.*)/target/surefire-reports/(.*)" to="\1/\2"/>
+        </copy>
+
+        <loadfile property="build.out" srcFile="build.out">
+            <filterchain>
+                <tailfilter lines="50"/>
+            </filterchain>
+        </loadfile>
+        <antcall target="echo.failure"/>
+        <fail if="build.failed">Build Failed</fail>
+    </target>
+</project>
