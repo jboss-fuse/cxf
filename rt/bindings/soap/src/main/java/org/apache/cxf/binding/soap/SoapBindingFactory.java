@@ -19,11 +19,11 @@
 
 package org.apache.cxf.binding.soap;
 
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+
 import javax.wsdl.BindingInput;
 import javax.wsdl.BindingOutput;
 import javax.wsdl.Definition;
@@ -47,8 +47,10 @@ import org.apache.cxf.binding.soap.interceptor.Soap11FaultInInterceptor;
 import org.apache.cxf.binding.soap.interceptor.Soap11FaultOutInterceptor;
 import org.apache.cxf.binding.soap.interceptor.Soap12FaultInInterceptor;
 import org.apache.cxf.binding.soap.interceptor.Soap12FaultOutInterceptor;
-import org.apache.cxf.binding.soap.interceptor.SoapActionInterceptor;
+import org.apache.cxf.binding.soap.interceptor.SoapActionInInterceptor;
+import org.apache.cxf.binding.soap.interceptor.SoapActionOutInterceptor;
 import org.apache.cxf.binding.soap.interceptor.SoapHeaderInterceptor;
+import org.apache.cxf.binding.soap.interceptor.SoapHeaderOutFilterInterceptor;
 import org.apache.cxf.binding.soap.interceptor.SoapOutInterceptor;
 import org.apache.cxf.binding.soap.interceptor.SoapPreProtocolOutInterceptor;
 import org.apache.cxf.binding.soap.model.SoapBindingInfo;
@@ -205,22 +207,23 @@ public class SoapBindingFactory extends AbstractBindingFactory {
 
             if (b.getInput() != null) {
                 List<String> bodyParts = null;
-                SoapHeaderInfo headerInfo = b.getInput().getExtensor(SoapHeaderInfo.class);
-                if (headerInfo != null) {
+                List<SoapHeaderInfo> headerInfos = b.getInput().getExtensors(SoapHeaderInfo.class);
+                if (headerInfos != null && headerInfos.size() > 0) {
                     bodyParts = new ArrayList<String>();
                     for (MessagePartInfo part : b.getInput().getMessageParts()) {
                         bodyParts.add(part.getName().getLocalPart());
                     }
 
-                    SoapHeader soapHeader = SOAPBindingUtil.createSoapHeader(extensionRegistry,
-                                                                             BindingInput.class,
-                                                                             isSoap12);
-                    soapHeader.setMessage(b.getInput().getMessageInfo().getName());
-                    soapHeader.setPart(headerInfo.getPart().getName().getLocalPart());
-                    soapHeader.setUse("literal");
-                    bodyParts.remove(headerInfo.getPart().getName().getLocalPart());
-                    b.getInput().addExtensor(soapHeader);
-
+                    for (SoapHeaderInfo headerInfo : headerInfos) { 
+                        SoapHeader soapHeader = SOAPBindingUtil.createSoapHeader(extensionRegistry,
+                                                                                 BindingInput.class,
+                                                                                 isSoap12);
+                        soapHeader.setMessage(b.getInput().getMessageInfo().getName());
+                        soapHeader.setPart(headerInfo.getPart().getName().getLocalPart());
+                        soapHeader.setUse("literal");
+                        bodyParts.remove(headerInfo.getPart().getName().getLocalPart());
+                        b.getInput().addExtensor(soapHeader);
+                    }
                 }
                 SoapBody body = SOAPBindingUtil.createSoapBody(extensionRegistry,
                                                                BindingInput.class,
@@ -239,21 +242,22 @@ public class SoapBindingFactory extends AbstractBindingFactory {
 
             if (b.getOutput() != null) {
                 List<String> bodyParts = null;
-                SoapHeaderInfo headerInfo = b.getOutput().getExtensor(SoapHeaderInfo.class);
-                if (headerInfo != null) {
+                List<SoapHeaderInfo> headerInfos = b.getOutput().getExtensors(SoapHeaderInfo.class);
+                if (headerInfos != null && headerInfos.size() > 0) {
                     bodyParts = new ArrayList<String>();
                     for (MessagePartInfo part : b.getOutput().getMessageParts()) {
                         bodyParts.add(part.getName().getLocalPart());
                     }
-                    SoapHeader soapHeader = SOAPBindingUtil.createSoapHeader(extensionRegistry,
+                    for (SoapHeaderInfo headerInfo : headerInfos) { 
+                        SoapHeader soapHeader = SOAPBindingUtil.createSoapHeader(extensionRegistry,
                                                                              BindingOutput.class,
                                                                              isSoap12);
-                    soapHeader.setMessage(b.getOutput().getMessageInfo().getName());
-                    soapHeader.setPart(headerInfo.getPart().getName().getLocalPart());
-                    soapHeader.setUse("literal");
-                    bodyParts.remove(headerInfo.getPart().getName().getLocalPart());
-                    b.getOutput().addExtensor(soapHeader);
-
+                        soapHeader.setMessage(b.getOutput().getMessageInfo().getName());
+                        soapHeader.setPart(headerInfo.getPart().getName().getLocalPart());
+                        soapHeader.setUse("literal");
+                        bodyParts.remove(headerInfo.getPart().getName().getLocalPart());
+                        b.getOutput().addExtensor(soapHeader);
+                    }
                 }
                 SoapBody body = SOAPBindingUtil.createSoapBody(extensionRegistry,
                                                                BindingOutput.class,
@@ -330,10 +334,12 @@ public class SoapBindingFactory extends AbstractBindingFactory {
         if (!Boolean.TRUE.equals(binding.getProperty(DATABINDING_DISABLED))) {
             sb.getInInterceptors().add(new AttachmentInInterceptor());
             sb.getInInterceptors().add(new StaxInInterceptor());
-
-            sb.getOutInterceptors().add(new SoapActionInterceptor());
+            sb.getInInterceptors().add(new SoapActionInInterceptor());
+            
+            sb.getOutInterceptors().add(new SoapActionOutInterceptor());
             sb.getOutInterceptors().add(new AttachmentOutInterceptor());
             sb.getOutInterceptors().add(new StaxOutInterceptor());
+            sb.getOutInterceptors().add(new SoapHeaderOutFilterInterceptor());
 
             if (SoapConstants.BINDING_STYLE_RPC.equalsIgnoreCase(bindingStyle)) {
                 sb.getInInterceptors().add(new RPCInInterceptor());

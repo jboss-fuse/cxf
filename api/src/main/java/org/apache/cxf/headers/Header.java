@@ -23,11 +23,20 @@ import javax.xml.namespace.QName;
 import org.apache.cxf.databinding.DataBinding;
 
 public class Header {
+    public enum Direction  { 
+        DIRECTION_IN, 
+        DIRECTION_OUT, 
+        DIRECTION_INOUT 
+    };
+        
     public static final String HEADER_LIST = Header.class.getName() + ".list";
+   
     
     private DataBinding dataBinding;
     private QName name;
     private Object object;
+    
+    private Direction direction = Header.Direction.DIRECTION_OUT;
 
     public Header(QName q, Object o) {
         this(q, o, null);
@@ -56,6 +65,14 @@ public class Header {
     }
     public void setObject(Object object) {
         this.object = object;
+    }
+    
+    public void setDirection(Direction hdrDirection) {
+        this.direction = hdrDirection;
+    }
+    
+    public Direction getDirection() {
+        return direction;
     }
     
 }

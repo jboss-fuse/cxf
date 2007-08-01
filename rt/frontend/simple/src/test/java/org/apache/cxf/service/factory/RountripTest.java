@@ -24,10 +24,8 @@ import org.apache.cxf.frontend.ClientProxyFactoryBean;
 import org.apache.cxf.frontend.ServerFactoryBean;
 import org.apache.cxf.interceptor.LoggingInInterceptor;
 import org.apache.cxf.interceptor.LoggingOutInterceptor;
-import org.junit.Ignore;
 import org.junit.Test;
 
-@Ignore
 public class RountripTest extends AbstractSimpleFrontendTest {
 
     @Test

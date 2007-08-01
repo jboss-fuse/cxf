@@ -28,6 +28,8 @@ import org.apache.cxf.message.Attachment;
 import org.apache.cxf.service.model.MessagePartInfo;
 
 public interface DataReader<T> {
+    String FAULT = DataReader.class.getName() + "Fault";
+
     Object read(T input);
     Object read(MessagePartInfo part, T input);
     Object read(QName name, T input, Class type);

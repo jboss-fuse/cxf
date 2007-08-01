@@ -44,6 +44,7 @@ import org.apache.cxf.jaxws.support.JaxWsEndpointImpl;
 import org.apache.cxf.jaxws.support.JaxWsImplementorInfo;
 import org.apache.cxf.jaxws.support.JaxWsServiceFactoryBean;
 import org.apache.cxf.service.Service;
+import org.apache.cxf.service.invoker.Invoker;
 
 public class EndpointImpl extends javax.xml.ws.Endpoint 
     implements InterceptorProvider, Configurable {
@@ -66,13 +67,14 @@ public class EndpointImpl extends javax.xml.ws.Endpoint
     private Service service;
     private Map<String, Object> properties;
     private List<Source> metadata;
-    
+    private Invoker invoker;
     private Executor executor;
     private String bindingUri;
     private String wsdlLocation;
     private String address;
     private QName endpointName;
     private QName serviceName;
+    private Class implementorClass;
     
     private List<AbstractFeature> features;
     private List<Interceptor> in = new ModCountCopyOnWriteArrayList<Interceptor>();
@@ -147,7 +149,7 @@ public class EndpointImpl extends javax.xml.ws.Endpoint
      * @return the class of the implementor object
      */
     public Class getImplementorClass() {
-        return implementor.getClass();
+        return implementorClass != null ? implementorClass : implementor.getClass();
     }
 
     public List<Source> getMetadata() {
@@ -257,6 +259,7 @@ public class EndpointImpl extends javax.xml.ws.Endpoint
             serverFactory.setServiceBean(implementor);
             serverFactory.setBus(bus);
             serverFactory.setFeatures(features);
+            serverFactory.setInvoker(invoker);
             
             // Be careful not to override any serverfactory settings as a user might
             // have supplied their own.
@@ -270,6 +273,10 @@ public class EndpointImpl extends javax.xml.ws.Endpoint
             
             if (serviceName != null) {
                 serverFactory.getServiceFactory().setServiceName(serviceName);
+            }
+            
+            if (implementorClass != null) {
+                serverFactory.setServiceClass(implementorClass);
             }
             
             configureObject(serverFactory);
@@ -296,6 +303,7 @@ public class EndpointImpl extends javax.xml.ws.Endpoint
             
             configureObject(endpoint.getService());
             configureObject(endpoint);
+            this.service = endpoint.getService();
             
             if (getWsdlLocation() == null) {
                 //hold onto the wsdl location so cache won't clear till we go away
@@ -409,6 +417,18 @@ public class EndpointImpl extends javax.xml.ws.Endpoint
 
     public void setFeatures(List<AbstractFeature> features) {
         this.features = features;
+    }
+
+    public Invoker getInvoker() {
+        return invoker;
+    }
+
+    public void setInvoker(Invoker invoker) {
+        this.invoker = invoker;
+    }
+
+    public void setImplementorClass(Class implementorClass) {
+        this.implementorClass = implementorClass;
     }
     
     /*

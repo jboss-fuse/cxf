@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.xml.transform.dom.DOMSource;
-
 import org.w3c.dom.Document;
 
 import org.apache.cxf.BusException;
@@ -40,6 +39,7 @@ import org.apache.cxf.endpoint.Server;
 import org.apache.cxf.endpoint.ServerImpl;
 import org.apache.cxf.feature.AbstractFeature;
 import org.apache.cxf.helpers.DOMUtils;
+import org.apache.cxf.interceptor.AnnotationInterceptors;
 import org.apache.cxf.jaxb.JAXBDataBinding;
 import org.apache.cxf.resource.ResourceManager;
 import org.apache.cxf.resource.URIResolver;
@@ -47,6 +47,7 @@ import org.apache.cxf.service.factory.ReflectionServiceFactoryBean;
 import org.apache.cxf.service.factory.ServiceConstructionException;
 import org.apache.cxf.service.invoker.BeanInvoker;
 import org.apache.cxf.service.invoker.Invoker;
+
 
 /**
  * This class helps take a {@link org.apache.cxf.service.Service} and 
@@ -85,6 +86,7 @@ public class ServerFactoryBean extends AbstractEndpointFactory {
     private boolean start = true;
     private Object serviceBean;
     private List<String> schemaLocations;
+    private Invoker invoker;
     
     public ServerFactoryBean() {
         super();
@@ -109,8 +111,12 @@ public class ServerFactoryBean extends AbstractEndpointFactory {
                                     getDestinationFactory(), 
                                     getBindingFactory());
             
-            if (serviceBean != null) {
-                ep.getService().setInvoker(createInvoker());
+            if (invoker == null) {
+                if (serviceBean != null) {
+                    ep.getService().setInvoker(createInvoker());
+                }
+            } else {
+                ep.getService().setInvoker(invoker);
             }
             
             if (start) {
@@ -122,6 +128,10 @@ public class ServerFactoryBean extends AbstractEndpointFactory {
             throw new ServiceConstructionException(e);
         } catch (IOException e) {
             throw new ServiceConstructionException(e);
+        }
+        
+        if (getServiceBean() != null) {
+            initializeAnnotationInterceptors(server.getEndpoint());
         }
         
         applyFeatures();
@@ -187,6 +197,42 @@ public class ServerFactoryBean extends AbstractEndpointFactory {
         }
     }
     
+    /**
+     * Add annotationed Interceptors and Features to the Endpoint
+     * @param ep
+     */
+    protected void initializeAnnotationInterceptors(Endpoint ep) {
+        AnnotationInterceptors provider = new AnnotationInterceptors(getServiceBean().getClass());
+        if (initializeAnnotationInterceptors(provider, ep)) {
+            LOG.fine("Added annotation based interceptors");
+        }
+        if (provider.getFeatures() != null) {
+            getFeatures().addAll(provider.getFeatures());
+            LOG.fine("Added annotation based features");
+        }
+    }
+    
+    protected boolean initializeAnnotationInterceptors(AnnotationInterceptors provider, Endpoint ep) {
+        boolean hasAnnotation = false;
+        if (provider.getInFaultInterceptors() != null) {
+            ep.getInFaultInterceptors().addAll(provider.getInFaultInterceptors());
+            hasAnnotation = true;
+        }
+        if (provider.getInInterceptors() != null) {
+            ep.getInInterceptors().addAll(provider.getInInterceptors());
+            hasAnnotation = true;
+        }
+        if (provider.getOutFaultInterceptors() != null) {
+            ep.getOutFaultInterceptors().addAll(provider.getOutFaultInterceptors());
+            hasAnnotation = true;
+        }
+        if (provider.getOutInterceptors() != null) {
+            ep.getOutInterceptors().addAll(provider.getOutInterceptors());
+            hasAnnotation = true;
+        }
+        return hasAnnotation;
+    }
+    
     protected Invoker createInvoker() {
         return new BeanInvoker(serviceBean);
     }
@@ -234,6 +280,14 @@ public class ServerFactoryBean extends AbstractEndpointFactory {
 
     public void setSchemaLocations(List<String> schemaLocations) {
         this.schemaLocations = schemaLocations;
+    }
+
+    public Invoker getInvoker() {
+        return invoker;
+    }
+
+    public void setInvoker(Invoker invoker) {
+        this.invoker = invoker;
     }
 
 }

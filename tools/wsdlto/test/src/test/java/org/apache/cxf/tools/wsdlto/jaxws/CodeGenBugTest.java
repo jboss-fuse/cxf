@@ -562,6 +562,70 @@ public class CodeGenBugTest extends ProcessorTestBase {
         env.put(ToolConstants.CFG_WSDLURL, getLocation("/wsdl2java_wsdl/cxf778/hello_world_recursive.wsdl"));
         processor.setContext(env);
         processor.execute();
-        assertNotNull("Process message with no part wsdl error", output);
+        assertNotNull("Process recursive import wsdl error ", output);
     }
+    
+    @Test
+    public void testCXF804() throws Exception {
+        env.put(ToolConstants.CFG_WSDLURL, 
+                getLocation("/wsdl2java_wsdl/cxf804/hello_world_contains_import.wsdl"));
+        //env.put(ToolConstants.CFG_SERVICENAME, "SOAPService");
+        processor.setContext(env);
+        processor.execute();
+        
+        File file = new File(output, "org/apache/hello_world_soap_http/MyService.java");
+        assertTrue("MyService is not found", file.exists());
+        
+    }
+    
+    @Test
+    public void testDefinieServiceName() throws Exception {
+        env.put(ToolConstants.CFG_WSDLURL, 
+                getLocation("/wsdl2java_wsdl/cxf804/hello_world_contains_import.wsdl"));
+        env.put(ToolConstants.CFG_SERVICENAME, "SOAPService");
+        processor.setContext(env);
+        processor.execute();
+        
+        File file = new File(output, "org/apache/hello_world_soap_http/SOAPService.java");
+        assertTrue("SOAPService is not found", file.exists());
+        
+        file = new File(output, "org/apache/hello_world_soap_http/MyService.java");
+        assertFalse("MyService should not be generated", file.exists());
+        
+    }
+    
+    @Test
+    public void testCXF805() throws Exception {
+        try {
+            env.put(ToolConstants.CFG_WSDLURL,
+                    getLocation("/wsdl2java_wsdl/cxf805/hello_world_with_typo.wsdl"));
+            env.put(ToolConstants.CFG_CLIENT, ToolConstants.CFG_CLIENT);
+            processor.setContext(env);
+            processor.execute();
+            fail("exception should be thrown");
+        } catch (Exception e) {
+            assertTrue("Fail to create java parameter exception should be thrown",
+                       e.getMessage().indexOf("Failed to create java parameter") > -1);
+        }
+
+    }
+    
+    
+    @Test
+    public void testAntFile() throws Exception {
+        env.put(ToolConstants.CFG_WSDLURL, getLocation("/wsdl2java_wsdl/hello_world.wsdl"));
+        env.put(ToolConstants.CFG_ANT, ToolConstants.CFG_ANT);
+        env.put(ToolConstants.CFG_SERVICENAME, "SOAPService_Test1");
+        processor.setContext(env);
+        
+        processor.execute();
+        File file = new File(output.getCanonicalPath() + "/build.xml");
+        String str = getStringFromFile(file);
+        assertTrue(str.indexOf("org.apache.hello_world_soap_http.Greeter_SoapPortTest1_Client") > -1);
+        assertTrue(str.indexOf("org.apache.hello_world_soap_http.Greeter_SoapPortTest2_Client") > -1);
+        assertTrue(str.indexOf("org.apache.hello_world_soap_http.Greeter_SoapPortTest1_Server") > -1);
+        assertTrue(str.indexOf("org.apache.hello_world_soap_http.Greeter_SoapPortTest2_Server") > -1);        
+    }
+    
+    
 }

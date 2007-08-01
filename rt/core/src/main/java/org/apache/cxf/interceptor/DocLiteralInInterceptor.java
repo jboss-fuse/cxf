@@ -19,9 +19,6 @@
 
 package org.apache.cxf.interceptor;
 
-//import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -40,7 +37,9 @@ import org.apache.cxf.databinding.DataReader;
 import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.Message;
+import org.apache.cxf.message.MessageContentsList;
 import org.apache.cxf.phase.Phase;
+import org.apache.cxf.service.Service;
 import org.apache.cxf.service.model.BindingMessageInfo;
 import org.apache.cxf.service.model.BindingOperationInfo;
 import org.apache.cxf.service.model.EndpointInfo;
@@ -50,6 +49,7 @@ import org.apache.cxf.service.model.OperationInfo;
 import org.apache.cxf.service.model.ServiceInfo;
 import org.apache.cxf.staxutils.DepthXMLStreamReader;
 import org.apache.cxf.staxutils.StaxUtils;
+import org.apache.ws.commons.schema.XmlSchemaElement;
 
 public class DocLiteralInInterceptor extends AbstractInDatabindingInterceptor {
     private static final Logger LOG = Logger.getLogger(DocLiteralInInterceptor.class.getName());
@@ -69,7 +69,7 @@ public class DocLiteralInInterceptor extends AbstractInDatabindingInterceptor {
 
         DepthXMLStreamReader xmlReader = getXMLStreamReader(message);
         DataReader<XMLStreamReader> dr = getDataReader(message);
-        List<Object> parameters = new ArrayList<Object>();
+        MessageContentsList parameters = new MessageContentsList();
 
         Exchange exchange = message.getExchange();
         BindingOperationInfo bop = exchange.get(BindingOperationInfo.class);
@@ -101,8 +101,7 @@ public class DocLiteralInInterceptor extends AbstractInDatabindingInterceptor {
             // Determine if there is a wrapper class
             if (msgInfo.getMessageParts().get(0).getTypeClass() != null) {
                 Object wrappedObject = dr.read(msgInfo.getMessageParts().get(0), xmlReader);
-                parameters.add(wrappedObject);
-
+                parameters.put(msgInfo.getMessageParts().get(0), wrappedObject);
             } else {
                 // Unwrap each part individually if we don't have a wrapper
 
@@ -119,7 +118,7 @@ public class DocLiteralInInterceptor extends AbstractInDatabindingInterceptor {
                 }
 
                 // loop through each child element
-                getPara(xmlReader, dr, parameters, itr);
+                getPara(xmlReader, dr, parameters, itr, message);
             }
 
         } else {
@@ -183,15 +182,8 @@ public class DocLiteralInInterceptor extends AbstractInDatabindingInterceptor {
                 }
 
                 o = dr.read(p, xmlReader);
-
-                if (o != null) {
-                    if (p.getIndex() == -1) {
-                        parameters.add(0, o);
-                    } else {
-                        parameters.add(o);
-                    }
-                    
-                }
+                parameters.put(p, o);
+                
                 paramNum++;
             } while (StaxUtils.toNextElement(xmlReader));
 
@@ -204,54 +196,47 @@ public class DocLiteralInInterceptor extends AbstractInDatabindingInterceptor {
     
     private void getPara(DepthXMLStreamReader xmlReader,
                          DataReader<XMLStreamReader> dr,
-                         List<Object> parameters,
-                         Iterator<MessagePartInfo> itr) {
-
-        boolean isListPara = false;
-        //List<Object> list = new ArrayList<Object>();
-        MessagePartInfo part = null;
-        while (StaxUtils.toNextElement(xmlReader)) { 
-            if (itr.hasNext()) {
-                part = itr.next();
-                if (part.getTypeClass().getName().startsWith("[L")) {
-                    //&& Collection.class.isAssignableFrom(part.getTypeClass())) {
-                    //it's List Para
-                    //
-                    Type genericType = (Type) part.getProperty("generic.type");
-                    
-                    if (genericType instanceof ParameterizedType) {
-                        isListPara = true;
-                        //ParameterizedType pt = (ParameterizedType) genericType;
-                        //part.setTypeClass((Class<?>)pt.getActualTypeArguments()[0]);
-                    } /*else if (genericType instanceof GenericArrayType) {
-                        GenericArrayType gt = (GenericArrayType)genericType;
-                        part.setTypeClass((Class<?>)gt.getGenericComponentType());
-                    }*/
-                } 
-            } 
-            if (part == null) {
-                break;
-            }
-            Object obj = dr.read(part, xmlReader);
-            if (isListPara) {
-                List<Object> listArg = new ArrayList<Object>();
-                for (Object o : (Object[])obj) {
-                    listArg.add(o);
-                }
-                parameters.add(listArg);
-            } else {
-                parameters.add(obj);
-            }
-
-        }
+                         MessageContentsList parameters,
+                         Iterator<MessagePartInfo> itr,
+                         Message message) {
         
-        /*if (isListPara) {
-            parameters.add(list);
-        } else {
-            for (Object obj : list) {
-                parameters.add(obj);
+        boolean hasNext = true;
+        while (itr.hasNext()) {
+            MessagePartInfo part = itr.next();
+            if (hasNext) {
+                hasNext = StaxUtils.toNextElement(xmlReader);
             }
-        }*/
+            Object obj = null;
+            if (hasNext) {
+                QName rname = xmlReader.getName();
+                while (part != null 
+                    && !rname.equals(part.getConcreteName())) {
+                    String bindingType =
+                        message.getExchange().get(Service.class).getDataBinding().getClass().getName();
+                    if (part.getXmlSchema() instanceof XmlSchemaElement) {
+                        if (bindingType.endsWith("AegisDatabinding")) {
+                            parameters.add(dr.read(part, xmlReader));
+                        } else {
+                            //should check minOccurs=0
+                            parameters.put(part, null);
+                        }
+                    } 
+
+                    if (itr.hasNext()) {
+                        part = itr.next();
+                    } else {
+                        part = null;
+                    }                
+                }
+                if (part == null) {
+                    return;
+                }
+                if (rname.equals(part.getConcreteName())) {
+                    obj = dr.read(part, xmlReader);
+                }
+            }
+            parameters.put(part, obj);
+        }
     }
 
 

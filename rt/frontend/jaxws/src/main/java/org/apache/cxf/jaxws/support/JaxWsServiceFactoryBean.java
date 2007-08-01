@@ -85,6 +85,15 @@ public class JaxWsServiceFactoryBean extends ReflectionServiceFactoryBean {
     }
 
     @Override
+    public org.apache.cxf.service.Service create() {
+        org.apache.cxf.service.Service s = super.create();
+        
+        s.put(ENDPOINT_CLASS, implInfo.getEndpointClass());
+        
+        return s;
+    }
+
+    @Override
     protected Invoker createInvoker() {
         return null;
     }
@@ -110,8 +119,6 @@ public class JaxWsServiceFactoryBean extends ReflectionServiceFactoryBean {
     protected void initializeDefaultInterceptors() {
         super.initializeDefaultInterceptors();
 
-        getService().getOutFaultInterceptors().add(new WebFaultOutInterceptor());
-
         if (implInfo.isWebServiceProvider()) {
             Class<?> type = implInfo.getProviderParameterType();
             Mode mode = implInfo.getServiceMode();
@@ -119,6 +126,11 @@ public class JaxWsServiceFactoryBean extends ReflectionServiceFactoryBean {
             getService().getInInterceptors().add(new DispatchInDatabindingInterceptor(type, mode));
             getService().getOutInterceptors().add(new DispatchOutDatabindingInterceptor(mode));
         }
+    }
+
+    @Override
+    protected void initializeFaultInterceptors() {
+        getService().getOutFaultInterceptors().add(new WebFaultOutInterceptor());
     }
 
     @Override
@@ -316,6 +328,7 @@ public class JaxWsServiceFactoryBean extends ReflectionServiceFactoryBean {
                 MessagePartInfo part = input.getMessageParts().get(0);
                 part.setTypeClass(getRequestWrapper(method));
                 part.setProperty("REQUEST.WRAPPER.CLASSNAME", getRequestWrapperClassName(method));
+                part.setIndex(0);
             }
 
             if (o.hasOutput()) {
@@ -323,7 +336,7 @@ public class JaxWsServiceFactoryBean extends ReflectionServiceFactoryBean {
                 MessagePartInfo part = input.getMessageParts().get(0);
                 part.setTypeClass(getResponseWrapper(method));
                 part.setProperty("RESPONSE.WRAPPER.CLASSNAME", getResponseWrapperClassName(method));
-                part.setIndex(-1);
+                part.setIndex(0);
             }
 
             setFaultClassInfo(o, method);
@@ -382,7 +395,7 @@ public class JaxWsServiceFactoryBean extends ReflectionServiceFactoryBean {
             }
             part.setProperty(ReflectionServiceFactoryBean.MODE_OUT, Boolean.TRUE);
             initializeParameter(part, paramType, genericType);
-            part.setIndex(i);
+            part.setIndex(i + 1);
         } else if (isIn && isOut) {
             QName name = getInPartName(o, method, i);
             part = o.getInput().getMessagePart(name);
@@ -396,11 +409,10 @@ public class JaxWsServiceFactoryBean extends ReflectionServiceFactoryBean {
             initializeParameter(part, paramType, genericType);
             part.setIndex(i);
 
-            name = getOutPartName(o, method, i);
             part = o.getOutput().getMessagePart(name);
             part.setProperty(ReflectionServiceFactoryBean.MODE_INOUT, Boolean.TRUE);
             initializeParameter(part, paramType, genericType);
-            part.setIndex(i);
+            part.setIndex(i + 1);
         }
     }
 

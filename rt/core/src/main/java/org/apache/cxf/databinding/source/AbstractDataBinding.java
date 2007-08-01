@@ -51,7 +51,7 @@ public class AbstractDataBinding {
                                    Document d,
                                    String systemId) {
         String ns = d.getDocumentElement().getAttribute("targetNamespace");
-        if (StringUtils.isEmpty(ns) || !isSameTNS(serviceInfo)) {
+        if (StringUtils.isEmpty(ns)) {
             ns = serviceInfo.getInterface().getName().getNamespaceURI();
             d.getDocumentElement().setAttribute("targetNamespace", ns);
         }
@@ -73,9 +73,5 @@ public class AbstractDataBinding {
         XmlSchema xmlSchema = col.read(d.getDocumentElement());
         schema.setSchema(xmlSchema);
         serviceInfo.addSchema(schema);
-    }
-
-    private boolean isSameTNS(final ServiceInfo service) {
-        return service.getName().getNamespaceURI().equals(service.getInterface().getName().getNamespaceURI());
     }
 }

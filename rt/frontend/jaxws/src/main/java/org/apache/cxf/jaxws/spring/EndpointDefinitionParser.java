@@ -29,11 +29,14 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import org.apache.cxf.Bus;
 import org.apache.cxf.common.classloader.ClassLoaderUtils;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.configuration.spring.AbstractBeanDefinitionParser;
 import org.apache.cxf.jaxws.EndpointImpl;
 import org.springframework.beans.FatalBeanException;
+import org.springframework.beans.factory.BeanDefinitionStoreException;
+import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.ParserContext;
 
@@ -41,6 +44,11 @@ import org.springframework.beans.factory.xml.ParserContext;
 public class EndpointDefinitionParser extends AbstractBeanDefinitionParser {
 
     private static final String IMPLEMENTOR = "implementor";
+
+    public EndpointDefinitionParser() {
+        super();
+        setBeanClass(EndpointImpl.class);
+    }
 
     @Override
     protected String getSuffix() {
@@ -52,8 +60,8 @@ public class EndpointDefinitionParser extends AbstractBeanDefinitionParser {
         NamedNodeMap atts = element.getAttributes();
         String bus = element.getAttribute("bus");
         if (StringUtils.isEmpty(bus)) {
-            if (ctx.getRegistry().containsBeanDefinition("cxf")) {
-                bean.addConstructorArgReference("cxf");
+            if (ctx.getRegistry().containsBeanDefinition(Bus.DEFAULT_BUS_ID)) {
+                bean.addConstructorArgReference(Bus.DEFAULT_BUS_ID);
             }
         } else {
             if (ctx.getRegistry().containsBeanDefinition(bus)) {
@@ -97,7 +105,7 @@ public class EndpointDefinitionParser extends AbstractBeanDefinitionParser {
                     bean.addPropertyValue(name, list);
                 } else if (IMPLEMENTOR.equals(name)) {
                     ctx.getDelegate()
-                        .parseConstructorArgElement(getFirstChild(element), bean.getBeanDefinition());
+                        .parseConstructorArgElement((Element)n, bean.getBeanDefinition());
                 } else {
                     setFirstChildAsProperty((Element) n, ctx, bean, name);
                 }
@@ -125,10 +133,17 @@ public class EndpointDefinitionParser extends AbstractBeanDefinitionParser {
             }
         }
     }
-
     @Override
-    protected Class getBeanClass(Element arg0) {
-        return EndpointImpl.class;
+    protected String resolveId(Element elem, 
+                               AbstractBeanDefinition definition, 
+                               ParserContext ctx) 
+        throws BeanDefinitionStoreException {
+        String id = super.resolveId(elem, definition, ctx);
+        if (StringUtils.isEmpty(id)) {
+            id = getBeanClass().getName() + "--" + hashCode();
+        }
+        
+        return id;
     }
 
 }

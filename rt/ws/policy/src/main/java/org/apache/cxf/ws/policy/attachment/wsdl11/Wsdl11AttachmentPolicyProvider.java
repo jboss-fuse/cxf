@@ -58,7 +58,6 @@ import org.apache.neethi.PolicyReference;
 public class Wsdl11AttachmentPolicyProvider extends AbstractPolicyProvider 
     implements PolicyProvider {
 
-    
     public Wsdl11AttachmentPolicyProvider() {
         this(null);
     }
@@ -162,14 +161,14 @@ public class Wsdl11AttachmentPolicyProvider extends AbstractPolicyProvider
         
         List<UnknownExtensibilityElement> extensions = 
             ex.getExtensors(UnknownExtensibilityElement.class);
+        PolicyConstants constants = bus.getExtension(PolicyConstants.class);
         if (null != extensions) {
-
             for (UnknownExtensibilityElement e : extensions) {
                 Policy p = null;
-                if (PolicyConstants.getPolicyElemQName().equals(e.getElementType())) {
-                    p = builder.getPolicy(e.getElement());
+                if (constants.getPolicyElemQName().equals(e.getElementType())) {
+                    p = builder.getPolicy(e.getElement());                    
 
-                } else if (PolicyConstants.getPolicyReferenceElemQName().equals(e.getElementType())) {
+                } else if (constants.getPolicyReferenceElemQName().equals(e.getElementType())) {
                     PolicyReference ref = builder.getPolicyReference(e.getElement());
                     if (null != ref) {
                         p = resolveReference(ref, di);
@@ -182,7 +181,7 @@ public class Wsdl11AttachmentPolicyProvider extends AbstractPolicyProvider
         }
         
         if (includeAttributes) {
-            Object attr = ex.getExtensionAttribute(PolicyConstants.getPolicyURIsAttrQName());
+            Object attr = ex.getExtensionAttribute(constants.getPolicyURIsAttrQName());
             // can be of type a String, a QName, a list of Srings or a list of QNames
             String uris = null;
             if (attr instanceof QName) {
@@ -225,7 +224,8 @@ public class Wsdl11AttachmentPolicyProvider extends AbstractPolicyProvider
         if (null != resolved) {
             return resolved;
         }
-        ReferenceResolver resolver = new LocalServiceModelReferenceResolver(di, builder);
+        ReferenceResolver resolver = new LocalServiceModelReferenceResolver(di, builder,
+            bus.getExtension(PolicyConstants.class));
         resolved = resolver.resolveReference(uri);
         if (null != resolved) {
             ref.setURI(absoluteURI);

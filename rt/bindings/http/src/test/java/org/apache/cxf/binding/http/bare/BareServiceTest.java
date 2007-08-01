@@ -78,6 +78,10 @@ public class BareServiceTest extends AbstractRestTest {
         assertNotNull(bop);
         assertEquals("updateCustomer", bop.getName().getLocalPart());
         
+        bop = mapper.getOperation("/customers/details/123", "GET", null);
+        assertNotNull(bop);
+        assertEquals("getSomeDetails", bop.getName().getLocalPart());
+        
         // TEST POST/GETs
         
         Document res = get("http://localhost:9001/foo/customers");
@@ -148,6 +152,15 @@ public class BareServiceTest extends AbstractRestTest {
         c.setRequestMethod("GET");
         
         assertEquals("text/plain", c.getContentType());
+
+        c.disconnect();
+        
+        url = new URL("http://localhost:9001/foo/customers/bleh");
+        c = (HttpURLConnection)url.openConnection();
+        c.setRequestMethod("GET");
+        
+        String ct = c.getContentType();
+        assertTrue(ct.startsWith("text/plain"));
 
         svr.stop();
     }

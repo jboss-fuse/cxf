@@ -33,12 +33,14 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.cxf.Bus;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.StringUtils;
+import org.apache.cxf.message.ExchangeImpl;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageImpl;
 import org.apache.cxf.security.SecurityContext;
 import org.apache.cxf.service.model.EndpointInfo;
 import org.apache.cxf.transport.ConduitInitiator;
 import org.apache.cxf.transport.http.AbstractHTTPDestination;
+import org.apache.cxf.transport.http.HTTPSession;
 import org.apache.cxf.transport.https.SSLUtils;
 import org.apache.cxf.transports.http.QueryHandler;
 import org.apache.cxf.transports.http.QueryHandlerRegistry;
@@ -98,11 +100,8 @@ public class JettyHTTPDestination extends AbstractHTTPDestination {
         engine = 
             serverEngineFactory.retrieveJettyHTTPServerEngine(nurl.getPort());
         if (engine == null) {
-            engine = "https".equals(nurl.getProtocol())
-                // https
-                ? serverEngineFactory.createJettyHTTPSServerEngine(nurl.getPort())
-                // http
-                : serverEngineFactory.createJettyHTTPServerEngine(nurl.getPort());
+            engine = serverEngineFactory.
+                createJettyHTTPServerEngine(nurl.getPort(), nurl.getProtocol());
         }
         
         assert engine != null;
@@ -250,6 +249,10 @@ public class JettyHTTPDestination extends AbstractHTTPDestination {
             
             SSLUtils.propogateSecureSession(req, inMessage);
 
+            ExchangeImpl exchange = new ExchangeImpl();
+            exchange.setInMessage(inMessage);
+            exchange.setSession(new HTTPSession(req));
+            
             incomingObserver.onMessage(inMessage);
 
             resp.flushBuffer();

@@ -28,7 +28,12 @@ import org.apache.cxf.testutil.common.AbstractBusTestServerBase;
 
 
 public class ServerMisc extends AbstractBusTestServerBase {
-
+    public static final String DOCLIT_CODEFIRST_URL = 
+        "http://localhost:9003/DocLitWrappedCodeFirstService/";
+    public static final String RPCLIT_CODEFIRST_URL = 
+        "http://localhost:9003/RpcLitCodeFirstService/";
+    
+    
     protected void run() {
         Object implementor1 = new AnonymousComplexTypeImpl();
         String address = "http://localhost:9000/anonymous_complex_typeSOAP";
@@ -41,7 +46,15 @@ public class ServerMisc extends AbstractBusTestServerBase {
         Object implementor3 = new OrderedParamHolderImpl();
         address = "http://localhost:9002/ordered_param_holder/";
         Endpoint.publish(address, implementor3);
-
+        
+        Object implementor4 = new DocLitWrappedCodeFirstServiceImpl();
+        Endpoint.publish(DOCLIT_CODEFIRST_URL, implementor4);
+        
+        Object implementor5 = new RpcLitCodeFirstServiceImpl();
+        Endpoint.publish(RPCLIT_CODEFIRST_URL, implementor5);
+        
+        Endpoint.publish("http://localhost:9000/InheritContext/InheritPort",
+                         new InheritImpl());
     }
 
     public static void main(String[] args) {

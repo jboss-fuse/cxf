@@ -46,8 +46,20 @@ http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd">
   
   <jaxws:endpoint id="inlineImplementor" address="http://localhost:8080/simpleWithAddress">
     <jaxws:implementor>
+      <bean class="org.apache.hello_world_soap_http.GreeterImpl">
+         <property name="prefix" value="hello"/>
+      </bean>   
+    </jaxws:implementor>
+  </jaxws:endpoint>
+  
+  
+  <jaxws:endpoint id="inlineInvoker" address="http://localhost:8080/simpleWithAddress">
+    <jaxws:implementor>
       <bean class="org.apache.hello_world_soap_http.GreeterImpl"/>
     </jaxws:implementor>
+    <jaxws:invoker>
+      <bean class="org.apache.cxf.jaxws.spring.NullInvoker"/>
+    </jaxws:invoker>
   </jaxws:endpoint>
   
   <jaxws:endpoint id="epWithProps" 
@@ -86,4 +98,12 @@ http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd">
 	</jaxws:outInterceptors>
   </jaxws:endpoint>
 
+  <jaxws:endpoint implementor="org.apache.cxf.jaxws.service.Hello"
+    address="http://localhost:8080/test"/>
+    
+    
+  <jaxws:endpoint id="implementorClass"
+    implementor="java.lang.Object"
+    implementorClass="org.apache.cxf.jaxws.service.Hello"
+    address="http://localhost:8080/test"/>
 </beans>

@@ -20,20 +20,24 @@
 package org.apache.cxf.binding.soap.interceptor;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
+import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.helpers.NSStack;
 import org.apache.cxf.interceptor.AbstractOutDatabindingInterceptor;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Message;
+import org.apache.cxf.message.MessageContentsList;
 import org.apache.cxf.phase.Phase;
 import org.apache.cxf.service.model.BindingOperationInfo;
 import org.apache.cxf.service.model.MessagePartInfo;
 import org.apache.cxf.staxutils.StaxUtils;
 
 public class RPCOutInterceptor extends AbstractOutDatabindingInterceptor {
+    private static final Logger LOG = LogUtils.getL7dLogger(RPCOutInterceptor.class);
 
     public RPCOutInterceptor() {
         super(Phase.MARSHAL);
@@ -62,11 +66,23 @@ public class RPCOutInterceptor extends AbstractOutDatabindingInterceptor {
                 parts = operation.getInput().getMessageParts();
             }
             
-            List<?> objs = message.getContent(List.class);
+            MessageContentsList objs = MessageContentsList.getContentsList(message);
             if (objs == null) {
                 return;
             }
             
+            
+            for (MessagePartInfo part : parts) {
+                if (objs.hasValue(part)) {
+                    Object o = objs.get(part);
+                    if (o == null) {
+                        //WSI-BP R2211 - RPC/Lit parts are not allowed to be xsi:nil
+                        throw new Fault(
+                            new org.apache.cxf.common.i18n.Message("BP_2211_RPCLIT_CANNOT_BE_NULL",
+                                                                   LOG, part.getConcreteName()));
+                    }
+                }
+            }
             writeParts(message, message.getExchange(), operation, objs, parts);
             
             // Finishing the writing.

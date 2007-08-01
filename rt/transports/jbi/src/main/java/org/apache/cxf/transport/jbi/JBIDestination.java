@@ -50,6 +50,13 @@ public class JBIDestination extends AbstractDestination {
         this.channel = dc;
     }
 
+    public void setDeliveryChannel(DeliveryChannel dc) {
+        this.channel = dc;
+    }
+    
+    public DeliveryChannel getDeliveryChannel() {
+        return this.channel;
+    }
     
     protected Logger getLogger() {
         return LOG;
@@ -109,9 +116,6 @@ public class JBIDestination extends AbstractDestination {
         public void prepare(Message message) throws IOException {
             // setup the message to be send back
             DeliveryChannel dc = channel;
-            if (dc == null) {
-                dc = JBITransportFactory.getDeliveryChannel();
-            }
             message.put(MessageExchange.class, inMessage.get(MessageExchange.class));
             message.setContent(OutputStream.class,
                                new JBIDestinationOutputStream(inMessage, dc));

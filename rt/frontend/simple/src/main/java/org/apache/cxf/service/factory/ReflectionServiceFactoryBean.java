@@ -40,6 +40,8 @@ import java.util.logging.Logger;
 import javax.xml.namespace.QName;
 import javax.xml.ws.Holder;
 
+import org.apache.cxf.BusException;
+import org.apache.cxf.binding.BindingFactoryManager;
 import org.apache.cxf.common.i18n.BundleUtils;
 import org.apache.cxf.common.i18n.Message;
 import org.apache.cxf.endpoint.Endpoint;
@@ -49,6 +51,7 @@ import org.apache.cxf.frontend.MethodDispatcher;
 import org.apache.cxf.frontend.SimpleMethodDispatcher;
 import org.apache.cxf.helpers.MethodComparator;
 import org.apache.cxf.interceptor.Fault;
+import org.apache.cxf.interceptor.FaultOutInterceptor;
 import org.apache.cxf.jaxb.JAXBDataBinding;
 import org.apache.cxf.service.Service;
 import org.apache.cxf.service.ServiceImpl;
@@ -90,6 +93,7 @@ import org.apache.ws.commons.schema.utils.NamespaceMap;
  */
 public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
 
+    public static final String ENDPOINT_CLASS = "endpoint.class";
     public static final String GENERIC_TYPE = "generic.type";
     public static final String MODE_OUT = "messagepart.mode.out";
     public static final String MODE_INOUT = "messagepart.mode.inout";
@@ -111,6 +115,7 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
     private Invoker invoker;
     private Executor executor;
     private List<String> ignoredClasses = new ArrayList<String>();
+    private List<Method> ignoredMethods = new ArrayList<Method>();
     private SimpleMethodDispatcher methodDispatcher = new SimpleMethodDispatcher();
     private Boolean wrappedStyle;
     private Map<String, Object> properties;
@@ -162,8 +167,17 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
     protected void createEndpoints() {
         Service service = getService();
 
+        BindingFactoryManager bfm = getBus().getExtension(BindingFactoryManager.class);
+        
         for (ServiceInfo inf : service.getServiceInfos()) {
             for (EndpointInfo ei : inf.getEndpoints()) {
+                
+                try {
+                    bfm.getBindingFactory(ei.getBinding().getBindingId());
+                } catch (BusException e1) {
+                    continue;
+                }
+                
                 try {
                     Endpoint ep = createEndpoint(ei);
 
@@ -345,7 +359,7 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
         // client/servers.
         Arrays.sort(methods, new MethodComparator());
 
-        for (Method m : serviceClass.getMethods()) {
+        for (Method m : methods) {
             if (isValidMethod(m)) {
                 createOperation(serviceInfo, intf, m);
             }
@@ -654,8 +668,14 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
                 el.setRefName(mpi.getElementQName());
             } else {
                 el.setSchemaTypeName(mpi.getTypeQName());
+                if (schema.getElementFormDefault().getValue().equals(XmlSchemaForm.UNQUALIFIED)) {
+                    mpi.setConcreteName(new QName(null, mpi.getName().getLocalPart()));
+                }
             }
             if (!Boolean.TRUE.equals(mpi.getProperty(HEADER))) {
+                if (!mpi.isElement()) {
+                    mpi.setXmlSchema(el);                    
+                }
                 if (mpi.getTypeClass() != null && mpi.getTypeClass().isArray()
                     && !Byte.TYPE.equals(mpi.getTypeClass().getComponentType())) {
                     el.setMinOccurs(0);
@@ -769,7 +789,7 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
                     }
                 }
 
-                part.setIndex(-1);
+                part.setIndex(0);
             }
 
             for (int j = 0; j < paramClasses.length; j++) {
@@ -790,7 +810,7 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
 
                     MessagePartInfo part = outMsg.addMessagePart(q);
                     initializeParameter(part, paramClasses[j], method.getGenericParameterTypes()[j]);
-                    part.setIndex(j);
+                    part.setIndex(j + 1);
 
                     if (!isRPC(method) && !isWrapped(method)) {
                         part.setProperty(ELEMENT_NAME, q2);
@@ -800,9 +820,12 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
                         part.setProperty(MODE_INOUT, Boolean.TRUE);
                     }
                     if (isHeader(method, j)) {
-                        //part.setElementQName(q2);
-                        part.setProperty(ELEMENT_NAME, q2);
                         part.setProperty(HEADER, Boolean.TRUE);
+                        if (isRPC(method) || !isWrapped(method)) {
+                            part.setElementQName(q2);
+                        } else {
+                            part.setProperty(ELEMENT_NAME, q2);
+                        }
                     }
                 }
             }
@@ -811,17 +834,10 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
 
         initializeFaults(intf, op, method);
     }
-
-    protected void createFaultWrappedMessageParts(FaultInfo fault) {
-        MessagePartInfo part = fault.addMessagePart("fault");
-        part.setElement(true);
-        if (part.getElementQName() == null) {
-            part.setElementQName(fault.getFaultName());
-        }
-    }
-
+    
     protected void createInputWrappedMessageParts(OperationInfo op, Method method, MessageInfo inMsg) {
         MessagePartInfo part = inMsg.addMessagePart("parameters");
+        part.setIndex(0);
         part.setElement(true);
         for (Iterator itr = serviceConfigurations.iterator(); itr.hasNext();) {
             AbstractServiceConfiguration c = (AbstractServiceConfiguration)itr.next();
@@ -853,7 +869,7 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
     protected void createOutputWrappedMessageParts(OperationInfo op, Method method, MessageInfo outMsg) {
         MessagePartInfo part = outMsg.addMessagePart("result");
         part.setElement(true);
-        part.setIndex(-1);
+        part.setIndex(0);
         for (Iterator itr = serviceConfigurations.iterator(); itr.hasNext();) {
             AbstractServiceConfiguration c = (AbstractServiceConfiguration)itr.next();
             QName q = c.getResponseWrapperName(op, method);
@@ -1085,6 +1101,16 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
         }
     }
 
+    protected void initializeDefaultInterceptors() {
+        super.initializeDefaultInterceptors();
+        
+        initializeFaultInterceptors();
+    }
+    
+    protected void initializeFaultInterceptors() {
+        getService().getOutFaultInterceptors().add(new FaultOutInterceptor());
+    }
+
     protected FaultInfo addFault(final InterfaceInfo service, final OperationInfo op, Class exClass) {
         Class beanClass = getBeanClass(exClass);
         if (beanClass == null) {
@@ -1097,6 +1123,7 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
         fi.setProperty(Class.class.getName(), exClass);
         fi.setProperty("elementName", faultName);
         MessagePartInfo mpi = fi.addMessagePart(new QName(faultName.getNamespaceURI(), "fault"));
+        mpi.setElementQName(faultName);
         mpi.setTypeClass(beanClass);
         return fi;
     }
@@ -1414,6 +1441,14 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
 
     public void setProperties(Map<String, Object> properties) {
         this.properties = properties;
+    }
+
+    public List<Method> getIgnoredMethods() {
+        return ignoredMethods;
+    }
+
+    public void setIgnoredMethods(List<Method> ignoredMethods) {
+        this.ignoredMethods = ignoredMethods;
     }
 
 }

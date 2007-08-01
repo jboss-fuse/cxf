@@ -21,8 +21,10 @@
 package org.apache.cxf.transport.servlet;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,31 +33,36 @@ import javax.annotation.Resource;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.service.model.EndpointInfo;
-import org.apache.cxf.transport.AbstractTransportFactory;
 import org.apache.cxf.transport.Destination;
 import org.apache.cxf.transport.DestinationFactory;
+import org.apache.cxf.transport.http.AbstractHTTPTransportFactory;
 
-public class ServletTransportFactory extends AbstractTransportFactory
+public class ServletTransportFactory extends AbstractHTTPTransportFactory
     implements DestinationFactory {
-
-    private Bus bus;
+    
     private Map<String, ServletDestination> destinations = 
         new ConcurrentHashMap<String, ServletDestination>();
     
     public ServletTransportFactory(Bus b) {
-        bus = b;
+        super.setBus(b);
+        List<String> ids = Arrays.asList(new String[] {
+            "http://schemas.xmlsoap.org/wsdl/soap/http",
+            "http://schemas.xmlsoap.org/soap/http",
+            "http://www.w3.org/2003/05/soap/bindings/HTTP/",
+            "http://schemas.xmlsoap.org/wsdl/http/",
+            "http://cxf.apache.org/transports/http/configuration",
+            "http://cxf.apache.org/bindings/xformat",         
+        });
+        this.setTransportIds(ids);
     }
 
     public ServletTransportFactory() {
     }
+   
 
-    public Bus getBus() {
-        return bus;
-    }
-
-    @Resource
-    public void setBus(Bus bus) {
-        this.bus = bus;
+    @Resource(name = "bus")
+    public void setBus(Bus b) {
+        super.setBus(b);
     }
     
     public void removeDestination(String path) {
@@ -67,7 +74,7 @@ public class ServletTransportFactory extends AbstractTransportFactory
         ServletDestination d = getDestinationForPath(endpointInfo.getAddress());
         if (d == null) { 
             String path = getTrimmedPath(endpointInfo.getAddress());
-            d = new ServletDestination(bus, null, endpointInfo, this, path);
+            d = new ServletDestination(getBus(), null, endpointInfo, this, path);
             destinations.put(path, d);
         }
         return d;
@@ -103,4 +110,6 @@ public class ServletTransportFactory extends AbstractTransportFactory
     public Set<String> getDestinationsPaths() {
         return Collections.unmodifiableSet(destinations.keySet());        
     }
+
+    
 }

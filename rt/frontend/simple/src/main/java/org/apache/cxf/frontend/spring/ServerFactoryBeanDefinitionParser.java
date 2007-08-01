@@ -23,16 +23,18 @@ import java.util.Map;
 
 import org.w3c.dom.Element;
 
-import org.apache.cxf.common.classloader.ClassLoaderUtils;
+import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.configuration.spring.AbstractBeanDefinitionParser;
 import org.apache.cxf.frontend.ServerFactoryBean;
-import org.springframework.beans.FatalBeanException;
+
+import org.springframework.beans.factory.BeanDefinitionStoreException;
+import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.ParserContext;
-import org.springframework.util.StringUtils;
+
 
 public class ServerFactoryBeanDefinitionParser extends AbstractBeanDefinitionParser {
-    private static final String IMPLEMENTOR = "implementor";
+    
 
     public ServerFactoryBeanDefinitionParser() {
         super();
@@ -50,22 +52,21 @@ public class ServerFactoryBeanDefinitionParser extends AbstractBeanDefinitionPar
             setFirstChildAsProperty(el, ctx, bean, "serviceFactory.invoker");
         } else if ("binding".equals(name)) {
             setFirstChildAsProperty(el, ctx, bean, "bindingConfig");
-        }  else if ("inInterceptors".equals(name) || "inFaultInterceptors".equals(name)
+        } else if ("inInterceptors".equals(name) || "inFaultInterceptors".equals(name)
             || "outInterceptors".equals(name) || "outFaultInterceptors".equals(name)
             || "features".equals(name)) {
             List list = ctx.getDelegate().parseListElement(el, bean.getBeanDefinition());
             bean.addPropertyValue(name, list);
         } else {
-            setFirstChildAsProperty(el, ctx, bean, name);
-        }
-        
+            setFirstChildAsProperty(el, ctx, bean, name);            
+        }        
     }
     
 
     @Override
     protected void doParse(Element element, ParserContext ctx, BeanDefinitionBuilder bean) {
         super.doParse(element, ctx, bean);
-        
+
         bean.setInitMethodName("create");
         
         // We don't really want to delay the registration of our Server
@@ -73,27 +74,16 @@ public class ServerFactoryBeanDefinitionParser extends AbstractBeanDefinitionPar
     }
 
     @Override
-    protected void mapAttribute(BeanDefinitionBuilder bean, Element e, String name, String val) {
-        if (name.equals(IMPLEMENTOR)) {
-            loadImplementor(bean, val);
-        } else {
-            super.mapAttribute(bean, e, name, val);
+    protected String resolveId(Element elem, 
+                               AbstractBeanDefinition definition, 
+                               ParserContext ctx) 
+        throws BeanDefinitionStoreException {
+        String id = super.resolveId(elem, definition, ctx);
+        if (StringUtils.isEmpty(id)) {
+            id = getBeanClass().getName() + "--" + hashCode();
         }
-    }
-
-    private void loadImplementor(BeanDefinitionBuilder bean, String val) {
-        if (StringUtils.hasText(val)) {
-            if (val.startsWith("#")) {
-                bean.addPropertyReference(IMPLEMENTOR, val.substring(1));
-            } else {
-                try {
-                    bean.addPropertyValue(IMPLEMENTOR,
-                                          ClassLoaderUtils.loadClass(val, getClass()).newInstance());
-                } catch (Exception e) {
-                    throw new FatalBeanException("Could not load class: " + val, e);
-                }
-            }
-        }
+        
+        return id;
     }
 
     @Override

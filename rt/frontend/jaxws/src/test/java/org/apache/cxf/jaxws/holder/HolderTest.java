@@ -70,27 +70,28 @@ public class HolderTest extends AbstractJaxWsTest {
         svr.create();
 
         addNamespace("h", "http://holder.jaxws.cxf.apache.org/");
+        Node response;
 
-        Node response = invoke(address, LocalTransportFactory.TRANSPORT_ID, "echo.xml");
+        response = invoke(address, LocalTransportFactory.TRANSPORT_ID, "echo.xml");
         
         assertNotNull(response);
-        assertValid("//h:echoResponse/h:return[text()='one']", response);
-        assertValid("//h:echoResponse/h:return1[text()='two']", response);
+        assertValid("//h:echoResponse/return[text()='one']", response);
+        assertValid("//h:echoResponse/return1[text()='two']", response);
         assertNoFault(response);
 
         response = invoke(address, LocalTransportFactory.TRANSPORT_ID, "echo2.xml");
 
         assertNotNull(response);
         assertNoFault(response);
-        assertValid("//h:echo2Response/h:return[text()='one']", response);
-        assertValid("//h:echo2Response/h:return1[text()='two']", response);
+        assertValid("//h:echo2Response/return[text()='one']", response);
+        assertValid("//h:echo2Response/return1[text()='two']", response);
         
         // test holder with in/out header
         response = invoke(address, LocalTransportFactory.TRANSPORT_ID, "echo3.xml");
         
         assertNotNull(response);
         assertNoFault(response);
-        assertValid("//h:echo3Response/h:return[text()='one']", response);
+        assertValid("//h:echo3Response/return[text()='one']", response);
         assertValid("//s:Header/h:header[text()='header']", response);
 
     }

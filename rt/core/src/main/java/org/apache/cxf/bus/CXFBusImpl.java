@@ -20,8 +20,8 @@
 package org.apache.cxf.bus;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
@@ -30,9 +30,8 @@ import org.apache.cxf.feature.AbstractFeature;
 import org.apache.cxf.interceptor.AbstractBasicInterceptorProvider;
 
 public class CXFBusImpl extends AbstractBasicInterceptorProvider implements Bus {    
-    protected static final String DEFAULT_BUS_ID = "CXF";
-    private Map<Class, Object> extensions;
-    private BusLifeCycleManager lifeCycleManager;
+    
+    protected final Map<Class, Object> extensions;
     private String id;
     private BusState state;      
     private Collection<AbstractFeature> features;
@@ -43,12 +42,14 @@ public class CXFBusImpl extends AbstractBasicInterceptorProvider implements Bus 
 
     public CXFBusImpl(Map<Class, Object> extensions) {
         if (extensions == null) {
-            extensions = new HashMap<Class, Object>();
+            extensions = new ConcurrentHashMap<Class, Object>();
+        } else {
+            extensions = new ConcurrentHashMap<Class, Object>(extensions);
         }
         this.extensions = extensions;
         
         state = BusState.INITIAL;
-        lifeCycleManager = this.getExtension(BusLifeCycleManager.class);
+        BusLifeCycleManager lifeCycleManager = this.getExtension(BusLifeCycleManager.class);
         if (null != lifeCycleManager) {
             lifeCycleManager.initComplete();
         }
@@ -60,9 +61,7 @@ public class CXFBusImpl extends AbstractBasicInterceptorProvider implements Bus 
         this.state = state;
     }
     
-    public void setExtensions(Map<Class, Object> e) {
-        extensions = e;
-    }
+
     
     public void setId(String i) {
         id = i;
@@ -116,7 +115,7 @@ public class CXFBusImpl extends AbstractBasicInterceptorProvider implements Bus 
     }
 
     public void shutdown(boolean wait) {
-        lifeCycleManager = this.getExtension(BusLifeCycleManager.class);
+        BusLifeCycleManager lifeCycleManager = this.getExtension(BusLifeCycleManager.class);
         if (null != lifeCycleManager) {
             lifeCycleManager.preShutdown();
         }
