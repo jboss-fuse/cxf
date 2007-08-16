@@ -22,6 +22,10 @@ import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 
 public class NamespaceHandler extends NamespaceHandlerSupport {
     public void init() {
-        registerBeanDefinitionParser("Policy", new PolicyFeatureBeanDefinitionParser());        
+        registerBeanDefinitionParser("policies", new PolicyFeatureBeanDefinitionParser());
+        registerBeanDefinitionParser("engine", new PolicyEngineBeanDefinitionParser());
+        registerBeanDefinitionParser("constants", new PolicyConstantsBeanDefinitionParser());
+        registerBeanDefinitionParser("externalAttachment", 
+                                     new ExternalAttachmentProviderBeanDefinitionParser()); 
     }
 }

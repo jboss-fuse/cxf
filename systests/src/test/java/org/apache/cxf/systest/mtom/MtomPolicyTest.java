@@ -22,8 +22,11 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import org.apache.cxf.Bus;
@@ -34,6 +37,7 @@ import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.jaxws.JaxWsServerFactoryBean;
 import org.apache.cxf.message.Attachment;
+import org.apache.cxf.message.ExchangeImpl;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageImpl;
 import org.apache.cxf.service.model.EndpointInfo;
@@ -79,18 +83,20 @@ public class MtomPolicyTest extends AbstractCXFTest {
         sf.setBus(getBus());
         sf.setAddress(address);
         
-        WSPolicyFeature policy = new WSPolicyFeature();
+        WSPolicyFeature policyFeature = new WSPolicyFeature();
+        List<Element> policyElements = new ArrayList<Element>();
         if (mtomRequired) {
-            policy.getPolicyElements().add(DOMUtils.readXml(
+            policyElements.add(DOMUtils.readXml(
                 getClass().getResourceAsStream("mtom-policy.xml"))
                            .getDocumentElement());
         } else {
-            policy.getPolicyElements().add(DOMUtils.readXml(
+            policyElements.add(DOMUtils.readXml(
                 getClass().getResourceAsStream("mtom-policy-optional.xml"))
                            .getDocumentElement());
-        }        
+        } 
+        policyFeature.setPolicyElements(policyElements);       
         
-        sf.getFeatures().add(policy);
+        sf.getFeatures().add(policyFeature);
         
         sf.create();
     }
@@ -131,6 +137,7 @@ public class MtomPolicyTest extends AbstractCXFTest {
         MessageImpl resMsg = new MessageImpl();
         resMsg.setContent(InputStream.class, new ByteArrayInputStream(res));
         resMsg.put(Message.CONTENT_TYPE, obs.getResponseContentType());
+        resMsg.setExchange(new ExchangeImpl());
         AttachmentDeserializer deserializer = new AttachmentDeserializer(resMsg);
         deserializer.initializeAttachments();
 

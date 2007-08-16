@@ -122,7 +122,7 @@ public class CXFServlet extends HttpServlet {
         // Set up the ServletController
         controller = createServletController();
 
-        replaceDestionFactory();
+        replaceDestinationFactory();
         
     }
 
@@ -138,8 +138,15 @@ public class CXFServlet extends HttpServlet {
 
         // Spring 2.0
         if (ctx == null) {
-            ctx = (ApplicationContext)svCtx
+            Object ctxObject = svCtx
                 .getAttribute("org.springframework.web.context.WebApplicationContext.ROOT");
+            if (ctxObject instanceof ApplicationContext) {
+                ctx = (ApplicationContext) ctxObject;
+            } else if (ctxObject != null) {
+                // it should be the runtime exception                
+                Exception ex = (Exception) ctxObject;
+                throw new ServletException(ex);
+            }                   
         }
         
         // This constructor works whether there is a context or not
@@ -155,7 +162,7 @@ public class CXFServlet extends HttpServlet {
         resourceManager.addResourceResolver(new ServletContextResourceResolver(
                                                servletConfig.getServletContext()));
         
-        replaceDestionFactory();
+        replaceDestinationFactory();
 
         // Set up the ServletController
         controller = createServletController();
@@ -211,7 +218,7 @@ public class CXFServlet extends HttpServlet {
         bus.getExtension(DestinationFactoryManager.class).registerDestinationFactory(namespace, factory);
     }
 
-    private void replaceDestionFactory() throws ServletException {
+    private void replaceDestinationFactory() throws ServletException {
        
         DestinationFactoryManager dfm = bus.getExtension(DestinationFactoryManager.class); 
         try {

@@ -22,6 +22,8 @@ import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 
 public class NamespaceHandler extends NamespaceHandlerSupport {
     public void init() {
-        registerBeanDefinitionParser("rmManager", new RMManagerBeanDefinitionParser());        
+        registerBeanDefinitionParser("rmManager", new RMManagerBeanDefinitionParser());
+        registerBeanDefinitionParser("reliableMessaging", new RMFeatureBeanDefinitionParser());
+        registerBeanDefinitionParser("jdbcStore", new RMTxStoreBeanDefinitionParser()); 
     }
 }

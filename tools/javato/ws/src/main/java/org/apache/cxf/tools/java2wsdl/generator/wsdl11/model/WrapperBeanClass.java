@@ -17,29 +17,34 @@
  * under the License.
  */
 
-package org.apache.cxf.systest.provider;
+package org.apache.cxf.tools.java2wsdl.generator.wsdl11.model;
 
-import javax.xml.ws.Endpoint;
+import javax.xml.namespace.QName;
 
-import org.apache.cxf.testutil.common.AbstractBusTestServerBase;
+import org.apache.cxf.tools.common.model.JavaClass;
 
-public class AttachementServer extends AbstractBusTestServerBase {
+public class WrapperBeanClass extends JavaClass {
 
-    protected void run() {
-        Object implementor = new AttachmentStreamSourceXMLProvider();
-        String address = "http://localhost:9033/XMLServiceAttachment";
-        Endpoint.publish(address, implementor);
+    /**
+     * Describe elementName here.
+     */
+    private QName elementName;
+
+    /**
+     * Get the <code>ElementName</code> value.
+     *
+     * @return a <code>QName</code> value
+     */
+    public final QName getElementName() {
+        return elementName;
     }
 
-    public static void main(String[] args) {
-        try {
-            AttachementServer s = new AttachementServer();
-            s.start();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            System.exit(-1);
-        } finally {
-            System.out.println("done!");
-        }
+    /**
+     * Set the <code>ElementName</code> value.
+     *
+     * @param newElementName The new ElementName value.
+     */
+    public final void setElementName(final QName newElementName) {
+        this.elementName = newElementName;
     }
 }

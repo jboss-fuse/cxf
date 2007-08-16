@@ -18,11 +18,11 @@
  */
 package org.apache.cxf.ws.rm.spring;
 
+
 import javax.xml.namespace.QName;
 
 import org.w3c.dom.Element;
 
-import org.apache.cxf.Bus;
 import org.apache.cxf.configuration.spring.AbstractBeanDefinitionParser;
 import org.apache.cxf.ws.rm.RMManager;
 import org.apache.cxf.ws.rm.policy.RMAssertion;
@@ -50,10 +50,19 @@ public class RMManagerBeanDefinitionParser extends AbstractBeanDefinitionParser 
         ctx.getDelegate().parsePropertyElements(element, bean.getBeanDefinition());
         
         String bus = element.getAttribute("bus");
-        if (bus == null || "".equals(bus) && ctx.getRegistry().containsBeanDefinition(Bus.DEFAULT_BUS_ID)) {
-            bean.addPropertyReference("bus", Bus.DEFAULT_BUS_ID);
+        if (bus == null || "".equals(bus) && ctx.getRegistry().containsBeanDefinition("cxf")) {
+            bean.addPropertyReference("bus", "cxf");
         } else {
             bean.addPropertyReference("bus", bus);
+        }
+        
+        super.parseChildElements(element, ctx, bean);
+    }
+    
+    @Override
+    protected void mapElement(ParserContext ctx, BeanDefinitionBuilder bean, Element e, String name) {
+        if ("store".equals(name)) {  
+            setFirstChildAsProperty(e, ctx, bean, name);
         }
     }
 
@@ -72,4 +81,9 @@ public class RMManagerBeanDefinitionParser extends AbstractBeanDefinitionParser 
         return "org.apache.cxf.ws.rm.manager";
     }
 
+    @Override
+    protected boolean shouldGenerateIdAsFallback() {
+        return true;
+    }
+       
 }

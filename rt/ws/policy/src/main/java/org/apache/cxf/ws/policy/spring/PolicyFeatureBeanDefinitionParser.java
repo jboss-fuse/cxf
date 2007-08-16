@@ -22,34 +22,51 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
-import org.apache.cxf.ws.policy.PolicyConstants;
+import org.apache.cxf.configuration.spring.AbstractBeanDefinitionParser;
 import org.apache.cxf.ws.policy.WSPolicyFeature;
-import org.springframework.beans.factory.BeanDefinitionStoreException;
-import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-import org.springframework.beans.factory.xml.AbstractSingleBeanDefinitionParser;
 import org.springframework.beans.factory.xml.ParserContext;
 
-public class PolicyFeatureBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
+
+
+public class PolicyFeatureBeanDefinitionParser extends AbstractBeanDefinitionParser {
 
     @Override
-    protected void doParse(Element element, ParserContext ctx, BeanDefinitionBuilder bean) {
-        List<Element> els = new ArrayList<Element>();
-        els.add(element);
-        bean.addPropertyValue("policyElements", els);
+    protected void parseChildElements(Element e, ParserContext ctx, BeanDefinitionBuilder bean) {
+        List<Element> ps = new ArrayList<Element>();
+        List<Element> prs = new ArrayList<Element>();
+        NodeList children = e.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            Node n = children.item(i);
+            if (n.getNodeType() == Node.ELEMENT_NODE) {
+                String name = n.getLocalName();
+                if ("Policy".equals(n.getLocalName())) {
+                    ps.add((Element)n);
+                } else if ("PolicyReference".equals(name)) {
+                    prs.add((Element)n);
+                }
+            }
+        }
+        bean.addPropertyValue("policyElements", ps);
+        bean.addPropertyValue("policyReferenceElements", prs);
+        
+        super.parseChildElements(e, ctx, bean);
     }
-
+    
     @Override
-    protected String resolveId(Element element, AbstractBeanDefinition bean, 
-                               ParserContext ctx) throws BeanDefinitionStoreException {
-        PolicyConstants constants = new PolicyConstants();
-        return element.getAttributeNS(constants.getWSUNamespace(), constants.getIdAttrName());
+    protected void mapElement(ParserContext ctx, BeanDefinitionBuilder bean, Element e, String name) {
+        if ("alternativeSelector".equals(name)) {            
+            setFirstChildAsProperty(e, ctx, bean, name);
+        }
     }
 
     @Override
     protected Class getBeanClass(Element el) {
         return WSPolicyFeature.class;
     }
+
 
 }
