@@ -14,14 +14,14 @@ A demo-specific logging.properties file is used to snoop the log messages
 relating to WS-A Headers and display these to the console in concise form.
 
 Normally the WS-Addressing MessageAddressProperties are generated and
-propagated implicitly, without any intravention from the
+propagated implicitly, without any intervention from the
 application. In certain circumstances however, the application may wish
 to participate in MAP assembly, for example to associate a sequence of
 requests via the RelatesTo header. This demo illustrates both implicit
 and explicit MAP propagation.
 
 This demo also illustrates usage of the decoupled HTTP transport, whereby
-a seperate server->client HTTP connection is used to deliver the responses.
+a separate server->client HTTP connection is used to deliver the responses.
 Note the normal HTTP mode (where the response is delivered on the back-
 channel of the original client->server HTTP connection) may of course also
 be used  with WS-Addressing; in this case the <wsa:ReplyTo> header is set to
@@ -47,28 +47,26 @@ on using wsdl2java, javac, and java to build and run the demos, you must
 set the environment by running the script.
 
 
-Building and running the demo using ant
+Building and running the demo using Ant
 ---------------------------------------
-
-From the samples/ws_addressing directory, the ant build script can be used to
-build and run the demo.  The server and client targets automatically build
-the demo.
+From the base directory of this sample (i.e., where this README file is
+located), the Ant build.xml file can be used to build and run the demo. 
+The server and client targets automatically build the demo.
 
 Using either UNIX or Windows:
 
-  ant server
-  ant client
+  ant server  (from one command line window)
+  ant client  (from a second command line window)
 
 Both client and server will use the MAPAggregator and MAPCodec
 handlers to aggregate and encode the WS-Addressing MAPs.
 
 To remove the code generated from the WSDL file and the .class
-files, run:
-
-  ant clean
+files, run "ant clean".
 
 
-Buildng the demo using wsdl2java and javac
+
+Building the demo using wsdl2java and javac
 ------------------------------------------
 
 From the samples/ws_addressing directory, first create the target directory

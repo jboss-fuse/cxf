@@ -78,8 +78,9 @@ public class JavaToProcessor implements Processor {
         String oldClassPath = System.getProperty(JAVA_CLASS_PATH);
         LOG.log(Level.INFO, "OLD_CP", oldClassPath);
         if (context.get(ToolConstants.CFG_CLASSPATH) != null) {
-            String newCp = (String)context.get(ToolConstants.CFG_CLASSPATH);
-            System.setProperty(JAVA_CLASS_PATH, newCp + File.pathSeparator + oldClassPath);
+            String newCp = (String)context.get(ToolConstants.CFG_CLASSPATH) 
+                + File.pathSeparator + oldClassPath;
+            System.setProperty(JAVA_CLASS_PATH, newCp);
             LOG.log(Level.INFO, "NEW_CP", newCp);
         }
 
@@ -215,7 +216,7 @@ public class JavaToProcessor implements Processor {
             result = nameFromClz;
         }
 
-        // rename the exising wsdl file
+        // rename the existing wsdl file
         if (result.exists()
             && !result.renameTo(new File(result.getParent(), result.getName()))) {
             throw new ToolException(new Message("OUTFILE_EXISTS", LOG));

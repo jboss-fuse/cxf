@@ -31,21 +31,19 @@ environment.
 
 
 
-Building and running the demo using ant
+Building and running the demo using Ant
 ---------------------------------------
-
-From the samples/soap_header directory, the ant build script
-can be used to build and run the demo.
+From the base directory of this sample (i.e., where this README file is
+located), the Ant build.xml file can be used to build and run the demo. 
+The server and client targets automatically build the demo.
 
 Using either UNIX or Windows:
 
-  ant build
-  ant server 
-  ant client
+  ant server  (from one command line window)
+  ant client  (from a second command line window)
     
-
 To remove the code generated from the WSDL file and the .class
-files, run:
+files, run "ant clean".
 
   ant clean
 
@@ -119,26 +117,7 @@ files, either delete the build directory and its contents or run:
 Building and running the demo in a servlet container
 ----------------------------------------------------
 
-From the samples/soap_header directory, the ant build script
-can be used to create the war file that is deployed into the
-servlet container.
-
-Build the war file with the command:
-
-  ant war
-
-Preparing deploy to APACHE TOMCAT
-
-* set CATALINA_HOME environment to your TOMCAT home directory
-    
-Deploy the war file into APACHE TOMCAT with the commond:
-[NOTE] This step will check if the cxf jars present in Tomcat, 
-       if not, it will automatically copy all the jars into CATALINA_HOME/shared/lib
-  
-  ant deploy -Dtomcat=true
-
-The servlet container will extract the war and deploy the application.
-
+Please refer to samples directory README for building demo in a servlet container.
 
 Using ant, run the client application with the command:
 
@@ -167,6 +146,3 @@ Using java, run the client application with the command:
 Where # is the TCP/IP port used by the servlet container,
 e.g., 8080.
 
-Undeploy the application from the APACHE TOMCAT with the command:
-
-   ant undeploy -Dtomcat=true
