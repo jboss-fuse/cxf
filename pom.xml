@@ -220,7 +220,7 @@
                     <uniqueVersion>true</uniqueVersion>
                     <id>iona-snapshot</id>
                     <name>IONA Maven Snapshot Repository</name>
-                    <url>file:///net/maven-repo.boston.amer.iona.com/x1/iona-repository/snapshot</url>
+                    <url>${snapshot-repo-url}</url>
                 </snapshotRepository>
             </distributionManagement>
         </profile>
@@ -230,7 +230,7 @@
             <modules>
                 <module>distribution</module>
                 <module>tools/eclipse-plugin</module>
-                <module>iona_samples</module>
+                <!--module>iona_samples</module-->
             </modules>
         </profile>
         <profile>
