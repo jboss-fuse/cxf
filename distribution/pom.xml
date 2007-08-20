@@ -221,6 +221,12 @@
             <artifactId>cxf-bundle</artifactId>
             <version>${pom.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.iona.fuse.cxf.container</groupId>
+            <artifactId>it-soa-container-rt</artifactId>
+            <version>${pom.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

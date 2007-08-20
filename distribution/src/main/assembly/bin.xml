@@ -53,6 +53,20 @@
             <fileMode>755</fileMode>
         </fileSet>
         <fileSet>
+            <directory>iona_src/main/release/bin</directory>
+            <outputDirectory>apache-cxf-${cxf.version}/bin</outputDirectory>
+            <fileMode>755</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>iona_src/main/release</directory>
+            <outputDirectory>apache-cxf-${cxf.version}/</outputDirectory>
+            <excludes>
+                <exclude>**/build</exclude>
+                <exclude>**/build/**/*</exclude>
+                <exclude>bin/**/*</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
             <directory>src/main/release/etc</directory>
             <outputDirectory>apache-cxf-${cxf.version}/etc</outputDirectory>
             <includes>
