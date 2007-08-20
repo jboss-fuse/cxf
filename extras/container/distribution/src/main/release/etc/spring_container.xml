@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+        Copyright (c) 1993-2007 IONA Technologies PLC.
+                       All Rights Reserved.
+-->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:jaxws="http://cxf.apache.org/jaxws"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:container="http://schemas.iona.com/soa/container-config"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans 
+                           http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+                           http://cxf.apache.org/jaxws 
+                           http://cxf.apache.org/schemas/jaxws.xsd
+                           http://schemas.iona.com/soa/container-config 
+                           http://schemas.iona.com/soa/container-config.xsd">
+
+    <!-- Bean definition for Container -->
+
+    <container:container id="container" containerRepository="${CELTIX_HOME}/containers/spring_container/repository" scanInterval="5000"/>
+
+    <!--                      Web Service Container Management                   -->
+    <!-- 
+         ContainerAdminApplication, ContainerService, ContainerServicePort and ContainerServiceImpl, 
+         define an application which creates a WebService interface for managing applications deployed 
+         to the container. 
+    -->
+
+  <jaxws:endpoint id="ContainerService" 
+    implementor="#ContainerServiceImpl" address="http://localhost:2222/AdminContext/AdminPort"
+    wsdlLocation="/wsdl/container.wsdl"
+    endpointName="e:ContainerServicePort"
+    serviceName="s:ContainerService"
+    xmlns:e="http://cxf.iona.com/container/admin"
+    xmlns:s="http://cxf.iona.com/container/admin"/>
+
+    <bean id="ContainerServiceImpl" class="com.iona.cxf.container.admin.ContainerAdminServiceImpl">
+        <property name="container">
+            <ref bean="container" />
+        </property>
+    </bean>
+
+
+    <!--                        JMX Container Management                        -->
+    <!-- The following beans allow a user to manage the container via JMX tools -->
+
+    <bean id="mbeanServer" class="org.springframework.jmx.support.MBeanServerFactoryBean">
+        <property name="locateExistingServerIfPossible" value="true" />
+    </bean>
+
+    <bean id="exporter" class="org.springframework.jmx.export.MBeanExporter">
+        <property name="beans">
+            <map>
+                <entry key="bean:name=SpringContainer" value-ref="container"/>
+                <entry key="connector:name=rmi" value-ref="serverConnector"/>
+            </map>
+        </property>
+
+        <property name="server" ref="mbeanServer"/>
+        <property name="assembler" ref="assembler" />
+    </bean>
+
+    <bean id="assembler" class="org.springframework.jmx.export.assembler.InterfaceBasedMBeanInfoAssembler">
+        <property name="interfaceMappings">
+            <props>
+                <prop key="bean:name=SpringContainer">com.iona.cxf.container.managed.JMXContainer</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="serverConnector" class="org.springframework.jmx.support.ConnectorServerFactoryBean"  depends-on="registry" >
+        <property name="serviceUrl" value="service:jmx:rmi:///jndi/rmi://localhost:1099/jmxrmi/server"/>
+    </bean>
+
+    <bean id="registry" class="org.springframework.remoting.rmi.RmiRegistryFactoryBean">
+        <property name="port" value="1099"/>
+    </bean>
+
+</beans>

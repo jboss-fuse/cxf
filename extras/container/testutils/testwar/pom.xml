@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.iona.fuse.cxf.container.testutils</groupId>
+    <artifactId>it-soa-testutils-container-testwar</artifactId>
+    <packaging>war</packaging>
+    <name>FUSE Spring Container - TestUtils War</name>
+    <version>2.1.0-fuse-SNAPSHOT</version>
+
+    <parent>
+        <groupId>com.iona.fuse.cxf</groupId>
+        <artifactId>fuse-extras-parent</artifactId>
+        <version>2.1.0-fuse-SNAPSHOT</version>
+        <relativePath>../../../parent/pom.xml</relativePath>
+    </parent>
+
+   
+    <dependencies>
+        <dependency>
+            <groupId>com.iona.fuse.cxf.container.testutils</groupId>
+            <artifactId>it-soa-testutils-container-testjar</artifactId>
+            <version>${project.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.easymock</groupId>
+            <artifactId>easymockclassextension</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

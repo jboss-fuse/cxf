@@ -1,0 +1,247 @@
+<definitions 
+xmlns="http://schemas.xmlsoap.org/wsdl/" 
+xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+xmlns:http-conf="http://schemas.iona.com/transports/http/configuration" 
+xmlns:tns="http://cxf.iona.com/container/admin" 
+targetNamespace="http://cxf.iona.com/container/admin">
+
+    <types>
+        <xs:schema targetNamespace="http://cxf.iona.com/container/admin"
+                xmlns:tns="http://cxf.iona.com/container/admin"
+                elementFormDefault="qualified">
+
+            <xs:complexType name="emptyMessageType">
+                <xs:sequence/>
+            </xs:complexType>            
+
+            <xs:complexType name="applicationNameType">
+                <xs:sequence>
+			<xs:element name="application" type="xs:string" />
+                </xs:sequence>
+            </xs:complexType>
+
+            <xs:complexType name="applicationListType">
+                <xs:sequence>
+			<xs:element name="applications" type="xs:string" minOccurs="0" maxOccurs="unbounded" />
+                </xs:sequence>
+            </xs:complexType>
+
+            <xs:simpleType name="applicationStateType">
+                <xs:restriction base = "xs:string">
+                    <xs:enumeration value = "STARTED"/>
+                    <xs:enumeration value = "STOPPED"/>
+                    <xs:enumeration value = "FAILED"/>
+                </xs:restriction>
+            </xs:simpleType>
+
+            <xs:complexType name="applicationState">
+                <xs:sequence>
+			<xs:element name="state" type="tns:applicationStateType" />
+                </xs:sequence>
+            </xs:complexType>
+
+            <xs:complexType name="containerFaultType">
+                <xs:sequence>
+                    <xs:element name="error" type="xs:string"/>
+                </xs:sequence>
+            </xs:complexType>
+	
+            <xs:element name="listApplications" type="tns:emptyMessageType" />
+            <xs:element name="listApplicationsResponse" type="tns:applicationListType" />
+
+            <xs:element name="stopApplication" type="tns:applicationNameType" />
+            <xs:element name="stopApplicationResponse" type="tns:emptyMessageType"/>
+
+            <xs:element name="startApplication" type="tns:applicationNameType" />
+            <xs:element name="startApplicationResponse" type="tns:emptyMessageType"/>
+
+            <xs:element name="removeApplication" type="tns:applicationNameType" />
+            <xs:element name="removeApplicationResponse" type="tns:emptyMessageType"/>
+
+            <xs:element name="shutdown" type="tns:emptyMessageType" />
+            <xs:element name="shutdownResponse" type="tns:emptyMessageType" />
+
+            <xs:element name="getApplicationState" type="tns:applicationNameType" />
+            <xs:element name="getApplicationStateResponse" type="tns:applicationState" />
+
+            <xs:element name="faultDetail" type="tns:containerFaultType" />
+
+        </xs:schema>                        
+    </types>
+
+    <message name="listApplicationsRequest">
+        <part name="in" element="tns:listApplications" />
+    </message>
+
+    <message name="listApplicationsResponse">
+        <part name="out" element="tns:listApplicationsResponse" />
+    </message>
+
+    <message name="stopApplicationRequest">
+        <part name="in" element="tns:stopApplication" />
+    </message>
+
+    <message name="stopApplicationResponse">
+        <part name="out" element="tns:stopApplicationResponse" />
+    </message>
+
+    <message name="startApplicationRequest">
+        <part name="in" element="tns:startApplication" />
+    </message>
+
+    <message name="startApplicationResponse">
+        <part name="out" element="tns:startApplicationResponse" />
+    </message>
+
+    <message name="removeApplicationRequest">
+        <part name="in" element="tns:removeApplication" />
+    </message>
+
+    <message name="removeApplicationResponse">
+        <part name="out" element="tns:removeApplicationResponse" />
+    </message>
+
+    <message name="shutdownRequest">
+        <part name="in" element="tns:shutdown" />
+    </message>
+
+    <message name="shutdownResponse">
+        <part name="out" element="tns:shutdownResponse" />
+    </message>
+
+    <message name="containerFault">
+        <part name="faultDetail" element="tns:faultDetail" />
+    </message>
+
+    <message name="getApplicationStateRequest">
+        <part name="in" element="tns:getApplicationState" />
+    </message>
+
+    <message name="getApplicationStateResponse">
+        <part name="out" element="tns:getApplicationStateResponse" />
+    </message>
+
+    <portType name="ContainerService">
+        <operation name="listApplications">
+            <input message="tns:listApplicationsRequest"/>
+            <output message="tns:listApplicationsResponse"/>
+        </operation>		
+
+        <operation name="stopApplication">
+            <input message="tns:stopApplicationRequest"/>
+            <output message="tns:stopApplicationResponse"/>
+	    <fault message="tns:containerFault" name="containerFault" />
+        </operation>		
+
+        <operation name="startApplication">
+            <input message="tns:startApplicationRequest"/>
+            <output message="tns:startApplicationResponse"/>
+	    <fault message="tns:containerFault" name="containerFault" />
+        </operation>		
+
+        <operation name="removeApplication">
+            <input message="tns:removeApplicationRequest"/>
+            <output message="tns:removeApplicationResponse"/>
+	    <fault message="tns:containerFault" name="containerFault" />
+        </operation>		
+
+        <operation name="shutdown">
+            <input message="tns:shutdownRequest"/>
+            <output message="tns:shutdownResponse"/>
+	    <fault message="tns:containerFault" name="containerFault" />
+        </operation>		
+
+        <operation name="getApplicationState">
+            <input message="tns:getApplicationStateRequest"/>
+            <output message="tns:getApplicationStateResponse"/>
+	    <fault message="tns:containerFault" name="containerFault" />
+        </operation>		
+    </portType>
+    
+    <binding name="ContainerServiceBinding" type="tns:ContainerService">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="listApplications">
+            <soap:operation/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+
+        <operation name="stopApplication">
+            <soap:operation/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+            <fault name="containerFault">
+                <soap:fault name="containerFault" use="literal"/>
+            </fault>
+        </operation>
+
+        <operation name="startApplication">
+            <soap:operation/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+            <fault name="containerFault">
+                <soap:fault name="containerFault" use="literal"/>
+            </fault>
+        </operation>
+
+        <operation name="removeApplication">
+            <soap:operation/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+            <fault name="containerFault">
+                <soap:fault name="containerFault" use="literal"/>
+            </fault>
+        </operation>
+
+        <operation name="shutdown">
+            <soap:operation/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+            <fault name="containerFault">
+                <soap:fault name="containerFault" use="literal"/>
+            </fault>
+        </operation>
+
+        <operation name="getApplicationState">
+            <soap:operation/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+            <fault name="containerFault">
+                <soap:fault name="containerFault" use="literal"/>
+            </fault>
+        </operation>
+
+    </binding>
+
+    <service name="ContainerService">
+        <port name="ContainerServicePort" binding="tns:ContainerServiceBinding">
+            <soap:address location="http://localhost:2222/AdminContext/AdminPort"/>
+        </port>
+    </service>
+
+</definitions>

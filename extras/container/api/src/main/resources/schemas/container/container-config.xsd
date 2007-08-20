@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- -->
+<!-- Copyright (c) 1993-2007 IONA Technologies PLC. -->
+<!--            All Rights Reserved. -->
+<!-- -->
+<xs:schema targetNamespace="http://schemas.iona.com/soa/container-config"
+    xmlns:tns="http://schemas.iona.com/soa/container-config"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:beans="http://www.springframework.org/schema/beans"
+    xmlns:cxf-beans="http://cxf.apache.org/configuration/beans"
+    elementFormDefault="qualified" 
+    attributeFormDefault="unqualified"
+    > 
+
+    <xs:import namespace="http://www.springframework.org/schema/beans"
+             schemaLocation="http://www.springframework.org/schema/beans/spring-beans-2.0.xsd"/>
+    <xs:import namespace="http://cxf.apache.org/configuration/beans" 
+             schemaLocation="http://cxf.apache.org/schemas/configuration/cxf-beans.xsd"/>
+  
+    <xs:element name="container">
+      <xs:complexType>
+        <xs:complexContent>
+          <xs:extension base="beans:identifiedType">  
+            <xs:attributeGroup ref="cxf-beans:beanAttributes"/>
+            <xs:attribute name="containerRepository" type="xs:string"/>
+            <xs:attribute name="scanInterval" type="xs:int" default="-1"/>
+          </xs:extension>
+        </xs:complexContent>
+      </xs:complexType>
+    </xs:element>
+
+</xs:schema>
+

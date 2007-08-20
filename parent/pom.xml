@@ -57,6 +57,7 @@
         <geronimo.version>1.1</geronimo.version>
         <rhino.version>1.6R5</rhino.version>
         <xmlbeans.version>2.2.0</xmlbeans.version>
+        <cxf.checkstyle.suffix/>
 
         <spring.validation.mode>VALIDATION_AUTO</spring.validation.mode>
 
@@ -154,13 +155,13 @@
                             <id>validate</id>
                             <phase>validate</phase>
                             <configuration>
-                                <configLocation>cxf-checkstyle.xml</configLocation>
+                                <configLocation>cxf-checkstyle${cxf.checkstyle.suffix}.xml</configLocation>
                                 <consoleOutput>true</consoleOutput>
                                 <failsOnError>true</failsOnError>
                                 <linkXRef>false</linkXRef>
                                 <suppressionsLocation>cxf-checkstyle-suppressions.xml</suppressionsLocation>
                                 <sourceDirectory>${basedir}/src</sourceDirectory>
-				<excludes>**/archetype-resources/**/*.java</excludes>
+                                <excludes>**/archetype-resources/**/*.java</excludes>
                             </configuration>
                             <goals>
                                 <goal>checkstyle</goal>
@@ -267,7 +268,7 @@
                             </supplementalModels>
                             <properties>
                                 <addLicense>true</addLicense>
-                                <projectName>Apache CXF</projectName>
+                                <projectName>FUSE Services Framework</projectName>
                             </properties>
                         </configuration>
                     </execution>
@@ -830,7 +831,7 @@
                                     <tasks>
                                         <whichresource resource="/cxf-eclipse-pmd" property="pmd.url" />
                                         <whichresource resource="/cxf-pmd-ruleset.xml" property="pmdruleset.url" />
-                                        <whichresource resource="/cxf-eclipse-checkstyle" property="eclipse.checkstyle.url" />
+                                        <whichresource resource="/cxf-eclipse-checkstyle${cxf.checkstyle.suffix}" property="eclipse.checkstyle.url" />
 
                                         <get src="${pmdruleset.url}" dest=".ruleset" />
                                         <get src="${pmd.url}" dest=".pmd" />

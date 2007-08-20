@@ -205,6 +205,7 @@
         <module>tools</module>
         <module>testutils</module>
         <module>rt</module>
+        <module>extras</module>
         <module>integration</module>
         <module>systests</module>
         <module>maven-plugins/codegen-plugin</module>
@@ -296,17 +297,20 @@
                                         <whichresource resource="/cxf-pmd-ruleset.xml" property="pmdruleset.url" />
                                         <whichresource resource="/cxf-eclipse-checkstyle" property="eclipse.checkstyle.url" />
                                         <whichresource resource="/cxf-checkstyle.xml" property="checkstyle.url" />
+                                        <whichresource resource="/cxf-checkstyle-iona.xml" property="checkstyle.iona.url" />
 
                                         <mkdir dir="${full.eclipse.workspace}/.metadata/.plugins/org.eclipse.core.runtime/.settings" />
                                         <mkdir dir="${full.eclipse.workspace}/.metadata/.plugins/com.atlassw.tools.eclipse.checkstyle" />
                                         <mkdir dir="${full.eclipse.workspace}/.metadata/.plugins/net.sourceforge.pmd.eclipse" />
 
                                         <get src="${checkstyle.url}" dest="${full.eclipse.workspace}/cxf-checkstyle.xml" />
+                                        <get src="${checkstyle.iona.url}" dest="${full.eclipse.workspace}/cxf-checkstyle-iona.xml" />
 
                                         <!-- Add checkstyle config -->
                                         <copy file="${basedir}/etc/eclipse/template.checkstyle-config.xml" tofile="${full.eclipse.workspace}/.metadata/.plugins/com.atlassw.tools.eclipse.checkstyle/checkstyle-config.xml" overwrite="no">
                                             <filterset>
                                                 <filter token="CHECKSTYLE_CONFIG_FILE" value="${full.eclipse.workspace}/cxf-checkstyle.xml" />
+                                                <filter token="CHECKSTYLE_IONA_CONFIG_FILE" value="${full.eclipse.workspace}/cxf-checkstyle-iona.xml" />
                                                 <filter token="APACHE_HEADER_FILE" value="${full.eclipse.workspace}/apache-header.txt" />
                                             </filterset>
                                         </copy>

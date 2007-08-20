@@ -1,0 +1,20 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.iona.fuse.cxf.container.testutils</groupId>
+    <artifactId>it-soa-container-testutils</artifactId>
+    <packaging>pom</packaging>
+    <name>FUSE Spring Container - Test Utilities</name>
+    <version>2.1.0-fuse-SNAPSHOT</version>
+    <url>http://open.iona.com/products/fuse-services-framework/</url>
+
+    <parent>
+        <groupId>com.iona.fuse.cxf.container</groupId>
+        <artifactId>it-soa-container</artifactId>
+        <version>2.1.0-fuse-SNAPSHOT</version>
+    </parent>
+
+    <modules>
+        <module>testjar</module> 
+        <module>testwar</module> 
+    </modules>
+</project>

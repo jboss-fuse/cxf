@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+        Copyright (c) 1993-2007 IONA Technologies PLC.
+                       All Rights Reserved.
+-->
+
+<toolspec xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	  xmlns:xhtml="http://www.w3.org/TR/xhtml1/strict"
+	  xsi:schemaLocation="http://www.xsume.com/Xutil/ToolSpecification http://www.xsume.com/schema/xutil/tool-specification.xsd"
+	  xmlns="http://www.xsume.com/Xutil/ToolSpecification"
+	  xmlns:ts="http://www.xsume.com/Xutil/ToolSpecification">
+
+    <usage>
+	<optionGroup id="options">
+	    <option id="container-config-loc" maxOccurs="1">
+		<annotation>
+  		            The URL which specifies the location of the Spring config file uses to launch the Spring-based container.
+		</annotation>
+		<switch>config</switch>
+		<associatedArgument placement="afterSpace">
+		    <annotation>spring-config-url</annotation>
+		</associatedArgument>
+	    </option>
+	</optionGroup>
+
+	<optionGroup id="common_options">
+	    <option id="help" maxOccurs="1">
+		<annotation>
+		            Display detailed information for options.</annotation>
+		<switch>h</switch>
+		<switch>?</switch>
+		<switch>help</switch>
+	    </option>
+
+	    <option id="verbose">
+		<annotation>
+		            Verbose mode</annotation>
+		<switch>verbose</switch>
+		<switch>V</switch>
+	    </option>
+
+	</optionGroup>
+
+	<argument id="start|stop" minOccurs="1" maxOccurs="1">
+	        <annotation>Start/Stop Container</annotation>
+	</argument>
+
+    </usage>
+</toolspec>

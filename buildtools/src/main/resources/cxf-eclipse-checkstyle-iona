@@ -17,9 +17,10 @@
   specific language governing permissions and limitations
   under the License.
 -->
-<checkstyle-configurations file-format-version="5.0.0">
-    <check-configuration name="CXF Checks" location="@CHECKSTYLE_CONFIG_FILE@" type="external" description="">
-        <property name="apache.header.file" value="@APACHE_HEADER_FILE@"/>
-    </check-configuration>
-    <check-configuration name="IONA Extras Checks" location="@IONA_CHECKSTYLE_CONFIG_FILE@" type="external" description=""/>
-</checkstyle-configurations>
+<fileset-config file-format-version="1.1.0" simple-config="false">
+    <fileset name="all" enabled="true" check-config-name="IONA Extras Checks" type="external" description="">
+        <file-match-pattern match-pattern="^src[/\\]." include-pattern="true"/>
+        <file-match-pattern match-pattern="^src[/\\]main[/\\]generated[/\\]." include-pattern="false"/>
+        <file-match-pattern match-pattern="^src[/\\]test[/\\]generated[/\\]." include-pattern="false"/>
+    </fileset>
+</fileset-config>

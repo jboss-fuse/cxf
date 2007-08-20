@@ -1,0 +1,32 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.iona.fuse.cxf</groupId>
+    <artifactId>fuse-extras-parent</artifactId>
+    <packaging>pom</packaging>
+    <name>FUSE Extras Parent Pom</name>
+    <version>2.1.0-fuse-SNAPSHOT</version>
+    <url>http://open.iona.com/products/fuse-services-framework/</url>
+
+    <parent>
+        <groupId>org.apache.cxf</groupId>
+        <artifactId>cxf-parent</artifactId>
+        <version>2.1.0-fuse-SNAPSHOT</version>
+        <relativePath>../../parent/pom.xml</relativePath>        
+    </parent>
+
+    <properties>
+        <cxf.checkstyle.suffix>-iona</cxf.checkstyle.suffix>
+    </properties>
+
+    <licenses>
+        <license>
+            <name>FUSE Services Framework v.2.0 License Agreement</name>
+            <url>http://open.iona.com/downloads/license-agreements/fuse-services-framework-v-2-0-license-agreement/</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <organization>
+        <name>IONA Technologies, PLC</name>
+        <url>http://www.iona.com/</url>
+    </organization>
+</project>

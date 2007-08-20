@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+        Copyright (c) 1993-2007 IONA Technologies PLC.
+                       All Rights Reserved.
+-->
+
+<beans
+    xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:jaxws="http://cxf.apache.org/jaxws"
+    xsi:schemaLocation="
+        http://cxf.apache.org/jaxws 
+        http://cxf.apache.org/schemas/jaxws.xsd
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <jaxws:endpoint id="SoapEndpoint"
+        implementor="#SOAPServiceImpl"
+        address="http://localhost:9000/SoapContext/SoapPort"
+        wsdlLocation="hello_world.wsdl"
+        endpointName="e:SoapPort"
+        serviceName="s:SOAPService"
+        xmlns:e="http://apache.org/hello_world_soap_http"
+        xmlns:s="http://apache.org/hello_world_soap_http"/>
+
+    <bean id="SOAPServiceImpl" class="demo.hw.server.GreeterImpl"/>
+</beans>
