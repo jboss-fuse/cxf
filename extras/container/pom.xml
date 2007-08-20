@@ -17,7 +17,6 @@
         <module>testutils</module> 
         <module>api</module> 
         <module>rt</module> 
-        <!--module>distribution</module--> 
     </modules>
 
 </project>
