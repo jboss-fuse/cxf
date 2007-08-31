@@ -22,6 +22,9 @@ package org.apache.cxf.systest.jaxws;
 
 
 import java.io.InputStream;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
@@ -39,6 +42,7 @@ import java.util.logging.Logger;
 import javax.xml.namespace.QName;
 import javax.xml.ws.AsyncHandler;
 import javax.xml.ws.BindingProvider;
+import javax.xml.ws.Endpoint;
 import javax.xml.ws.Response;
 import javax.xml.ws.Service;
 import javax.xml.ws.WebServiceException;
@@ -49,12 +53,15 @@ import org.w3c.dom.Node;
 
 //import org.apache.cxf.Bus;
 import org.apache.cxf.binding.soap.Soap11;
+import org.apache.cxf.configuration.security.AuthorizationPolicy;
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.endpoint.dynamic.DynamicClientFactory;
+import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.helpers.XMLUtils;
 import org.apache.cxf.helpers.XPathUtils;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
+import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.hello_world_soap_http.BadRecordLitFault;
 import org.apache.hello_world_soap_http.DocLitBare;
 import org.apache.hello_world_soap_http.Greeter;
@@ -762,11 +769,25 @@ public class ClientServerTest extends AbstractBusClientServerTestBase {
         Greeter greeter = service.getPort(fakePortName, Greeter.class);
 
         try {
+            //try the jaxws way
             BindingProvider bp = (BindingProvider)greeter;
             bp.getRequestContext().put(BindingProvider.USERNAME_PROPERTY, "BJ");
             bp.getRequestContext().put(BindingProvider.PASSWORD_PROPERTY, "pswd");
             String s = greeter.greetMe("secure");
             assertEquals("Hello BJ", s);
+            bp.getRequestContext().remove(BindingProvider.USERNAME_PROPERTY);
+            bp.getRequestContext().remove(BindingProvider.PASSWORD_PROPERTY);
+            
+            //try setting on the conduit directly
+            Client client = ClientProxy.getClient(greeter);
+            HTTPConduit httpConduit = (HTTPConduit)client.getConduit();
+            AuthorizationPolicy policy = new AuthorizationPolicy();
+            policy.setUserName("BJ2");
+            policy.setPassword("pswd");
+            httpConduit.setAuthorization(policy);
+            
+            s = greeter.greetMe("secure");
+            assertEquals("Hello BJ2", s);
         } catch (UndeclaredThrowableException ex) {
             throw (Exception)ex.getCause();
         }
@@ -846,5 +867,23 @@ public class ClientServerTest extends AbstractBusClientServerTestBase {
         assertEquals("Hello CXF", result);
     }
 
+    @Test
+    public void testProxy() throws Exception {
+        InvocationHandler handler = new InvocationHandler() {
+
+            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                // TODO Auto-generated method stub
+                return null;
+            }
+            
+        };
+        Object implementor4 = Proxy.newProxyInstance(this.getClass().getClassLoader(),
+                                                     new Class<?>[] {DocLitWrappedCodeFirstService.class},
+                                                     handler);
+        Endpoint.publish("http://localhost:9023/DocLitWrappedCodeFirstService/", implementor4);
+        URL url = new URL("http://localhost:9023/DocLitWrappedCodeFirstService/?wsdl");
+        InputStream ins = url.openStream();
+        ins.close();
+    }
     
 }

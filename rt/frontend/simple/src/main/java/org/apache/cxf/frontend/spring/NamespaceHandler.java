@@ -18,11 +18,13 @@
  */
 package org.apache.cxf.frontend.spring;
 
+import org.apache.cxf.configuration.spring.StringBeanDefinitionParser;
 import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 
 public class NamespaceHandler extends NamespaceHandlerSupport {
     public void init() {
         registerBeanDefinitionParser("client", new ClientProxyFactoryBeanDefinitionParser());    
-        registerBeanDefinitionParser("server", new ServerFactoryBeanDefinitionParser());        
+        registerBeanDefinitionParser("server", new ServerFactoryBeanDefinitionParser());     
+        registerBeanDefinitionParser("schemaLocation", new StringBeanDefinitionParser());
     }
 }

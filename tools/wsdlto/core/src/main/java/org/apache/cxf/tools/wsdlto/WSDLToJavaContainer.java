@@ -72,6 +72,8 @@ import org.apache.cxf.wsdl11.WSDLServiceBuilder;
 
 
 
+
+
 public class WSDLToJavaContainer extends AbstractCXFToolContainer {
 
     protected static final Logger LOG = LogUtils.getL7dLogger(WSDLToJavaContainer.class);
@@ -181,7 +183,16 @@ public class WSDLToJavaContainer extends AbstractCXFToolContainer {
                 schemas = new java.util.HashMap<String, Element>();
                 ServiceInfo serviceInfo = serviceList.get(0);
                 for (SchemaInfo schemaInfo : serviceInfo.getSchemas()) {
-                    schemas.put(schemaInfo.getSystemId(), schemaInfo.getElement());
+                    if (schemaInfo.getElement() != null && schemaInfo.getSystemId() == null) {
+                        String sysId = schemaInfo.getElement().getAttribute("targetNamespce");
+                        if (sysId == null) {
+                            sysId = serviceInfo.getTargetNamespace();
+                        }
+                        schemas.put(sysId, schemaInfo.getElement());
+                    }
+                    if (schemaInfo.getElement() != null && schemaInfo.getSystemId() != null) {
+                        schemas.put(schemaInfo.getSystemId(), schemaInfo.getElement());
+                    }
                 }
             }
             context.put(ToolConstants.SCHEMA_MAP, schemas);
@@ -204,9 +215,8 @@ public class WSDLToJavaContainer extends AbstractCXFToolContainer {
             for (ServiceInfo service : serviceList) {
 
                 context.put(ServiceInfo.class, service);
-                if (context.optionSet(ToolConstants.CFG_VALIDATE_WSDL)) {
-                    validate(service);
-                }
+
+                validate(service);
 
                 // Build the JavaModel from the ServiceModel
                 processor.setEnvironment(context);
@@ -529,6 +539,7 @@ public class WSDLToJavaContainer extends AbstractCXFToolContainer {
 
     public void validate(final ServiceInfo service) throws ToolException {
         for (ServiceValidator validator : getServiceValidators()) {
+            service.setProperty(ToolContext.class.getName(), context);
             validator.setService(service);
             if (!validator.isValid()) {
                 throw new ToolException(validator.getErrorMessage());

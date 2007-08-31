@@ -19,6 +19,7 @@
 package org.apache.cxf.transport.http;
 
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -69,7 +70,7 @@ import org.apache.cxf.ws.addressing.EndpointReferenceType;
 import org.apache.cxf.ws.policy.Assertor;
 import org.apache.cxf.ws.policy.PolicyEngine;
 import org.apache.cxf.wsdl.EndpointReferenceUtils;
-import org.apache.geronimo.mail.util.StringBufferOutputStream;
+
 
 import static org.apache.cxf.message.Message.DECOUPLED_CHANNEL_MESSAGE;
 
@@ -813,15 +814,12 @@ public class HTTPConduit
             if (enc != null && ct.indexOf("charset=") == -1) {
                 ct = ct + "; charset=" + enc;
             }
-            connection.setRequestProperty(
-                    HttpHeaderHelper.CONTENT_TYPE, ct);
         } else if (enc != null) {
-            connection.setRequestProperty(
-                    HttpHeaderHelper.CONTENT_TYPE, "text/xml; charset=" + enc);
+            ct = "text/xml; charset=" + enc;
         } else {
-            connection.setRequestProperty(
-                    HttpHeaderHelper.CONTENT_TYPE, "text/xml");
+            ct = "text/xml";
         }
+        connection.setRequestProperty(HttpHeaderHelper.CONTENT_TYPE, ct);
         
         if (LOG.isLoggable(Level.FINE)) {
             LOG.fine("Sending "
@@ -829,7 +827,8 @@ public class HTTPConduit
                 + " Message with Headers to " 
                            + connection.getURL()
                 + " Conduit :"
-                + getConduitName());
+                + getConduitName()
+                + "\nContent-Type: " + ct + "\n");
             logProtocolHeaders(Level.FINE, message);
         }
         
@@ -1124,8 +1123,7 @@ public class HTTPConduit
                 Arrays.asList(new String[] {policy.getAcceptLanguage()}));
         }
         if (policy.isSetContentType()) {
-            headers.put(HttpHeaderHelper.CONTENT_TYPE,
-                Arrays.asList(new String[] {policy.getContentType()}));
+            message.put(Message.CONTENT_TYPE, policy.getContentType());
         }
         if (policy.isSetCookie()) {
             headers.put("Cookie",
@@ -1586,19 +1584,16 @@ public class HTTPConduit
         out.close();
         
         if (LOG.isLoggable(Level.FINE)) {
-            StringBuffer sbuf = new StringBuffer();
-            StringBufferOutputStream sout =
-                new StringBufferOutputStream(sbuf);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
             CacheAndWriteOutputStream.copyStream(stream.getInputStream(), 
-                    sout, 2048);
-            sout.close();
+                    baos, 2048);
 
             LOG.fine("Conduit \""
                      + getConduitName() 
                      + "\" Retransmit message to: " 
                      + connection.getURL()
                      + ": "
-                     + sbuf);
+                     + baos.toString());
         }
         return connection;
     }
@@ -1805,18 +1800,15 @@ public class HTTPConduit
             if (cachedStream != null) {
 
                 if (LOG.isLoggable(Level.FINE)) {
-                    StringBuffer sbuf = new StringBuffer();
-                    StringBufferOutputStream sout =
-                        new StringBufferOutputStream(sbuf);
-                    IOUtils.copy(cachedStream.getInputStream(), sout, 2048);
-                    sout.close();
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
+                    IOUtils.copy(cachedStream.getInputStream(), baos, 2048);
 
                     LOG.fine("Conduit \""
                              + getConduitName() 
                              + "\" Transmit cached message to: " 
                              + connection.getURL()
                              + ": "
-                             + sbuf);
+                             + baos.toString());
                 }
 
                 HttpURLConnection oldcon = connection;

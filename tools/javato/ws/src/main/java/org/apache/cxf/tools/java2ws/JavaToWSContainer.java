@@ -33,7 +33,8 @@ import org.apache.cxf.tools.common.toolspec.parser.BadUsageException;
 import org.apache.cxf.tools.common.toolspec.parser.CommandDocument;
 import org.apache.cxf.tools.common.toolspec.parser.ErrorVisitor;
 import org.apache.cxf.tools.java2wsdl.processor.JavaToWSDLProcessor;
-import org.apache.cxf.tools.java2wsdl.processor.ServiceInfoToJavaProcessor;
+import org.apache.cxf.tools.java2wsdl.processor.internal.jaxws.ServiceInfoToJavaProcessor;
+import org.apache.cxf.tools.java2wsdl.processor.internal.simple.SimpleFrontEndProcessor;
 import org.apache.cxf.tools.util.AnnotationUtil;
 
 public class JavaToWSContainer extends AbstractCXFToolContainer {
@@ -62,6 +63,7 @@ public class JavaToWSContainer extends AbstractCXFToolContainer {
                 String ft = (String)env.get(ToolConstants.CFG_FRONTEND);
                 if (ft == null || "jaxws".equals(ft.toLowerCase())) {
                     ft = "jaxws";
+                    env.put(ToolConstants.CFG_FRONTEND, "jaxws");
                     if (env.optionSet(ToolConstants.CFG_SERVER) || env.optionSet(ToolConstants.CFG_CLIENT)) {
                         processor = new ServiceInfoToJavaProcessor();
                         processor.setEnvironment(env);
@@ -69,6 +71,10 @@ public class JavaToWSContainer extends AbstractCXFToolContainer {
                     }
                 } else {
                     ft = "simple";
+                    env.put(ToolConstants.CFG_FRONTEND, "simple");
+                    processor = new SimpleFrontEndProcessor();
+                    processor.setEnvironment(env);
+                    processor.process();
                 }       
             }
         } catch (ToolException ex) {

@@ -26,6 +26,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 
 import javax.xml.namespace.QName;
@@ -36,10 +37,12 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
+import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.helpers.JavaUtils;
 import org.apache.cxf.jaxb.JAXBUtils;
 import org.apache.cxf.service.model.MessagePartInfo;
 import org.apache.cxf.service.model.ServiceInfo;
+import org.apache.cxf.tools.common.ToolConstants;
 import org.apache.cxf.tools.common.ToolContext;
 import org.apache.cxf.tools.common.model.DefaultValueWriter;
 import org.apache.cxf.tools.util.ClassCollector;
@@ -339,15 +342,35 @@ public final class ProcessorUtil {
         }
         return clone;
     }
-    
-    public static List<QName> getWrappedElement(ToolContext context, QName partElement) {
+
+    public static List<QName> getWrappedElementQNames(ToolContext context, QName partElement) {
         List<QName> qnames = new ArrayList<QName>();
+        for (WrapperElement element : getWrappedElement(context, partElement)) {
+            qnames.add(element.getElementName());
+        }
+        return qnames;
+    }
+
+    public static List<WrapperElement> getWrappedElement(ToolContext context, QName partElement) {
+        List<WrapperElement> qnames = new ArrayList<WrapperElement>();
         
         ServiceInfo serviceInfo = (ServiceInfo)context.get(ServiceInfo.class);
         XmlSchemaCollection schema = (XmlSchemaCollection)serviceInfo
             .getProperty(WSDLServiceBuilder.WSDL_SCHEMA_LIST);
-        
+       
         XmlSchemaElement elementByName = schema.getElementByQName(partElement);
+        
+        //is elementByName is null,it could be generate from serviceInfo, we need read the schema element
+        //into schemaCollection
+        if (elementByName == null) {
+            Map<String, Element> maps = CastUtils.cast((Map<?, ?>)context.get(ToolConstants.SCHEMA_MAP));
+            if (maps != null) {
+                for (Element ele : maps.values()) {
+                    schema.read(ele);
+                }
+                elementByName = schema.getElementByQName(partElement);
+            }
+        }
 
         XmlSchemaComplexType type = (XmlSchemaComplexType)elementByName.getSchemaType();
 
@@ -363,9 +386,9 @@ public final class ProcessorUtil {
                 XmlSchemaElement subElement = (XmlSchemaElement)ite.next();
 
                 if (subElement.getQName() != null) {
-                    qnames.add(subElement.getQName());
+                    qnames.add(new WrapperElement(subElement.getQName(), subElement.getSchemaTypeName()));
                 } else {
-                    qnames.add(subElement.getRefName());
+                    qnames.add(new WrapperElement(subElement.getRefName(), subElement.getSchemaTypeName()));
                 }
             }
         }

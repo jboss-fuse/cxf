@@ -120,6 +120,7 @@
        </pluginRepository>
      </pluginRepositories>
 
+
      <distributionManagement>
        <repository>
          <id>open.iona.m2</id>

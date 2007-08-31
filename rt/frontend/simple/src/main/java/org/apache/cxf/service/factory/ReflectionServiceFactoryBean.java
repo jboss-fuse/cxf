@@ -24,6 +24,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.ArrayList;
@@ -33,8 +34,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.concurrent.Executor;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.xml.namespace.QName;
@@ -42,11 +43,12 @@ import javax.xml.ws.Holder;
 
 import org.apache.cxf.BusException;
 import org.apache.cxf.binding.BindingFactoryManager;
-import org.apache.cxf.common.i18n.BundleUtils;
 import org.apache.cxf.common.i18n.Message;
+import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.endpoint.EndpointException;
 import org.apache.cxf.endpoint.EndpointImpl;
+import org.apache.cxf.frontend.FaultInfoException;
 import org.apache.cxf.frontend.MethodDispatcher;
 import org.apache.cxf.frontend.SimpleMethodDispatcher;
 import org.apache.cxf.helpers.MethodComparator;
@@ -102,8 +104,8 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
     public static final String ELEMENT_NAME = "messagepart.elementName";
     public static final String METHOD = "operation.method";
 
-    private static final Logger LOG = Logger.getLogger(ReflectionServiceFactoryBean.class.getName());
-    private static final ResourceBundle BUNDLE = BundleUtils.getBundle(ReflectionServiceFactoryBean.class);
+    private static final Logger LOG = LogUtils.getL7dLogger(ReflectionServiceFactoryBean.class,
+                                                            "SimpleMessages");
 
     protected String wsdlURL;
 
@@ -217,6 +219,11 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
 
     protected void buildServiceFromClass() {
         LOG.info("Creating Service " + getServiceQName() + " from class " + getServiceClass().getName());
+        
+        if (Proxy.isProxyClass(this.getServiceClass())) {
+            LOG.log(Level.WARNING, "USING_PROXY_FOR_SERVICE", getServiceClass());
+        }
+        
         ServiceInfo serviceInfo = new ServiceInfo();
         ServiceImpl service = new ServiceImpl(serviceInfo);
 
@@ -283,7 +290,7 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
                 return si.getInterface();
             }
         }
-        throw new ServiceConstructionException(new Message("COULD_NOT_FIND_PORTTYPE", BUNDLE, qn));
+        throw new ServiceConstructionException(new Message("COULD_NOT_FIND_PORTTYPE", LOG, qn));
     }
 
     protected void initializeWSDLOperations() {
@@ -313,7 +320,7 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
             }
 
             if (selected == null) {
-                throw new ServiceConstructionException(new Message("NO_METHOD_FOR_OP", BUNDLE, o.getName()));
+                throw new ServiceConstructionException(new Message("NO_METHOD_FOR_OP", LOG, o.getName()));
             }
 
             initializeWSDLOperation(intf, o, selected);
@@ -414,7 +421,9 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
     protected void initializeWrappedSchema(ServiceInfo serviceInfo) {
         for (OperationInfo op : serviceInfo.getInterface().getOperations()) {
             if (op.getUnwrappedOperation() != null) {
-                if (op.hasInput()) {
+                if (op.hasInput() 
+                    && op.getInput().getMessageParts().get(0).getTypeClass() == null) {
+                    
                     QName wraperBeanName = op.getInput().getMessageParts().get(0).getElementQName();
                     XmlSchemaElement e = null;
                     for (SchemaInfo s : serviceInfo.getSchemas()) {
@@ -442,7 +451,9 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
 
 
                 }
-                if (op.hasOutput()) {
+                if (op.hasOutput()
+                    && op.getOutput().getMessageParts().get(0).getTypeClass() == null) {
+                    
                     QName wraperBeanName = op.getOutput().getMessageParts().get(0).getElementQName();
                     XmlSchemaElement e = null;
                     for (SchemaInfo s : serviceInfo.getSchemas()) {
@@ -1144,6 +1155,19 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
         if (java.rmi.RemoteException.class.isAssignableFrom(exClass)) {
             return null;
         }
+        
+        if (FaultInfoException.class.isAssignableFrom(exClass)) {
+            try {
+                Method m = exClass.getMethod("getFaultInfo");
+                return m.getReturnType();
+            } catch (SecurityException e) {
+                throw new ServiceConstructionException(e);
+            } catch (NoSuchMethodException e) {
+                throw new ServiceConstructionException(e);
+            }
+        }
+        
+        
         return exClass;
     }
 

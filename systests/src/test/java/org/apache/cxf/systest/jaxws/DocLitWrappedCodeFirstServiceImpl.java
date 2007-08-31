@@ -51,6 +51,11 @@ public class DocLitWrappedCodeFirstServiceImpl implements DocLitWrappedCodeFirst
         }
         return buf.toString();
     }
+    
+    public int[] echoIntArray(int[] ar) {
+        return ar;
+    }
+
 
     public String listInput(List<String> inputs) {
         StringBuffer buf = new StringBuffer();
@@ -115,6 +120,10 @@ public class DocLitWrappedCodeFirstServiceImpl implements DocLitWrappedCodeFirst
    
     public int throwException(int i) throws ServiceTestFault {
         throw new ServiceTestFault(new ServiceTestFault.ServiceTestDetails(i));
+    }
+    
+    public String echo(String msg) {
+        return msg;
     }
 
 }
