@@ -28,7 +28,7 @@
     <artifactId>cxf-parent</artifactId>
     <version>2.1.0-fuse-SNAPSHOT</version>
     <name>Apache CXF Parent</name>
-    <url>http://cwiki.apache.org/CXF</url>
+    <url>http://open.iona.com/products/fuse-services-framework</url>
 
     <packaging>pom</packaging>
 
