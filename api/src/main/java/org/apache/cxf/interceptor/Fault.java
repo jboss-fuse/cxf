@@ -21,7 +21,6 @@ package org.apache.cxf.interceptor;
 
 import javax.xml.namespace.QName;
 
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import org.apache.cxf.common.i18n.Message;
@@ -131,9 +130,9 @@ public class Fault extends UncheckedException {
     }
 
     public Element getOrCreateDetail() {
-        Document d = DOMUtils.createDocument();
-        Element element = d.createElement("Fault");
-        this.detail = element;
-        return element;
+        if (detail == null) {
+            detail = DOMUtils.createDocument().createElement("detail");
+        }
+        return detail;
     }
 }

@@ -44,22 +44,26 @@ public abstract class AbstractInvoker implements Invoker {
     public Object invoke(Exchange exchange, Object o) {
 
         final Object serviceObject = getServiceObject(exchange);
+        try {
 
-        BindingOperationInfo bop = exchange.get(BindingOperationInfo.class);
-        MethodDispatcher md = (MethodDispatcher) 
-            exchange.get(Service.class).get(MethodDispatcher.class.getName());
-        Method m = md.getMethod(bop);
-        //Method m = (Method)bop.getOperationInfo().getProperty(Method.class.getName());
-        m = matchMethod(m, serviceObject);
-        
-        List<Object> params = null;
-        if (o instanceof List) {
-            params = CastUtils.cast((List<?>)o);
-        } else if (o != null) {
-            params = new MessageContentsList(o);
+            BindingOperationInfo bop = exchange.get(BindingOperationInfo.class);
+            MethodDispatcher md = (MethodDispatcher) 
+                exchange.get(Service.class).get(MethodDispatcher.class.getName());
+            Method m = md.getMethod(bop);
+            //Method m = (Method)bop.getOperationInfo().getProperty(Method.class.getName());
+            m = matchMethod(m, serviceObject);
+            
+            List<Object> params = null;
+            if (o instanceof List) {
+                params = CastUtils.cast((List<?>)o);
+            } else if (o != null) {
+                params = new MessageContentsList(o);
+            }
+            
+            return invoke(exchange, serviceObject, m, params);
+        } finally {
+            releaseServiceObject(exchange, serviceObject);
         }
-        
-        return invoke(exchange, serviceObject, m, params);
     }
 
     protected Object invoke(Exchange exchange, final Object serviceObject, Method m, List<Object> params) {
@@ -83,14 +87,18 @@ public abstract class AbstractInvoker implements Invoker {
                 t = e;
             }
             exchange.getInMessage().put(FaultMode.class, FaultMode.CHECKED_APPLICATION_FAULT);
-            throw new Fault(t);
+            throw createFault(t);
         } catch (Fault f) {
             exchange.getInMessage().put(FaultMode.class, FaultMode.UNCHECKED_APPLICATION_FAULT);
             throw f;
         } catch (Exception e) {
             exchange.getInMessage().put(FaultMode.class, FaultMode.UNCHECKED_APPLICATION_FAULT);
-            throw new Fault(e);
+            throw createFault(e);
         }
+    }
+    
+    protected Fault createFault(Throwable ex) {
+        return new Fault(ex);        
     }
     
     protected Object performInvocation(Exchange exchange, final Object serviceObject, Method m,
@@ -123,6 +131,15 @@ public abstract class AbstractInvoker implements Invoker {
      * Creates and returns a service object depending on the scope.
      */
     public abstract Object getServiceObject(final Exchange context);
+
+    /**
+     * Called when the invoker is done with the object.   Default implementation
+     * does nothing.
+     * @param context
+     * @param obj
+     */
+    public void releaseServiceObject(final Exchange context, Object obj) {
+    }
 
     /**
      * Returns a Method that has the same declaring class as the class of

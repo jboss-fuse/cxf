@@ -32,7 +32,7 @@ public class DualOutServiceTest extends AbstractAegisTest {
     public void testWSDL() throws Exception {
         JaxWsServerFactoryBean sf = new JaxWsServerFactoryBean();
         sf.setServiceClass(DualOutService.class);
-        sf.setAddress("DualOutService");
+        sf.setAddress("local://DualOutService");
         sf.setBus(getBus());
         setupAegis(sf);
         sf.create();
@@ -44,11 +44,11 @@ public class DualOutServiceTest extends AbstractAegisTest {
  
         assertValid(
                     "//xsd:complexType[@name='getValuesResponse']//xsd:element"
-                    + "[@name='return'][@type='string']",
+                    + "[@name='return'][@type='xsd:string']",
                     wsdl);
         assertValid(
                     "//xsd:complexType[@name='getValuesResponse']//xsd:element"
-                    + "[@name='return1'][@type='string']",
+                    + "[@name='return1'][@type='xsd:string']",
                     wsdl);
     }
 }

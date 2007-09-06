@@ -29,6 +29,7 @@ import org.apache.cxf.service.model.MessagePartInfo;
 
 public interface DataReader<T> {
     String FAULT = DataReader.class.getName() + "Fault";
+    String ENDPOINT = DataReader.class.getName() + "Endpoint";
 
     Object read(T input);
     Object read(MessagePartInfo part, T input);

@@ -62,17 +62,25 @@ public abstract class AbstractBeanDefinitionParser
         for (int i = 0; i < atts.getLength(); i++) {
             Attr node = (Attr) atts.item(i);
             String val = node.getValue();
+            String pre = node.getPrefix();
             String name = node.getLocalName();
             
             if ("createdFromAPI".equals(name)) {
                 bean.setAbstract(true);
             } else if ("abstract".equals(name)) {
                 bean.setAbstract(true);
-            } else if (!"id".equals(name) && !"name".equals(name)) {
-                if ("bus".equals(name)) {
-                    setBus = true;
-                } 
-                mapAttribute(bean, element, name, val);
+            } else if ("depends-on".equals(name)) {
+                bean.addDependsOn(val);
+            } else if (!"id".equals(name) && !"name".equals(name) && isAttribute(pre, name)) {
+                if ("bus".equals(name)) {                                     
+                    if (val != null && val.trim().length() > 0 
+                        && ctx.getRegistry().containsBeanDefinition(val)) {
+                        bean.addPropertyReference(name, val);
+                        setBus = true;                         
+                    }
+                } else {
+                    mapAttribute(bean, element, name, val);
+                }    
             }
         } 
         return setBus;

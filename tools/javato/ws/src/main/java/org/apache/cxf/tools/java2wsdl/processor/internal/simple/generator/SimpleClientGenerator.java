@@ -39,7 +39,6 @@ public class SimpleClientGenerator extends AbstractSimpleGenerator {
             return false;
         }
         return true;
-
     }
 
 

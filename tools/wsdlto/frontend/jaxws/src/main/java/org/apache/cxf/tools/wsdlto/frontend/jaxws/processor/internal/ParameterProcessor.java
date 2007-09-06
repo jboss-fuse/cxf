@@ -20,6 +20,7 @@
 package org.apache.cxf.tools.wsdlto.frontend.jaxws.processor.internal;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,6 @@ import java.util.logging.Level;
 
 import javax.wsdl.OperationType;
 import javax.xml.namespace.QName;
-
 
 import org.apache.cxf.common.i18n.Message;
 import org.apache.cxf.common.util.StringUtils;
@@ -157,7 +157,6 @@ public class ParameterProcessor extends AbstractProcessor {
         return message.getMessageParts().size() - count > 1;
     }
 
-    @SuppressWarnings("unchecked")
     private void processInput(JavaMethod method, MessageInfo inputMessage) throws ToolException {
         if (requireOutOfBandHeader()) {
             try {
@@ -175,7 +174,6 @@ public class ParameterProcessor extends AbstractProcessor {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void processWrappedInput(JavaMethod method, MessageInfo inputMessage) throws ToolException {
         List<MessagePartInfo> inputParts = inputMessage.getMessageParts();
 
@@ -213,7 +211,6 @@ public class ParameterProcessor extends AbstractProcessor {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void processOutput(JavaMethod method, MessageInfo inputMessage, MessageInfo outputMessage)
         throws ToolException {
         Map<QName, MessagePartInfo> inputPartsMap = inputMessage.getMessagePartsMap();
@@ -268,7 +265,6 @@ public class ParameterProcessor extends AbstractProcessor {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void processWrappedAbstractOutput(JavaMethod method,
                                               MessageInfo inputMessage,
                                               MessageInfo outputMessage) throws ToolException {
@@ -482,18 +478,24 @@ public class ParameterProcessor extends AbstractProcessor {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void buildParamModelsWithOrdering(JavaMethod method,
                                               MessageInfo inputMessage,
                                               MessageInfo outputMessage,
                                               List<String> parameterList) throws ToolException {
-
         Map<QName, MessagePartInfo> inputPartsMap = inputMessage.getMessagePartsMap();
 
-        Map<QName, MessagePartInfo> outputPartsMap = outputMessage.getMessagePartsMap();
+        Map<QName, MessagePartInfo> outputPartsMap = new HashMap<QName, MessagePartInfo>();
+        
+        if (outputMessage != null) {
+            outputPartsMap = outputMessage.getMessagePartsMap();
+        }
 
         List<MessagePartInfo> inputParts = inputMessage.getMessageParts();
-        List<MessagePartInfo> outputParts = outputMessage.getMessageParts();
+        List<MessagePartInfo> outputParts = new ArrayList<MessagePartInfo>();
+
+        if (outputMessage != null) {
+            outputParts = outputMessage.getMessageParts();
+        }
 
         List<MessagePartInfo> inputUnlistedParts = new ArrayList<MessagePartInfo>();
         List<MessagePartInfo> outputUnlistedParts = new ArrayList<MessagePartInfo>();
@@ -521,6 +523,8 @@ public class ParameterProcessor extends AbstractProcessor {
             } else {
                 processReturn(method, null);
             }
+        } else {
+            processReturn(method, null);
         }
 
         // now create list of paramModel with parts
@@ -567,13 +571,16 @@ public class ParameterProcessor extends AbstractProcessor {
         return false;
     }
 
-    @SuppressWarnings("unchecked")
     private boolean isValidOrdering(List<String> parameterOrder,
                                     MessageInfo inputMessage, MessageInfo outputMessage) {
         Iterator<String> params = parameterOrder.iterator();
 
         List<MessagePartInfo> inputParts = inputMessage.getMessageParts();
-        List<MessagePartInfo> outputParts = outputMessage.getMessageParts();
+        List<MessagePartInfo> outputParts = new ArrayList<MessagePartInfo>();
+
+        if (outputMessage != null) {
+            outputParts = outputMessage.getMessageParts();
+        }
 
         boolean partFound = false;
 
