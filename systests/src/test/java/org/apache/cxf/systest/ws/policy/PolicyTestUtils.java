@@ -17,21 +17,19 @@
  * under the License.
  */
 
-package org.apache.cxf.tools.java2wsdl.generator;
+package org.apache.cxf.systest.ws.policy;
 
-import org.apache.cxf.tools.java2wsdl.generator.wsdl11.WSDL11Generator;
-import org.apache.cxf.wsdl.WSDLConstants;
-import org.junit.Assert;
-import org.junit.Test;
+import org.apache.cxf.Bus;
+import org.apache.cxf.ws.policy.PolicyConstants;
 
-public class WSDLGeneratorFactoryTest extends Assert {
+public final class PolicyTestUtils {
 
-    @Test
-    public void testNewWSDL11Generator() {
-        WSDLGeneratorFactory factory = new WSDLGeneratorFactory();
-        factory.setWSDLVersion(WSDLConstants.WSDLVersion.WSDL11);
-        AbstractGenerator generator = factory.newGenerator();
-        assertNotNull(generator);
-        assertTrue(generator instanceof WSDL11Generator);
+    private PolicyTestUtils() {
+        // utility class
+    }
+    
+    public static void setPolicyConstants(Bus bus, String policyNs) {
+        PolicyConstants pc = bus.getExtension(PolicyConstants.class);
+        pc.setNamespace(policyNs);
     }
 }
