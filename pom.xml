@@ -21,16 +21,16 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.cxf</groupId>
     <artifactId>cxf</artifactId>
-    <version>2.0.2.0-fuse</version>
+    <version>2.0.2-fuse-SNAPSHOT</version>
     <name>FUSE Services Framework</name>
     <url>http://open.iona.com/products/fuse-services-framework/</url>
 
     <packaging>pom</packaging>
 
     <scm>
-        <connection>scm:svn:http://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.0.2.0-fuse</connection>
-        <developerConnection>scm:svn:https://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.0.2.0-fuse</developerConnection>
-        <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/tags/cxf-2.0.2.0-fuse</url>
+        <connection>scm:svn:http://projects.open.iona.com/projects/svn/iona/cxf/trunk</connection>
+        <developerConnection>scm:svn:https://projects.open.iona.com/projects/svn/iona/cxf/trunk</developerConnection>
+        <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk</url>
     </scm>
     <issueManagement>
         <system>jira</system>
