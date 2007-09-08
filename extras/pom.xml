@@ -4,13 +4,13 @@
     <artifactId>fuse-extras</artifactId>
     <packaging>pom</packaging>
     <name>FUSE Extras</name>
-    <version>2.0.2-fuse-SNAPSHOT</version>
+    <version>2.0.2.0-fuse</version>
     <url>http://open.iona.com/products/fuse-services-framework/</url>
 
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf</artifactId>
-        <version>2.0.2-fuse-SNAPSHOT</version>
+        <version>2.0.2.0-fuse</version>
     </parent>
 
     <licenses>
