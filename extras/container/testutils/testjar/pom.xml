@@ -6,12 +6,12 @@
     <artifactId>it-soa-testutils-container-testjar</artifactId>
     <packaging>jar</packaging>
     <name>FUSE Spring Container - TestUtils Jar</name>
-    <version>2.0.2.1-fuse</version>
+    <version>2.0.2-fuse-SNAPSHOT</version>
 
     <parent>
         <groupId>com.iona.fuse.cxf</groupId>
         <artifactId>fuse-extras-parent</artifactId>
-        <version>2.0.2.1-fuse</version>
+        <version>2.0.2-fuse-SNAPSHOT</version>
         <relativePath>../../../parent/pom.xml</relativePath>
     </parent>
 
