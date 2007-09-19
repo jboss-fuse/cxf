@@ -4,13 +4,13 @@
     <artifactId>it-soa-container-testutils</artifactId>
     <packaging>pom</packaging>
     <name>FUSE Spring Container - Test Utilities</name>
-    <version>2.0.2.2-fuse</version>
+    <version>2.0.2-fuse-SNAPSHOT</version>
     <url>http://open.iona.com/products/fuse-services-framework/</url>
 
     <parent>
         <groupId>com.iona.fuse.cxf.container</groupId>
         <artifactId>it-soa-container</artifactId>
-        <version>2.0.2.2-fuse</version>
+        <version>2.0.2-fuse-SNAPSHOT</version>
     </parent>
 
     <modules>
