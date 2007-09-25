@@ -26,15 +26,15 @@ Using either UNIX or Windows:
    directory. 
 
 2. Run "ant copy.war" to copy hello_world.war from the build directory to 
-   <install_dir>/java/containers/spring_container/repository.
+   <install_dir>/containers/spring_container/repository.
   
-3. Run "<install_dir>/java/bin/spring_container(.bat) start" to start the Spring 
+3. Run "<install_dir>/bin/spring_container(.bat) start" to start the Spring 
    Container and run the deployed application.
   
 4. Run "ant client" to run the client against the endpoint deployed in the 
    Spring container
     
-5. Run "<install_dir>/java/bin/jmx_console_start(.bat) to launch the Java JMX 
+5. Run "<install_dir>/bin/jmx_console_start(.bat) to launch the Java JMX 
    Console. This allows you to view the "SpringContainer" MBean deployed as 
    part of the container. The MBean gives you access to the management
    interface for the Spring Container. You can use it to list, stop, start and 
