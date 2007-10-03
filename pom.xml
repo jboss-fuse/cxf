@@ -183,7 +183,7 @@
         </license>
     </licenses>
     <organization>
-        <name>Apache Software Foundation</name>
+        <name>The Apache Software Foundation</name>
         <url>http://www.apache.org/</url>
     </organization>
 
@@ -376,7 +376,7 @@
         <!--
                     <plugin>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.0-alpha-3</version>
+                        <version>1.0-alpha-4</version>
                         <executions>
                             <execution>
                                 <goals>
