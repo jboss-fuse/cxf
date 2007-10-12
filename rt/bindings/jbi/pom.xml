@@ -115,8 +115,7 @@
     <scm>
         <connection>scm:svn:http://svn.apache.org/repos/asf/incubator/cxf/trunk/rt/bindings/jbi</connection>
         <developerConnection>scm:svn:https://svn.apache.org/repos/asf/incubator/cxf/trunk/rt/bindings/jbi</developerConnection>
-      <url>http://svn.apache.org/viewvc/incubator/cxf/trunk/cxf-parent/cxf-rt-bindings-jbi</url>
-  </scm>
+    </scm>
 
     <repositories>
         <repository>

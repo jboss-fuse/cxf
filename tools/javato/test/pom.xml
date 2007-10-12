@@ -89,6 +89,13 @@
             <artifactId>cxf-rt-frontend-jaxws</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.cxf</groupId>
+                    <artifactId>cxf-rt-bindings-xml</artifactId>
+                </exclusion>
+            </exclusions>
+
         </dependency>
 
         <dependency>
@@ -103,6 +110,7 @@
             <artifactId>cxf-tools-java2wsdl</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
+
         </dependency>
 
         <dependency>
@@ -131,7 +139,6 @@
     <scm>
         <connection>scm:svn:http://svn.apache.org/repos/asf/incubator/cxf/trunk/tools/javato/test</connection>
         <developerConnection>scm:svn:https://svn.apache.org/repos/asf/incubator/cxf/trunk/tools/javato/test</developerConnection>
-        <url>http://svn.apache.org/viewvc/incubator/cxf/trunk/cxf-parent/cxf-tools-java2wsdl-test</url>
     </scm>
 
     <build>

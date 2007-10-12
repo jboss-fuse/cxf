@@ -31,9 +31,8 @@
     <version>2.0.3.0-fuse-SNAPSHOT</version>
     <url>http://cwiki.apache.org/CXF</url>
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/incubator/cxf/trunk/systests</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/incubator/cxf/trunk/systests</developerConnection>
-        <url>http://svn.apache.org/viewvc/incubator/cxf/trunk/cxf-parent/cxf-systests</url>
+        <connection>scm:svn:http://svn.apache.org/repos/asf/incubator/cxf/branches/2.0.x-fixes/systests</connection>
+        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/incubator/cxf/branches/2.0.x-fixes/systests</developerConnection>
     </scm>
     <build>
         <plugins>
