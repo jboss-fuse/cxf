@@ -82,18 +82,7 @@
         <dependency>
             <groupId>org.apache.servicemix</groupId>
             <artifactId>servicemix-jbi</artifactId>
-            <version>${servicemix.version}</version>
             <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>servicemix</groupId>
-                    <artifactId>jaxp</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>mx4j</groupId>
-                    <artifactId>mx4j</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
 

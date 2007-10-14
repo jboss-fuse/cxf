@@ -62,7 +62,7 @@
         <spring.validation.mode>VALIDATION_AUTO</spring.validation.mode>
 
         <downloadSources>true</downloadSources>
-        <servicemix.version>3.1-incubating</servicemix.version>
+        <servicemix.version>3.1.2</servicemix.version>
     </properties>
 
 
@@ -297,6 +297,24 @@
                     <exclusion>
                         <groupId>junit</groupId>
                         <artifactId>junit</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+
+            <dependency>
+                <groupId>org.apache.servicemix</groupId>
+                <artifactId>servicemix-jbi</artifactId>
+                <version>${servicemix.version}</version>
+                <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>servicemix</groupId>
+                        <artifactId>jaxp</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>mx4j</groupId>
+                        <artifactId>mx4j</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
