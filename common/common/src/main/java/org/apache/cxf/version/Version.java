@@ -50,6 +50,12 @@ public final class Version {
                 InputStream ins = getResourceAsStream(VERSION_BASE + "version.properties");
                 p.load(ins);
                 ins.close();
+
+                ins = getResourceAsStream("/META-INF/cxf-version.properties");
+                if (ins != null) {
+                    p.load(ins);
+                    ins.close();
+                }
             } catch (IOException ex) {
                 // ignore, will end up with defaults
             }
