@@ -55,6 +55,13 @@ public interface JMXContainer {
      * @returns list of application names.
      */
     String[] listApplicationNames();
+    
+    /**
+     * Lists all services that constitute this application.
+     * @param name the name of the application
+     * @returns list of expanded qualified service names.
+     */
+    String[] listApplicationServices(String name) throws ContainerException;
 
     ApplicationState getApplicationState(String name) throws ContainerException;
 

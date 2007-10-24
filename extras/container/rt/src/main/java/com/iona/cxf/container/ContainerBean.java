@@ -14,12 +14,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.xml.namespace.QName;
 
 import com.iona.cxf.container.managed.JMXContainer;
 import com.iona.cxf.container.util.ApplicationExploder;
@@ -27,7 +31,6 @@ import com.iona.cxf.container.util.Utils;
 
 import org.apache.cxf.common.i18n.Message;
 import org.apache.cxf.common.logging.LogUtils;
-
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContextAware;
@@ -48,7 +51,7 @@ public final class ContainerBean
     private org.springframework.context.ApplicationContext applicationContext;
     private long scanInterval = -1;
     private Thread scanner;
-    private boolean destroy;
+    private volatile boolean destroy;
 
     public ContainerBean() {
 
@@ -223,14 +226,18 @@ public final class ContainerBean
     private void deployApplication(File appDir) throws ContainerException {
         try {
             LOG.log(Level.INFO, "EXPLODED_APPLICATION_DIR", new Object[] {appDir});
-            Application app = new Application(appDir);
-            applications.put(appDir.getName(), app);
+            Application app = new Application(appDir.getName(), appDir);
+            applications.put(app.getName(), app);
             app.start();
         } catch (Exception ex) {
             throw new ContainerException(ex);
         }
     }
 
+    public List<Application> getApplications() {
+        return new ArrayList<Application>(applications.values());
+    }
+    
     /**
      * Stops the specified application based upon its name. This does not remove the application
      * from the container repository.
@@ -297,7 +304,7 @@ public final class ContainerBean
     }
 
     /**
-     * Lists all applications that have been deployed. These applications may be in either a start 
+     * Lists names of all applications that have been deployed. These applications may be in either a start 
      * or stop state.
      * @returns list of application names.
      */
@@ -306,6 +313,26 @@ public final class ContainerBean
         String[] names = set.toArray(new String[set.size()]);
 
         return names;
+    }
+    
+    /**
+     * Lists all services that constitute this application.
+     * @param name the name of the application
+     * @returns list of expanded qualified service names.
+     */
+    public String[] listApplicationServices(String name) throws ContainerException {
+        Application app = applications.get(name);
+
+        if (app != null) {
+            QName[] qnames = app.getServices().toArray(new QName[]{});
+            String[] services = new String[qnames.length];
+            for (int i = 0; i < qnames.length; i++) {
+                services[i] = qnames[i].toString();
+            }
+            return services;
+        } else {
+            throw new ContainerException(new Message("APPLICATION_DOES_NOT_EXIST", LOG, new Object[] {name}));
+        }
     }
 
     public synchronized ApplicationState getApplicationState(String name) throws ContainerException {
