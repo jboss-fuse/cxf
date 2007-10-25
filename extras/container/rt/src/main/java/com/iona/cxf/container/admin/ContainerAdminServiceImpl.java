@@ -8,12 +8,14 @@ package com.iona.cxf.container.admin;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.namespace.QName;
+
+import com.iona.cxf.container.Application;
 import com.iona.cxf.container.ApplicationState;
 import com.iona.cxf.container.ContainerBean;
 import com.iona.cxf.container.ContainerException;
 
 import org.apache.cxf.Bus;
-
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
@@ -30,12 +32,21 @@ public class ContainerAdminServiceImpl implements ContainerService, Initializing
         
     }
 
-    public List<String> listApplications() {
-        String[] names = container.listApplicationNames();
-        List<String> list = new ArrayList<String>();
+    public List<ApplicationType> listApplications() {
+        List<Application> applications = container.getApplications();
+        List<ApplicationType> list = new ArrayList<ApplicationType>();
         
-        for (String name : names) {
-            list.add(name);
+        for (Application app : applications) {
+            ApplicationType appType = new ApplicationType();
+            appType.setName(app.getName());
+            
+            for (QName serviceQName : app.getServices()) {
+                ServiceType serviceType = new ServiceType();
+                serviceType.setName(serviceQName);
+                appType.getServices().add(serviceType);    
+            }
+            
+            list.add(appType);
         }
 
         return list;

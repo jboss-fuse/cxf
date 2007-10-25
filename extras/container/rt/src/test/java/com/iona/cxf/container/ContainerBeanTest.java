@@ -9,9 +9,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.List;
+import java.util.Set;
+
+import javax.xml.namespace.QName;
 
 import com.iona.cxf.container.util.ApplicationExploder;
 
@@ -50,6 +53,18 @@ public class ContainerBeanTest extends Assert {
         String [] appNames = containerBean.listApplicationNames();
         assertEquals(1, appNames.length);
         assertEquals("test", appNames[0]);
+
+        String [] appServices = containerBean.listApplicationServices(appNames[0]);
+        assertEquals(1, appServices.length);
+        assertEquals("{http://cxf.iona.com/test/greeter}GreeterService", 
+                     appServices[0].toString());
+        
+        List<Application> applications = containerBean.getApplications();
+        assertEquals(1, applications.size());
+        Set<QName> services = applications.get(0).getServices();
+        assertEquals(1, services.size());
+        assertEquals("{http://cxf.iona.com/test/greeter}GreeterService", 
+                     services.iterator().next().toString());
     }
 
     @Test
@@ -64,7 +79,6 @@ public class ContainerBeanTest extends Assert {
         channel.write(buffer);
         channel.close();
         
-        //copyToRepository("/com/iona/cxf/container/ContainerBeanTest.class", "badwar.war");        
         containerBean.run();
         File invalidWar = new File(repository, "test.war.corrupted");
         assertTrue(invalidWar.exists());        
