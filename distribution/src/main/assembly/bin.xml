@@ -117,6 +117,13 @@
             </includes>
         </fileSet>
         <fileSet>
+            <directory>target</directory>
+            <outputDirectory>apache-cxf-${cxf.version}/lib</outputDirectory>
+            <includes>
+                <include>it-soa-container.jar</include>
+            </includes>
+        </fileSet>
+        <fileSet>
             <directory>manifest/target</directory>
             <outputDirectory>apache-cxf-${cxf.version}/modules</outputDirectory>
             <includes>
