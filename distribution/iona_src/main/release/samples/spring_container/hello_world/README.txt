@@ -13,7 +13,7 @@ a generated client against the endpoint deployed in the container.
 Prerequisites
 -------------
 
-$SUBSTITUTE_PREREQ$
+CXF_HOME should be set to the FUSE Services Framework installation directory. 
 
 Building and running the demo using ant
 ---------------------------------------
