@@ -20,7 +20,6 @@ then
   echo "JAVA_HOME must point to your JDK installation."
   echo "Please set JAVA_HOME and run this script again."
   return 1
-  fi
 fi
 
 echo "setting SPRING_CONTAINER_HOME to "$CXF_HOME"/containers/spring_container"
@@ -29,7 +28,7 @@ export SPRING_CONTAINER_HOME
 
 LOGGING_PROPS=$CXF_HOME/etc/logging.properties
 
-SPRING_CONTAINER_CLASSPATH=$SPRING_CONTAINER_HOME/etc:$CLASSPATH:$CXF_HOME/lib/it-soa-container.jar:$CXF_HOME/lib/cxf-manifest-incubator.jar:$ACTIVEMQ_HOME/activemq-all-$ACTIVEMQ_VERSION.jar:$CLASSPATH
+SPRING_CONTAINER_CLASSPATH=$SPRING_CONTAINER_HOME/etc:$CXF_HOME/lib/it-soa-container.jar:$CXF_HOME/lib/cxf-manifest-incubator.jar:$CLASSPATH
 
 $JAVA_HOME/bin/java -cp $SPRING_CONTAINER_CLASSPATH -Djava.util.logging.config.file=$LOGGING_PROPS com.iona.cxf.container.ContainerLauncher "$@"
 

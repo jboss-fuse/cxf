@@ -39,7 +39,7 @@ set SPRING_CONTAINER_HOME=%CXF_HOME%\containers\spring_container
 
 set LOGGING_PROPS=%CXF_HOME%\etc\logging.properties
 
-set SPRING_CONTAINER_CLASSPATH=%SPRING_CONTAINER_HOME%/etc;%CXF_HOME%\lib\it-soa-container.jar;%CXF_HOME%\lib\cxf-manifest-incubator.jar;%ACTIVEMQ_HOME%\activemq-all-%ACTIVEMQ_VERSION%.jar;%CLASSPATH%
+set SPRING_CONTAINER_CLASSPATH=%SPRING_CONTAINER_HOME%/etc;%CXF_HOME%\lib\it-soa-container.jar;%CXF_HOME%\lib\cxf-manifest-incubator.jar;%CLASSPATH%
 
 "%JAVA_HOME%\bin\java" -cp "%SPRING_CONTAINER_CLASSPATH%" -Djava.util.logging.config.file=%LOGGING_PROPS% com.iona.cxf.container.ContainerLauncher  %*
 goto end
