@@ -17,13 +17,28 @@ targetNamespace="http://cxf.iona.com/container/admin">
 
             <xs:complexType name="applicationNameType">
                 <xs:sequence>
-			<xs:element name="application" type="xs:string" />
+			        <xs:element name="applicationName" type="xs:string"/>
                 </xs:sequence>
             </xs:complexType>
 
+
+            <xs:complexType name="serviceType">
+                <xs:sequence>
+			        <xs:element name="name" type="xs:QName"/>
+			        <xs:any minOccurs="0" maxOccurs="unbounded" processContents="lax"/>
+                </xs:sequence>
+            </xs:complexType>
+
+            <xs:complexType name="applicationType">
+                <xs:sequence>
+			        <xs:element name="name" type="xs:string"/>
+			        <xs:element name="services" type="tns:serviceType" minOccurs="0" maxOccurs="unbounded" />
+                </xs:sequence>
+            </xs:complexType>
+ 
             <xs:complexType name="applicationListType">
                 <xs:sequence>
-			<xs:element name="applications" type="xs:string" minOccurs="0" maxOccurs="unbounded" />
+ 			       <xs:element name="applications" type="tns:applicationType" minOccurs="0" maxOccurs="unbounded" />
                 </xs:sequence>
             </xs:complexType>
 
