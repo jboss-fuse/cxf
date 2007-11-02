@@ -175,7 +175,7 @@
             <artifactId>cxf-rt-databinding-aegis</artifactId>
             <version>${pom.version}</version>
         </dependency>
-        
+
         <dependency>
             <groupId>${pom.groupId}</groupId>
             <artifactId>cxf-rt-ws-addr</artifactId>
@@ -191,7 +191,7 @@
             <artifactId>cxf-rt-ws-policy</artifactId>
             <version>${pom.version}</version>
         </dependency>
-		    <dependency>
+        <dependency>
             <groupId>${pom.groupId}</groupId>
             <artifactId>cxf-rt-ws-security</artifactId>
             <version>${pom.version}</version>
@@ -237,6 +237,10 @@
             <groupId>com.iona.fuse.cxf.container</groupId>
             <artifactId>it-soa-container-rt</artifactId>
             <version>${pom.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
         </dependency>
     </dependencies>
 
