@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.acme.customer;
+package demo.restful.server;
 
 import java.io.FileInputStream;
 import java.io.OutputStream;
@@ -44,9 +44,9 @@ import org.apache.cxf.transport.MessageObserver;
 import org.codehaus.jettison.mapped.MappedXMLInputFactory;
 import org.codehaus.jettison.mapped.MappedXMLOutputFactory;
 
-public final class Main {
-    private Main() { }
-    
+public final class Server {
+    private Server() { }
+
     public static void main(String[] args) throws Exception {
         CustomerServiceImpl bs = new CustomerServiceImpl();
 
@@ -57,9 +57,9 @@ public final class Main {
         createJsonRestService(bs);
 
         serveHTML();
-        
+
         System.out.println("Started CustomerService!");
-    
+
         System.out.println("Server ready...");
 
         Thread.sleep(5 * 60 * 1000);
@@ -109,7 +109,7 @@ public final class Main {
 
         // Set up the JSON StAX implementation
         Map<String, String> nstojns = new HashMap<String, String>();
-        nstojns.put("http://customer.acme.com", "acme");
+        nstojns.put("http://demo.restful.server", "acme");
 
         MappedXMLInputFactory xif = new MappedXMLInputFactory(nstojns);
         properties.put(XMLInputFactory.class.getName(), xif);
