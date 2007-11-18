@@ -25,27 +25,40 @@ public class UtilsTest extends TestCase {
         URL url = getClass().getResource("/test.war");
         assertNotNull(url);
         File war = new File(url.toURI());
+
+        long warTimestamp = war.lastModified();
+        
         File warDir = ApplicationExploder.explodeApplication(war, repository);        
         File wsdl = new File(warDir, "WEB-INF/wsdl/greeter.wsdl");
         assertTrue(wsdl.exists());
 
-        boolean fileDeleted = ApplicationExploder.deleteFile(warDir);
-        assertTrue(fileDeleted);
+        boolean wasDeleted = ApplicationExploder.deleteFile(warDir);
+        assertTrue(wasDeleted);
         assertTrue(!warDir.exists());
 
         warDir = ApplicationExploder.explodeApplication(war, repository);        
         long timestamp1 = warDir.lastModified();
-        boolean wasSet = warDir.setLastModified(timestamp1 - 1000000);
-        assertTrue(wasSet);
-        long timestamp2 = warDir.lastModified();        
-        assertTrue(timestamp1 - timestamp2 == 1000000);
+        
         warDir = ApplicationExploder.explodeApplication(war, repository);
-        long timestamp3 = warDir.lastModified();        
-        assertTrue("Timestamp " + timestamp3 + " not equal to " + timestamp1,
-                   Math.abs(timestamp3 - timestamp1) < 10000);
+        long timestamp2 = warDir.lastModified();  
+      
+        assertEquals("Exploded application has been overwritten by yonger war",
+                     timestamp1, timestamp2);
 
-        boolean wasDeleted = ApplicationExploder.deleteFile(repository);
+        assertTrue("Exploded application's timestamp must be bigger than that of the war",
+                    timestamp2 > warTimestamp);
+
+        warDir.setLastModified(warTimestamp - 1000000);
+        assertTrue("Exploded application's timestamp must now be less than that of the war",
+                    warDir.lastModified() < warTimestamp);         
+
+        warDir = ApplicationExploder.explodeApplication(war, repository);
+        assertTrue("Exploded application's timestamp must've been overwritten be an older war",
+                    warDir.lastModified() > warTimestamp);
+
+        wasDeleted = ApplicationExploder.deleteFile(repository);
         assertTrue(wasDeleted);
+        assertTrue(!warDir.exists());
     }
 
 }

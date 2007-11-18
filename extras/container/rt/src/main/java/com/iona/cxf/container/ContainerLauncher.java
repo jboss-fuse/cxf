@@ -10,6 +10,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.xml.namespace.QName;
 
 import com.iona.cxf.container.admin.ContainerService;
@@ -41,6 +42,7 @@ public final class ContainerLauncher extends AbstractToolContainer {
     private static final String TOOL_NAME = "spring_container";
     private static final String START_STOP_PARAM_ID = "start|stop";
     private static final String CONFIG_LOC_ID = "container-config-loc";
+    private static final String WSDL_URL_ID = "container-wsdl-url";
     private static final String START = "start";
     private static final String STOP = "stop";
     private boolean shutdownComplete;
@@ -83,7 +85,7 @@ public final class ContainerLauncher extends AbstractToolContainer {
                     startContainer(cmdDoc);
                 } else if (STOP.equals(param1)) {
                     LogUtils.log(LOG, Level.INFO, "STOPPING_CONTAINER");
-                    stopContainer();
+                    stopContainer(cmdDoc);
                 } else {
                     throw new Exception("ContainerLauncher requires start/stop argument.");
                 }
@@ -138,27 +140,9 @@ public final class ContainerLauncher extends AbstractToolContainer {
     }
 
     private void startContainer(CommandDocument cmd) throws Exception {
-        URL url = null;
-        String configLoc = cmd.getParameter(CONFIG_LOC_ID);      
-        
-        if (null != configLoc) {
-            try {
-                url = new URL(configLoc);
-            } catch (MalformedURLException mex) {
-                url = getResource(configLoc);
-            }
-            
-            if (null == url) {
-                String error = "Could not resolve config location " + configLoc;
-                throw new ToolException(error);
-            }
-        } else {        
-            url = getResource(SPRING_CONTAINER_CONFIG);
-            if (null == url) {
-                String error = "Could not resolve config " + SPRING_CONTAINER_CONFIG;
-                throw new ToolException(error);
-            }
-        }            
+        URL url = resolveURL(cmd.getParameter(CONFIG_LOC_ID),
+                             SPRING_CONTAINER_CONFIG,
+                             "Could not resolve configuration resource ");
         
         LogUtils.log(LOG, Level.INFO, "LOADING_CONTAINER_CONFIG", new Object[] {url});
 
@@ -193,13 +177,45 @@ public final class ContainerLauncher extends AbstractToolContainer {
 
     }
     
-    private void stopContainer() throws Exception {
-        URL wsdlURL = getResource(CONTAINER_WSDL);
+    private void stopContainer(CommandDocument cmd) throws Exception {
+        
+        URL wsdlURL = resolveURL(cmd.getParameter(WSDL_URL_ID),
+                                 CONTAINER_WSDL,
+                                 "Could not resolve wsdl url ");
+        
         ContainerService_Service ss = new ContainerService_Service(wsdlURL, SERVICE_NAME);
         ContainerService port = ss.getContainerServicePort();  
         port.shutdown();
     }
 
+    private URL resolveURL(String optionalLocation, 
+                           String defaultLocation,
+                           String errorMessageStart) {
+        
+        URL url = null;
+        
+        if (null != optionalLocation) {
+            try {
+                url = new URL(optionalLocation);
+            } catch (MalformedURLException mex) {
+                url = getResource(optionalLocation);
+            }
+            
+            if (null == url) {
+                String error = errorMessageStart + optionalLocation;
+                throw new ToolException(error);
+            }
+        } else {        
+            url = getResource(defaultLocation);
+            if (null == url) {
+                String error = errorMessageStart + defaultLocation;
+                throw new ToolException(error);
+            }
+        }
+        
+        return url;
+    }
+    
     private void printUsageException(String toolName, BadUsageException ex) {
         if (isVerboseMode()) {
             outputFullCommandLine();

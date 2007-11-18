@@ -137,6 +137,8 @@ public class Application {
                 throw new ContainerException(new Message("MISSING_SPRING_BEAN_DEFINITIONS", LOG));
             }
             
+        } catch (ContainerException ex) {
+            throw ex;
         } catch (Exception ex) {
             throw new ContainerException(ex);
         } finally {
@@ -149,7 +151,9 @@ public class Application {
 
         try {
             Thread.currentThread().setContextClassLoader(loader);
-            bus.shutdown(true);
+            if (bus != null) {
+                bus.shutdown(true);
+            }
         } finally {
             bus = null;
             loader = null;
