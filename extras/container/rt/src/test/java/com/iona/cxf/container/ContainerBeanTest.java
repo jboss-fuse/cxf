@@ -81,7 +81,10 @@ public class ContainerBeanTest extends Assert {
         
         containerBean.run();
         File invalidWar = new File(repository, "test.war.corrupted");
-        assertTrue(invalidWar.exists());        
+        assertTrue(invalidWar.exists());
+        
+        String [] appNames = containerBean.listApplicationNames();
+        assertEquals(0, appNames.length);
     }
 
     @Ignore

@@ -227,8 +227,10 @@ public final class ContainerBean
         try {
             LOG.log(Level.INFO, "EXPLODED_APPLICATION_DIR", new Object[] {appDir});
             Application app = new Application(appDir.getName(), appDir);
-            applications.put(app.getName(), app);
             app.start();
+            applications.put(app.getName(), app);
+        } catch (ContainerException ex) {
+            throw ex;
         } catch (Exception ex) {
             throw new ContainerException(ex);
         }

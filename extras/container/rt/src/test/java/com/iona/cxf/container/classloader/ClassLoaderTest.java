@@ -56,6 +56,9 @@ public class ClassLoaderTest extends TestCase {
 
         URL wsdlUrl = loader1.getResource("greeter.wsdl");
         assertNotNull(wsdlUrl);
+        
+        wsdlUrl = loader1.getResource("WEB-INF/wsdl/greeter.wsdl");
+        assertNotNull(wsdlUrl);
 
         URL springUrl = loader1.getResource("spring/spring.xml");
         assertNotNull(springUrl);

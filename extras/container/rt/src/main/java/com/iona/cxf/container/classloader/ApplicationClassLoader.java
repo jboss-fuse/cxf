@@ -51,6 +51,9 @@ public final class ApplicationClassLoader {
 
         try {
             List<URL> urls = new ArrayList<URL>();
+            
+            urls.add(appDir.toURL());
+            
             File classDir = new File(appDir, CLASSES_DIR);
             
             if (classDir.exists()) {

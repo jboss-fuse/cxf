@@ -1,41 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-        Copyright (c) 1993-2007 IONA Technologies PLC.
+        Copyright (c) 1993-2006 IONA Technologies PLC.
                        All Rights Reserved.
 -->
 
 <toolspec xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	  xmlns:xhtml="http://www.w3.org/TR/xhtml1/strict"
-    xsi:schemaLocation="http://cxf.apache.org/Xutil/ToolSpecification http://cxf.apache.org/schema/xutil/tool-specification.xsd"
-    xmlns="http://cxf.apache.org/Xutil/ToolSpecification"
-    xmlns:ts="http://cxf.apache.org/Xutil/ToolSpecification">
+	  xsi:schemaLocation="http://cxf.apache.org/Xutil/ToolSpecification http://cxf.apache.org/schema/xutil/tool-specification.xsd"
+	  xmlns="http://cxf.apache.org/Xutil/ToolSpecification"
+	  xmlns:ts="http://cxf.apache.org/Xutil/ToolSpecification">
 
     <usage>
 	<optionGroup id="options">
 	    <option id="container-config-loc" maxOccurs="1">
-		<annotation>
-  		            The URL which specifies the location of the Spring config file uses to launch the Spring-based container.
-		</annotation>
+		<annotation>The URL which specifies the location of the Spring config file used to launch the Spring-based container.</annotation>
 		<switch>config</switch>
 		<associatedArgument placement="afterSpace">
 		    <annotation>spring-config-url</annotation>
 		</associatedArgument>
 	    </option>
 	</optionGroup>
+	
+	<optionGroup id="options2">
+	    <option id="container-wsdl-url" maxOccurs="1">
+		<annotation>The container wsdl URL.</annotation>
+		<switch>wsdl</switch>
+		<associatedArgument placement="afterSpace">
+		    <annotation>container-wsdl-url</annotation>
+		</associatedArgument>
+	    </option>
+	    
+	</optionGroup>
 
 	<optionGroup id="common_options">
 	    <option id="help" maxOccurs="1">
-		<annotation>
-		            Display detailed information for options.</annotation>
+		<annotation>Display detailed information for options.</annotation>
 		<switch>h</switch>
 		<switch>?</switch>
 		<switch>help</switch>
 	    </option>
 
 	    <option id="verbose">
-		<annotation>
-		            Verbose mode</annotation>
+		<annotation>Verbose mode</annotation>
 		<switch>verbose</switch>
 		<switch>V</switch>
 	    </option>
