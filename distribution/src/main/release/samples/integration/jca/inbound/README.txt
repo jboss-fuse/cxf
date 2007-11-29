@@ -3,7 +3,7 @@ INBOUND CONNECTION CXF J2EE DEMO
 
  
 This demo shows how to expose an Enterprise Java Bean over
-SOAP/HTTP using CXF. This demo is based on JBoss4.0.5GA. 
+SOAP/HTTP using CXF. 
 
 
 Running the Demo

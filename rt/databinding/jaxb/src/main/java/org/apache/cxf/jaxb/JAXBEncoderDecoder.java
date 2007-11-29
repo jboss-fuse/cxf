@@ -33,16 +33,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-import javax.xml.bind.PropertyException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -62,7 +58,6 @@ import org.w3c.dom.Node;
 
 import org.apache.cxf.common.i18n.BundleUtils;
 import org.apache.cxf.common.i18n.Message;
-import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.service.model.MessagePartInfo;
@@ -77,14 +72,11 @@ import org.apache.ws.commons.schema.XmlSchemaSimpleTypeList;
  */
 public final class JAXBEncoderDecoder {
     private static final ResourceBundle BUNDLE = BundleUtils.getBundle(JAXBEncoderDecoder.class);
-    private static final Logger LOG = LogUtils.getLogger(JAXBEncoderDecoder.class);
     
     private JAXBEncoderDecoder() {
     }
 
-    private static Marshaller createMarshaller(JAXBContext context, Class<?> cls,
-                                               Map<String, Object> marshallerProperties)
-        throws JAXBException {
+    private static Marshaller createMarshaller(JAXBContext context, Class<?> cls) throws JAXBException {
         Marshaller jm = null;
         if (context == null) {
             context = JAXBContext.newInstance(cls);
@@ -93,15 +85,6 @@ public final class JAXBEncoderDecoder {
         jm = context.createMarshaller();
         jm.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
         jm.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-        if (marshallerProperties != null) {
-            for (Map.Entry<String, Object> propEntry : marshallerProperties.entrySet()) {
-                try {
-                    jm.setProperty(propEntry.getKey(), propEntry.getValue());
-                } catch (PropertyException pe) {
-                    LOG.log(Level.INFO, "PropertyException setting Marshaller properties", pe);
-                }
-            }
-        }
 
         return jm;
     }
@@ -112,8 +95,7 @@ public final class JAXBEncoderDecoder {
                                 Object elValue, 
                                 MessagePartInfo part,
                                 Object source, 
-                                AttachmentMarshaller am,
-                                Map<String, Object> marshallerProperties) {
+                                AttachmentMarshaller am) {
         Class<?> cls = null;
         if (part != null) {
             cls = part.getTypeClass();
@@ -129,7 +111,7 @@ public final class JAXBEncoderDecoder {
         }
         
         try {
-            Marshaller u = createMarshaller(context, cls, marshallerProperties);
+            Marshaller u = createMarshaller(context, cls);
             try {
                 // The Marshaller.JAXB_FRAGMENT will tell the Marshaller not to
                 // generate the xml declaration.
@@ -214,8 +196,7 @@ public final class JAXBEncoderDecoder {
                                 Exception elValue, 
                                 MessagePartInfo part,
                                 Object source, 
-                                AttachmentMarshaller am,
-                                Map<String, Object> marshallerProperties) {
+                                AttachmentMarshaller am) {
         XMLStreamWriter writer = getStreamWriter(source);
         QName qn = part.getElementQName();
         try {
@@ -228,9 +209,8 @@ public final class JAXBEncoderDecoder {
             XmlAccessType accessType = accessorType != null 
                 ? accessorType.value() : XmlAccessType.PUBLIC_MEMBER;
             String namespace = part.getElementQName().getNamespaceURI();
-            Marshaller u = createMarshaller(context, cls, marshallerProperties);
+            Marshaller u = createMarshaller(context, cls);
             try {
-                // override anything the user asked us to set.
                 // The Marshaller.JAXB_FRAGMENT will tell the Marshaller not to
                 // generate the xml declaration.
                 u.setProperty(Marshaller.JAXB_FRAGMENT, true);
@@ -367,18 +347,16 @@ public final class JAXBEncoderDecoder {
         throw new Fault(new Message("UNKNOWN_SOURCE", BUNDLE, source.getClass().getName()));
     }
 
-    public static void marshall(JAXBContext context, Schema schema, Object elValue, Object source,
-                                Map<String, Object> marshallerProperties) {
-        marshall(context, schema, elValue, null, source, null, marshallerProperties);
+    public static void marshall(JAXBContext context, Schema schema, Object elValue, Object source) {
+        marshall(context, schema, elValue, null, source, null);
     }
     
     @SuppressWarnings("unchecked")
     public static void marshallNullElement(JAXBContext context, Schema schema, 
-                                           Object source, MessagePartInfo part,
-                                           Map<String, Object> marshallerProperties) {
+                                               Object source, MessagePartInfo part) {
         Class<?> clazz = part != null ? (Class) part.getTypeClass() : null;
         try {
-            Marshaller u = createMarshaller(context, clazz, marshallerProperties);
+            Marshaller u = createMarshaller(context, clazz);
             u.setSchema(schema);
             try {
                 // The Marshaller.JAXB_FRAGMENT will tell the Marshaller not to
@@ -397,9 +375,8 @@ public final class JAXBEncoderDecoder {
     public static void marshall(JAXBContext context, Schema schema, 
                                 Object elValue, 
                                 MessagePartInfo part,
-                                Object source,
-                                Map<String, Object> marshallerProperties) {
-        marshall(context, schema, elValue, part, source, null, marshallerProperties);
+                                Object source) {
+        marshall(context, schema, elValue, part, source, null);
     }
 
     private static Unmarshaller createUnmarshaller(JAXBContext context, Class<?> cls) throws JAXBException {

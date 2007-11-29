@@ -26,9 +26,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -85,8 +83,6 @@ public final class DynamicClientFactory {
     private String tmpdir = System.getProperty("java.io.tmpdir");
 
     private boolean simpleBindingEnabled = true;
-    
-    private Map<String, Object> jaxbContextProperties;
     
     private DynamicClientFactory(Bus bus) {
         this.bus = bus;
@@ -229,17 +225,12 @@ public final class DynamicClientFactory {
         }
 
         JAXBContext context;
-        Map<String, Object> contextProperties = jaxbContextProperties;
-        
-        if (contextProperties == null) {
-            contextProperties = Collections.emptyMap();
-        }
-        
+
         try {
             if (StringUtils.isEmpty(packageList)) {
-                context = JAXBContext.newInstance(new Class[0], contextProperties);
+                context = JAXBContext.newInstance(new Class[0]);
             } else {
-                context = JAXBContext.newInstance(packageList, cl, contextProperties);
+                context = JAXBContext.newInstance(packageList, cl);
             }
         } catch (JAXBException jbe) {
             throw new IllegalStateException("Unable to create JAXBContext for generated packages: "
@@ -454,21 +445,5 @@ public final class DynamicClientFactory {
             }
             return null;
         }
-    }
-
-    /**
-     * Return the map of JAXB context properties used at the time that we create new contexts.
-     * @return the map
-     */
-    public Map<String, Object> getJaxbContextProperties() {
-        return jaxbContextProperties;
-    }
-
-    /**
-     * Set the map of JAXB context properties used at the time that we create new contexts.
-     * @param jaxbContextProperties
-     */
-    public void setJaxbContextProperties(Map<String, Object> jaxbContextProperties) {
-        this.jaxbContextProperties = jaxbContextProperties;
     }
 }

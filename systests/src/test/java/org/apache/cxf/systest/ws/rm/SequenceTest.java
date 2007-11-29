@@ -49,7 +49,6 @@ import org.apache.cxf.systest.ws.util.InMessageRecorder;
 import org.apache.cxf.systest.ws.util.MessageFlow;
 import org.apache.cxf.systest.ws.util.MessageRecorder;
 import org.apache.cxf.systest.ws.util.OutMessageRecorder;
-import org.apache.cxf.test.TestUtilities;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
@@ -61,7 +60,6 @@ import org.apache.cxf.ws.rm.RMOutInterceptor;
 import org.apache.cxf.ws.rm.RMProperties;
 import org.apache.cxf.ws.rm.soap.RMSoapInterceptor;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -122,13 +120,7 @@ public class SequenceTest extends AbstractBusClientServerTestBase {
 
     @BeforeClass
     public static void startServers() throws Exception {
-        TestUtilities.setKeepAliveSystemProperty(false);
         assertTrue("server did not launch correctly", launchServer(Server.class));
-    }
-    
-    @AfterClass
-    public static void cleanup() {
-        TestUtilities.recoverKeepAliveSystemProperty();
     }
             
     

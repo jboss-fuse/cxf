@@ -20,8 +20,6 @@
 package org.apache.cxf.helpers;
 
 import java.nio.charset.Charset;
-import java.nio.charset.IllegalCharsetNameException;
-import java.nio.charset.UnsupportedCharsetException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,13 +76,11 @@ public final class HttpHeaderHelper {
         if (newenc == null) {
             try {
                 newenc = Charset.forName(enc).name();
-            } catch (IllegalCharsetNameException icne) {
-                return null;
-            } catch (UnsupportedCharsetException uce) {
-                return null;
+            } catch (Exception ex) {
+                //ignore
             }
             encodings.put(enc, newenc);
         }
-        return newenc;
+        return newenc == null ? enc : newenc;
     }
 }

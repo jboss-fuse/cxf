@@ -20,8 +20,9 @@
 package org.apache.cxf.transport.http_jetty;
 
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.URL;
-
+import java.nio.channels.ServerSocketChannel;
 import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.logging.Level;
@@ -39,6 +40,7 @@ import org.mortbay.jetty.AbstractConnector;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
+import org.mortbay.jetty.bio.SocketConnector;
 import org.mortbay.jetty.handler.ContextHandler;
 import org.mortbay.jetty.handler.ContextHandlerCollection;
 import org.mortbay.jetty.handler.DefaultHandler;
@@ -181,7 +183,7 @@ public class JettyHTTPServerEngine
         //if we shutdown the port, on SOME OS's/JVM's, if a client
         //in the same jvm had been talking to it at some point and keep alives
         //are on, then the port is held open for about 60 seconds
-        //afterwards and if we restart, connections will then 
+        //afterword and if we restart, connections will then 
         //get sent into the old stuff where there are 
         //no longer any servant registered.   They pretty much just hang.
         
@@ -282,10 +284,11 @@ public class JettyHTTPServerEngine
             if (defaultHandler != null) {
                 server.addHandler(defaultHandler);
             }
-            try {                
-                setReuseAddress(connector);
+            try {
                 server.start();
-               
+                if (isReuseAddress()) {
+                    setReuseAddress(connector);
+                }
                 AbstractConnector aconn = (AbstractConnector) connector;
                 if (aconn.getThreadPool() instanceof BoundedThreadPool
                     && isSetThreadingParameters()) {
@@ -340,11 +343,20 @@ public class JettyHTTPServerEngine
     }
     
     private void setReuseAddress(Connector conn) throws IOException {
-        if (conn instanceof AbstractConnector) {
-            ((AbstractConnector)conn).setReuseAddress(isReuseAddress());
+        if (conn.getConnection() == null) {
+            conn.open();  // it might not be opened.
+        }    
+        ServerSocket socket = null;
+        if (conn instanceof SelectChannelConnector) {
+            ServerSocketChannel channel = (ServerSocketChannel) conn.getConnection();
+            socket = channel.socket();
+        } else if (conn instanceof SocketConnector) {    
+            socket = (ServerSocket)conn.getConnection();
         } else {
-            LOG.log(Level.INFO, "UNKNOWN_CONNECTOR_MSG", new Object[] {conn});
-        }
+            LOG.info("UNKNOWN_CONNECTOR_MSG");
+            return;
+        }       
+        socket.setReuseAddress(true);        
     }
 
     /**
@@ -501,7 +513,7 @@ public class JettyHTTPServerEngine
      * This method is called after configure on this object.
      */
     @PostConstruct
-    public void finalizeConfig() 
+    protected void finalizeConfig() 
         throws GeneralSecurityException,
                IOException {
         retrieveEngineFactory();
