@@ -37,6 +37,7 @@
     <properties>
         <maven.test.skip>true</maven.test.skip>
         <cxf.version>${pom.version}</cxf.version>
+        <createSourcesJar>false</createSourcesJar>
     </properties>
 
     <dependencies>
@@ -269,7 +270,7 @@
                         <configuration>
                             <shadedGroupFilter>org.apache.cxf</shadedGroupFilter>
                             <shadedArtifactAttached>false</shadedArtifactAttached>
-                            <createSourcesJar>true</createSourcesJar>
+                            <createSourcesJar>${createSourcesJar}</createSourcesJar>
                             <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
                             <createDependencyReducedPom>true</createDependencyReducedPom>
 
@@ -314,28 +315,31 @@
     </build>
 
     <profiles>
-        <profile>
-            <id>deploy</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>unpack-sources</id>
-                                <phase>generate-sources</phase>
-                                <goals>
-                                    <goal>unpack-dependencies</goal>
-                                </goals>
-                                <configuration>
-                                    <includeGroupIds>org.apache.cxf</includeGroupIds>
-                                    <classifier>sources</classifier>
-                                    <outputDirectory>${project.build.directory}/sources</outputDirectory>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
+         <profile>
+             <id>deploy</id>
+             <properties>
+                 <createSourcesJar>true</createSourcesJar>                     
+             </properties>
+             <build>
+                 <plugins>
+                     <plugin>
+                         <groupId>org.apache.maven.plugins</groupId>
+                         <artifactId>maven-dependency-plugin</artifactId>
+                         <executions>
+                             <execution>
+                                 <id>unpack-sources</id>
+                                 <phase>generate-sources</phase>
+                                 <goals>
+                                     <goal>unpack-dependencies</goal>
+                                 </goals>
+                                 <configuration>
+                                     <includeGroupIds>org.apache.cxf</includeGroupIds>
+                                     <classifier>sources</classifier>
+                                     <outputDirectory>${project.build.directory}/sources</outputDirectory>
+                                 </configuration>
+                             </execution>
+                         </executions>
+                     </plugin>
 
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
