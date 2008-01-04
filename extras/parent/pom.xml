@@ -15,7 +15,7 @@
     </parent>
 
     <properties>
-        <cxf.checkstyle.suffix>-iona</cxf.checkstyle.suffix>
+        <checkstyle.extension>-iona</checkstyle.extension>
     </properties>
 
     <licenses>
