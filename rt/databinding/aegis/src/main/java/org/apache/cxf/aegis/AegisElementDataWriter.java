@@ -17,26 +17,30 @@
  * under the License.
  */
 
-package org.apache.cxf.jaxws.javaee;
+package org.apache.cxf.aegis;
 
-import java.io.InputStream;
+import javax.xml.namespace.QName;
+import org.w3c.dom.Element;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
+import org.apache.cxf.aegis.type.Type;
+import org.apache.cxf.staxutils.W3CDOMStreamWriter;
 
-import org.junit.Assert;
-import org.junit.Test;
+/**
+ * 
+ */
+public class AegisElementDataWriter extends AbstractAegisIoImpl 
+       implements AegisWriter<Element> {
+    
+    protected AegisXMLStreamDataWriter writer;
 
+    public AegisElementDataWriter(AegisContext globalContext) {
+        super(globalContext);
+        writer = new AegisXMLStreamDataWriter(globalContext);
+    }
 
-public class WebservicesTypeTest extends Assert {
-
-    @Test
-    public void testReadWebservicesXml() throws Exception {
-        JAXBContext ctx = JAXBContext.newInstance(WebservicesType.class);
-        InputStream in = this.getClass().getClassLoader().getResourceAsStream("webservices.xml");
-        Unmarshaller unmarshaller = ctx.createUnmarshaller();
-        Object obj =  unmarshaller.unmarshal(in);
-
-        assertTrue("obj is an " + obj.getClass(), obj instanceof WebservicesType);
+    public void write(Object obj, QName elementName, boolean optional, Element output, Type aegisType)
+        throws Exception {
+        W3CDOMStreamWriter swriter = new W3CDOMStreamWriter(output);
+        writer.write(obj, elementName, optional, swriter, aegisType);
     }
 }

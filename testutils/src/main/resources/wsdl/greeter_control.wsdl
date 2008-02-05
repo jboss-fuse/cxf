@@ -279,7 +279,7 @@
             <wswa:UsingAddressing xmlns:wswa="http://www.w3.org/2005/02/addressing/wsdl"/>
         </wsdl:port>
     </wsdl:service>
-   
+    
     <wsdl:service name="ReliableGreeterService">
         <wsdl:port binding="tns:GreeterSOAPBinding" name="GreeterPort">
             <soap:address location="http://localhost:9020/SoapContext/GreeterPort"/>
@@ -291,7 +291,16 @@
                     <wsrmp:BaseRetransmissionInterval Milliseconds="30000"/>
                 </wsrmp:RMAssertion>
             </wsp:Policy>
+        </wsdl:port> 
+        <wsdl:port binding="tns:GreeterSOAPBinding" name="GreeterPort2">
+            <soap:address location="http://localhost:9020/SoapContext/GreeterPort2"/>
+            <wsp:Policy xmlns:wsp="http://www.w3.org/2006/07/ws-policy">
+                <wsam:Addressing xmlns:wsam="http://www.w3.org/2007/02/addressing/metadata">
+                    <wsp:Policy/>
+                </wsam:Addressing>
+            </wsp:Policy>
         </wsdl:port>
+        
     </wsdl:service>
    
     <wsdl:service name="BasicGreeterService">

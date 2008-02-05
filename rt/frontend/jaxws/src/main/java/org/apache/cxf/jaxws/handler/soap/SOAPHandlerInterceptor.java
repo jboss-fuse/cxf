@@ -20,11 +20,18 @@
 package org.apache.cxf.jaxws.handler.soap;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import javax.xml.namespace.QName;
+import javax.xml.soap.Node;
+import javax.xml.soap.SOAPBody;
+import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
+import javax.xml.soap.SOAPHeader;
 import javax.xml.soap.SOAPMessage;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -50,11 +57,13 @@ import org.apache.cxf.interceptor.OutgoingChainInterceptor;
 import org.apache.cxf.jaxws.handler.AbstractProtocolHandlerInterceptor;
 import org.apache.cxf.jaxws.handler.HandlerChainInvoker;
 import org.apache.cxf.jaxws.support.ContextPropertiesMapping;
+import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.Phase;
 import org.apache.cxf.phase.PhaseInterceptorChain;
 import org.apache.cxf.staxutils.StaxUtils;
 import org.apache.cxf.transport.MessageObserver;
+import org.apache.cxf.ws.addressing.Names;
 
 public class SOAPHandlerInterceptor extends
         AbstractProtocolHandlerInterceptor<SoapMessage> implements
@@ -122,6 +131,7 @@ public class SOAPHandlerInterceptor extends
     }
 
     private void handleMessageInternal(SoapMessage message) {
+        
         MessageContext context = createProtocolMessageContext(message);
         HandlerChainInvoker invoker = getInvoker(message);
         invoker.setProtocolMessageContext(context);
@@ -144,11 +154,13 @@ public class SOAPHandlerInterceptor extends
             // client side outbound
             if (getInvoker(message).isOutbound()) {
                 message.getInterceptorChain().abort();
-                Endpoint e = message.getExchange().get(Endpoint.class);
-                Message responseMsg = e.getBinding().createMessage();
-
+                
                 MessageObserver observer = (MessageObserver)message.getExchange().get(MessageObserver.class);
-                if (observer != null) {
+                if (!message.getExchange().isOneWay()
+                    && observer != null) {
+                    Endpoint e = message.getExchange().get(Endpoint.class);
+                    Message responseMsg = e.getBinding().createMessage();
+    
                     // the request message becomes the response message
                     message.getExchange().setInMessage(responseMsg);
                     SOAPMessage soapMessage = ((SOAPMessageContext)context).getMessage();
@@ -162,7 +174,6 @@ public class SOAPHandlerInterceptor extends
                                     SOAPHandlerInterceptor.class.getName());
                     observer.onMessage(responseMsg);
                 }
-
                 //We dont call onCompletion here, as onCompletion will be called by inbound
                 //LogicalHandlerInterceptor
             } else {
@@ -206,6 +217,34 @@ public class SOAPHandlerInterceptor extends
         SOAPMessageContextImpl sm = new SOAPMessageContextImpl(message);
         boolean requestor = isRequestor(message);
         ContextPropertiesMapping.mapCxf2Jaxws(message.getExchange(), sm, requestor);
+        Exchange exch = message.getExchange();
+        setupBindingOperationInfo(exch, sm);
+        SOAPMessage msg = sm.getMessage();
+        try {
+            List<SOAPElement> params = new ArrayList<SOAPElement>();
+            message.put(MessageContext.REFERENCE_PARAMETERS, params);
+            SOAPHeader head = msg.getSOAPHeader();
+            if (head != null) {
+                Iterator<Node> it = CastUtils.cast(head.getChildElements());
+                while (it != null && it.hasNext()) {
+                    Node nd = it.next();
+                    if (nd instanceof SOAPElement) {
+                        SOAPElement el = (SOAPElement)nd;
+                        if (el.hasAttributeNS(Names.WSA_NAMESPACE_NAME, "IsReferenceParameter")
+                            && ("1".equals(el.getAttributeNS(Names.WSA_NAMESPACE_NAME,
+                                                             "IsReferenceParameter"))
+                                || Boolean.parseBoolean(el.getAttributeNS(Names.WSA_NAMESPACE_NAME,
+                                                                          "IsReferenceParameter")))) {
+                            params.add(el);
+                        }
+                    }
+                }
+            }
+        } catch (SOAPException e) {
+            throw new Fault(e);
+        }
+        
+        
         return sm;
     }
 
@@ -227,4 +266,27 @@ public class SOAPHandlerInterceptor extends
 
     public void handleFault(SoapMessage message) {
     }
+    
+    protected QName getOpQName(Exchange ex, Object data) {
+        SOAPMessageContextImpl sm = (SOAPMessageContextImpl)data;
+        try {
+            SOAPMessage msg = sm.getMessage();
+            if (msg == null) {
+                return null;
+            }
+            SOAPBody body = msg.getSOAPBody();
+            if (body == null) {
+                return null;
+            }
+            Iterator<SOAPElement> it = CastUtils.cast(body.getChildElements());
+            if (it != null && it.hasNext()) {
+                SOAPElement el = it.next();
+                return el.getElementQName();
+            }
+        } catch (SOAPException e) {
+            //ignore, nothing we can do
+        }
+        return null;
+    }
+
 }

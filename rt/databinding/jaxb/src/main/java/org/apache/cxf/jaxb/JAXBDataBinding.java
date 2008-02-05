@@ -62,10 +62,9 @@ import org.apache.cxf.common.util.CacheMap;
 import org.apache.cxf.common.util.PackageUtils;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.common.xmlschema.SchemaCollection;
-import org.apache.cxf.databinding.DataBinding;
+import org.apache.cxf.databinding.AbstractDataBinding;
 import org.apache.cxf.databinding.DataReader;
 import org.apache.cxf.databinding.DataWriter;
-import org.apache.cxf.databinding.source.AbstractDataBinding;
 import org.apache.cxf.jaxb.io.DataReaderImpl;
 import org.apache.cxf.jaxb.io.DataWriterImpl;
 import org.apache.cxf.service.Service;
@@ -73,13 +72,14 @@ import org.apache.cxf.service.factory.ServiceConstructionException;
 import org.apache.cxf.service.model.ServiceInfo;
 import org.apache.cxf.ws.addressing.ObjectFactory;
 
-public final class JAXBDataBinding extends AbstractDataBinding implements DataBinding {
+public final class JAXBDataBinding extends AbstractDataBinding {
     public static final String SCHEMA_RESOURCE = "SCHEMRESOURCE";
+    public static final String MTOM_THRESHOLD = "org.apache.cxf.jaxb.mtomThreshold";
     
     public static final String UNWRAP_JAXB_ELEMENT = "unwrap.jaxb.element";
     
     public static final String USE_JAXB_BRIDGE = "use.jaxb.bridge";
-
+    
     private static final Logger LOG = LogUtils.getLogger(JAXBDataBinding.class);
 
 
@@ -90,7 +90,7 @@ public final class JAXBDataBinding extends AbstractDataBinding implements DataBi
                                                                                Node.class,
                                                                                XMLEventWriter.class,
                                                                                XMLStreamWriter.class};
-
+    
     private static final Map<Set<Class<?>>, JAXBContext> JAXBCONTEXT_CACHE = 
         new CacheMap<Set<Class<?>>, JAXBContext>();
 
@@ -105,7 +105,7 @@ public final class JAXBDataBinding extends AbstractDataBinding implements DataBi
     private Map<String, Object> marshallerProperties = Collections.emptyMap();
 
     private boolean qualifiedSchemas;
-
+    private Service service;
     
     public JAXBDataBinding() {
     }
@@ -162,19 +162,28 @@ public final class JAXBDataBinding extends AbstractDataBinding implements DataBi
             currentMarshallerProperties.put("com.sun.xml.bind.namespacePrefixMapper",
                                             getNamespacePrefixMapper());
         }
-        currentMarshallerProperties.putAll(marshallerProperties);
-        if (c == XMLStreamWriter.class) {
-            return (DataWriter<T>)new DataWriterImpl<XMLStreamWriter>(context, currentMarshallerProperties);
-        } else if (c == OutputStream.class) {
-            return (DataWriter<T>)new DataWriterImpl<OutputStream>(context, 
-                currentMarshallerProperties);            
-        } else if (c == XMLEventWriter.class) {
-            return (DataWriter<T>)new DataWriterImpl<XMLEventWriter>(context,
-                                                                     currentMarshallerProperties);           
-        } else if (c == Node.class) {
-            return (DataWriter<T>)new DataWriterImpl<Node>(context, currentMarshallerProperties);      
-        }
         
+        Integer mtomThresholdInt = new Integer(getMtomThreshold());
+        if (c == XMLStreamWriter.class) {
+            DataWriterImpl<XMLStreamWriter> r = 
+                new DataWriterImpl<XMLStreamWriter>(context, currentMarshallerProperties);
+            r.setMtomThreshold(mtomThresholdInt);
+            return (DataWriter<T>)r;
+        } else if (c == OutputStream.class) {
+            DataWriterImpl<OutputStream> r = 
+                new DataWriterImpl<OutputStream>(context, currentMarshallerProperties);
+            r.setMtomThreshold(mtomThresholdInt);
+            return (DataWriter<T>)r;    
+        } else if (c == XMLEventWriter.class) {
+            DataWriterImpl<XMLEventWriter> r = new DataWriterImpl<XMLEventWriter>(context,
+                currentMarshallerProperties);
+            r.setMtomThreshold(mtomThresholdInt);
+            return (DataWriter<T>)r;        
+        } else if (c == Node.class) {
+            DataWriterImpl<Node> r = new DataWriterImpl<Node>(context, currentMarshallerProperties);
+            r.setMtomThreshold(mtomThresholdInt);
+            return (DataWriter<T>)r;      
+        }
         return null;
     }
 
@@ -201,7 +210,8 @@ public final class JAXBDataBinding extends AbstractDataBinding implements DataBi
     }
     
     @SuppressWarnings("unchecked")
-    public void initialize(Service service) {
+    public void initialize(Service aservice) {
+        this.service = aservice;
         //context is already set, don't redo it
         if (context != null) {
             return;
@@ -311,14 +321,27 @@ public final class JAXBDataBinding extends AbstractDataBinding implements DataBi
         final List<DOMResult> results = new ArrayList<DOMResult>();
 
         context.generateSchema(new SchemaOutputResolver() {
+            private Map<String, String> builtIns = new HashMap<String, String>();
+            {
+                builtIns.put("http://www.w3.org/2005/02/addressing/wsdl",
+                             "classpath:/schemas/wsdl/ws-addr-wsdl.xsd");
+                builtIns.put("http://www.w3.org/2005/08/addressing",
+                             "classpath:/schemas/wsdl/ws-addr.xsd");
+                builtIns.put("http://schemas.xmlsoap.org/ws/2005/02/rm",
+                             "classpath:/schemas/wsdl/wsrm.xsd");
+                builtIns.put("http://www.w3.org/2005/05/xmlmime",
+                             "classpath:/schemas/wsdl/ws-addr.xsd");
+            }
+            
             @Override
             public Result createOutput(String ns, String file) throws IOException {
                 DOMResult result = new DOMResult();
-                result.setSystemId(file);
-                // Don't include WS-Addressing bits
-                if ("http://www.w3.org/2005/02/addressing/wsdl".equals(ns)) {
+                
+                if (builtIns.containsKey(ns)) {
+                    result.setSystemId(builtIns.get(ns));
                     return result;
                 }
+                result.setSystemId(file);
                 results.add(result);
                 return result;
             }

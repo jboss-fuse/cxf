@@ -31,14 +31,19 @@ import javax.wsdl.Operation;
 import javax.xml.bind.annotation.XmlNsForm;
 import javax.xml.bind.annotation.XmlSchema;
 import javax.xml.bind.annotation.XmlSeeAlso;
-import javax.xml.namespace.QName;
 import javax.xml.ws.Action;
 import javax.xml.ws.AsyncHandler;
+import javax.xml.ws.BindingType;
 import javax.xml.ws.FaultAction;
 import javax.xml.ws.Service;
 import javax.xml.ws.Service.Mode;
 import javax.xml.ws.WebFault;
 import javax.xml.ws.WebServiceFeature;
+import javax.xml.ws.soap.Addressing;
+import javax.xml.ws.soap.AddressingFeature;
+import javax.xml.ws.soap.MTOM;
+import javax.xml.ws.soap.MTOMFeature;
+import javax.xml.ws.soap.SOAPBinding;
 
 import org.apache.cxf.binding.AbstractBindingFactory;
 import org.apache.cxf.common.classloader.ClassLoaderUtils;
@@ -72,6 +77,8 @@ import org.apache.cxf.wsdl11.WSDLServiceBuilder;
  * @see org.apache.cxf.jaxws.JaxWsServerFactoryBean
  */
 public class JaxWsServiceFactoryBean extends ReflectionServiceFactoryBean {
+    // used to tag property on service.
+    public static final  String WS_FEATURES = "JAXWS-WS-FEATURES";
     private AbstractServiceConfiguration jaxWsConfiguration;
 
     private JaxWsImplementorInfo implInfo;
@@ -96,11 +103,49 @@ public class JaxWsServiceFactoryBean extends ReflectionServiceFactoryBean {
         this.implInfo = implInfo;
         initConfiguration(implInfo);
         this.serviceClass = implInfo.getEndpointClass();
+        loadWSFeatureAnnotation(implInfo.getSEIClass(), implInfo.getImplementorClass());
     }
 
     private void initSchemaLocations() {
         this.schemaLocationMapping.put(JAXWSAConstants.NS_WSA, 
                                        JAXWSAConstants.WSA_XSD);
+    }
+    
+    private void loadWSFeatureAnnotation(Class<?> serviceClass, Class<?> implementorClass) {
+        List<WebServiceFeature> features = new ArrayList<WebServiceFeature>();
+        MTOM mtom = implInfo.getImplementorClass().getAnnotation(MTOM.class);        
+        if (mtom == null && serviceClass != null) {
+            mtom = serviceClass.getAnnotation(MTOM.class);
+        }
+        if (mtom != null) {
+            features.add(new MTOMFeature(mtom.enabled(), mtom.threshold()));
+        } else {
+            //deprecated way to set mtom
+            BindingType bt = implInfo.getImplementorClass().getAnnotation(BindingType.class);
+            if (bt != null
+                && (SOAPBinding.SOAP11HTTP_MTOM_BINDING.equals(bt.value())
+                || SOAPBinding.SOAP12HTTP_MTOM_BINDING.equals(bt.value()))) {
+                features.add(new MTOMFeature(true));                
+            }
+        }
+        
+
+        Addressing addressing = null;
+        if (implementorClass != null) {
+            addressing = implementorClass.getAnnotation(Addressing.class);
+        }
+
+        if (addressing == null && serviceClass != null) {
+            addressing = serviceClass.getAnnotation(Addressing.class);
+        }
+
+        if (addressing != null) {
+            features.add(new AddressingFeature(addressing.enabled(), addressing.required()));
+        }
+
+        if (features.size() > 0) {
+            wsFeatures = features;
+        }
     }
 
     @Override
@@ -146,7 +191,7 @@ public class JaxWsServiceFactoryBean extends ReflectionServiceFactoryBean {
     @Override
     protected void initializeWSDLOperation(InterfaceInfo intf, OperationInfo o, Method method) {
         method = ((JaxWsServiceConfiguration)jaxWsConfiguration).getDeclaredMethod(method);
-
+        o.setProperty(Method.class.getName(), method);
         initializeWrapping(o, method);
 
         try {
@@ -332,6 +377,7 @@ public class JaxWsServiceFactoryBean extends ReflectionServiceFactoryBean {
                 }
             }
         }
+        loadWSFeatureAnnotation(ii.getSEIClass(), ii.getImplementorClass());
         setMethodDispatcher(new JAXWSMethodDispatcher(implInfo));
         
     }
@@ -346,35 +392,46 @@ public class JaxWsServiceFactoryBean extends ReflectionServiceFactoryBean {
 
     private FaultInfo getFaultInfo(final OperationInfo operation, final Class expClass) {
         for (FaultInfo fault : operation.getFaults()) {
-            if (fault.getProperty(Class.class.getName()) == expClass) {
+            if (fault.getProperty(Class.class.getName()) == expClass
+                || fault.getProperty(Class.class.getName()) == expClass) {
                 return fault;
             }
         }
         return null;
     }
-    
     private void buildWSAActions(OperationInfo operation, Method method) {
+        //nothing
+        if (method == null) {
+            return;
+        }
+
         Action action = method.getAnnotation(Action.class);
         if (action == null) {
             return;
         }
-        String ns = operation.getName().getNamespaceURI();
         MessageInfo input = operation.getInput();
-        if (action.input() != null) {
-            input.addExtensionAttribute(JAXWSAConstants.WSAW_ACTION_QNAME, new QName(ns, action.input()));
+        if (!StringUtils.isEmpty(action.input())) {
+            input.addExtensionAttribute(JAXWSAConstants.WSAW_ACTION_QNAME, action.input());
         }
         
         MessageInfo output = operation.getOutput();
-        if (output != null && action.output() != null) {
-            output.addExtensionAttribute(JAXWSAConstants.WSAW_ACTION_QNAME, new QName(ns, action.output()));
+        if (output != null && !StringUtils.isEmpty(action.output())) {
+            output.addExtensionAttribute(JAXWSAConstants.WSAW_ACTION_QNAME, action.output());
         }
         
         FaultAction[] faultActions = action.fault();
-        if (faultActions != null && operation.getFaults() != null) {
+        if (faultActions != null 
+            && faultActions.length > 0 
+            && operation.getFaults() != null) {
             for (FaultAction faultAction : faultActions) {                
                 FaultInfo faultInfo = getFaultInfo(operation, faultAction.className());
                 faultInfo.addExtensionAttribute(JAXWSAConstants.WSAW_ACTION_QNAME, 
-                                                new QName(ns, faultAction.value()));
+                                                faultAction.value());
+                if (operation.isUnwrappedCapable()) {
+                    faultInfo = getFaultInfo(operation.getUnwrappedOperation(), faultAction.className());
+                    faultInfo.addExtensionAttribute(JAXWSAConstants.WSAW_ACTION_QNAME, 
+                                                    faultAction.value());
+                }
             }
         }        
     }
@@ -412,8 +469,12 @@ public class JaxWsServiceFactoryBean extends ReflectionServiceFactoryBean {
     private Set<Class<?>> generatedWrapperBeanClass() {
         ServiceInfo serviceInfo = getService().getServiceInfos().get(0);
         WrapperClassGenerator wrapperGen = new WrapperClassGenerator(serviceInfo.getInterface());
-        return wrapperGen.genearte();
+        return wrapperGen.generate();
     }
-    
-    
+
+    @Override
+    protected void buildServiceFromClass() {
+        super.buildServiceFromClass();
+        getService().put(WS_FEATURES, getWsFeatures()); 
+    }
 }

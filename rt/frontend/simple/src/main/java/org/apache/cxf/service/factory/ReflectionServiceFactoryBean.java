@@ -248,6 +248,9 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
         for (ServiceInfo inf : service.getServiceInfos()) {
             for (EndpointInfo ei : inf.getEndpoints()) {
 
+                for (BindingOperationInfo boi : ei.getBinding().getOperations()) {
+                    updateBindingOperation(boi);
+                }
                 try {
                     bfm.getBindingFactory(ei.getBinding().getBindingId());
                 } catch (BusException e1) {
@@ -263,6 +266,10 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
                 }
             }
         }
+    }
+    
+    public void updateBindingOperation(BindingOperationInfo boi) {
+        //nothing
     }
 
     public Endpoint createEndpoint(EndpointInfo ei) throws EndpointException {
@@ -314,7 +321,6 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
         col.getExtReg().registerSerializer(MimeAttribute.class, new MimeSerializer());
 
         ServiceImpl service = new ServiceImpl(serviceInfo);
-
         setService(service);
 
         setServiceProperties();
@@ -331,7 +337,7 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
                 si.setProperty(EXTRA_CLASS, wrapperClasses);
             }
         }
-        
+
         getDataBinding().initialize(service);
 
         boolean isWrapped = isWrapped();
