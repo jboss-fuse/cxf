@@ -371,12 +371,6 @@ public class JMSDestination extends AbstractMultiplexDestination implements Conf
             // setup the message to be send back
             message.put(JMSConstants.JMS_REQUEST_MESSAGE, 
                         inMessage.get(JMSConstants.JMS_REQUEST_MESSAGE));
-            
-            if (!message.containsKey(JMSConstants.JMS_SERVER_RESPONSE_HEADERS)
-                && inMessage.containsKey(JMSConstants.JMS_SERVER_RESPONSE_HEADERS)) {
-                message.put(JMSConstants.JMS_SERVER_RESPONSE_HEADERS,
-                            inMessage.get(JMSConstants.JMS_SERVER_RESPONSE_HEADERS));
-            }
             message.setContent(OutputStream.class,
                                new JMSOutputStream(inMessage));
         }
@@ -403,7 +397,7 @@ public class JMSDestination extends AbstractMultiplexDestination implements Conf
         private void commitOutputMessage() throws IOException {
             
             JMSMessageHeadersType headers =
-                (JMSMessageHeadersType) outMessage.get(JMSConstants.JMS_SERVER_RESPONSE_HEADERS);
+                (JMSMessageHeadersType) inMessage.get(JMSConstants.JMS_SERVER_RESPONSE_HEADERS);
             javax.jms.Message request = 
                 (javax.jms.Message) inMessage.get(JMSConstants.JMS_REQUEST_MESSAGE);              
             
@@ -445,6 +439,7 @@ public class JMSDestination extends AbstractMultiplexDestination implements Conf
                                          msgType);
 
                     setReplyCorrelationID(request, reply);
+                    
                     base.setMessageProperties(headers, reply);
 
                     sendResponse();

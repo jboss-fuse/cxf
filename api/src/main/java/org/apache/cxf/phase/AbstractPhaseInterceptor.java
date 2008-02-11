@@ -33,25 +33,14 @@ public abstract class AbstractPhaseInterceptor<T extends Message> implements Pha
     private final Set<String> after = new SortedArraySet<String>();
 
     public AbstractPhaseInterceptor(String phase) {
-        this(null, phase, false);
+        this(null, phase);
     }
     public AbstractPhaseInterceptor(String i, String p) {
-        this(i, p, false);
-    }
-    public AbstractPhaseInterceptor(String phase, boolean uniqueId) {
-        this(null, phase, uniqueId);
-    }
-    public AbstractPhaseInterceptor(String i, String p, boolean uniqueId) {
-        if (i == null) {
-            i = getClass().getName();
-        }
-        if (uniqueId) {
-            i += System.identityHashCode(this);
-        }
-        id = i;
+        super();
+        id = i == null ? getClass().getName() : i;
         phase = p;
     }
-    
+
     public void addBefore(String i) {
         before.add(i);
     }

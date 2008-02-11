@@ -148,12 +148,6 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
         ignoredClasses.add("javax.rmi.CORBA.Stub");
     }
 
-    
-     
-    protected DataBinding createDefaultDataBinding() {
-        return new JAXBDataBinding(getQualifyWrapperSchema());
-    }
-    
     @Override
     public Service create() {
         initializeServiceConfigurations();
