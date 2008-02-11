@@ -26,6 +26,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Map;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 import java.util.concurrent.Executor;
@@ -45,6 +47,7 @@ import org.apache.cxf.BusFactory;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.configuration.Configurable;
 import org.apache.cxf.configuration.Configurer;
+import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageImpl;
@@ -378,7 +381,7 @@ public class JMSDestination extends AbstractMultiplexDestination implements Conf
                             inMessage.get(JMSConstants.JMS_SERVER_RESPONSE_HEADERS));
             }
             message.setContent(OutputStream.class,
-                               new JMSOutputStream(inMessage));
+                               new JMSOutputStream(inMessage, message));
         }
         
         protected Logger getLogger() {
@@ -389,14 +392,16 @@ public class JMSDestination extends AbstractMultiplexDestination implements Conf
     private class JMSOutputStream extends CachedOutputStream {
                 
         private Message inMessage;
+        private Message outMessage;
         private javax.jms.Message reply;
         private Queue replyTo;
         private QueueSender sender;
         
         // setup the ByteArrayStream
-        public JMSOutputStream(Message m) {
+        public JMSOutputStream(Message m, Message o) {
             super();
             inMessage = m;
+            outMessage = o;
         }
         
         //to prepear the message and get the send out message
@@ -446,6 +451,9 @@ public class JMSDestination extends AbstractMultiplexDestination implements Conf
 
                     setReplyCorrelationID(request, reply);
                     base.setMessageProperties(headers, reply);
+                    Map<String, List<String>> protHeaders = 
+                        CastUtils.cast((Map<?, ?>)outMessage.get(Message.PROTOCOL_HEADERS));
+                    base.addProtocolHeaders(reply, protHeaders);
 
                     sendResponse();
                     

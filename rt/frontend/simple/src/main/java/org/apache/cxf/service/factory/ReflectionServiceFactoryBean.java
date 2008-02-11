@@ -665,7 +665,7 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
         anonymousWrappers = b;
     }
     
-    public boolean getQualifyWrapperSchema() {
+    public final boolean getQualifyWrapperSchema() {
         return qualifiedSchemas;
     }
     public boolean isQualifyWrapperSchema() {
@@ -951,6 +951,7 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
         if (qualified) {
             schema.setElementFormDefault(new XmlSchemaForm(XmlSchemaForm.QUALIFIED));
         }
+
         schemaInfo.setSchema(schema);
 
         Map<String, String> explicitNamespaceMappings = this.getDataBinding().getDeclaredNamespaceMappings();
