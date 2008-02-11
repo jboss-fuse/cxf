@@ -50,6 +50,7 @@ import org.apache.cxf.common.i18n.Message;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.xmlschema.SchemaCollection;
 import org.apache.cxf.common.xmlschema.XmlSchemaTools;
+import org.apache.cxf.databinding.DataBinding;
 import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.endpoint.EndpointException;
 import org.apache.cxf.endpoint.EndpointImpl;
@@ -137,8 +138,6 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
 
     public ReflectionServiceFactoryBean() {
         getServiceConfigurations().add(0, new DefaultServiceConfiguration());
-
-        setDataBinding(new JAXBDataBinding());
 
         ignoredClasses.add("java.lang.Object");
         ignoredClasses.add("java.lang.Throwable");
