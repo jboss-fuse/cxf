@@ -177,9 +177,9 @@
     </build>
 
     <scm>
-        <connection>scm:svn:http://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.0.3.2-fuse</connection>
-        <developerConnection>scm:svn:https://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.0.3.2-fuse</developerConnection>
-    <url>scm:svn:https://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.0.3.2-fuse/cxf-parent/cxf-rt-ws-rm</url>
+        <connection>scm:svn:http://projects.open.iona.com/projects/svn/iona/cxf/branches/cxf-2.0.3-fuse</connection>
+        <developerConnection>scm:svn:https://projects.open.iona.com/projects/svn/iona/cxf/branches/cxf-2.0.3-fuse</developerConnection>
+    <url>scm:svn:https://projects.open.iona.com/projects/svn/iona/cxf/branches/cxf-2.0.3-fuse/cxf-parent/cxf-rt-ws-rm</url>
   </scm>
 
 </project>
