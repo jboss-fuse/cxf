@@ -37,7 +37,7 @@
     <properties>
         <maven.test.skip>true</maven.test.skip>
         <cxf.version>${pom.version}</cxf.version>
-	<shade.version>1.0-beta-1</shade.version>
+	<shade.version>1.0-alpha-10</shade.version>
     </properties>
 
     <dependencies>
@@ -258,8 +258,8 @@
         <plugins>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>shade-maven-plugin</artifactId>
                 <version>${shade.version}</version>
                 <executions>
                     <execution>
