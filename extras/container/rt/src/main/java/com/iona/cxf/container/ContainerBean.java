@@ -214,7 +214,7 @@ public final class ContainerBean
         File appDir = null;
         try {
             appDir = ApplicationExploder.explodeApplication(war, repository);
-        } catch (IOException ioex) {
+        } catch (Exception ioex) {
             File invalidWar = new File(war.toString() + CORRUPTED_JAR_SUFFIX);
             war.renameTo(invalidWar);
             throw new ContainerException(ioex);
