@@ -28,9 +28,8 @@
     <packaging>pom</packaging>
 
     <scm>
-        <connection>scm:svn:http://projects.open.iona.com/projects/svn/iona/cxf/trunk</connection>
-        <developerConnection>scm:svn:https://projects.open.iona.com/projects/svn/iona/cxf/trunk</developerConnection>
-        <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk</url>
+        <connection>scm:svn:http://svn.apache.org/repos/asf/incubator/cxf/branches/2.0.x-fixes</connection>
+        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/incubator/cxf/branches/2.0.x-fixes</developerConnection>
     </scm>
     <issueManagement>
         <system>jira</system>

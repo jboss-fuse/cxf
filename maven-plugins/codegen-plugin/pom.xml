@@ -111,9 +111,8 @@
     </repositories>
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/incubator/cxf/trunk/maven-plugins/codegen-plugin</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/incubator/cxf/trunk/maven-plugins/codegen-plugin</developerConnection>
-    <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-parent/cxf-codegen-plugin</url>
-  </scm>
+        <connection>scm:svn:http://svn.apache.org/repos/asf/incubator/cxf/branches/2.0.x-fixes/maven-plugins/codegen-plugin</connection>
+        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/incubator/cxf/branches/2.0.x-fixes/maven-plugins/codegen-plugin</developerConnection>
+    </scm>
 
 </project>
