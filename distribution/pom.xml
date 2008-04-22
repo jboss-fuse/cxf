@@ -225,6 +225,10 @@
                     <groupId>bouncycastle</groupId>
                     <artifactId>bcprov-jdk14</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>xalan</groupId>
+                    <artifactId>xalan</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 
@@ -265,6 +269,16 @@
             <groupId>${pom.groupId}</groupId>
             <artifactId>cxf-bundle</artifactId>
             <version>${pom.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>bouncycastle</groupId>
+                    <artifactId>bcprov-jdk14</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>xalan</groupId>
+                    <artifactId>xalan</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
