@@ -21,6 +21,7 @@ package org.apache.cxf.transport.jbi;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -36,18 +37,22 @@ import org.w3c.dom.Document;
 
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.io.CachedOutputStream;
+import org.apache.cxf.message.Attachment;
 import org.apache.cxf.message.Message;
 
 public class JBIDestinationOutputStream extends CachedOutputStream {
 
     private static final Logger LOG = LogUtils.getL7dLogger(JBIDestinationOutputStream.class);
     private Message inMessage;
+    private Message outMessage;
     private DeliveryChannel channel;
     
     public JBIDestinationOutputStream(Message m, 
+                               Message outM,
                                DeliveryChannel dc) {
         super();
         inMessage = m;
+        outMessage = outM;
         channel = dc;
     }
     
@@ -95,6 +100,19 @@ public class JBIDestinationOutputStream extends CachedOutputStream {
                     }
                 } else {
                     NormalizedMessage msg = xchng.createMessage();
+                    //copy attachments
+                    if (outMessage != null && outMessage.getAttachments() != null) {
+                        for (Attachment att : outMessage.getAttachments()) {
+                            msg.addAttachment(att.getId(), att
+                                    .getDataHandler());
+                        }
+                    }
+                    //copy properties
+                    Set<String> keys = inMessage.keySet();
+                    for (String key : keys) {
+                        msg.setProperty(key, inMessage.get(key));
+                    }
+                    //copy contents
                     msg.setContent(new DOMSource(doc));
                     xchng.setMessage(msg, "out");
                     

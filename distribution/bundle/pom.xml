@@ -422,4 +422,10 @@
         </profile>
     </profiles>
 
+    <scm>
+        <connection>scm:svn:http://projects.open.iona.com/projects/svn/iona/cxf/trunk/distribution/bundle</connection>
+        <developerConnection>scm:svn:https://projects.open.iona.com/projects/svn/iona/cxf/trunk/distribution/bundle</developerConnection>
+        <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/distribution/bundle</url>
+    </scm>
+
 </project>
