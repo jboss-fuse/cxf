@@ -19,7 +19,6 @@
 package org.apache.cxf.frontend;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -42,7 +41,8 @@ public class SimpleMethodDispatcher implements MethodDispatcher {
         for (Method m : methods) {
             methodToOp.put(m, o);            
             
-            Map<BindingInfo, BindingOperationInfo> biToBop = new HashMap<BindingInfo, BindingOperationInfo>();
+            Map<BindingInfo, BindingOperationInfo> biToBop 
+                = new ConcurrentHashMap<BindingInfo, BindingOperationInfo>();
             infoMap.put(m, biToBop);
         }
         
