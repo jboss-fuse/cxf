@@ -21,14 +21,14 @@
     <groupId>org.apache.cxf</groupId>
     <artifactId>cxf-tools-wsdlto</artifactId>
     <packaging>pom</packaging>
-    <version>2.1.0.0-fuse</version>
+    <version>2.1.1-fuse-SNAPSHOT</version>
     <name>Apache CXF Command Line Tools WSDLTo</name>
     <url>http://cxf.apache.org</url>
 
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-tools</artifactId>
-        <version>2.1.0.0-fuse</version>
+        <version>2.1.1-fuse-SNAPSHOT</version>
     </parent>
 
     <modules>
@@ -41,9 +41,9 @@
     </modules>
 
     <scm>
-        <connection>scm:svn:http://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.1.0.0-fuse</connection>
-        <developerConnection>scm:svn:https://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.1.0.0-fuse</developerConnection>
-      <url>scm:svn:https://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.1.0.0-fuse/cxf-tools/cxf-tools-wsdlto</url>
+        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/trunk/tools/wsdlto</connection>
+        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/trunk/tools/wsdlto</developerConnection>
+      <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-tools/cxf-tools-wsdlto</url>
   </scm>
 
 </project>

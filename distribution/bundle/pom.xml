@@ -23,14 +23,14 @@
     <artifactId>cxf-bundle</artifactId>
     <packaging>bundle</packaging>
     <name>Apache CXF Bundle Jar</name>
-    <version>2.1.0.0-fuse</version>
+    <version>2.1.1-fuse-SNAPSHOT</version>
     <url>http://cxf.apache.org</url>
 
 
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>2.1.0.0-fuse</version>
+        <version>2.1.1-fuse-SNAPSHOT</version>
         <relativePath>../../parent</relativePath>
     </parent>
 
@@ -425,9 +425,9 @@
     </profiles>
 
     <scm>
-        <connection>scm:svn:http://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.1.0.0-fuse/distribution/bundle</connection>
-        <developerConnection>scm:svn:https://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.1.0.0-fuse/distribution/bundle</developerConnection>
-        <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/tags/cxf-2.1.0.0-fuse/distribution/bundle</url>
+        <connection>scm:svn:http://projects.open.iona.com/projects/svn/iona/cxf/trunk/distribution/bundle</connection>
+        <developerConnection>scm:svn:https://projects.open.iona.com/projects/svn/iona/cxf/trunk/distribution/bundle</developerConnection>
+        <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/distribution/bundle</url>
     </scm>
 
 </project>
