@@ -21,14 +21,14 @@
     <groupId>org.apache.cxf</groupId>
     <artifactId>cxf-common-utilities</artifactId>
     <packaging>jar</packaging>
-    <version>2.1.0-fuse-SNAPSHOT</version>
+    <version>2.1.0.0-fuse</version>
     <name>Apache CXF Common Utilities</name>
     <url>http://cxf.apache.org</url>
 
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>2.1.0-fuse-SNAPSHOT</version>
+        <version>2.1.0.0-fuse</version>
         <relativePath>../../parent/pom.xml</relativePath>
     </parent>
 
@@ -152,8 +152,9 @@
     </dependencies>
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/trunk/common/common</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/trunk/common/common</developerConnection>
-    </scm>
+        <connection>scm:svn:http://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.1.0.0-fuse</connection>
+        <developerConnection>scm:svn:https://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.1.0.0-fuse</developerConnection>
+      <url>scm:svn:https://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.1.0.0-fuse/cxf-parent/cxf-common-utilities</url>
+  </scm>
 
 </project>
