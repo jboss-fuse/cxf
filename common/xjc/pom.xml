@@ -21,14 +21,14 @@
     <groupId>org.apache.cxf</groupId>
     <artifactId>cxf-xjc</artifactId>
     <packaging>pom</packaging>
-    <version>2.1.0-fuse-SNAPSHOT</version>
+    <version>2.1.0.0-fuse</version>
     <name>Apache CXF XJC Plugins</name>
     <url>http://cxf.apache.org</url>
 
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>2.1.0-fuse-SNAPSHOT</version>
+        <version>2.1.0.0-fuse</version>
         <relativePath>../../parent/pom.xml</relativePath>
     </parent>
 
@@ -41,8 +41,9 @@
 
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/trunk/common/xjc</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/trunk/common/xjc</developerConnection>
-    </scm>
+        <connection>scm:svn:http://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.1.0.0-fuse</connection>
+        <developerConnection>scm:svn:https://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.1.0.0-fuse</developerConnection>
+      <url>scm:svn:https://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.1.0.0-fuse/cxf-parent/cxf-xjc</url>
+  </scm>
 
 </project>
