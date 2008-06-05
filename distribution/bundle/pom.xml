@@ -193,6 +193,11 @@
             <artifactId>cxf-rt-databinding-aegis</artifactId>
             <version>${pom.version}</version>
         </dependency>
+        <dependency>
+            <groupId>${pom.groupId}</groupId>
+            <artifactId>cxf-rt-databinding-jaxb</artifactId>
+            <version>${pom.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>${pom.groupId}</groupId>
@@ -259,6 +264,7 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
+                <version>1.4.1</version>
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
@@ -276,6 +282,7 @@
                             com.sun*;resolution:=optional,
                             javanet.staxutils*;resolution:=optional,
                             javax.jms*;resolution:=optional,
+                            javax.ws.rs*;resolution:=optional,
                             javax.xml.soap,
                             junit.framework*;resolution:=optional,
                             org.apache.abdera*;resolution:=optional,
@@ -287,6 +294,7 @@
                             org.apache.ws.security*;resolution:=optional,
                             org.codehaus.jra*;resolution:=optional,
                             org.codehaus.jettison*;resolution:=optional,
+                            org.jaxen*;resolution:=optional,
                             org.jdom*;resolution:=optional,
                             org.junit*;resolution:=optional,
                             org.mortbay*;resolution:=optional,
@@ -299,7 +307,7 @@
                             org.xmlsoap.schemas*;version=${pom.version};-split-package:=merge-first,
                             org.codehaus.xfire.aegis.type.java5.*,
                             org.xmlsoap.schemas.wsdl.http.*,
-                            org.w3._2006._05.addressing.wsdl.*
+                            org.w3._2006._05.addressing.wsdl.*,
                             '=META-INF.cxf'
                         </Export-Package>
                         <_failok>true</_failok>
