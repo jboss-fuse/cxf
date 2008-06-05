@@ -18,6 +18,7 @@
  */
 package org.apache.cxf.service.factory;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -179,12 +180,23 @@ public class ReflectionServiceFactoryTest extends AbstractSimpleFrontendTest {
         assertEquals("document", sop.getStyle());
     }
     
-    @org.junit.Ignore
-    @Test
+    @Test(expected = ServiceConstructionException.class)
     public void testDocLiteralPartWithType() throws Exception {
         serviceFactory = new ReflectionServiceFactoryBean();
         serviceFactory.setBus(getBus());
         serviceFactory.setServiceClass(NoBodyPartsImpl.class);
+        serviceFactory.getServiceConfigurations().add(0,
+            new AbstractServiceConfiguration() {
+                @Override
+                public Boolean isWrapped() {
+                    return Boolean.FALSE;
+                }
+
+                @Override
+                public Boolean isWrapped(Method m) {
+                    return Boolean.FALSE;
+                }
+            });
         Service service = serviceFactory.create();
         ServiceInfo serviceInfo = 
             service.getServiceInfos().get(0);
