@@ -21,14 +21,14 @@
     <groupId>org.apache.cxf</groupId>
     <artifactId>cxf-rt-management</artifactId>
     <packaging>jar</packaging>
-    <version>2.0.6.0-fuse</version>
+    <version>2.0.6.1-fuse-SNAPSHOT</version>
     <name>Apache CXF Runtime Management</name>
     <url>http://cwiki.apache.org/CXF</url>
 
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>2.0.6.0-fuse</version>
+        <version>2.0.6.1-fuse-SNAPSHOT</version>
         <relativePath>../../parent/pom.xml</relativePath>
     </parent>
 
@@ -119,8 +119,8 @@
 
 
     <scm>
-        <connection>scm:svn:http://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.0.6.0-fuse/rt/management</connection>
-        <developerConnection>scm:svn:https://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.0.6.0-fuse/rt/management</developerConnection>
+        <connection>scm:svn:http://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.0.6.1-fuse-SNAPSHOT/rt/management</connection>
+        <developerConnection>scm:svn:https://projects.open.iona.com/projects/svn/iona/cxf/tags/cxf-2.0.6.1-fuse-SNAPSHOT/rt/management</developerConnection>
     </scm>
 
 </project>
