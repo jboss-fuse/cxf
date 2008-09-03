@@ -344,7 +344,6 @@
             <id>deploy</id>
             <modules>
                 <module>distribution</module>
-                <module>tools/eclipse-plugin</module>
                 <!-- Not yet included.
                 <module>iona_samples</module>
                 -->
