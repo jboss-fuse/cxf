@@ -21,14 +21,14 @@
     <groupId>org.apache.cxf</groupId>
     <artifactId>cxf-rt-transports-local</artifactId>
     <packaging>jar</packaging>
-    <version>2.0.x-fuse-SNAPSHOT</version>
+    <version>2.0.8.2-fuse</version>
     <name>Apache CXF Runtime Local Transport</name>
     <url>http://cwiki.apache.org/CXF</url>
 
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>2.0.x-fuse-SNAPSHOT</version>
+        <version>2.0.8.2-fuse</version>
         <relativePath>../../../parent/pom.xml</relativePath>
     </parent>
 
