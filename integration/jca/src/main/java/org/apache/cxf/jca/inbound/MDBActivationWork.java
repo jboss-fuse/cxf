@@ -18,15 +18,18 @@
  */
 package org.apache.cxf.jca.inbound;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.resource.spi.UnavailableException;
 import javax.resource.spi.endpoint.MessageEndpoint;
 import javax.resource.spi.endpoint.MessageEndpointFactory;
 import javax.resource.spi.work.Work;
+import javax.xml.namespace.QName;
 
+import org.apache.cxf.bus.spring.SpringBusFactory;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.endpoint.Server;
 import org.apache.cxf.frontend.ServerFactoryBean;
@@ -51,7 +54,6 @@ public class MDBActivationWork implements Work {
     private MessageEndpointFactory endpointFactory;
     private boolean released;
 
-    private Server server;
     private Map<String, InboundEndpoint> endpoints;
 
     public MDBActivationWork(MDBActivationSpec spec, 
@@ -70,41 +72,104 @@ public class MDBActivationWork implements Work {
      * Performs the work
      */
     public void run() {
-        // create service endpoint interface class
-        if (spec.getServiceInterfaceClass() != null) {
-            
-            // get the classloader from the event driven bean
-            MessageEndpoint endpoint = getMesssageEndpoint();
-            if (endpoint != null) {
-                try {
-                    ClassLoader classLoader = endpoint.getClass().getClassLoader();
-                    Class<?> clazz = Class.forName(spec.getServiceInterfaceClass(),
-                            false, classLoader); 
-                    
-                    // create server bean factory
-                    ServerFactoryBean factory = EndpointUtils.hasWebServiceAnnotation(clazz) 
-                        ? new JaxWsServerFactoryBean() : new ServerFactoryBean();
-                    factory.setServiceClass(clazz);
-                    factory.setAddress(spec.getAddress());
-                    
-                    MDBInvoker invoker = createInvoker(endpoint);
-                    factory.setInvoker(invoker);
-                    
-                    // create and start the server
-                    server = factory.create();
-                    server.start();
-                    
-                    // save the server for clean up later
-                    endpoints.put(spec.getEndpointName(), new InboundEndpoint(server, invoker));
-                    
-                } catch (Exception e) {
-                    LOG.log(Level.SEVERE, "Failed to activate service endpoint " 
-                            + spec.getEndpointName(), e);
-                }
-            }
+        // get message driven bean proxy
+        MessageEndpoint endpoint = getMesssageEndpoint();
+        if (endpoint == null) {
+            // error has been logged.
+            return;
+        }
+    
+        // get class loader
+        ClassLoader classLoader = endpoint.getClass().getClassLoader();
+        ClassLoader savedClassLoader = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(classLoader);
+            activate(endpoint, classLoader);
+        } finally {
+            Thread.currentThread().setContextClassLoader(savedClassLoader);
         }
     }
     
+    /**
+     * @param endpoint
+     * @param classLoader 
+     */
+    private void activate(MessageEndpoint endpoint, ClassLoader classLoader) {
+        Class<?> serviceClass = null;
+        if (spec.getServiceInterfaceClass() != null) {
+            try {
+                serviceClass = Class.forName(spec.getServiceInterfaceClass(),
+                        false, classLoader);
+            } catch (ClassNotFoundException e) {
+                LOG.severe("Failed to activate service endpoint " 
+                        + spec.getDisplayName() 
+                        + " due to unable to endpoint listener.");
+                return;
+            } 
+        }
+        
+        // create server bean factory
+        ServerFactoryBean factory = null;
+        if (serviceClass != null && EndpointUtils.hasWebServiceAnnotation(serviceClass)) {
+            factory = new JaxWsServerFactoryBean();
+        } else {
+            factory = new ServerFactoryBean();
+        }
+        
+        if (serviceClass != null) {
+            factory.setServiceClass(serviceClass);
+        }
+        
+        if (spec.getWsdlLocation() != null) {   
+            factory.setWsdlLocation(spec.getWsdlLocation());
+        }
+        
+        if (spec.getAddress() != null) {
+            factory.setAddress(spec.getAddress());
+        }
+        
+        if (spec.getBusConfigLocation() != null) {
+            factory.setBus(new SpringBusFactory().createBus(classLoader
+                    .getResource(spec.getBusConfigLocation())));
+        }
+        
+        if (spec.getEndpointName() != null) {
+            factory.setEndpointName(QName.valueOf(spec.getEndpointName()));
+        }
+        
+        if (spec.getSchemaLocations() != null) {
+            factory.setSchemaLocations(getListOfString(spec.getSchemaLocations()));
+        }
+        
+        if (spec.getServiceName() != null) {
+            factory.setServiceName(QName.valueOf(spec.getServiceName()));
+        }
+              
+        MDBInvoker invoker = createInvoker(endpoint);
+        factory.setInvoker(invoker);
+
+
+        // create and start the server
+        factory.setStart(true);
+        Server server = factory.create();
+
+        // save the server for clean up later
+        endpoints.put(spec.getDisplayName(), new InboundEndpoint(server, invoker));
+    }
+
+
+    /**
+     * @param str
+     * @return
+     */
+    private List<String> getListOfString(String str) {
+        if (str == null) {
+            return null;
+        }
+        
+        return Arrays.asList(str.split(","));
+    }
+
     /**
      * @param endpoint
      * @return
@@ -148,7 +213,7 @@ public class MDBActivationWork implements Work {
         
         if (answer == null) {
             LOG.severe("Failed to activate  service endpoint " 
-                    + spec.getEndpointName() 
+                    + spec.getDisplayName() 
                     + " due to unable to endpoint listener.");
         }
         

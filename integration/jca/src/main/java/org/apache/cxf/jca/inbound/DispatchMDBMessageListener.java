@@ -21,12 +21,12 @@ package org.apache.cxf.jca.inbound;
 
 /**
  * The DispatchMDBMessageListener is intended to be used as the 
- * "messagelistener-type" of an "inbound-resourcesadapter" defined
+ * <messagelistener-type> of an <inbound-resourcesadapter> defined
  * in the Rosource Adapter's deployment descriptor.
  * The default implementation class {@link DispatchMDBMessageListenerImpl}.
  * The benefit of using DispatchMDBMessageListener is that, users
  * are not required to put the Service Endpoint Interface in the Resource
- * Adaptor's deployment descriptor.  Users can leave the "messagelistener-type"
+ * Adaptor's deployment descriptor.  Users can leave the <messagelistener-type>
  * as org.apache.cxf.jca.inbound.DispatchMDBMessageListener for any endpoint.
  */
 public interface DispatchMDBMessageListener {
