@@ -23,7 +23,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.util.ArrayList;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -34,18 +33,17 @@ import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.ws.BindingProvider;
 import javax.xml.ws.Holder;
+
 import org.w3c.dom.Node;
 
 import org.apache.cxf.BusFactory;
-
+import org.apache.cxf.binding.soap.SoapHeader;
 import org.apache.cxf.bus.spring.SpringBusFactory;
 import org.apache.cxf.headers.Header;
 import org.apache.cxf.jaxb.JAXBDataBinding;
-
 import org.apache.cxf.outofband.header.ObjectFactory;
 import org.apache.cxf.outofband.header.OutofBandHeader;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
-
 import org.apache.hello_world_doc_lit_bare.PutLastTradedPricePortType;
 import org.apache.hello_world_doc_lit_bare.SOAPService;
 import org.apache.hello_world_doc_lit_bare.types.TradePriceData;
@@ -78,7 +76,7 @@ public class OOBHeaderTest extends AbstractBusClientServerTestBase {
         assertTrue("server did not launch correctly", launchServer(Server.class, true));
     }
     
-    private void addOutOfBoundHeader(PutLastTradedPricePortType portType) {
+    private void addOutOfBoundHeader(PutLastTradedPricePortType portType, boolean invalid) {
         InvocationHandler handler  = Proxy.getInvocationHandler(portType);
         BindingProvider  bp = null;
 
@@ -90,14 +88,13 @@ public class OOBHeaderTest extends AbstractBusClientServerTestBase {
                 OutofBandHeader ob = new OutofBandHeader();
                 ob.setName("testOobHeader");
                 ob.setValue("testOobHeaderValue");
-                ob.setHdrAttribute("testHdrAttribute");
+                ob.setHdrAttribute(invalid ? "dontProcess" : "testHdrAttribute"); 
 
-                JAXBElement<OutofBandHeader> job = new JAXBElement<OutofBandHeader>(
-                        new QName(TEST_HDR_NS, TEST_HDR_REQUEST_ELEM), OutofBandHeader.class, null, ob);
-                Header hdr = new Header(
-                        new QName(TEST_HDR_NS, TEST_HDR_REQUEST_ELEM), 
-                        job, 
-                        new JAXBDataBinding(ob.getClass()));
+                SoapHeader hdr = new SoapHeader(
+                    new QName(TEST_HDR_NS, TEST_HDR_REQUEST_ELEM), 
+                    ob, 
+                    new JAXBDataBinding(ob.getClass()));
+                hdr.setMustUnderstand(true);
 
                 List<Header> holder = new ArrayList<Header>();
                 holder.add(hdr);
@@ -182,10 +179,17 @@ public class OOBHeaderTest extends AbstractBusClientServerTestBase {
         priceData.setTickerSymbol("CELTIX");
         Holder<TradePriceData> holder = new Holder<TradePriceData>(priceData);
         
-        addOutOfBoundHeader(putLastTradedPrice);
-        
+        addOutOfBoundHeader(putLastTradedPrice, false);
         putLastTradedPrice.sayHi(holder);
-        
         checkReturnedOOBHeader(putLastTradedPrice);
+        
+        addOutOfBoundHeader(putLastTradedPrice, true);
+        try {
+            putLastTradedPrice.sayHi(holder);
+            fail("mustUnderstand header should not have been processed");
+        } catch (Exception ex) {
+            assertTrue(ex.getMessage(), 
+                       ex.getMessage().contains("Can not understand QNames:"));
+        }
     }
 }
