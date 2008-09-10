@@ -117,7 +117,7 @@ public class ResourceAdapterImpl extends ResourceBean implements ResourceAdapter
         }
         
         MDBActivationSpec spec = (MDBActivationSpec)as;
-        LOG.info("CXF resource adapter is activating " + spec.getEndpointName());
+        LOG.info("CXF resource adapter is activating " + spec.getDisplayName());
 
         Work work = new MDBActivationWork(spec, mef, endpoints);
         ctx.getWorkManager().scheduleWork(work);        
@@ -132,15 +132,15 @@ public class ResourceAdapterImpl extends ResourceBean implements ResourceAdapter
         }
         
         MDBActivationSpec spec = (MDBActivationSpec)as;
-        LOG.info("CXF resource adapter is deactivating " + spec.getEndpointName());
+        LOG.info("CXF resource adapter is deactivating " + spec.getDisplayName());
         
-        InboundEndpoint endpoint = endpoints.remove(spec.getEndpointName());
+        InboundEndpoint endpoint = endpoints.remove(spec.getDisplayName());
         if (endpoint != null) {
             try {
                 endpoint.shutdown();
             } catch (Exception e) {
                 LOG.log(Level.WARNING, "Failed to stop endpoint " 
-                        + spec.getEndpointName(), e); 
+                        + spec.getDisplayName(), e); 
             }
         }
     }
@@ -149,4 +149,19 @@ public class ResourceAdapterImpl extends ResourceBean implements ResourceAdapter
         return ctx;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

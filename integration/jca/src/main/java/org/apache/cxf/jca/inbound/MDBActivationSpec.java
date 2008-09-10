@@ -25,15 +25,20 @@ import javax.resource.spi.ResourceAdapter;
 
 /**
  * MDBActivationSpec is for activating a CXF service endpoint facade.  
+ * All resource locations are relative to the message driven bean jar.
+ *
  */
 public class MDBActivationSpec implements ActivationSpec {
 
     private ResourceAdapter resouceAdapter;
-    private String wsdlURL;
+    private String wsdlLocation;
+    private String schemaLocations;
     private String serviceInterfaceClass;
-    private String busConfigurationURL;
+    private String busConfigLocation;
     private String address;
     private String endpointName;
+    private String serviceName;
+    private String displayName;
     
     /**
      * Gets the transport address used by 
@@ -45,22 +50,21 @@ public class MDBActivationSpec implements ActivationSpec {
         return address;
     }
 
-
-    /**
-     * Gets the CXF bus configuration URL.  
-     * 
-     * The resource location should be within the Message Driven Bean jar.
-     * 
-     * @return the busConfigurationURL
+    /**      
+     * @return the busConfigLocation
      */
-    public String getBusConfigurationURL() {
-        return busConfigurationURL;
+    public String getBusConfigLocation() {
+        return busConfigLocation;
     }
 
+    /**
+     * @return the displayName
+     */
+    public String getDisplayName() {
+        return displayName;
+    }
 
     /**
-     * A unique name that is readable to human and it is to
-     * identify an inbound endpoint within a application service.
      *  
      * @return the endpointName
      */
@@ -68,10 +72,19 @@ public class MDBActivationSpec implements ActivationSpec {
         return endpointName;
     }
 
-
     public ResourceAdapter getResourceAdapter() {
         return resouceAdapter;
     }
+
+    /**
+     * Comma separated schema locations
+     * 
+     * @return the schemaLocations
+     */
+    public String getSchemaLocations() {
+        return schemaLocations;
+    }
+
 
     /**
      * Gets the service endpoint interface classname.  
@@ -84,14 +97,20 @@ public class MDBActivationSpec implements ActivationSpec {
         return serviceInterfaceClass;
     }
 
+    /**
+     * @return the serviceName
+     */
+    public String getServiceName() {
+        return serviceName;
+    }
+
 
     /**
-     * The resource location should be within the Message Driven Bean jar.
      * 
-     * @return the wsdlURL
+     * @return the wsdlLocation
      */
-    public String getWsdlURL() {
-        return wsdlURL;
+    public String getWsdlLocation() {
+        return wsdlLocation;
     }
 
 
@@ -107,14 +126,23 @@ public class MDBActivationSpec implements ActivationSpec {
 
 
     /**
-     * The class should be available in the Message Driven Bean jar.
-     * 
-     * @param busConfigurationURL the busConfigurationURL to set
+     *      
+     * @param busConfigLocation the busConfigLocation to set
      */
-    public void setBusConfigurationURL(String busConfigurationURL) {
-        this.busConfigurationURL = busConfigurationURL;
+    public void setBusConfigLocation(String busConfigLocation) {
+        this.busConfigLocation = busConfigLocation;
     }
 
+
+    /**
+     * A unique name that is readable to human and it is to
+     * identify an inbound endpoint within a application server.
+     * 
+     * @param displayName the displayName to set
+     */
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
 
     /**
      * @param endpointName the endpointName to set
@@ -127,6 +155,14 @@ public class MDBActivationSpec implements ActivationSpec {
         resouceAdapter = ra;
     }
 
+    /**
+     * Comma separated schema locations
+     * 
+     * @param schemaLocations the schemaLocations to set
+     */
+    public void setSchemaLocations(String schemaLocations) {
+        this.schemaLocations = schemaLocations;
+    }
 
     /**
      * @param serviceInterfaceClass the serviceInterfaceClass to set
@@ -135,16 +171,21 @@ public class MDBActivationSpec implements ActivationSpec {
         this.serviceInterfaceClass = serviceInterfaceClass;
     }
 
-
     /**
-     * The resource location should be within the Message Driven Bean jar.
-     * 
-     * @param wsdlURL the wsdlURL to set
+     * @param serviceName the serviceName to set
      */
-    public void setWsdlURL(String wsdlURL) {
-        this.wsdlURL = wsdlURL;
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
     }
 
+
+    /**
+     * 
+     * @param wsdlLocation the wsdlLocation to set
+     */
+    public void setWsdlLocation(String wsdlLocation) {
+        this.wsdlLocation = wsdlLocation;
+    }
 
     /**
      * TODO implement validation
