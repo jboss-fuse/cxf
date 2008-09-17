@@ -24,8 +24,9 @@ import javax.resource.spi.InvalidPropertyException;
 import javax.resource.spi.ResourceAdapter;
 
 /**
- * MDBActivationSpec is for activating a CXF service endpoint facade.  
- * All resource locations are relative to the message driven bean jar.
+ * MDBActivationSpec is an {@link javax.resource.spi.ActivationSpec} that
+ * activates a CXF service endpoint facade.  All resource locations are 
+ * relative to the message driven bean jar.
  *
  */
 public class MDBActivationSpec implements ActivationSpec {
@@ -194,3 +195,4 @@ public class MDBActivationSpec implements ActivationSpec {
     }
 
 }
+

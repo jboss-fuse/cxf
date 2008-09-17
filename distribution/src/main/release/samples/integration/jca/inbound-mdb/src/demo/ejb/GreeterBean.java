@@ -16,31 +16,33 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jca.inbound;
+package demo.ejb;
 
-/**
- *
- * DispatchMDBActivationSpec is an {@link javax.resource.spi.ActivationSpec}
- * that activates a CXF service endpoint facade to dispatch call to the target 
- * Stateless Session Bean.
- * 
- */
-public class DispatchMDBActivationSpec extends MDBActivationSpec {
+import javax.ejb.MessageDrivenBean;
+import javax.ejb.MessageDrivenContext;
 
-    private String targetBeanJndiName;
+import org.apache.hello_world_soap_http.Greeter;
 
-    /**
-     * @param targetBeanJndiName 
-     */
-    public void setTargetBeanJndiName(String targetBeanJndiName) {
-        this.targetBeanJndiName = targetBeanJndiName;
+public class GreeterBean implements MessageDrivenBean, Greeter {
+
+    public String sayHi() {
+        System.out.println("sayHi called ");
+        return "Hi there!";
     }
 
-    /**
-     * @return the targetBeanJndiName
-     */
-    public String getTargetBeanJndiName() {
-        return targetBeanJndiName;
+    public String greetMe(String user) {
+        System.out.println("greetMe called user = " + user);
+        return "Hello " + user;
     }
+
+    //---------------- EJB Methods
+    public void ejbCreate() {
+    }
+
+    public void ejbRemove() {
+    }
+
+    public void setMessageDrivenContext(MessageDrivenContext mdc) {
+    }
+
 }
-

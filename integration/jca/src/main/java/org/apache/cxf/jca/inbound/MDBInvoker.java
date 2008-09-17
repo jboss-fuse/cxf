@@ -24,12 +24,15 @@ import org.apache.cxf.message.Exchange;
 import org.apache.cxf.service.invoker.AbstractInvoker;
 
 /**
- * Invoker that supports direct Message Driven Bean invocation.
- * Applications that put service implementation inside the Message 
- * Driven Bean that activates the inbound endpoint facade should
- * choose this invoker.  It is more straightforward and faster than 
- * {@link DispatchMBDInvoker} but it requires to modify Resource
- * Adapter's deployment descriptor.
+ * An invoker that supports direct Message Driven Bean invocation.  
+ * It get invoked in the context of the Message Driven Bean that 
+ * activates the CXF service endpoint facade.  Applications that put 
+ * service implementation inside the Message Driven Bean that activates 
+ * the inbound endpoint facade should choose this invoker.  It is 
+ * more straightforward and faster than {@link DispatchMBDInvoker} but 
+ * it requires to modify resource adapter's deployment descriptor (ra.xml)
+ * as the <messaging-type> needs to be set to the Service Endpoint Interface
+ * (SEI) class.
  */
 public class MDBInvoker extends AbstractInvoker {
 
@@ -55,3 +58,4 @@ public class MDBInvoker extends AbstractInvoker {
     }
 
 }
+

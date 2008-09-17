@@ -28,13 +28,13 @@ import org.apache.cxf.message.Exchange;
 
 /**
  * DispatchMDBInvoker is executed in the context of a Message Driven Bean
- * that dispatches invocation to a Session Bean where the service logic is
+ * that dispatches calls to the target Session Bean where the service logic is
  * implemented.  The target must be a Stateless Session Bean.  Since 
- * DispatchMDBInvoker makes EJB local reference to the target bean, the 
- * Message Driven Bean must be configured to have a local reference to
+ * DispatchMDBInvoker makes EJB local invocation to the target bean, the 
+ * Message Driven Bean must be configured to include a local reference to
  * the target bean in the deployment descriptor.  The advantage of using
- * DispatchMDBInvoker is no modification is required when adding or removing
- * inbound endpoints.
+ * DispatchMDBInvoker is that no modification to the resource adapter's 
+ * deployment descriptor (ra.xml) is required to add or remove inbound endpoints.
  */
 public class DispatchMDBInvoker extends MDBInvoker {
     
@@ -65,3 +65,4 @@ public class DispatchMDBInvoker extends MDBInvoker {
     }
 
 }
+

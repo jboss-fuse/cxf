@@ -16,31 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jca.inbound;
+package demo.ejb;
 
-/**
- *
- * DispatchMDBActivationSpec is an {@link javax.resource.spi.ActivationSpec}
- * that activates a CXF service endpoint facade to dispatch call to the target 
- * Stateless Session Bean.
- * 
- */
-public class DispatchMDBActivationSpec extends MDBActivationSpec {
+import java.rmi.RemoteException;
+import javax.ejb.EJBObject;
 
-    private String targetBeanJndiName;
+public interface GreeterRemote extends EJBObject {
 
-    /**
-     * @param targetBeanJndiName 
-     */
-    public void setTargetBeanJndiName(String targetBeanJndiName) {
-        this.targetBeanJndiName = targetBeanJndiName;
-    }
+    String sayHi() throws RemoteException;
 
-    /**
-     * @return the targetBeanJndiName
-     */
-    public String getTargetBeanJndiName() {
-        return targetBeanJndiName;
-    }
+    String greetMe(String user) throws RemoteException;
+
 }
+
 
