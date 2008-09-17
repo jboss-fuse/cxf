@@ -25,17 +25,17 @@ import javax.ejb.MessageDrivenContext;
 import javax.naming.InitialContext;
 
 /**
- * DispatchMDBMessageListenerImpl supports dispatching of invocation to a 
+ * DispatchMDBMessageListenerImpl supports dispatching of calls to a 
  * Stateless Session Bean.
  *  
  * DispatchMDBMessageListenerImpl is intended to be used as the <ejb-class> of
- * the <message-driven> bean in the deployment descriptor.  When it is used, 
- * the <messaging-type> should be set to 
- * org.apache.cxf.jca.inbound.DispatchMDBMessageListener.  Also, the Resource
- * Adaptor's deployment descriptor should specify the same interface
+ * the <message-driven> bean in the resource adaptor's deployment descriptor
+ * (ra.xml).  When it is used, the <messaging-type> should be set to 
+ * org.apache.cxf.jca.inbound.DispatchMDBMessageListener.  Also, the resource
+ * adaptor's deployment descriptor should specify the same interface
  * (org.apache.cxf.jca.inbound.DispatchMDBMessageListener) in the 
- * <messagelistener-type> in order to properly activate the inbound facade 
- * endpoint.  Since the Message Driven Bean is used to activate the inbound 
+ * <messagelistener-type> in order to activate the inbound facade endpoint.  
+ * Since the Message Driven Bean is used to activate the inbound 
  * endpoint facade by CXF JCA connector, all the required resources (such as, 
  * service endpoint interface class, WSDL, or bus configuration) should be put 
  * in the same jar with the Message Driven Bean. 
@@ -68,3 +68,4 @@ public class DispatchMDBMessageListenerImpl
    
 
 }
+

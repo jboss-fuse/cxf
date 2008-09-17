@@ -38,9 +38,9 @@ import org.apache.cxf.jaxws.JaxWsServerFactoryBean;
 
 /**
  *
- * MDBActivationWork is a type of {@link Work} that to be executed by 
+ * MDBActivationWork is a type of {@link Work} that is executed by 
  * {@link javax.resource.spi.work.WorkManager}.  MDBActivationWork
- * starts an CXF service endpoint which accepts inbound calls for
+ * starts an CXF service endpoint to accept inbound calls for
  * the JCA connector.
  * 
  */
@@ -220,3 +220,4 @@ public class MDBActivationWork implements Work {
         return answer;
     }
 }
+

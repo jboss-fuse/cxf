@@ -165,3 +165,4 @@ public class ResourceAdapterImpl extends ResourceBean implements ResourceAdapter
 
 
 
+

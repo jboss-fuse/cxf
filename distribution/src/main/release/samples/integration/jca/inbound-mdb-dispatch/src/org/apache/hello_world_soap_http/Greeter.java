@@ -16,31 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jca.inbound;
 
-/**
- *
- * DispatchMDBActivationSpec is an {@link javax.resource.spi.ActivationSpec}
- * that activates a CXF service endpoint facade to dispatch call to the target 
- * Stateless Session Bean.
- * 
- */
-public class DispatchMDBActivationSpec extends MDBActivationSpec {
+package org.apache.hello_world_soap_http;
 
-    private String targetBeanJndiName;
+import javax.jws.WebMethod;
+import javax.jws.WebService;
 
-    /**
-     * @param targetBeanJndiName 
-     */
-    public void setTargetBeanJndiName(String targetBeanJndiName) {
-        this.targetBeanJndiName = targetBeanJndiName;
-    }
+@WebService
+public interface Greeter {
 
-    /**
-     * @return the targetBeanJndiName
-     */
-    public String getTargetBeanJndiName() {
-        return targetBeanJndiName;
-    }
+    @WebMethod
+    String sayHi();
+
+    @WebMethod
+    String greetMe(String user);
 }
-
