@@ -360,6 +360,9 @@
                     <execution>
                         <id>process-sources-xsl</id>
                         <phase>process-sources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
                         <configuration>
                             <tasks>
                                 <mkdir dir="${basedir}/target" />
