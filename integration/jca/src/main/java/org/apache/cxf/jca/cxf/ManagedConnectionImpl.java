@@ -197,7 +197,7 @@ public class ManagedConnectionImpl
         return Proxy.newProxyInstance(cri.getInterface().getClassLoader(), classes, 
                                       createInvocationHandler(obj, subject));
     }
-
+       
     private InvocationHandler createInvocationHandler(Object obj, Subject subject) throws ResourceException {
 
         return getHandlerFactory().createHandlers(obj, subject);
