@@ -35,6 +35,7 @@ import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 import org.apache.hello_world_rpclit.GreeterRPCLit;
 import org.apache.hello_world_rpclit.SOAPServiceRPCLit;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class ProviderRPCClientServerTest extends AbstractBusClientServerTestBase {
@@ -44,6 +45,11 @@ public class ProviderRPCClientServerTest extends AbstractBusClientServerTestBase
         assertTrue("server did not launch correctly", launchServer(Server.class, true));
     }
     
+    //
+    // Skipping this test as of 20081003 - update of released sun saaj in
+    // suns maven repo seems to have broken this test.
+    //
+    @Ignore
     @Test
     public void testSWA() throws Exception {
         SOAPFactory soapFac = SOAPFactory.newInstance();
