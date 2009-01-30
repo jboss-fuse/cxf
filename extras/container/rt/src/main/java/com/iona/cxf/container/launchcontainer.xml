@@ -33,6 +33,14 @@
 	    
 	</optionGroup>
 
+	<optionGroup id="options3">
+	    <option id="logging-props" maxOccurs="1">
+		<switch>logging-properties</switch>
+		<associatedArgument placement="afterSpace">
+		</associatedArgument>
+	    </option>
+	</optionGroup>
+
 	<optionGroup id="common_options">
 	    <option id="help" maxOccurs="1">
 		<annotation>Display detailed information for options.</annotation>
