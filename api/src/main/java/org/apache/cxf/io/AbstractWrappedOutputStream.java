@@ -42,7 +42,9 @@ public abstract class AbstractWrappedOutputStream extends OutputStream {
             onFirstWrite();
             written = true;
         }
-        wrappedStream.write(b, off, len);
+        if (wrappedStream != null) {
+            wrappedStream.write(b, off, len);
+        }
     }
 
     protected void onFirstWrite() throws IOException {
@@ -50,11 +52,7 @@ public abstract class AbstractWrappedOutputStream extends OutputStream {
 
     @Override
     public void write(byte[] b) throws IOException {
-        if (!written) {
-            onFirstWrite();
-            written = true;
-        }
-        wrappedStream.write(b);
+        write(b, 0, b.length);
     }
 
     @Override
@@ -63,7 +61,9 @@ public abstract class AbstractWrappedOutputStream extends OutputStream {
             onFirstWrite();
             written = true;
         }
-        wrappedStream.write(b);
+        if (wrappedStream != null) {
+            wrappedStream.write(b);
+        }
     }
     
     @Override
@@ -75,7 +75,7 @@ public abstract class AbstractWrappedOutputStream extends OutputStream {
 
     @Override
     public void flush() throws IOException {
-        if (written) {
+        if (written && wrappedStream != null) {
             wrappedStream.flush();
         }
     }
