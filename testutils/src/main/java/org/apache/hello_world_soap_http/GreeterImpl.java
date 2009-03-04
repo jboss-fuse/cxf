@@ -21,9 +21,12 @@ package org.apache.hello_world_soap_http;
 
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.logging.Logger;
 
+import javax.activation.DataHandler;
 import javax.annotation.Resource;
 
 import javax.jws.WebMethod;
@@ -79,7 +82,19 @@ public class GreeterImpl implements Greeter {
         if ("principal".equals(me)) {
             return "Hello " + getContext().getUserPrincipal().getName();
         }
-        
+        if ("add attachments".equals(me)) {
+            MessageContext msgCtxt = getContext().getMessageContext();
+            Map<String, DataHandler> dataHandlers = 
+                new HashMap<String, DataHandler>();
+            dataHandlers.put("foo", 
+                             new DataHandler("FOO", "text/plain"));
+            dataHandlers.put("bar", 
+                             new DataHandler("BAR", "text/plain"));
+            dataHandlers.put("snafu", 
+                             new DataHandler("SNAFU", "text/plain"));
+            msgCtxt.put(MessageContext.OUTBOUND_MESSAGE_ATTACHMENTS,
+                        dataHandlers);
+        }
         
         LOG.info("Invoking greetMe " + prefix + me);
         invocationCount++;
