@@ -19,7 +19,6 @@
 
 package org.apache.cxf.systest.jaxws;
 
-import java.net.URL;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -27,6 +26,7 @@ import javax.activation.DataHandler;
 import javax.xml.namespace.QName;
 import javax.xml.ws.BindingProvider;
 import javax.xml.ws.handler.MessageContext;
+import javax.xml.ws.soap.SOAPBinding;
 
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
@@ -37,19 +37,15 @@ import org.junit.Test;
 
 public class AttachmentsTest extends AbstractBusClientServerTestBase {
   
-    static final Logger LOG = LogUtils.getLogger(ClientServerTest.class);
+    static final Logger LOG = LogUtils.getLogger(AttachmentsTest.class);
 
-    private final QName portName = new QName("http://apache.org/hello_world_soap_http",
-                                             "SoapPort");
+    private final QName portName = 
+        new QName("http://apache.org/hello_world_soap_http", "SoapPort");
 
     @BeforeClass
     public static void startServers() throws Exception {                    
-        // set up configuration to enable schema validation
-        URL url = ClientServerTest.class.getResource("enable-mtom.xml");
-        assertNotNull("cannot find test resource", url);
-        defaultConfigFileName = url.toString();
-
-        assertTrue("server did not launch correctly", launchServer(Server.class));
+        assertTrue("server did not launch correctly",
+                   launchServer(MtomEnabledServer.class));
     }
 
     @Test
@@ -58,10 +54,12 @@ public class AttachmentsTest extends AbstractBusClientServerTestBase {
         assertNotNull(service);
 
         Greeter greeter = service.getPort(portName, Greeter.class);
+        BindingProvider bp = (BindingProvider)greeter;
+        SOAPBinding binding = (SOAPBinding) bp.getBinding();
+        binding.setMTOMEnabled(true);
 
         greeter.greetMe("add attachments");
 
-        BindingProvider bp = (BindingProvider)greeter;
         Map<String, Object> responseContext = bp.getResponseContext();
         Map dataHandlers = (Map)
             responseContext.get(MessageContext.INBOUND_MESSAGE_ATTACHMENTS);

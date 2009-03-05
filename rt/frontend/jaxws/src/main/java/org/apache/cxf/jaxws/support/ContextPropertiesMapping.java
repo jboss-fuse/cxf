@@ -265,6 +265,7 @@ public final class ContextPropertiesMapping {
     
     public static void updateWebServiceContext(Exchange exchange, MessageContext ctx) {
         //get the context response code and setback to out message
+        System.out.println("\n\n %%% CPM update WSC %%%");
         if (ctx.containsKey(MessageContext.HTTP_RESPONSE_CODE)) {
             exchange.getOutMessage().put(Message.RESPONSE_CODE, ctx.get(MessageContext.HTTP_RESPONSE_CODE));
         }
@@ -282,11 +283,13 @@ public final class ContextPropertiesMapping {
         }
 
         Message out = exchange.getOutMessage();
+        System.out.println("\n\n %%% CPM out: " + out);
         if (out != null) {
             Map<String, Object> map =
                 out.containsKey(MessageContext.OUTBOUND_MESSAGE_ATTACHMENTS)
                 ? out
                 : ctx;
+            System.out.println("\n\n %%% CPM map: " + map);
             Map<String, DataHandler> dataHandlers =
                 CastUtils.cast((Map<?, ?>)map.get(MessageContext.OUTBOUND_MESSAGE_ATTACHMENTS));
             if (dataHandlers != null && !dataHandlers.isEmpty()) {
@@ -296,6 +299,7 @@ public final class ContextPropertiesMapping {
                     out.setAttachments(attachments);
                 }
                 for (Map.Entry<String, DataHandler> entry : dataHandlers.entrySet()) {
+                    System.out.println("%%% CPM adding: " + entry.getKey() + ": " + entry.getValue());
                     Attachment att = new AttachmentImpl(entry.getKey(), entry.getValue());
                     attachments.add(att);
                 }
