@@ -15,10 +15,21 @@ import java.util.List;
 import java.util.Set;
 
 import javax.xml.namespace.QName;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import com.iona.cxf.container.util.ApplicationExploder;
 
 import org.apache.cxf.helpers.IOUtils;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -53,6 +64,7 @@ public class ContainerBeanTest extends Assert {
         String [] appNames = containerBean.listApplicationNames();
         assertEquals(1, appNames.length);
         assertEquals("test", appNames[0]);
+        assertEquals(containerBean.getApplicationState("test"), ApplicationState.STARTED);
 
         String [] appServices = containerBean.listApplicationServices(appNames[0]);
         assertEquals(1, appServices.length);
@@ -85,6 +97,37 @@ public class ContainerBeanTest extends Assert {
         
         String [] appNames = containerBean.listApplicationNames();
         assertEquals(0, appNames.length);
+    }
+    
+    @Test
+    public void testBadSpringFile() throws Exception {
+        copyToRepository("/test.war", "test.war");
+        containerBean.run();
+        String [] appNames = containerBean.listApplicationNames();
+        assertEquals(1, appNames.length);
+        assertEquals("test", appNames[0]);
+        assertEquals(containerBean.getApplicationState("test"), ApplicationState.STARTED);
+        containerBean.shutdown();
+        File f = new File(repository, "test/META-INF/spring/spring.xml");
+        assertTrue(f.exists());
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilder db = dbf.newDocumentBuilder();
+        Document doc = db.parse(f);
+        Element el = doc.createElement("apples");
+        doc.getElementsByTagName("beans").item(0).appendChild(el);
+        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        StreamResult result = new StreamResult(f);
+        DOMSource source = new DOMSource(doc);
+        transformer.transform(source, result);
+        System.out.println("DONE!");
+        containerBean.run();
+        appNames = containerBean.listApplicationNames();
+        assertEquals(1, appNames.length);
+        assertEquals("test", appNames[0]);
+        assertEquals(containerBean.getApplicationState("test"), ApplicationState.FAILED);
+        containerBean.shutdown();
+        
     }
 
     @Ignore

@@ -131,6 +131,8 @@ public final class ContainerBean
                 LogUtils.log(LOG, Level.SEVERE, "APPLICATION_STOP_FAILED", ex, new Object[] {appName});
             }
         }
+
+        applications.clear();
     } 
 
     public void deploy(String location) throws ContainerException {
@@ -224,16 +226,18 @@ public final class ContainerBean
     }
 
     private void deployApplication(File appDir) throws ContainerException {
+        Application app = null;
         try {
             LOG.log(Level.INFO, "EXPLODED_APPLICATION_DIR", new Object[] {appDir});
-            Application app = new Application(appDir.getName(), appDir);
+            app = new Application(appDir.getName(), appDir);
             app.start();
-            applications.put(app.getName(), app);
         } catch (ContainerException ex) {
             throw ex;
-        } catch (Exception ex) {
-            throw new ContainerException(ex);
-        }
+        } finally {
+            if (app != null) {
+                applications.put(app.getName(), app);
+            }
+        }        
     }
 
     public List<Application> getApplications() {
