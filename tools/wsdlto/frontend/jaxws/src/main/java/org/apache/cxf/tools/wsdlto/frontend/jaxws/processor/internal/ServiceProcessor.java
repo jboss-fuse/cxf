@@ -454,9 +454,12 @@ public class ServiceProcessor extends AbstractProcessor {
                             found = true;
                         }
                     }
-                    if (jm.getReturn().getName().equals(soapHeader.getPart())) {
+
+                    if (jm.getReturn().getName() != null 
+                        && jm.getReturn().getName().equals(soapHeader.getPart())) {
                         found = true;
                     }
+
                     if (Boolean.valueOf((String)context.get(ToolConstants.CFG_EXTRA_SOAPHEADER))
                         && !found) {
                         // Header can't be found in java method parameters, in
