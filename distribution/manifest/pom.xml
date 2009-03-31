@@ -31,7 +31,6 @@
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
         <version>2.2.x-fuse-SNAPSHOT</version>
-        <version>2.2</version>
         <relativePath>../../parent</relativePath>
     </parent>
 
