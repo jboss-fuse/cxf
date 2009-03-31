@@ -19,6 +19,8 @@
 
 package org.apache.cxf.service.model;
 
+import java.lang.ref.SoftReference;
+
 import javax.xml.namespace.QName;
 
 import org.w3c.dom.Attr;
@@ -27,21 +29,22 @@ import org.w3c.dom.Element;
 
 import org.apache.cxf.common.WSDLConstants;
 import org.apache.cxf.common.xmlschema.XmlSchemaConstants;
-import org.apache.cxf.helpers.XMLUtils;
-import org.apache.cxf.io.CachedOutputStream;
 import org.apache.ws.commons.schema.XmlSchema;
 import org.apache.ws.commons.schema.XmlSchemaElement;
 import org.apache.ws.commons.schema.XmlSchemaForm;
+import org.apache.ws.commons.schema.XmlSchemaSerializer.XmlSchemaSerializerException;
 import org.apache.ws.commons.schema.utils.NamespaceMap;
 
 public final class SchemaInfo extends AbstractPropertiesHolder {
   
-    String namespaceUri;
-    Element element;
-    boolean isElementQualified;
-    boolean isAttributeQualified;
-    XmlSchema schema;
-    String systemId;
+    private String namespaceUri;
+    private boolean isElementQualified;
+    private boolean isAttributeQualified;
+    private XmlSchema schema;
+    private String systemId;
+    // Avoid re-serializing all the time. Particularly as a cached WSDL will
+    // hold a reference to the element.
+    private SoftReference<Element> cachedElement = new SoftReference<Element>(null);
     
     public SchemaInfo(String namespaceUri) {
         this(namespaceUri, false, false);
@@ -72,59 +75,54 @@ public final class SchemaInfo extends AbstractPropertiesHolder {
         this.namespaceUri = nsUri;
     }
 
+    /**
+     * Build and return a DOM tree for this schema.
+     * @return
+     */
     public synchronized Element getElement() {
-        if (element == null && getSchema() != null) {
-            CachedOutputStream cout = new CachedOutputStream();
-            XmlSchema sch = getSchema();
-            synchronized (sch) {
-                XmlSchema schAgain = getSchema();
-                // XML Schema blows up when the context is null as opposed to empty.
-                // Some unit tests really want to see 'tns:'.
-                if (schAgain.getNamespaceContext() == null) {
-                    NamespaceMap nsMap = new NamespaceMap();
-                    nsMap.add("xsd", XmlSchemaConstants.XSD_NAMESPACE_URI);
-                    nsMap.add("tns", schAgain.getTargetNamespace());
-                    schAgain.setNamespaceContext(nsMap);
-                }
-                schAgain.write(cout);
+        // if someone recently used this DOM tree, take advantage.
+        Element element = cachedElement.get();
+        if (element != null) {
+            return element;
+        }
+        if (getSchema() == null) {
+            throw new RuntimeException("No XmlSchma in SchemaInfo");
+        }
+
+        XmlSchema sch = getSchema();
+        synchronized (sch) {
+            XmlSchema schAgain = getSchema();
+            // XML Schema blows up when the context is null as opposed to empty.
+            // Some unit tests really want to see 'tns:'.
+            if (schAgain.getNamespaceContext() == null) {
+                NamespaceMap nsMap = new NamespaceMap();
+                nsMap.add("xsd", XmlSchemaConstants.XSD_NAMESPACE_URI);
+                nsMap.add("tns", schAgain.getTargetNamespace());
+                schAgain.setNamespaceContext(nsMap);
             }
-            Document sdoc = null;
+            Document serializedSchema;
             try {
-                sdoc = XMLUtils.parse(cout.getInputStream());
-                cout.close();
-            } catch (Exception e1) {
-                return null;
+                serializedSchema = schAgain.getSchemaDocument();
+            } catch (XmlSchemaSerializerException e) {
+                throw new RuntimeException("Error serializing Xml Schema", e);
             }
-            
-            Element e = sdoc.getDocumentElement();
-            // XXX A problem can occur with the ibm jdk when the XmlSchema
-            // object is serialized. The xmlns declaration gets incorrectly
-            // set to the same value as the targetNamespace attribute.
-            // The aegis databinding tests demonstrate this particularly.
-            if (e.getPrefix() == null
-                && !WSDLConstants.NS_SCHEMA_XSD.equals(e.getAttributeNS(WSDLConstants.NS_XMLNS,
-                                                                        WSDLConstants.NP_XMLNS))) {
-                
-                Attr attr = e.getOwnerDocument().createAttributeNS(WSDLConstants.NS_XMLNS, 
-                                                                   WSDLConstants.NP_XMLNS);
-                attr.setValue(WSDLConstants.NS_SCHEMA_XSD);
-                e.setAttributeNodeNS(attr);
-            }
-            setElement(e);
+            element = serializedSchema.getDocumentElement();
+            cachedElement = new SoftReference<Element>(element);
+        }
+        // XXX A problem can occur with the ibm jdk when the XmlSchema
+        // object is serialized. The xmlns declaration gets incorrectly
+        // set to the same value as the targetNamespace attribute.
+        // The aegis databinding tests demonstrate this particularly.
+        if (element.getPrefix() == null
+            && !WSDLConstants.NS_SCHEMA_XSD.equals(element.getAttributeNS(WSDLConstants.NS_XMLNS,
+                                                                    WSDLConstants.NP_XMLNS))) {
+
+            Attr attr = element.getOwnerDocument()
+                .createAttributeNS(WSDLConstants.NS_XMLNS, WSDLConstants.NP_XMLNS);
+            attr.setValue(WSDLConstants.NS_SCHEMA_XSD);
+            element.setAttributeNodeNS(attr);
         }
         return element;
-    }
-
-    public void setElement(Element element) {
-        this.element = element;        
-        String form = element.getAttribute("elementFormDefault");
-        if ((form != null) && form.equals("qualified")) {
-            isElementQualified = true;
-        }
-        form = element.getAttribute("attributeFormDefault");
-        if ((form != null) && form.equals("qualified")) {
-            isAttributeQualified = true;
-        }
     }
 
     public boolean isElementFormQualified() {
@@ -161,5 +159,17 @@ public final class SchemaInfo extends AbstractPropertiesHolder {
             return schema.getElementByName(qname);
         }
         return null;
+    }
+
+    String getNamespaceUri() {
+        return namespaceUri;
+    }
+    
+    boolean isElementQualified() {
+        return isElementQualified;
+    }
+    
+    boolean isAttributeQualified() {
+        return isAttributeQualified;
     }
 }

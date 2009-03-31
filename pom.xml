@@ -38,7 +38,7 @@
     </issueManagement>
 
     <prerequisites>
-        <maven>2.0.5</maven>
+        <maven>2.0.9</maven>
     </prerequisites>
 
     <properties>
