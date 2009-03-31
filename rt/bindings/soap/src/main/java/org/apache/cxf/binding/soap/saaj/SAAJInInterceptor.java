@@ -58,6 +58,7 @@ import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Attachment;
 import org.apache.cxf.phase.Phase;
 import org.apache.cxf.staxutils.StaxUtils;
+import org.apache.cxf.staxutils.W3CDOMStreamWriter;
 
 /**
  * Builds a SAAJ tree from the Document fragment inside the message which contains
@@ -88,8 +89,13 @@ public class SAAJInInterceptor extends AbstractSoapInterceptor {
             SOAPPart part = soapMessage.getSOAPPart();
             
             Document node = (Document) message.getContent(Node.class);
-            DOMSource source = new DOMSource(node);
-            part.setContent(source);
+            if (node == null) {
+                // replicate 2.1 behavior.
+                part.setContent(new DOMSource(null));
+            } else {
+                StaxUtils.copy(node, new W3CDOMStreamWriter(part));
+            }
+
             
             // TODO: setup mime headers
             Collection<Attachment> atts = message.getAttachments();

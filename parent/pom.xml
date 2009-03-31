@@ -1059,6 +1059,12 @@
 		</exclusion>
 	      </exclusions>
 	    </dependency>
+	    <dependency>
+	      <groupId>xerces</groupId>
+	      <artifactId>xercesImpl</artifactId>
+	      <version>2.9.1</version>
+	    </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -1080,6 +1086,12 @@
     </reporting>
 
     <profiles>
+      <profile>
+	<id>validateServices</id>
+	<properties>
+	  <cxf.validateServices>true</cxf.validateServices>
+	</properties>
+      </profile>
         <profile>
             <!-- sjsxp is really the precursor to the jaxp-ri jars.   However, getting the jaxp-ri  jar to work on 
             Java 5 requires endorsing it which is non-trivial in maven  :-(.
@@ -1302,6 +1314,10 @@
                                     <name>java.security.properties</name>
                                     <value>${basedir}/target/test-classes/ibm.security</value>
                                 </property>
+				<property>
+				  <name>cxf.validateServiceSchemas</name>
+				  <value>${cxf.validateServices}</value>
+				</property>
                             </systemProperties>
                         </configuration>
                     </plugin>
