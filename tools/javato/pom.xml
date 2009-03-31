@@ -36,8 +36,8 @@
     </modules>
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/trunk/tools/javato</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/trunk/tools/javato</developerConnection>
+        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/tools/javato</connection>
+        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/tools/javato</developerConnection>
       <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-tools/cxf-tools-javato</url>
   </scm>
 </project>

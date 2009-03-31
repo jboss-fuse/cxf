@@ -406,8 +406,8 @@
         </profile>
     </profiles>
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/trunk/distribution/bundle/all</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/trunk/distribution/bundle/all</developerConnection>
+        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/distribution/bundle/all</connection>
+        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/distribution/bundle/all</developerConnection>
     </scm>
 
 </project>

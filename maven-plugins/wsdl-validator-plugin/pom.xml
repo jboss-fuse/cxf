@@ -59,8 +59,8 @@
     </dependencies>
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/trunk/maven-plugins/wsdl-validator-plugin</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/trunk/maven-plugins/wsdl-validator-plugin</developerConnection>
+        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/maven-plugins/wsdl-validator-plugin</connection>
+        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/maven-plugins/wsdl-validator-plugin</developerConnection>
       <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-parent/cxf-wsdl-validator-plugin</url>
   </scm>
 

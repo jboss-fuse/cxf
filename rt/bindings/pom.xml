@@ -42,8 +42,8 @@
 
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/trunk/rt/bindings</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/trunk/rt/bindings</developerConnection>
+        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/rt/bindings</connection>
+        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/rt/bindings</developerConnection>
       <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-rt/cxf-rt-bindings</url>
   </scm>
 

@@ -86,8 +86,8 @@
     </dependencies>
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/trunk/integration/jbi</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/trunk/integration/jbi</developerConnection>
+        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/integration/jbi</connection>
+        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/integration/jbi</developerConnection>
       <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-parent/cxf-integration-jbi</url>
   </scm>
 </project>

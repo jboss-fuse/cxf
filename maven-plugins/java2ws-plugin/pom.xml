@@ -90,8 +90,8 @@
     </dependencies>
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/trunk/maven-plugins/java2ws-plugin</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/trunk/maven-plugins/java2ws-plugin</developerConnection>
+        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/maven-plugins/java2ws-plugin</connection>
+        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/maven-plugins/java2ws-plugin</developerConnection>
       <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-parent/cxf-java2ws-plugin</url>
   </scm>
 

@@ -76,8 +76,8 @@
 
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/trunk/rt/bindings/object</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/trunk/rt/bindings/object</developerConnection>
+        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/rt/bindings/object</connection>
+        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/rt/bindings/object</developerConnection>
       <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-parent/cxf-rt-bindings-object</url>
   </scm>
 

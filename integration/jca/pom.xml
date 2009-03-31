@@ -127,8 +127,8 @@
 
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/trunk/integration/jca</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/trunk/integration/jca</developerConnection>
+        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/integration/jca</connection>
+        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/integration/jca</developerConnection>
       <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-parent/cxf-integration-jca</url>
   </scm>
 
