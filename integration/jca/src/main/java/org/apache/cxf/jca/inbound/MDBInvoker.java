@@ -18,8 +18,14 @@
  */
 package org.apache.cxf.jca.inbound;
 
-import javax.resource.spi.endpoint.MessageEndpoint;
+import java.util.logging.Logger;
 
+import javax.resource.spi.UnavailableException;
+import javax.resource.spi.endpoint.MessageEndpoint;
+import javax.resource.spi.endpoint.MessageEndpointFactory;
+
+import org.apache.cxf.common.logging.LogUtils;
+import org.apache.cxf.common.util.AbstractTwoStageCache;
 import org.apache.cxf.message.Exchange;
 import org.apache.cxf.service.invoker.AbstractInvoker;
 
@@ -32,26 +38,88 @@ import org.apache.cxf.service.invoker.AbstractInvoker;
  * Adapter's deployment descriptor.
  */
 public class MDBInvoker extends AbstractInvoker {
-
-    private MessageEndpoint messageEndpoint;
+    private static final Logger LOG = LogUtils.getL7dLogger(MDBInvoker.class);
+    private static final int MAX_ATTEMPTS = 5;
+    private static final long RETRY_SLEEP = 5000;
+    private static final int CACHE_SIZE = 10;
+    
+    private final MessageEndpointFactory endpointFactory;
+    private final AbstractTwoStageCache<MessageEndpoint> cache;
 
     /**
      * @param messageEndpoint
      */
-    public MDBInvoker(MessageEndpoint messageEndpoint) {
-        this.messageEndpoint = messageEndpoint;
+    public MDBInvoker(MessageEndpointFactory factory, int cacheSize) throws Exception {
+        endpointFactory = factory;
+        if (cacheSize == 0) {
+            cacheSize = CACHE_SIZE;
+        }
+        cache = new AbstractTwoStageCache<MessageEndpoint>(cacheSize, cacheSize, 0) {
+            public MessageEndpoint create() throws Exception {
+                MessageEndpoint mep = createMessageEndpoint();
+                if (mep == null) {
+                    throw new Exception("Failed to create MessageEndpoint.");                  
+                }
+                
+                return mep;
+            }
+
+            /**
+             * Invokes endpoint factory to create message endpoint (event driven bean).
+             * It will retry if the event driven bean is not yet available.
+             */
+            private MessageEndpoint createMessageEndpoint() {
+                MessageEndpoint ep = null;
+                for (int i = 0; i < MAX_ATTEMPTS; i++) {
+                    try {
+                        ep = endpointFactory.createEndpoint(null);
+                        break;
+                    } catch (UnavailableException e) {
+                        LOG.fine("Target endpoint activation in progress.  Will retry.");
+                        try {
+                            Thread.sleep(RETRY_SLEEP);
+                        } catch (InterruptedException e1) {
+                            // ignore
+                        }
+                    }
+                }
+                
+                return ep;
+            }
+        };
+        
+        cache.populateCache();
+    }
+
+    public void release() {
+        MessageEndpoint mep = cache.poll();
+        while (mep != null) {
+            mep.release();
+            mep = cache.poll();
+        }
     }
 
     /**
      * @return the messageEndpoint
      */
     public MessageEndpoint getMessageEndpoint() {
-        return messageEndpoint;
+        try {
+            return cache.get();
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    protected void recycleEndpoint(MessageEndpoint mep) {
+        boolean wasRecycled = cache.recycle(mep);
+        if (!wasRecycled) {
+            mep.release();
+        }
     }
 
     @Override
     public Object getServiceObject(Exchange context) {
-        return messageEndpoint;
+        return getMessageEndpoint();
     }
 
 }

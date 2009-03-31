@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.resource.spi.UnavailableException;
 import javax.resource.spi.endpoint.MessageEndpoint;
 import javax.resource.spi.endpoint.MessageEndpointFactory;
 import javax.resource.spi.work.Work;
@@ -52,12 +51,10 @@ import org.apache.cxf.jaxws.JaxWsServerFactoryBean;
 public class MDBActivationWork implements Work {
     
     private static final Logger LOG = LogUtils.getL7dLogger(MDBActivationWork.class);
-    private static final int MAX_ATTEMPTS = 5;
-    private static final long RETRY_SLEEP = 5000;
 
     private MDBActivationSpec spec;
     private MessageEndpointFactory endpointFactory;
-    private boolean released;
+    //private boolean released;
 
     private Map<String, InboundEndpoint> endpoints;
 
@@ -70,26 +67,32 @@ public class MDBActivationWork implements Work {
     }
 
     public void release() {
-        released = true;
+        //released = true;
     }
 
     /**
      * Performs the work
      */
     public void run() {
-        // get message driven bean proxy
-        MessageEndpoint endpoint = getMesssageEndpoint();
-        if (endpoint == null) {
-            // error has been logged.
+        MDBInvoker invoker = null;
+        try {
+            invoker = createInvoker();
+        } catch (Exception ex) {
+            LOG.severe("Failed to create invoker for service endpoint " 
+                       + spec.getDisplayName());
             return;
         }
-    
-        // get class loader
-        ClassLoader classLoader = endpoint.getClass().getClassLoader();
+        MessageEndpoint mep = invoker.getMessageEndpoint();
+        if (mep == null) {
+            return;            
+        }
+        ClassLoader classLoader = mep.getClass().getClassLoader();
+        invoker.recycleEndpoint(mep);
+        
         ClassLoader savedClassLoader = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(classLoader);
-            activate(endpoint, classLoader);
+            activate(invoker, classLoader);
         } finally {
             Thread.currentThread().setContextClassLoader(savedClassLoader);
         }
@@ -99,7 +102,7 @@ public class MDBActivationWork implements Work {
      * @param endpoint
      * @param classLoader 
      */
-    private void activate(MessageEndpoint endpoint, ClassLoader classLoader) {
+    private void activate(MDBInvoker invoker, ClassLoader classLoader) {
         Class<?> serviceClass = null;
         if (spec.getServiceInterfaceClass() != null) {
             try {
@@ -128,7 +131,6 @@ public class MDBActivationWork implements Work {
             bus = BusFactory.getDefaultBus();
         }
 
-        MDBInvoker invoker = createInvoker(endpoint);
         Server server = createServer(bus, serviceClass, invoker);
         
         if (server == null) {
@@ -231,49 +233,17 @@ public class MDBActivationWork implements Work {
      * @param endpoint
      * @return
      */
-    private MDBInvoker createInvoker(MessageEndpoint endpoint) {
+    private MDBInvoker createInvoker() throws Exception {
         MDBInvoker answer = null;
+        int cacheSize = spec.getMessageEndpointCacheSize();
         if (spec instanceof DispatchMDBActivationSpec) {
-            answer = new DispatchMDBInvoker(endpoint, 
-                    ((DispatchMDBActivationSpec)spec).getTargetBeanJndiName());
+            answer = new DispatchMDBInvoker(endpointFactory, 
+                    ((DispatchMDBActivationSpec)spec).getTargetBeanJndiName(),
+                    cacheSize);
         } else {
-            answer = new MDBInvoker(endpoint);
+            answer = new MDBInvoker(endpointFactory, cacheSize);
         }
         return answer;
     }
 
-    /**
-     * Invokes endpoint factory to create message endpoint (event driven bean).
-     * It will retry if the event driven bean is not yet available.
-     */
-    private MessageEndpoint getMesssageEndpoint() {
-        MessageEndpoint answer = null;
-        for (int i = 0; i < MAX_ATTEMPTS; i++) {
-            
-            if (released) {
-                LOG.warning("CXF service activation has been stopped.");
-                return null;
-            }
-            
-            try {
-                answer = endpointFactory.createEndpoint(null);
-                break;
-            } catch (UnavailableException e) {
-                LOG.fine("Target endpoint activation in progress.  Will retry.");
-                try {
-                    Thread.sleep(RETRY_SLEEP);
-                } catch (InterruptedException e1) {
-                    // ignore
-                }
-            }
-        }
-        
-        if (answer == null) {
-            LOG.severe("Failed to activate  service endpoint " 
-                    + spec.getDisplayName() 
-                    + " due to unable to endpoint listener.");
-        }
-        
-        return answer;
-    }
 }
