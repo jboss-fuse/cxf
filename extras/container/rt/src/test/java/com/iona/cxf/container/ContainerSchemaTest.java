@@ -29,7 +29,7 @@ public class ContainerSchemaTest extends Assert {
             factory.getBean("container1");
             fail("Incorrect repositoy location should cause Exception.");
         } catch (Exception ex) {
-            assertTrue(ex.getMessage().indexOf("x1/repository") >= 0);
+            assertTrue(ex.getMessage().indexOf("Repository location does not exist") >= 0);
         }
     }
 
