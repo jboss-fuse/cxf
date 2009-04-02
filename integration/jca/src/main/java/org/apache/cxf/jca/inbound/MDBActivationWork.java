@@ -74,14 +74,7 @@ public class MDBActivationWork implements Work {
      * Performs the work
      */
     public void run() {
-        MDBInvoker invoker = null;
-        try {
-            invoker = createInvoker();
-        } catch (Exception ex) {
-            LOG.severe("Failed to create invoker for service endpoint " 
-                       + spec.getDisplayName());
-            return;
-        }
+        MDBInvoker invoker = createInvoker();
         MessageEndpoint mep = invoker.getMessageEndpoint();
         if (mep == null) {
             return;            
@@ -233,7 +226,7 @@ public class MDBActivationWork implements Work {
      * @param endpoint
      * @return
      */
-    private MDBInvoker createInvoker() throws Exception {
+    private MDBInvoker createInvoker() {
         MDBInvoker answer = null;
         if (spec instanceof DispatchMDBActivationSpec) {
             answer = new DispatchMDBInvoker(endpointFactory, 

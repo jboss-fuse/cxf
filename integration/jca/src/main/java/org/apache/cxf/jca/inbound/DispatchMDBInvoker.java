@@ -46,8 +46,7 @@ public class DispatchMDBInvoker extends MDBInvoker {
     /**
      * @param messageEndpoint
      */
-    public DispatchMDBInvoker(MessageEndpointFactory factory, String targetJndiName) 
-        throws Exception {
+    public DispatchMDBInvoker(MessageEndpointFactory factory, String targetJndiName) {
         super(factory);
         this.targetJndiName = targetJndiName;
     }
