@@ -82,7 +82,6 @@ public class InboundEndpoint {
      */
     public void shutdown() throws Exception {
         if (invoker != null) {
-            invoker.release();
             invoker = null;
         }
         

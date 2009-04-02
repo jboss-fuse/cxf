@@ -39,7 +39,7 @@ public class MDBActivationSpec implements ActivationSpec {
     private String endpointName;
     private String serviceName;
     private String displayName;
-    private int messageEndpointCacheSize;    
+
     /**
      * Gets the transport address used by 
      * {@link org.apache.cxf.frontend.ServerFactoryBean}.
@@ -114,14 +114,6 @@ public class MDBActivationSpec implements ActivationSpec {
     }
 
     /**
-     *
-     * @return size of cache for MessageEndpoint objects
-     */
-    public int getMessageEndpointCacheSize() {
-        return messageEndpointCacheSize;
-    }
-
-    /**
      * Sets the transport address used by 
      * {@link org.apache.cxf.frontend.ServerFactoryBean}.
      * 
@@ -192,14 +184,6 @@ public class MDBActivationSpec implements ActivationSpec {
      */
     public void setWsdlLocation(String wsdlLocation) {
         this.wsdlLocation = wsdlLocation;
-    }
-
-    /**
-     * 
-     * @param mepCacheSize size of cache of MessageEndpoints
-     */
-    public void setMessageEndpointCacheSize(int mepCacheSize) {
-        messageEndpointCacheSize = mepCacheSize;
     }
 
     /**

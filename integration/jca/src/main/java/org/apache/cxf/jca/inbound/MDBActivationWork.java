@@ -235,14 +235,13 @@ public class MDBActivationWork implements Work {
      */
     private MDBInvoker createInvoker() throws Exception {
         MDBInvoker answer = null;
-        int cacheSize = spec.getMessageEndpointCacheSize();
         if (spec instanceof DispatchMDBActivationSpec) {
             answer = new DispatchMDBInvoker(endpointFactory, 
-                    ((DispatchMDBActivationSpec)spec).getTargetBeanJndiName(),
-                    cacheSize);
+                    ((DispatchMDBActivationSpec)spec).getTargetBeanJndiName());
         } else {
-            answer = new MDBInvoker(endpointFactory, cacheSize);
+            answer = new MDBInvoker(endpointFactory);
         }
+
         return answer;
     }
 
