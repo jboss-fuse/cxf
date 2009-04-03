@@ -54,7 +54,6 @@ public class MDBActivationWork implements Work {
 
     private MDBActivationSpec spec;
     private MessageEndpointFactory endpointFactory;
-    //private boolean released;
 
     private Map<String, InboundEndpoint> endpoints;
 
@@ -67,7 +66,7 @@ public class MDBActivationWork implements Work {
     }
 
     public void release() {
-        //released = true;
+
     }
 
     /**
@@ -79,15 +78,19 @@ public class MDBActivationWork implements Work {
         if (mep == null) {
             return;            
         }
-        ClassLoader classLoader = mep.getClass().getClassLoader();
-        invoker.recycleEndpoint(mep);
-        
-        ClassLoader savedClassLoader = Thread.currentThread().getContextClassLoader();
+
+        ClassLoader savedClassLoader = null;        
+
         try {
+            savedClassLoader = Thread.currentThread().getContextClassLoader();
+            ClassLoader classLoader = mep.getClass().getClassLoader();
             Thread.currentThread().setContextClassLoader(classLoader);
             activate(invoker, classLoader);
         } finally {
-            Thread.currentThread().setContextClassLoader(savedClassLoader);
+            invoker.releaseEndpoint(mep);
+            if (savedClassLoader != null) {
+                Thread.currentThread().setContextClassLoader(savedClassLoader);
+            }
         }
     }
     

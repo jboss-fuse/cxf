@@ -54,7 +54,7 @@ public class MDBInvoker extends AbstractInvoker {
         return createMessageEndpoint();
     }
 
-    protected void recycleEndpoint(MessageEndpoint mep) {
+    protected void releaseEndpoint(MessageEndpoint mep) {
         mep.release();
     }
 
@@ -66,7 +66,7 @@ public class MDBInvoker extends AbstractInvoker {
     public void releaseServiceObject(final Exchange context, Object obj) {
         if (obj instanceof MessageEndpoint) {
             MessageEndpoint mep = (MessageEndpoint)obj;
-            recycleEndpoint(mep);
+            releaseEndpoint(mep);
         }
     }
 

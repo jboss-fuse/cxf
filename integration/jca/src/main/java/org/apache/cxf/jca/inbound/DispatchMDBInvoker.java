@@ -55,6 +55,12 @@ public class DispatchMDBInvoker extends MDBInvoker {
     public Object getServiceObject(Exchange context) {
         Object target = null;
         MessageEndpoint ep = getMessageEndpoint();
+
+        if (ep == null) {
+            LOG.log(Level.SEVERE, "Failed to obtain MessageEndpoint");
+            return null;
+        }
+
         try {
             target = ((DispatchMDBMessageListener)ep)
                 .lookupTargetObject(targetJndiName);
@@ -62,10 +68,14 @@ public class DispatchMDBInvoker extends MDBInvoker {
             LOG.log(Level.SEVERE, "Failed to obtain service object " + targetJndiName, e);
             return null;
         } finally {
-            recycleEndpoint(ep);
+            releaseEndpoint(ep);
         }
         
         return target;
+    }
+
+    public void releaseServiceObject(final Exchange context, Object obj) {
+
     }
 
 }
