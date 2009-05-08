@@ -166,6 +166,7 @@ public final class JMSFactory {
         if (jmsConfig.getTaskExecutor() != null) {
             jmsListener.setTaskExecutor(jmsConfig.getTaskExecutor());
         } 
+        
         if (jmsConfig.isAutoResolveDestination()) {
             jmsListener.setDestinationName(destinationName);
         } else {
