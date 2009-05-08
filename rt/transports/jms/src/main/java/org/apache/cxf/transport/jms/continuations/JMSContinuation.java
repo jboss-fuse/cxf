@@ -149,7 +149,7 @@ public class JMSContinuation implements Continuation {
     protected void cancelTimerTask() {
         if (timer != null) {
             timer.cancel();
-            timer.cancel();
+            timer = null;
         }
     }
     
