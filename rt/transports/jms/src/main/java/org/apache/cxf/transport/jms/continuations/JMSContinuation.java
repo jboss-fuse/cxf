@@ -158,7 +158,6 @@ public class JMSContinuation implements Continuation {
         if (jmsConfig.getMaxSuspendedContinuations() < 0
                 || jmsListener.getCacheLevel() >= DefaultMessageListenerContainer.CACHE_CONSUMER) {
             modifyList(remove);
-            modifyList(remove);
             return;
         }
         
