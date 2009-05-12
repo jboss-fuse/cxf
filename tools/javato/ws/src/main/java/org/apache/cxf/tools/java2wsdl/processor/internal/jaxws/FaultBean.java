@@ -66,7 +66,13 @@ public final class FaultBean {
         buildBeanFields(exceptionClass, jClass);
 
         String pkg = PackageUtils.getPackageName(exceptionClass);
-        jClass.setElementName(new QName(URIParserUtil.getNamespace(pkg),
+        if (pkg.length() > 0) {
+            jClass.setElementName(new QName(URIParserUtil.getNamespace(pkg),
+                                        exceptionClass.getSimpleName()));
+        } else {
+            jClass.setElementName(new QName(URIParserUtil.getNamespace(ToolConstants.DEFAULT_PACKAGE_NAME),
+                                        exceptionClass.getSimpleName()));
+        }
         
         jClass.annotate(new WrapperBeanAnnotator());
         
