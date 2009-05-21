@@ -303,8 +303,8 @@
 
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/branches/2.0.x-fixes/distribution/bundle/minimal</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/branches/2.0.x-fixes/distribution/bundle/minimal</developerConnection>
+        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.0.x-fuse/distribution/bundle/minimal</connection>
+        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.0.x-fuse/distribution/bundle/minimal</developerConnection>
     </scm>
 
 </project>

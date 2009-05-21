@@ -91,9 +91,10 @@
 
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/incubator/cxf/branches/2.0.x-fixes/rt/bindings/soap</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/incubator/cxf/branches/2.0.x-fixes/rt/bindings/soap</developerConnection>
-    </scm>
+        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.0.x-fuse/rt/bindings/soap</connection>
+        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.0.x-fuse/rt/bindings/soap</developerConnection>
+      <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-parent/cxf-rt-bindings-soap</url>
+  </scm>
 
     <profiles>
         <profile>
