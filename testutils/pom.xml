@@ -288,8 +288,8 @@
 
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/testutils</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/testutils</developerConnection>
+        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk/testutils</connection>
+        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk/testutils</developerConnection>
       <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-parent/cxf-testutils</url>
   </scm>
 

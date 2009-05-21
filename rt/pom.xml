@@ -56,8 +56,8 @@
     </modules>
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/rt</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/rt</developerConnection>
+        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk/rt</connection>
+        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk/rt</developerConnection>
       <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-rt</url>
   </scm>
 

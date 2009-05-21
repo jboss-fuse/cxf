@@ -182,8 +182,8 @@
     </dependencies>
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/rt/ws/security</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/rt/ws/security</developerConnection>
+        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk/rt/ws/security</connection>
+        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk/rt/ws/security</developerConnection>
       <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-parent/cxf-rt-ws-security</url>
   </scm>
 

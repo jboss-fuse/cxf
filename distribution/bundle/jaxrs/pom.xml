@@ -212,8 +212,8 @@
 
    
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/distribution/bundle/jaxrs</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/distribution/bundle/jaxrs</developerConnection>
+        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk/distribution/bundle/jaxrs</connection>
+        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk/distribution/bundle/jaxrs</developerConnection>
     </scm>
 
 </project>

@@ -23,18 +23,18 @@
     <artifactId>cxf</artifactId>
     <version>2.2.x-fuse-SNAPSHOT</version>
     <name>FUSE Services Framework</name>
-    <url>http://open.iona.com/products/fuse-services-framework/</url>
+    <url>http://fusesource.com/forge/projects/FUSESF</url>
 
     <packaging>pom</packaging>
 
     <scm>
-        <connection>scm:svn:http://projects.open.iona.com/projects/svn/iona/cxf/trunk</connection>
-        <developerConnection>scm:svn:https://projects.open.iona.com/projects/svn/iona/cxf/trunk</developerConnection>
+        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk</connection>
+        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk</developerConnection>
         <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk</url>
     </scm>
     <issueManagement>
         <system>jira</system>
-        <url>http://open.iona.com/issues/browse/SF</url>
+        <url>http://fusesource.com/issues/browse/SF</url>
     </issueManagement>
 
     <prerequisites>
@@ -42,22 +42,22 @@
     </prerequisites>
 
     <properties>
-         <release-repo-url>scpexe://repo.open.iona.com/www/repo.open.iona.com/maven2</release-repo-url>
-         <snapshot-repo-url>scpexe://repo.open.iona.com/www/repo.open.iona.com/maven2-snapshot</snapshot-repo-url>
-         <m1-repo-url>scpexe://repo.open.iona.com/www/repo.open.iona.com/maven1</m1-repo-url>
+         <release-repo-url>scpexe://repo.fusesource.com/www/repo.fusesource.com/maven2</release-repo-url>
+         <snapshot-repo-url>scpexe://repo.fusesource.com/www/repo.fusesource.com/maven2-snapshot</snapshot-repo-url>
+         <m1-repo-url>scpexe://repo.fusesource.com/www/repo.fusesource.com/maven1</m1-repo-url>
          <compiler.fork>false</compiler.fork>
      </properties>
 
      <distributionManagement>
        <repository>
-         <id>open.iona.m2</id>
-         <name>IONA Open Source Community Release Repository</name>
+         <id>fusesource.m2</id>
+         <name>FUSESource Community Release Repository</name>
          <url>${release-repo-url}</url>
          <uniqueVersion>false</uniqueVersion>
        </repository>
        <snapshotRepository>
-         <id>open.iona.m2-snapshot</id>
-         <name>IONA Open Source Community Snapshot Repository</name>
+         <id>fusesource.m2-snapshot</id>
+         <name>FUSESource Community Snapshot Repository</name>
          <url>${snapshot-repo-url}</url>
          <uniqueVersion>false</uniqueVersion>
        </snapshotRepository>
@@ -115,20 +115,6 @@
             <archive>http://mail-archives.apache.org/mod_mbox/cxf-notifications</archive>
         </mailingList>
     </mailingLists>
-    <ciManagement>
-        <system>CruiseControl</system>
-        <url>http://pdceltix.boston.amer.iona.com:8080/cruisecontrol</url>
-        <!-- HC: We are not really going to notify an apache email list are we???
-        <notifiers>
-            <notifier>
-                <type>mail</type>
-                <configuration>
-                    <address>notifications@cxf.apache.org</address>
-                </configuration>
-            </notifier>
-        </notifiers>
-      -->
-    </ciManagement>
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
@@ -163,8 +149,8 @@
             <distributionManagement>
                 <snapshotRepository>
                     <uniqueVersion>true</uniqueVersion>
-                    <id>iona-snapshot</id>
-                    <name>IONA Maven Snapshot Repository</name>
+                    <id>fusesource-snapshot</id>
+                    <name>FUSESource Maven Snapshot Repository</name>
                     <url>${snapshot-repo-url}</url>
                 </snapshotRepository>
             </distributionManagement>
@@ -414,7 +400,7 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-release-plugin</artifactId>
                     <configuration>
-                        <tagBase>https://projects.open.iona.com/projects/svn/iona/cxf/tags/</tagBase>
+                        <tagBase>http://fusesource.com/forge/svn/fusesf/tags/</tagBase>
                         <useReleaseProfile>false</useReleaseProfile>
                         <preparationGoals>clean install</preparationGoals>
                         <goals>deploy</goals>
