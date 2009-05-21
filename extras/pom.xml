@@ -5,7 +5,7 @@
     <packaging>pom</packaging>
     <name>FUSE Extras</name>
     <version>2.1.x-fuse-SNAPSHOT</version>
-    <url>http://open.iona.com/products/fuse-services-framework/</url>
+    <url>http://fusesource.com/forge/projects/FUSESF</url>
 
     <parent>
         <groupId>org.apache.cxf</groupId>
@@ -16,13 +16,13 @@
     <licenses>
         <license>
             <name>FUSE Services Framework v.2.0 License Agreement</name>
-            <url>http://open.iona.com/downloads/license-agreements/fuse-services-framework-v-2-0-license-agreement/</url>
+            <url>http://fusesource.com/downloads/license-agreements/fuse-services-framework-v-2-0-license-agreement</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
     <organization>
-        <name>IONA Technologies, PLC</name>
-        <url>http://www.iona.com/</url>
+        <name>Progress Software</name>
+        <url>http://www.progress.com/</url>
     </organization>
 
     <modules>

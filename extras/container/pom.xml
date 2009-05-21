@@ -5,7 +5,7 @@
     <packaging>pom</packaging>
     <name>FUSE Spring Container</name>
     <version>2.1.x-fuse-SNAPSHOT</version>
-    <url>http://open.iona.com/products/fuse-services-framework/</url>
+    <url>http://fusesource.com/forge/projects/FUSESF</url>
 
     <parent>
         <groupId>com.iona.fuse.cxf</groupId>

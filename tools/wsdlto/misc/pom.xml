@@ -119,8 +119,8 @@
     </dependencies>
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/trunk/tools/wsdlto/misc</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/trunk/tools/wsdlto/misc</developerConnection>
+        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.1.x-fuse/tools/wsdlto/misc</connection>
+        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.1.x-fuse/tools/wsdlto/misc</developerConnection>
       <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-parent/cxf-tools-misctools</url>
   </scm>
 
