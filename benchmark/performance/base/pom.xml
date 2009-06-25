@@ -25,7 +25,7 @@
     <name>Apache CXF Benchmark Base</name>
     <url>http://cxf.apache.org</url>
     <properties>
-        <cxf.version>2.2.x-fuse-SNAPSHOT</cxf.version>
+        <cxf.version>2.2.2.0-fuse</cxf.version>
     </properties>
 
     <build>
