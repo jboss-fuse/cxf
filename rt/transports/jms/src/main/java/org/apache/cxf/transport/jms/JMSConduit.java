@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.MessageListener;
 import javax.jms.Session;
@@ -104,28 +105,38 @@ public class JMSConduit extends AbstractConduit implements JMSExchangeSender, Me
             throw new RuntimeException("Exchange to be sent has no outMessage");
         }
 
-        JMSMessageHeadersType headers = (JMSMessageHeadersType)outMessage
+        final JMSMessageHeadersType headers = (JMSMessageHeadersType)outMessage
             .get(JMSConstants.JMS_CLIENT_REQUEST_HEADERS);
 
-        JmsTemplate jmsTemplate = JMSFactory.createJmsTemplate(jmsConfig, headers);
+        final JmsTemplate jmsTemplate = JMSFactory.createJmsTemplate(jmsConfig, headers);
         if (!exchange.isOneWay() && jmsListener == null) {
             jmsListener = JMSFactory.createJmsListener(jmsConfig, this, jmsConfig.getReplyDestination(), 
                                                        conduitId);
         }
         
         final javax.jms.Destination replyTo = exchange.isOneWay() ? null : jmsListener.getDestination();
-
+        
         final String correlationId = (headers != null && headers.isSetJMSCorrelationID()) 
             ? headers.getJMSCorrelationID() 
             : JMSUtils.createCorrelationId(jmsConfig.getConduitSelectorPrefix() + conduitId, 
                                            messageCount.incrementAndGet());
-            
+        
         MessageCreator messageCreator = new MessageCreator() {
             public javax.jms.Message createMessage(Session session) throws JMSException {
                 String messageType = jmsConfig.getMessageType();
                 final javax.jms.Message jmsMessage;
+                Destination replyToDestination = replyTo;
+                if (exchange.isOneWay() && !jmsConfig.isEnforceSpec()) {
+                    final String contextReplyToName = (headers != null) ? headers.getJMSReplyTo() : null;
+                    if (contextReplyToName != null) {
+                        replyToDestination = 
+                            JMSFactory.resolveOrCreateDestination(jmsTemplate, 
+                                                                  contextReplyToName, 
+                                                                  jmsConfig.isPubSubDomain());
+                    }
+                }
                 jmsMessage = JMSUtils.buildJMSMessageFromCXFMessage(outMessage, request, messageType,
-                                                                    session, replyTo,
+                                                                    session, replyToDestination,
                                                                     correlationId);
                 LOG.log(Level.FINE, "client sending request: ", jmsMessage);
                 return jmsMessage;

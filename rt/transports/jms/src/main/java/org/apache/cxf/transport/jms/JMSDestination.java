@@ -174,6 +174,7 @@ public class JMSDestination extends AbstractMultiplexDestination implements Mess
             inMessage.setContent(InputStream.class, new ByteArrayInputStream(request));
             inMessage.put(JMSConstants.JMS_SERVER_RESPONSE_HEADERS, new JMSMessageHeadersType());
             inMessage.put(JMSConstants.JMS_REQUEST_MESSAGE, message);
+            inMessage.put(Message.SKIP_PRE_REQUEST_ACK, Boolean.TRUE);
             inMessage.setDestination(this);
 
             inMessage.put(ContinuationProvider.class.getName(), 

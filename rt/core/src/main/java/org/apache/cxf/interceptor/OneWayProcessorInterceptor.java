@@ -49,24 +49,24 @@ public class OneWayProcessorInterceptor extends AbstractPhaseInterceptor<Message
         if (message.getExchange().isOneWay() 
             && !MessageUtils.isRequestor(message)
             && message.get(OneWayProcessorInterceptor.class) == null
-            && message.getExchange().get(Executor.class) == null) { 
-            //one way on server side, fork the rest of this chain onto the
-            //workqueue, call the Outgoing chain directly.
+            && message.getExchange().get(Executor.class) == null
+            && !isSkipRequestAck(message)) { 
+            //one way on server side with pre-request ack required, 
+            // so fork the rest of this chain onto the
+            // workqueue, call the Outgoing chain directly.
             
             message.put(OneWayProcessorInterceptor.class, this);
             final InterceptorChain chain = message.getInterceptorChain();
-            
             try {
                 Message partial = createMessage(message.getExchange());
                 partial.setExchange(message.getExchange());
                 Conduit conduit = message.getExchange().getDestination()
-                    .getBackChannel(message, null, null);
+                        .getBackChannel(message, null, null);
                 conduit.prepare(partial);
                 conduit.close(partial);
             } catch (IOException e) {
-                //IGNORE
+                // IGNORE
             }
-            
             
             chain.pause();
             message.getExchange().get(Bus.class).getExtension(WorkQueueManager.class)
@@ -87,5 +87,13 @@ public class OneWayProcessorInterceptor extends AbstractPhaseInterceptor<Message
         return msg;
     }
 
-
+    /**
+     * @param message the current message
+     * @returned true if server does not need to 
+     * send a acknowledgment response to the client's one-way request
+     */
+    protected static boolean isSkipRequestAck(Message message) {
+        Boolean ret = (Boolean)message.get(Message.SKIP_PRE_REQUEST_ACK);
+        return ret != null && ret.booleanValue();
+    }
 }

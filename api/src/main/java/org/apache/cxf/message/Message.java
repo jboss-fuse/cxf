@@ -38,6 +38,9 @@ public interface Message extends StringMap {
     String ASYNC_POST_RESPONSE_DISPATCH =
         "org.apache.cxf.async.post.response.dispatch";
 
+    String SKIP_PRE_REQUEST_ACK =
+        "org.apache.cxf.pre.request.ack";
+
     String DECOUPLED_CHANNEL_MESSAGE = "decoupled.channel.message";
     String PARTIAL_RESPONSE_MESSAGE = "org.apache.cxf.partial.response";
     
