@@ -856,7 +856,7 @@ public abstract class AbstractBindingBuilder {
                                                             el.getNamespaceURI(), 
                                                             "Content",
                                                             WSConstants.PART_TYPE_ELEMENT);
-                            part.setXpath(expression);
+                            //part.setXpath(expression);
                             result.add(part);
                         } else {
                             WSEncryptionPart encryptedElem = new WSEncryptionPart(el.getLocalName(),
@@ -864,7 +864,7 @@ public abstract class AbstractBindingBuilder {
                                                                                   "Element",
                                                                                   WSConstants
                                                                                       .PART_TYPE_ELEMENT);
-                            encryptedElem.setXpath(expression);
+                            //encryptedElem.setXpath(expression);
                             String wsuId = el.getAttributeNS(WSConstants.WSU_NS, "Id");
                             
                             if (!StringUtils.isEmpty(wsuId)) {
@@ -895,7 +895,7 @@ public abstract class AbstractBindingBuilder {
                                                                               "Content",
                                                                               WSConstants
                                                                                   .PART_TYPE_ELEMENT);
-                        encryptedElem.setXpath(expression);
+                        //encryptedElem.setXpath(expression);
                         String wsuId = el.getAttributeNS(WSConstants.WSU_NS, "Id");
                         
                         if (!StringUtils.isEmpty(wsuId)) {
