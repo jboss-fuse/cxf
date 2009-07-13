@@ -29,6 +29,7 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -47,13 +48,10 @@ import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
 
 import org.apache.cxf.Bus;
-import org.apache.cxf.BusFactory;
 import org.apache.cxf.common.i18n.BundleUtils;
 import org.apache.cxf.common.logging.LogUtils;
-import org.apache.cxf.common.util.ModCountCopyOnWriteArrayList;
 import org.apache.cxf.endpoint.ConduitSelector;
 import org.apache.cxf.endpoint.Endpoint;
-import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.interceptor.Interceptor;
 import org.apache.cxf.jaxrs.impl.MetadataMap;
 import org.apache.cxf.jaxrs.impl.UriBuilderImpl;
@@ -74,24 +72,20 @@ import org.apache.cxf.transport.MessageObserver;
  * Common proxy and http-centric client implementation
  *
  */
-public class AbstractClient implements Client, InvocationHandlerAware {
-
+public class AbstractClient implements Client {
     private static final Logger LOG = LogUtils.getL7dLogger(AbstractClient.class);
     private static final ResourceBundle BUNDLE = BundleUtils.getBundle(AbstractClient.class);
+    private static final String REQUEST_CONTEXT = "RequestContext";
+    private static final String RESPONSE_CONTEXT = "ResponseContext";
     
-    protected List<Interceptor> inInterceptors = new ModCountCopyOnWriteArrayList<Interceptor>();
-    protected List<Interceptor> outInterceptors = new ModCountCopyOnWriteArrayList<Interceptor>();
-    protected ConduitSelector conduitSelector;
-    protected Bus bus;
-
+    protected ClientConfiguration cfg = new ClientConfiguration();
+    
     private MultivaluedMap<String, String> requestHeaders = new MetadataMap<String, String>();
     private ResponseBuilder responseBuilder;
     
     private URI baseURI;
     private UriBuilder currentBuilder;
 
-    
-    
     protected AbstractClient(URI baseURI, URI currentURI) {
         this.baseURI = baseURI;
         this.currentBuilder = new UriBuilderImpl(currentURI);
@@ -297,7 +291,7 @@ public class AbstractClient implements Client, InvocationHandlerAware {
         currentBuilder = new UriBuilderImpl(uri);
     }
     
-    protected ResponseBuilder setResponseBuilder(HttpURLConnection conn) throws Throwable {
+    protected ResponseBuilder setResponseBuilder(HttpURLConnection conn, Message inMessage) throws Throwable {
         
         if (conn == null) {
             throw new WebApplicationException(); 
@@ -321,18 +315,21 @@ public class AbstractClient implements Client, InvocationHandlerAware {
                 }
             }
         }
+        InputStream mStream = null;
+        if (inMessage != null) {
+            mStream = inMessage.getContent(InputStream.class);
+        }
         if (status >= 400) {
             try {
-                InputStream errorStream = conn.getErrorStream();
-                if (errorStream != null) {
-                    responseBuilder.entity(IOUtils.readStringFromStream(errorStream));
-                }
+                InputStream errorStream = mStream == null ? conn.getErrorStream() : mStream;
+                responseBuilder.entity(errorStream);
             } catch (Exception ex) {
                 // nothing we can do really
             }
         } else {
             try {
-                responseBuilder.entity(conn.getInputStream());
+                InputStream stream = mStream == null ? conn.getInputStream() : mStream;
+                responseBuilder.entity(stream);
             } catch (Exception ex) {
                 // it may that the successful response has no response body
             }
@@ -371,13 +368,21 @@ public class AbstractClient implements Client, InvocationHandlerAware {
     }
     
     @SuppressWarnings("unchecked")
-    protected Object readBody(Response r, HttpURLConnection conn, Message inMessage, 
-                              Class<?> cls, Type type, Annotation[] anns) {
+    protected Object readBody(Response r, HttpURLConnection conn, Message inMessage, Class<?> cls, 
+                              Type type, Annotation[] anns) {
 
+        InputStream inputStream = (InputStream)r.getEntity();
+        if (inputStream == null) {
+            return cls == Response.class ? cls : null;
+        }
         try {
             int status = conn.getResponseCode();
             if (status < 200 || status == 204 || status > 300) {
-                return null;
+                Object length = r.getMetadata().getFirst(HttpHeaders.CONTENT_LENGTH);
+                if (length == null || Integer.parseInt(length.toString()) == 0
+                    || status >= 400) {
+                    return cls == Response.class ? cls : null;
+                }
             }
         } catch (IOException ex) {
             // won't happen at this stage
@@ -394,8 +399,7 @@ public class AbstractClient implements Client, InvocationHandlerAware {
         if (mbr != null) {
             try {
                 return mbr.readFrom(cls, type, anns, contentType, 
-                       new MetadataMap<String, Object>(r.getMetadata(), true, true), 
-                       (InputStream)r.getEntity());
+                       new MetadataMap<String, Object>(r.getMetadata(), true, true), inputStream);
             } catch (Exception ex) {
                 throw new WebApplicationException();
             }
@@ -480,32 +484,32 @@ public class AbstractClient implements Client, InvocationHandlerAware {
         }
     }
     
-    protected void setConduitSelector(ConduitSelector cs) {
-        this.conduitSelector = cs;
+    protected ClientConfiguration getConfiguration() {
+        return cfg;
     }
     
-    protected void setBus(Bus bus) {
-        this.bus = bus;
+    protected void setConfiguration(ClientConfiguration config) {
+        cfg = config;
     }
     
     protected void prepareConduitSelector(Message message) {
-        conduitSelector.prepare(message);
-        message.getExchange().put(ConduitSelector.class, conduitSelector);
+        cfg.getConduitSelector().prepare(message);
+        message.getExchange().put(ConduitSelector.class, cfg.getConduitSelector());
     }
     
-    protected PhaseInterceptorChain setupOutInterceptorChain(Endpoint endpoint) { 
-        PhaseManager pm = bus.getExtension(PhaseManager.class);
-        List<Interceptor> i1 = bus.getOutInterceptors();
-        List<Interceptor> i2 = outInterceptors;
-        List<Interceptor> i3 = endpoint.getOutInterceptors();
+    protected static PhaseInterceptorChain setupOutInterceptorChain(ClientConfiguration cfg) { 
+        PhaseManager pm = cfg.getBus().getExtension(PhaseManager.class);
+        List<Interceptor> i1 = cfg.getBus().getOutInterceptors();
+        List<Interceptor> i2 = cfg.getOutInterceptors();
+        List<Interceptor> i3 = cfg.getConduitSelector().getEndpoint().getOutInterceptors();
         return new PhaseChainCache().get(pm.getOutPhases(), i1, i2, i3);
     }
     
-    protected PhaseInterceptorChain setupInInterceptorChain(Endpoint endpoint) { 
-        PhaseManager pm = bus.getExtension(PhaseManager.class);
-        List<Interceptor> i1 = bus.getInInterceptors();
-        List<Interceptor> i2 = inInterceptors;
-        List<Interceptor> i3 = endpoint.getInInterceptors();
+    protected static PhaseInterceptorChain setupInInterceptorChain(ClientConfiguration cfg) { 
+        PhaseManager pm = cfg.getBus().getExtension(PhaseManager.class);
+        List<Interceptor> i1 = cfg.getBus().getInInterceptors();
+        List<Interceptor> i2 = cfg.getInInterceptors();
+        List<Interceptor> i3 = cfg.getConduitSelector().getEndpoint().getInInterceptors();
         return new PhaseChainCache().get(pm.getInPhases(), i1, i2, i3);
     }
     
@@ -518,7 +522,7 @@ public class AbstractClient implements Client, InvocationHandlerAware {
     protected Message createMessage(String httpMethod, 
                                     MultivaluedMap<String, String> headers,
                                     URI currentURI) {
-        Message m = conduitSelector.getEndpoint().getBinding().createMessage();
+        Message m = cfg.getConduitSelector().getEndpoint().getBinding().createMessage();
         m.put(Message.REQUESTOR_ROLE, Boolean.TRUE);
         m.put(Message.INBOUND_MESSAGE, Boolean.FALSE);
         
@@ -533,14 +537,24 @@ public class AbstractClient implements Client, InvocationHandlerAware {
         Exchange exchange = new ExchangeImpl();
         exchange.setSynchronous(true);
         exchange.setOutMessage(m);
-        exchange.put(Bus.class, bus);
-        exchange.put(MessageObserver.class, new ClientMessageObserver());
-        exchange.put(Endpoint.class, conduitSelector.getEndpoint());
+        exchange.put(Bus.class, cfg.getBus());
+        exchange.put(MessageObserver.class, new ClientMessageObserver(cfg));
+        exchange.put(Endpoint.class, cfg.getConduitSelector().getEndpoint());
         exchange.setOneWay(false);
         m.setExchange(exchange);
         
-        PhaseInterceptorChain chain = setupOutInterceptorChain(conduitSelector.getEndpoint());
+        PhaseInterceptorChain chain = setupOutInterceptorChain(cfg);
         m.setInterceptorChain(chain);
+        
+        // context
+        if (cfg.getRequestContext().size() > 0 || cfg.getResponseContext().size() > 0) {
+            Map<String, Object> context = new HashMap<String, Object>();
+            context.put(REQUEST_CONTEXT, cfg.getRequestContext());
+            context.put(RESPONSE_CONTEXT, cfg.getResponseContext());
+            m.put(Message.INVOCATION_CONTEXT, context);
+            m.putAll(cfg.getRequestContext());
+            exchange.putAll(cfg.getRequestContext());
+        }
         
         //setup conduit selector
         prepareConduitSelector(m);
@@ -548,38 +562,4 @@ public class AbstractClient implements Client, InvocationHandlerAware {
         return m;
     }
 
-    protected void setInInterceptors(List<Interceptor> interceptors) {
-        inInterceptors = interceptors;
-    }
-
-    protected void setOutInterceptors(List<Interceptor> interceptors) {
-        outInterceptors = interceptors;
-    }
-    
-    private class ClientMessageObserver implements MessageObserver {
-
-        public void onMessage(Message m) {
-            
-            Message message = conduitSelector.getEndpoint().getBinding().createMessage(m);
-            message.put(Message.REQUESTOR_ROLE, Boolean.FALSE);
-            message.put(Message.INBOUND_MESSAGE, Boolean.TRUE);
-            PhaseInterceptorChain chain = setupInInterceptorChain(conduitSelector.getEndpoint());
-            message.setInterceptorChain(chain);
-            message.getExchange().setInMessage(message);
-            Bus origBus = BusFactory.getThreadDefaultBus(false);
-            BusFactory.setThreadDefaultBus(bus);
-
-            // execute chain
-            try {
-                chain.doIntercept(message);
-            } finally {
-                BusFactory.setThreadDefaultBus(origBus);
-            }
-        }
-        
-    }
-
-    public Object getInvocationHandler() {
-        return this;
-    }
 }

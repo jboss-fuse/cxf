@@ -50,6 +50,7 @@ import org.apache.cxf.jaxrs.model.ClassResourceInfo;
 import org.apache.cxf.jaxrs.model.OperationResourceInfo;
 import org.apache.cxf.jaxrs.model.Parameter;
 import org.apache.cxf.jaxrs.model.ParameterType;
+import org.apache.cxf.jaxrs.model.URITemplate;
 import org.apache.cxf.jaxrs.provider.ProviderFactory;
 import org.apache.cxf.jaxrs.utils.FormUtils;
 import org.apache.cxf.jaxrs.utils.InjectionUtils;
@@ -62,7 +63,7 @@ import org.apache.cxf.transport.http.HTTPConduit;
  * Proxy-based client implementation
  *
  */
-public class ClientProxyImpl extends AbstractClient implements InvocationHandler {
+public class ClientProxyImpl extends AbstractClient implements InvocationHandlerAware, InvocationHandler {
 
     private static final Logger LOG = LogUtils.getL7dLogger(ClientProxyImpl.class);
     private static final ResourceBundle BUNDLE = BundleUtils.getBundle(ClientProxyImpl.class);
@@ -145,10 +146,7 @@ public class ClientProxyImpl extends AbstractClient implements InvocationHandler
                 reportInvalidResourceMethod(m, "INVALID_SUBRESOURCE");
             }
             ClientProxyImpl proxyImpl = new ClientProxyImpl(getBaseURI(), uri, subCri, false, inheritHeaders);
-            proxyImpl.setBus(bus);
-            proxyImpl.setConduitSelector(conduitSelector);
-            proxyImpl.setInInterceptors(inInterceptors);
-            proxyImpl.setOutInterceptors(outInterceptors);
+            proxyImpl.setConfiguration(getConfiguration());
             
             Object proxy = JAXRSClientFactory.create(m.getReturnType(), proxyImpl);
             if (inheritHeaders) {
@@ -162,7 +160,7 @@ public class ClientProxyImpl extends AbstractClient implements InvocationHandler
         setRequestHeaders(headers, ori, types.containsKey(ParameterType.FORM), 
             bodyIndex == -1 ? null : params[bodyIndex].getClass(), m.getReturnType());
         
-        return doChainedInvocation(uri, headers, ori, params, bodyIndex, types);
+        return doChainedInvocation(uri, headers, ori, params, bodyIndex, types, pathParams);
         
     }
 
@@ -367,9 +365,20 @@ public class ClientProxyImpl extends AbstractClient implements InvocationHandler
     
     private Object doChainedInvocation(URI uri, MultivaluedMap<String, String> headers, 
                           OperationResourceInfo ori, Object[] params, int bodyIndex, 
-                          MultivaluedMap<ParameterType, Parameter> types) throws Throwable {
+                          MultivaluedMap<ParameterType, Parameter> types,
+                          List<Object> pathParams) throws Throwable {
         Message m = createMessage(ori.getHttpMethod(), headers, uri);
-
+        if (pathParams.size() != 0) { 
+            List<String> vars = ori.getURITemplate().getVariables();
+            MultivaluedMap<String, String> templatesMap =  new MetadataMap<String, String>(vars.size());
+            for (int i = 0; i < vars.size(); i++) {
+                if (i < pathParams.size()) {
+                    templatesMap.add(vars.get(i), pathParams.get(i).toString());
+                }
+            }
+            m.put(URITemplate.TEMPLATE_PARAMETERS, templatesMap);
+        }
+        
         if (bodyIndex != -1 || types.containsKey(ParameterType.FORM)) {
             m.setContent(OperationResourceInfo.class, ori);
             m.put("BODY_INDEX", bodyIndex);
@@ -392,11 +401,11 @@ public class ClientProxyImpl extends AbstractClient implements InvocationHandler
         
     }
     
-    protected Object handleResponse(HttpURLConnection connect, Message inMessage, OperationResourceInfo ori) 
+    protected Object handleResponse(HttpURLConnection connect, Message outMessage, OperationResourceInfo ori) 
         throws Throwable {
-        Response r = setResponseBuilder(connect).clone().build();
+        Response r = setResponseBuilder(connect, outMessage.getExchange().getInMessage()).clone().build();
         Method method = ori.getMethodToInvoke();
-        checkResponse(method, r, inMessage);
+        checkResponse(method, r, outMessage);
         if (method.getReturnType() == Void.class) { 
             return null;
         }
@@ -406,10 +415,14 @@ public class ClientProxyImpl extends AbstractClient implements InvocationHandler
             return r;
         }
         
-        return readBody(r, connect, inMessage, method.getReturnType(), 
+        return readBody(r, connect, outMessage, method.getReturnType(), 
                         method.getGenericReturnType(), method.getDeclaredAnnotations());
     }
 
+    public Object getInvocationHandler() {
+        return this;
+    }
+    
     protected static void reportInvalidResourceMethod(Method m, String name) {
         org.apache.cxf.common.i18n.Message errorMsg = 
             new org.apache.cxf.common.i18n.Message(name, 

@@ -21,6 +21,9 @@ package org.apache.cxf.jaxrs.client;
 
 import java.net.URI;
 
+import org.apache.cxf.jaxrs.resources.BookInterface;
+import org.apache.cxf.jaxrs.resources.BookStore;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -131,6 +134,33 @@ public class WebClientTest extends Assert {
         assertEquals(URI.create("http://foo"), wc.getCurrentURI());
         wc.back(false);
         assertEquals(URI.create("http://foo"), wc.getCurrentURI());
+    }
+    
+    @Test
+    public void testPathWithTemplates() {
+        WebClient wc = WebClient.create(URI.create("http://foo"));
+        assertEquals(URI.create("http://foo"), wc.getBaseURI());
+        assertEquals(URI.create("http://foo"), wc.getCurrentURI());
+        
+        wc.path("{bar}/{foo}", 1, 2);
+        assertEquals(URI.create("http://foo"), wc.getBaseURI());
+        assertEquals(URI.create("http://foo/1/2"), wc.getCurrentURI());
+    }
+    
+    @Test
+    public void testWebClientConfiguration() {
+        WebClient wc = WebClient.create(URI.create("http://foo"));
+        assertNotNull(WebClient.getConfig(wc) != null);
+    }
+    
+    @Test
+    public void testProxyConfiguration() {
+        // interface
+        BookInterface proxy = JAXRSClientFactory.create("http://foo", BookInterface.class);
+        assertNotNull(WebClient.getConfig(proxy) != null);
+        // cglib
+        BookStore proxy2 = JAXRSClientFactory.create("http://foo", BookStore.class);
+        assertNotNull(WebClient.getConfig(proxy2) != null);
     }
     
 }

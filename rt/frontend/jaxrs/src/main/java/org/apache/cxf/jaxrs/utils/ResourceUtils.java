@@ -48,6 +48,8 @@ import javax.ws.rs.core.Context;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import org.apache.cxf.Bus;
+import org.apache.cxf.BusFactory;
 import org.apache.cxf.common.classloader.ClassLoaderUtils;
 import org.apache.cxf.common.i18n.BundleUtils;
 import org.apache.cxf.common.logging.LogUtils;
@@ -62,6 +64,7 @@ import org.apache.cxf.jaxrs.model.ParameterType;
 import org.apache.cxf.jaxrs.model.URITemplate;
 import org.apache.cxf.jaxrs.model.UserOperation;
 import org.apache.cxf.jaxrs.model.UserResource;
+import org.apache.cxf.resource.ResourceManager;
 
 public final class ResourceUtils {
     
@@ -332,12 +335,13 @@ public final class ResourceUtils {
         }
     }
     
-    public static List<UserResource> getUserResources(String loc) {
+    
+    public static List<UserResource> getUserResources(String loc, Bus bus) {
         try {
             InputStream is = null;
             if (loc.startsWith("classpath:")) {
                 String path = loc.substring("classpath:".length());
-                is = ClassLoaderUtils.getResourceAsStream(path, ResourceUtils.class);
+                is = getClasspathResourceStream(path, ResourceUtils.class, bus);
             } else {
                 File f = new File(loc);
                 if (f.exists()) {
@@ -354,6 +358,21 @@ public final class ResourceUtils {
         }
         
         return null;
+    }
+    
+    public static InputStream getClasspathResourceStream(String path, Class<?> callingClass, Bus bus) {
+        InputStream is = ClassLoaderUtils.getResourceAsStream(path, callingClass);
+        if (is == null && bus != null) {
+            ResourceManager rm = bus.getExtension(ResourceManager.class);
+            if (rm != null) {
+                is = rm.getResourceAsStream(path);
+            }
+        }
+        return is;
+    }
+    
+    public static List<UserResource> getUserResources(String loc) {
+        return getUserResources(loc, BusFactory.getThreadDefaultBus());
     }
     
     public static List<UserResource> getUserResources(InputStream is) throws Exception {
@@ -398,8 +417,9 @@ public final class ResourceUtils {
             DOMUtils.findAllElementsByTagNameNS(e, 
                  "http://cxf.apache.org/jaxrs", "param");
         List<Parameter> params = new ArrayList<Parameter>(paramEls.size());
-        for (Element paramEl : paramEls) {
-            Parameter p = new Parameter(paramEl.getAttribute("type"), paramEl.getAttribute("name"));
+        for (int i = 0; i < paramEls.size(); i++) {
+            Element paramEl = paramEls.get(i);
+            Parameter p = new Parameter(paramEl.getAttribute("type"), i, paramEl.getAttribute("name"));
             p.setEncoded(Boolean.valueOf(paramEl.getAttribute("encoded")));
             p.setDefaultValue(paramEl.getAttribute("default"));
             params.add(p);

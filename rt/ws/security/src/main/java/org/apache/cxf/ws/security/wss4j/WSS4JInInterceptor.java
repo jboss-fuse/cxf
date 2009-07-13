@@ -127,6 +127,19 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
         return doc;
     }
     
+    @Override
+    public Object getProperty(Object msgContext, String key) {
+        // use the superclass first
+        Object result = super.getProperty(msgContext, key);
+        
+        // handle the special case of the SEND_SIGV
+        if (result == null 
+            && key == WSHandlerConstants.SEND_SIGV
+            && this.isRequestor((SoapMessage)msgContext)) {
+            result = ((SoapMessage)msgContext).getExchange().getOutMessage().get(key);
+        }               
+        return result;
+    }
     
     public void handleMessage(SoapMessage msg) throws Fault {
         SOAPMessage doc = getSOAPMessage(msg);
@@ -251,7 +264,7 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
             }
 
             /*
-             * now check the security actions: do they match, in right order?
+             * now check the security actions: do they match, in any order?
              */
             if (!ignoreActions && !checkReceiverResults(wsResult, actions)) {
                 LOG.warning("Security processing failed (actions mismatch)");

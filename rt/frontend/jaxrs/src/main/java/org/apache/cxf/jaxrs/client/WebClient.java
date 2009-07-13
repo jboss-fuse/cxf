@@ -36,13 +36,16 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.UriBuilder;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.bus.spring.SpringBusFactory;
 import org.apache.cxf.interceptor.AbstractOutDatabindingInterceptor;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.jaxrs.ext.form.Form;
+import org.apache.cxf.jaxrs.impl.MetadataMap;
 import org.apache.cxf.jaxrs.model.ParameterType;
+import org.apache.cxf.jaxrs.model.URITemplate;
 import org.apache.cxf.jaxrs.utils.HttpUtils;
 import org.apache.cxf.jaxrs.utils.JAXRSUtils;
 import org.apache.cxf.message.Message;
@@ -56,6 +59,8 @@ import org.apache.cxf.transport.http.HTTPConduit;
  *
  */
 public class WebClient extends AbstractClient {
+    
+    private MultivaluedMap<String, String> templates;
     
     protected WebClient(String baseAddress) {
         this(URI.create(baseAddress));
@@ -171,6 +176,23 @@ public class WebClient extends AbstractClient {
     }
     
     /**
+     * Retieves ClientConfiguration
+     * @param client proxy or http-centric Client
+     * @return underlying ClientConfiguration instance 
+     */
+    public static ClientConfiguration getConfig(Object client) {
+        if (client instanceof Client) {
+            if (client instanceof WebClient) { 
+                return ((AbstractClient)client).getConfiguration();
+            } else if (client instanceof InvocationHandlerAware) {
+                Object handler = ((InvocationHandlerAware)client).getInvocationHandler();
+                return ((AbstractClient)handler).getConfiguration();
+            }
+        }
+        throw new IllegalArgumentException("Not a valid Client");
+    }
+    
+    /**
      * Does HTTP invocation
      * @param httpMethod HTTP method
      * @param body request body, can be null
@@ -263,7 +285,7 @@ public class WebClient extends AbstractClient {
         
         Response r = doInvoke(httpMethod, body, responseClass);
         
-        if (r.getStatus() >= 400) {
+        if (r.getStatus() >= 400 && responseClass != null) {
             throw new WebApplicationException(r);
         }
         
@@ -301,6 +323,27 @@ public class WebClient extends AbstractClient {
         getCurrentBuilder().path(path.toString());
         
         return this;
+    }
+    
+    /**
+     * Updates the current URI path with path segment which may contain template variables
+     * @param path new relative path segment
+     * @param values template variable values
+     * @return updated WebClient
+     */
+    public WebClient path(String path, Object... values) {
+        URITemplate t = new URITemplate(path);
+        List<String> vars = t.getVariables();
+        if (vars.size() > 0 && vars.size() == values.length) {
+            if (templates == null) {
+                templates = new MetadataMap<String, String>();
+            }
+            for (int i = 0; i < values.length; i++) {
+                templates.add(vars.get(i), values[i].toString());
+            }
+        }
+        URI u = UriBuilder.fromUri(URI.create("http://tempuri")).path(path).buildFromEncoded(values);
+        return path(u.getRawPath());
     }
     
     /**
@@ -342,6 +385,7 @@ public class WebClient extends AbstractClient {
      * @return updated WebClient
      */
     public WebClient to(String newAddress, boolean forward) {
+        clearTemplates();
         if (forward) {
             if (!newAddress.startsWith(getBaseURI().toString())) {
                 throw new IllegalArgumentException("Base address can not be preserved");
@@ -359,6 +403,7 @@ public class WebClient extends AbstractClient {
      * @return updated WebClient
      */
     public WebClient back(boolean fast) {
+        clearTemplates();
         if (fast) {
             getCurrentBuilder().replacePath(getBaseURI().getPath());
         } else {
@@ -443,6 +488,7 @@ public class WebClient extends AbstractClient {
     
     @Override
     public WebClient reset() {
+        clearTemplates();
         return (WebClient)super.reset();
     }
     
@@ -460,7 +506,11 @@ public class WebClient extends AbstractClient {
             headers.putSingle(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML_TYPE.toString());
         }
         resetResponse();
-        return doChainedInvocation(httpMethod, headers, body, responseClass);
+        try {
+            return doChainedInvocation(httpMethod, headers, body, responseClass);
+        } finally {
+            clearTemplates();
+        }
         
     }
 
@@ -468,7 +518,7 @@ public class WebClient extends AbstractClient {
         MultivaluedMap<String, String> headers, Object body, Class<?> responseClass) {
         
         Message m = createMessage(httpMethod, headers, getCurrentURI());
-        
+        m.put(URITemplate.TEMPLATE_PARAMETERS, templates);
         if (body != null) {
             MessageContentsList contents = new MessageContentsList(body);
             m.setContent(List.class, contents);
@@ -486,12 +536,12 @@ public class WebClient extends AbstractClient {
         return handleResponse(connect, m, responseClass);
     }
     
-    protected Response handleResponse(HttpURLConnection conn, Message m, Class<?> responseClass) {
+    protected Response handleResponse(HttpURLConnection conn, Message outMessage, Class<?> responseClass) {
         try {
-            ResponseBuilder rb = setResponseBuilder(conn).clone();
+            ResponseBuilder rb = setResponseBuilder(conn, outMessage.getExchange().getInMessage()).clone();
             Response currentResponse = rb.clone().build();
             
-            Object entity = readBody(currentResponse, conn, m, responseClass, responseClass,
+            Object entity = readBody(currentResponse, conn, outMessage, responseClass, responseClass,
                                      new Annotation[]{});
             rb.entity(entity);
             
@@ -503,6 +553,13 @@ public class WebClient extends AbstractClient {
     
     protected HttpURLConnection getConnection(String methodName) {
         return createHttpConnection(getCurrentBuilder().clone().buildFromEncoded(), methodName);
+    }
+    
+    private void clearTemplates() {
+        if (templates != null) {
+            templates.clear();
+            templates = null;
+        }
     }
     
     private class BodyWriter extends AbstractOutDatabindingInterceptor {
@@ -536,10 +593,7 @@ public class WebClient extends AbstractClient {
     static void copyProperties(Client toClient, Client fromClient) {
         AbstractClient newClient = toAbstractClient(toClient);
         AbstractClient oldClient = toAbstractClient(fromClient);
-        newClient.bus = oldClient.bus;
-        newClient.conduitSelector = oldClient.conduitSelector;
-        newClient.inInterceptors = oldClient.inInterceptors;
-        newClient.outInterceptors = oldClient.outInterceptors;
+        newClient.setConfiguration(oldClient.getConfiguration());
     }
     
     private static AbstractClient toAbstractClient(Client client) {

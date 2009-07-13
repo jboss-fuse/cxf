@@ -89,6 +89,7 @@ import org.apache.cxf.jaxrs.provider.AbstractConfigurableProvider;
 import org.apache.cxf.jaxrs.provider.ProviderFactory;
 import org.apache.cxf.jaxrs.utils.multipart.AttachmentUtils;
 import org.apache.cxf.message.Message;
+import org.apache.cxf.message.MessageUtils;
 import org.apache.cxf.transport.http.AbstractHTTPDestination;
 
 public final class JAXRSUtils {
@@ -240,6 +241,17 @@ public final class JAXRSUtils {
                                                          MultivaluedMap<String, String> values, 
                                                          String requestContentType, 
                                                          List<MediaType> acceptContentTypes) {
+        return JAXRSUtils.findTargetMethod(resource, path, httpMethod, values, requestContentType, 
+                                           acceptContentTypes, true);
+    }
+    
+    public static OperationResourceInfo findTargetMethod(ClassResourceInfo resource, 
+                                                         String path,
+                                                         String httpMethod, 
+                                                         MultivaluedMap<String, String> values, 
+                                                         String requestContentType, 
+                                                         List<MediaType> acceptContentTypes,
+                                                         boolean logNow) {
         SortedMap<OperationResourceInfo, MultivaluedMap<String, String>> candidateList = 
             new TreeMap<OperationResourceInfo, MultivaluedMap<String, String>>(
                 new OperationResourceInfoComparator());
@@ -306,7 +318,7 @@ public final class JAXRSUtils {
                                                    path,
                                                    requestType.toString(),
                                                    convertTypesToString(acceptContentTypes));
-        if (!"OPTIONS".equalsIgnoreCase(httpMethod)) {
+        if (!"OPTIONS".equalsIgnoreCase(httpMethod) && logNow) {
             LOG.warning(errorMsg.toString());
         }
         ResponseBuilder rb = createResponseBuilder(resource, status, methodMatched == 0);
@@ -682,6 +694,9 @@ public final class JAXRSUtils {
     
     @SuppressWarnings("unchecked")
     private static UriInfo createUriInfo(Message m) {
+        if (MessageUtils.isRequestor(m)) {
+            m = m.getExchange() != null ? m.getExchange().getOutMessage() : m;
+        }
         MultivaluedMap<String, String> templateParams =
             (MultivaluedMap<String, String>)m.get(URITemplate.TEMPLATE_PARAMETERS);
         return new UriInfoImpl(m, templateParams);

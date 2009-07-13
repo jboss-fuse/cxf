@@ -36,13 +36,13 @@ import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
 
+import org.apache.cxf.Bus;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.jaxrs.client.ResponseExceptionMapper;
 import org.apache.cxf.jaxrs.ext.ParameterHandler;
 import org.apache.cxf.jaxrs.ext.RequestHandler;
 import org.apache.cxf.jaxrs.ext.ResponseHandler;
-import org.apache.cxf.jaxrs.ext.SystemQueryHandler;
 import org.apache.cxf.jaxrs.impl.RequestPreprocessor;
 import org.apache.cxf.jaxrs.impl.WebApplicationExceptionMapper;
 import org.apache.cxf.jaxrs.model.ProviderInfo;
@@ -78,7 +78,6 @@ public final class ProviderFactory {
                                     new PrimitiveTextProvider(),
                                     new MultipartProvider(),
                                     new WebApplicationExceptionMapper(),
-                                    new SystemQueryHandler(),
                                     new WadlGenerator());
     }
     
@@ -550,14 +549,44 @@ public final class ProviderFactory {
         responseExceptionMappers.clear();
     }
     
-    public void setSchemaLocations(List<String> schemas) {
+    public void setBus(Bus bus) {
+        if (bus == null) {
+            return;
+        }
         for (ProviderInfo<MessageBodyReader> r : messageReaders) {
-            try {
-                Method m = r.getProvider().getClass().getMethod("setSchemas", 
-                                                     new Class[]{List.class});
-                m.invoke(r.getProvider(), new Object[]{schemas});
-            } catch (Exception ex) {
-                // ignore
+            injectProviderProperty(r.getProvider(), "setBus", Bus.class, bus);
+        }
+    }
+    
+    private boolean injectProviderProperty(Object provider, String mName, Class<?> pClass, 
+                                        Object pValue) {
+        try {
+            Method m = provider.getClass().getMethod(mName, new Class[]{pClass});
+            m.invoke(provider, new Object[]{pValue});
+            return true;
+        } catch (Exception ex) {
+            // ignore
+        }
+        return false;
+    }
+    
+    public void setSchemaLocations(List<String> schemas) {
+        boolean schemasMethodAvailable = false;
+        for (ProviderInfo<MessageBodyReader> r : messageReaders) {
+            schemasMethodAvailable = injectProviderProperty(r.getProvider(), "setSchemas", 
+                                                            List.class, schemas);
+        }
+        if (!schemasMethodAvailable) {
+            for (ProviderInfo<MessageBodyReader> r : SHARED_FACTORY.messageReaders) {
+                try {
+                    Method m = r.getProvider().getClass().getMethod("setSchemas", 
+                                                         new Class[]{List.class});
+                    Object provider = r.getProvider().getClass().newInstance();
+                    m.invoke(provider, new Object[]{schemas});
+                    registerUserProvider(provider);
+                } catch (Exception ex) {
+                    // ignore
+                }
             }
         }
     }
