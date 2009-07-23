@@ -346,9 +346,21 @@ public class ManagedConnectionImpl implements ManagedConnection {
                 LOG.finest("invoke connection spec:" + spec + " method=" + method);
             }
             
-            if ("hashCode".equals(method.getName()) || "equals".equals(method.getName())) {
+            if ("hashCode".equals(method.getName())) {
                 return method.invoke(Proxy.getInvocationHandler(proxy), args);
-                
+            }
+            
+            if ("equals".equals(method.getName())) {
+                // this is a proxy so we can really tests the equality of the targets
+                // so, if the handler and proxy reference are equals, we believe they
+                // are equal.
+                boolean result = false;
+                try {
+                    result = proxy == args[0] && this == Proxy.getInvocationHandler(args[0]);
+                } catch (Exception e) {
+                    // ignore 
+                }      
+                return result;
             }
             
             if ("toString".equals(method.getName())) {
@@ -383,15 +395,13 @@ public class ManagedConnectionImpl implements ManagedConnection {
         private Object handleCloseMethod(Object proxy, Method method,
                 Object[] args) {
             
+
             handles.remove(proxy);
             associatedHandle = null;
-            if (handles.isEmpty()) {
-                isClosed = true;
-                ConnectionEvent event = new ConnectionEvent(ManagedConnectionImpl.this,
-                        ConnectionEvent.CONNECTION_CLOSED);
-                event.setConnectionHandle(proxy);
-                sendEvent(event);
-            }
+            ConnectionEvent event = new ConnectionEvent(ManagedConnectionImpl.this,
+                    ConnectionEvent.CONNECTION_CLOSED);
+            event.setConnectionHandle(proxy);
+            sendEvent(event);
             
             return null;
         }
