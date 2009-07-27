@@ -9,7 +9,7 @@
                            http://cxf.apache.org/schemas/jaxws.xsd">
 
   <jaxws:endpoint id="GreeterPort" 
-    implementor="com.iona.cxf.container.GreeterImpl" address="http://localhost:9090/GreeterContext/GreeterPort"
+    implementor="com.iona.cxf.container.GreeterImpl" address="http://localhost:9091/GreeterContext/GreeterPort"
     wsdlLocation="greeter.wsdl"
     endpointName="e:GreeterPort"
     serviceName="s:GreeterService"
