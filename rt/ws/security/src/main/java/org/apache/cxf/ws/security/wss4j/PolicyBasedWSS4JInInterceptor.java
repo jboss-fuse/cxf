@@ -291,7 +291,7 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
         }
         return action;
     }
-
+    
     private void assertXPathTokens(AssertionInfoMap aim, 
                                    QName name, 
                                    Collection<WSDataRef> refs,
@@ -326,7 +326,6 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
                                                                      doc.getSOAPPart().getEnvelope(),
                                                                      XPathConstants.NODESET);
                             boolean found = list.getLength() == 0;
-                            /*
                             for (int x = 0; x < list.getLength(); x++) {
                                 Element el = (Element)list.item(x);
                                 for (WSDataRef r : refs) {
@@ -336,7 +335,6 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
                                     }
                                 }
                             }
-                            */
                             if (!found && "signed".equals(type)) {
                                 for (int x = 0; x < list.getLength(); x++) {
                                     Element el = (Element)list.item(x);
