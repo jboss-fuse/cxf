@@ -21,11 +21,11 @@
     <groupId>org.apache.cxf.benchmark</groupId>
     <artifactId>cxf-benchmark-base</artifactId>
     <packaging>jar</packaging>
-    <version>2.2.x-fuse-SNAPSHOT</version>
+    <version>2.2.2.2-fuse</version>
     <name>Apache CXF Benchmark Base</name>
     <url>http://cxf.apache.org</url>
     <properties>
-        <cxf.version>2.2.x-fuse-SNAPSHOT</cxf.version>
+        <cxf.version>2.2.2.2-fuse</cxf.version>
     </properties>
 
     <build>
