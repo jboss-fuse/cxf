@@ -41,6 +41,7 @@ import javax.jms.JMSException;
 import javax.jms.MessageListener;
 import javax.jms.Session;
 import javax.jms.TextMessage;
+import javax.resource.spi.endpoint.MessageEndpoint;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
@@ -193,6 +194,11 @@ public class JMSDestination extends AbstractMultiplexDestination implements Mess
             
             BusFactory.setThreadDefaultBus(bus);
 
+            MessageEndpoint ep = JCATransactionalMessageListenerContainer.ENDPOINT_LOCAL.get();
+            if (ep != null) {
+                inMessage.setContent(MessageEndpoint.class, ep);
+            }
+            
             // handle the incoming message
             incomingObserver.onMessage(inMessage);
         } catch (SuspendedInvocationException ex) {
