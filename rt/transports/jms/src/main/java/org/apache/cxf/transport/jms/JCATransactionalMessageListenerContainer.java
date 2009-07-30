@@ -29,18 +29,21 @@ import javax.resource.spi.endpoint.MessageEndpoint;
 import javax.resource.spi.endpoint.MessageEndpointFactory;
 import javax.transaction.xa.XAResource;
 
-import org.apache.cxf.Bus;
+import org.apache.cxf.service.model.EndpointInfo;
 import org.springframework.jms.listener.DefaultMessageListenerContainer;
 import org.springframework.jms.support.JmsUtils;
 
 public class JCATransactionalMessageListenerContainer extends DefaultMessageListenerContainer {
     static final ThreadLocal<MessageEndpoint> ENDPOINT_LOCAL = new ThreadLocal<MessageEndpoint>();
-    private Bus bus;
+    static final String MESSAGE_ENDPOINT_FACTORY = "MessageEndpointFactory";
+    static final String MDB_TRANSACTED_METHOD = "MDBTransactedMethod";
     private MessageEndpointFactory factory;
+    private Method method;
     
-    public JCATransactionalMessageListenerContainer(Bus b) {
-        bus = b;
-        factory = bus.getExtension(javax.resource.spi.endpoint.MessageEndpointFactory.class);
+    public JCATransactionalMessageListenerContainer(EndpointInfo ei) {
+        factory = ei.getProperty(MESSAGE_ENDPOINT_FACTORY, 
+                                 MessageEndpointFactory.class);
+        method = ei.getProperty(MDB_TRANSACTED_METHOD, Method.class);
         this.setCacheLevel(CACHE_CONNECTION);
     }
     
@@ -56,12 +59,10 @@ public class JCATransactionalMessageListenerContainer extends DefaultMessageList
             xa = (XASession)createSession(getSharedConnection());
             XAResource xar = xa.getXAResource();
             s = xa.getSession();
-            mc = s.createConsumer(getDestination());
-            
+            mc = s.createConsumer(getDestination());            
             ep = factory.createEndpoint(xar);
             ENDPOINT_LOCAL.set(ep);
-            Method m = bus.getExtension(Method.class);
-            ep.beforeDelivery(m);                
+            ep.beforeDelivery(method);                
             messageReceived = doReceiveAndExecute(invoker, s, mc, null);
             ep.afterDelivery();
         } catch (Exception ex) {

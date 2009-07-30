@@ -40,6 +40,7 @@ import org.apache.cxf.frontend.ServerFactoryBean;
 import org.apache.cxf.jaxws.EndpointImpl;
 import org.apache.cxf.jaxws.EndpointUtils;
 import org.apache.cxf.jaxws.JaxWsServerFactoryBean;
+import org.apache.cxf.service.model.EndpointInfo;
 
 /**
  *
@@ -53,6 +54,8 @@ public class MDBActivationWork implements Work {
     
     private static final Logger LOG = LogUtils.getL7dLogger(MDBActivationWork.class);
     private static final String MESSAGE_LISTENER_METHOD = "lookupTargetObject";
+    private static final String MESSAGE_ENDPOINT_FACTORY = "MessageEndpointFactory";
+    private static final String MDB_TRANSACTED_METHOD = "MDBTransactedMethod";
 
     private MDBActivationSpec spec;
     private MessageEndpointFactory endpointFactory;
@@ -131,10 +134,11 @@ public class MDBActivationWork implements Work {
 
         bus.setExtension(endpointFactory, javax.resource.spi.endpoint.MessageEndpointFactory.class);
         
+        Method method = null;
+
         try {
             Class clazz = org.apache.cxf.jca.inbound.DispatchMDBMessageListener.class;
-            Method m = clazz.getMethod(MESSAGE_LISTENER_METHOD, new Class[] {String.class});
-            bus.setExtension(m, Method.class);
+            method = clazz.getMethod(MESSAGE_LISTENER_METHOD, new Class[] {String.class});
         } catch (Exception ex) {
             LOG.severe("Failed to get method " + MESSAGE_LISTENER_METHOD
                        + " from class DispatchMDBMessageListener.");
@@ -147,6 +151,10 @@ public class MDBActivationWork implements Work {
             return;
         }
         
+        EndpointInfo  ei = server.getEndpoint().getEndpointInfo();
+        ei.setProperty(MESSAGE_ENDPOINT_FACTORY, endpointFactory);
+        ei.setProperty(MDB_TRANSACTED_METHOD, method);
+
         server.start();
         
         // save the server for clean up later
