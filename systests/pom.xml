@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements. See the NOTICE file
@@ -30,10 +30,6 @@
     <name>Apache CXF System Tests</name>
     <version>2.0.x-fuse-SNAPSHOT</version>
     <url>http://cwiki.apache.org/CXF</url>
-    <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/incubator/cxf/branches/2.0.x-fixes/systests</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/incubator/cxf/branches/2.0.x-fixes/systests</developerConnection>
-    </scm>
     <build>
         <plugins>
             <plugin>

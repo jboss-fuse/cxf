@@ -100,11 +100,6 @@
             <artifactId>ant-nodeps</artifactId>
         </dependency>
     </dependencies>
-
-    <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/incubator/cxf/branches/2.0.x-fixes/maven-plugins/codegen-plugin</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/incubator/cxf/branches/2.0.x-fixes/maven-plugins/codegen-plugin</developerConnection>
-    </scm>
     
     <profiles>
         <profile>

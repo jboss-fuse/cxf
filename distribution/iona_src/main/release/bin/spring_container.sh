@@ -29,7 +29,7 @@ export SPRING_CONTAINER_HOME
 
 LOGGING_PROPS=$CXF_HOME/etc/logging.properties
 
-SPRING_CONTAINER_CLASSPATH=$SPRING_CONTAINER_HOME/etc:$CLASSPATH:$CXF_HOME/lib/it-soa-container.jar:$CXF_HOME/lib/cxf-manifest-incubator.jar:$ACTIVEMQ_HOME/activemq-all-$ACTIVEMQ_VERSION.jar:$CLASSPATH
+SPRING_CONTAINER_CLASSPATH=$SPRING_CONTAINER_HOME/etc:$CLASSPATH:$CXF_HOME/lib/it-soa-container.jar:$CXF_HOME/lib/cxf-manifest.jar:$ACTIVEMQ_HOME/activemq-all-$ACTIVEMQ_VERSION.jar:$CLASSPATH
 
 $JAVA_HOME/bin/java -cp $SPRING_CONTAINER_CLASSPATH -Djava.util.logging.config.file=$LOGGING_PROPS com.iona.cxf.container.ContainerLauncher "$@"
 
