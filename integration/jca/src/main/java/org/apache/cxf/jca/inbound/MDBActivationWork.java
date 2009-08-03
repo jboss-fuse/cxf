@@ -131,8 +131,6 @@ public class MDBActivationWork implements Work {
         if (bus == null) {
             bus = BusFactory.getDefaultBus();
         }
-
-        bus.setExtension(endpointFactory, javax.resource.spi.endpoint.MessageEndpointFactory.class);
         
         Method method = null;
 
