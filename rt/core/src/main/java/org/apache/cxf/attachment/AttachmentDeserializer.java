@@ -23,16 +23,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
-import java.net.URLDecoder;
-import java.util.Enumeration;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.activation.DataHandler;
 import javax.activation.DataSource;
-import javax.mail.Header;
 import javax.mail.MessagingException;
 import javax.mail.internet.InternetHeaders;
 
@@ -60,6 +58,8 @@ public class AttachmentDeserializer {
 
     private int pbAmount = 2048;
     private PushbackInputStream stream;
+    private int createCount; 
+    private int closedCount;
 
     private byte boundary[];
 
@@ -72,11 +72,17 @@ public class AttachmentDeserializer {
     private InputStream body;
     
     private Set<DelegatingInputStream> loaded = new HashSet<DelegatingInputStream>();
+    private List<String> supportedTypes;
 
     public AttachmentDeserializer(Message message) {
-        this.message = message;
+        this(message, Collections.singletonList("multipart/related"));
     }
 
+    public AttachmentDeserializer(Message message, List<String> supportedTypes) {
+        this.message = message;
+        this.supportedTypes = supportedTypes;
+    }
+    
     public void initializeAttachments() throws IOException {
         initializeRootMessage();
 
@@ -95,7 +101,7 @@ public class AttachmentDeserializer {
             throw new IllegalStateException("An InputStream must be provided!");
         }
 
-        if (contentType.toLowerCase().indexOf("multipart/related") != -1) {
+        if (AttachmentUtil.isTypeSupported(contentType.toLowerCase(), supportedTypes)) {
             String boundaryString = findBoundaryFromContentType(contentType);
             if (null == boundaryString) {                
                 boundaryString = findBoundaryFromInputStream();
@@ -104,22 +110,23 @@ public class AttachmentDeserializer {
             if (null == boundaryString) {
                 throw new IOException("Couldn't determine the boundary from the message!");
             }
-            boundary = boundaryString.getBytes();
+            boundary = boundaryString.getBytes("utf-8");
 
             stream = new PushbackInputStream(message.getContent(InputStream.class),
                                              pbAmount);
             if (!readTillFirstBoundary(stream, boundary)) {
-                throw new IOException("Couldn't find MIME boundary: " + new String(boundary));
+                throw new IOException("Couldn't find MIME boundary: " + boundaryString);
             }
 
             try {
-                // TODO: Do we need to copy these headers somewhere?
-                new InternetHeaders(stream);
+                message.put(InternetHeaders.class.getName(), new InternetHeaders(stream));
             } catch (MessagingException e) {
                 throw new RuntimeException(e);
             }
 
-            body = new DelegatingInputStream(new MimeBodyPartInputStream(stream, boundary, pbAmount));
+            body = new DelegatingInputStream(new MimeBodyPartInputStream(stream, boundary, pbAmount),
+                                             this);
+            createCount++;
             message.setContent(InputStream.class, body);
         }
     }
@@ -136,7 +143,7 @@ public class AttachmentDeserializer {
         PushbackInputStream in = new PushbackInputStream(is, 4096);
         byte buf[] = new byte[2048];
         int i = in.read(buf);
-        String msg = new String(buf, 0, i);
+        String msg = IOUtils.newStringFromBytes(buf, 0, i);
         in.unread(buf, 0, i);
         
         // Reset the input stream since we'll need it again later
@@ -188,19 +195,7 @@ public class AttachmentDeserializer {
             throw new RuntimeException(e);
         }
 
-        String id = headers.getHeader("Content-ID", null);
-        if (id != null && id.startsWith("<")) {
-            id = id.substring(1, id.length() - 1);
-        } else {
-            //no Content-ID, set cxf default ID
-            id = "Content-ID: <root.message@cxf.apache.org";
-        }
-
-        id = URLDecoder.decode(id.startsWith("cid:") ? id.substring(4) : id, "UTF-8");
-
-        AttachmentImpl att = new AttachmentImpl(id);
-        setupAttachment(att, headers);
-        return att;
+        return (AttachmentImpl)createAttachment(headers);
     }
 
     private void cacheStreamedAttachments() throws IOException {
@@ -208,13 +203,15 @@ public class AttachmentDeserializer {
             && !((DelegatingInputStream) body).isClosed()) {
 
             cache((DelegatingInputStream) body, true);
-            message.setContent(InputStream.class, body);
         }
 
         for (Attachment a : attachments.getLoadedAttachments()) {
             DataSource s = a.getDataHandler().getDataSource();
-            if (!(s instanceof AttachmentDataSource)) {
-                //AttachementDataSource objects are already cached
+            if (s instanceof AttachmentDataSource) {
+                if (((AttachmentDataSource)s).getDelegatingInputStream() != null) {
+                    cache(((AttachmentDataSource)s).getDelegatingInputStream(), false);
+                }
+            } else {
                 cache((DelegatingInputStream) s.getInputStream(), false);
             }
         }
@@ -286,33 +283,12 @@ public class AttachmentDeserializer {
      * @return
      * @throws IOException
      */
-    private void setupAttachment(AttachmentImpl att, InternetHeaders headers) throws IOException {
-        MimeBodyPartInputStream partStream = new MimeBodyPartInputStream(stream, boundary, pbAmount);
-
-        final String ct = headers.getHeader("Content-Type", null);
-        
-        boolean quotedPrintable = false;
-        
-        for (Enumeration<?> e = headers.getAllHeaders(); e.hasMoreElements();) {
-            Header header = (Header) e.nextElement();
-            if (header.getName().equalsIgnoreCase("Content-Transfer-Encoding")) {
-                if (header.getValue().equalsIgnoreCase("binary")) {
-                    att.setXOP(true);
-                } else if (header.getValue().equalsIgnoreCase("quoted-printable")) {
-                    quotedPrintable = true;
-                }
-            }
-            att.setHeader(header.getName(), header.getValue());
-        }
-        
-        DelegatingInputStream is = new DelegatingInputStream(partStream);
-        if (quotedPrintable) {
-            DataSource source = new AttachmentDataSource(ct, new QuotedPrintableDecoderStream(is));
-            att.setDataHandler(new DataHandler(source));
-        } else {
-            DataSource source = new AttachmentDataSource(ct, is);
-            att.setDataHandler(new DataHandler(source));
-        }
+    private Attachment createAttachment(InternetHeaders headers) throws IOException {
+        InputStream partStream = 
+            new DelegatingInputStream(new MimeBodyPartInputStream(stream, boundary, pbAmount),
+                                      this);
+        createCount++;
+        return AttachmentUtil.createAttachment(partStream, headers);
     }
 
     public boolean isLazyLoading() {
@@ -321,5 +297,12 @@ public class AttachmentDeserializer {
 
     public void setLazyLoading(boolean lazyLoading) {
         this.lazyLoading = lazyLoading;
+    }
+
+    public void markClosed(DelegatingInputStream delegatingInputStream) throws IOException {
+        closedCount++;
+        if (closedCount == createCount && !attachments.hasNext()) {
+            stream.close();
+        }
     }
 }
