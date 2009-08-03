@@ -592,7 +592,7 @@ public class ClientImpl
         
         PhaseInterceptorChain chain;
         if (endpoint.getService().getDataBinding() instanceof InterceptorProvider) {
-            InterceptorProvider p = ((InterceptorProvider)endpoint.getService().getDataBinding());
+            InterceptorProvider p = (InterceptorProvider)endpoint.getService().getDataBinding();
             chain = inboundChainCache.get(pm.getInPhases(), i1, i2, i3, i4, p.getInInterceptors());
         } else {
             chain = inboundChainCache.get(pm.getInPhases(), i1, i2, i3, i4);
