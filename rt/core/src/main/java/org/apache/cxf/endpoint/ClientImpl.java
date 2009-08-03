@@ -44,6 +44,7 @@ import org.apache.cxf.interceptor.AbstractBasicInterceptorProvider;
 import org.apache.cxf.interceptor.ClientOutFaultObserver;
 import org.apache.cxf.interceptor.Interceptor;
 import org.apache.cxf.interceptor.InterceptorChain;
+import org.apache.cxf.interceptor.InterceptorProvider;
 import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.ExchangeImpl;
 import org.apache.cxf.message.Message;
@@ -589,7 +590,13 @@ public class ClientImpl
             LOG.fine("Interceptors contributed by binding: " + i4);
         }
         
-        PhaseInterceptorChain chain = inboundChainCache.get(pm.getInPhases(), i1, i2, i3, i4); 
+        PhaseInterceptorChain chain;
+        if (endpoint.getService().getDataBinding() instanceof InterceptorProvider) {
+            InterceptorProvider p = ((InterceptorProvider)endpoint.getService().getDataBinding());
+            chain = inboundChainCache.get(pm.getInPhases(), i1, i2, i3, i4, p.getInInterceptors());
+        } else {
+            chain = inboundChainCache.get(pm.getInPhases(), i1, i2, i3, i4);
+        }
         message.setInterceptorChain(chain);
         
         chain.setFaultObserver(outFaultObserver);
@@ -754,7 +761,12 @@ public class ClientImpl
         if (LOG.isLoggable(Level.FINE)) {
             LOG.fine("Interceptors contributed by binding: " + i4);
         }
-        return outboundChainCache.get(pm.getOutPhases(), i1, i2, i3, i4);
+        if (endpoint.getService().getDataBinding() instanceof InterceptorProvider) {
+            InterceptorProvider p = (InterceptorProvider)endpoint.getService().getDataBinding();
+            return outboundChainCache.get(pm.getOutPhases(), i1, i2, i3, i4, p.getOutInterceptors());
+        } else {
+            return outboundChainCache.get(pm.getOutPhases(), i1, i2, i3, i4);
+        }
     }
 
     protected void modifyChain(InterceptorChain chain, Map<String, Object> ctx) {

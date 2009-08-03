@@ -114,7 +114,7 @@ public class ClientMtomXopTest extends AbstractBusClientServerTestBase {
                                                                                 fileSize * x,
                                                                                 fileSize);
             }
-            
+           
             ((BindingProvider)mtomPort).getRequestContext().put("schema-validation-enabled",
                                                                 Boolean.TRUE);
             param.value = new DataHandler(new ByteArrayDataSource(data, "application/octet-stream"));
@@ -122,7 +122,6 @@ public class ClientMtomXopTest extends AbstractBusClientServerTestBase {
             mtomPort.testXop(name, param);
             assertEquals("name unchanged", "return detail + call detail", name.value);
             assertNotNull(param.value);
-            param.value.getInputStream().close();
             
             InputStream in = param.value.getInputStream();
             byte bytes[] = IOUtils.readBytesFromStream(in);
