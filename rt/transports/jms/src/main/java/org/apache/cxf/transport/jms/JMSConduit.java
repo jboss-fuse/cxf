@@ -43,6 +43,7 @@ import org.apache.cxf.message.MessageImpl;
 import org.apache.cxf.service.model.EndpointInfo;
 import org.apache.cxf.transport.AbstractConduit;
 import org.apache.cxf.ws.addressing.EndpointReferenceType;
+import org.springframework.jms.connection.SingleConnectionFactory;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
 import org.springframework.jms.listener.DefaultMessageListenerContainer;
@@ -65,6 +66,7 @@ public class JMSConduit extends AbstractConduit implements JMSExchangeSender, Me
     private DefaultMessageListenerContainer jmsListener;
     private String conduitId;
     private AtomicLong messageCount;
+    private JmsTemplate jmsTemplate;
 
     public JMSConduit(EndpointInfo endpointInfo, EndpointReferenceType target, JMSConfiguration jmsConfig) {
         super(target);
@@ -108,7 +110,7 @@ public class JMSConduit extends AbstractConduit implements JMSExchangeSender, Me
         final JMSMessageHeadersType headers = (JMSMessageHeadersType)outMessage
             .get(JMSConstants.JMS_CLIENT_REQUEST_HEADERS);
 
-        final JmsTemplate jmsTemplate = JMSFactory.createJmsTemplate(jmsConfig, headers);
+        jmsTemplate = JMSFactory.createJmsTemplate(jmsConfig, headers);
         if (!exchange.isOneWay() && jmsListener == null) {
             jmsListener = JMSFactory.createJmsListener(jmsConfig, this, jmsConfig.getReplyDestination(), 
                                                        conduitId);
@@ -222,9 +224,23 @@ public class JMSConduit extends AbstractConduit implements JMSExchangeSender, Me
     }
 
     public void close() {
-        if (jmsListener != null) {
-            jmsListener.shutdown();
-        }
+        //Tmeplate should only be null if close has already been called in which case it is 
+        //not neccessary to repeat.
+        if (jmsTemplate != null) {
+            if (jmsTemplate.getConnectionFactory() instanceof SingleConnectionFactory) {
+                //Since all listeners/templates use same config/connectionfactory, it is only
+                //necessary to call destroy() once.
+                LOG.log(Level.FINE, "Destroying SingleConnectionFactory from template .....");
+                ((SingleConnectionFactory)jmsTemplate.getConnectionFactory()).destroy();
+                jmsTemplate = null;
+            }
+            
+            if (jmsListener != null) {
+                jmsListener.shutdown();
+            }
+            
+        }        
+                        
         LOG.log(Level.FINE, "JMSConduit closed ");
     }
 
@@ -247,9 +263,7 @@ public class JMSConduit extends AbstractConduit implements JMSExchangeSender, Me
 
     @Override
     protected void finalize() throws Throwable {
-        if (jmsListener != null) {
-            jmsListener.shutdown();
-        }
+        close();
         super.finalize();
     }
 
