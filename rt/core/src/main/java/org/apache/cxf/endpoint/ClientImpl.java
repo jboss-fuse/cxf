@@ -160,7 +160,9 @@ public class ClientImpl
             mgr.clientDestroyed(this);
         }
 
-        getConduit().close();
+        if (conduitSelector != null) {
+            getConduit().close();
+        }
     }
     
     private void notifyLifecycleManager() {

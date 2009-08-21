@@ -224,26 +224,28 @@ public class JMSConduit extends AbstractConduit implements JMSExchangeSender, Me
     }
 
     public void close() {
-        //Tmeplate should only be null if close has already been called in which case it is 
-        //not neccessary to repeat.
-        if (jmsTemplate != null) {
-            if (jmsTemplate.getConnectionFactory() instanceof SingleConnectionFactory) {
-                //Since all listeners/templates use same config/connectionfactory, it is only
-                //necessary to call destroy() once.
-                LOG.log(Level.FINE, "Destroying SingleConnectionFactory from template .....");
-                ((SingleConnectionFactory)jmsTemplate.getConnectionFactory()).destroy();
-                jmsTemplate = null;
-            }
-            
+        synchronized (this) {
             if (jmsListener != null) {
                 jmsListener.shutdown();
+                jmsListener = null;
             }
             
-        }        
-                        
-        LOG.log(Level.FINE, "JMSConduit closed ");
+            if (jmsTemplate != null) {
+                Object obj = jmsTemplate.getConnectionFactory();
+                if (obj instanceof SingleConnectionFactory) {
+                    //Since all listeners/templates use same config/connectionfactory, it is only
+                    //necessary to call destroy() once.
+                    LOG.log(Level.FINE, "Destroying SingleConnectionFactory from template .....");
+                    ((SingleConnectionFactory)obj).destroy();
+                }
+                
+                jmsTemplate = null;
+            }        
+            
+            LOG.log(Level.FINE, "JMSConduit closed ");
+        }
     }
-
+    
     protected Logger getLogger() {
         return LOG;
     }
