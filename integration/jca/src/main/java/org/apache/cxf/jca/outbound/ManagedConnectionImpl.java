@@ -119,6 +119,7 @@ public class ManagedConnectionImpl implements ManagedConnection {
         
         Client client = ClientProxy.getClient(clientProxy);
         client.destroy();
+        clientProxy = null;
         
         handles.clear();
         isClosed = false;
