@@ -18,6 +18,7 @@
  */
 package org.apache.cxf.transport.jms;
 
+import java.lang.reflect.Method;
 import java.util.logging.Logger;
 
 import javax.jms.ConnectionFactory;
@@ -28,9 +29,9 @@ import javax.jms.QueueSession;
 import javax.jms.Session;
 import javax.jms.XAConnectionFactory;
 import javax.naming.NamingException;
-  
-import org.apache.cxf.Bus;
+
 import org.apache.cxf.common.logging.LogUtils;
+import org.apache.cxf.service.model.EndpointInfo;
 import org.springframework.jms.connection.UserCredentialsConnectionFactoryAdapter;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.JmsTemplate102;
@@ -115,7 +116,7 @@ public final class JMSFactory {
         return jmsTemplate;
     }
 
-    public static DefaultMessageListenerContainer createJmsListener(Bus bus,
+    public static DefaultMessageListenerContainer createJmsListener(EndpointInfo ei,
                                                                     JMSConfiguration jmsConfig,
                                                                     MessageListener listenerHandler,
                                                                     String destinationName, 
@@ -125,9 +126,12 @@ public final class JMSFactory {
         
         if (jmsConfig.isUseJms11()) {
             //Check to see if transport is being used in JCA RA with XA
-            if (bus.getExtension(java.lang.reflect.Method.class) != null 
-                && jmsConfig.getConnectionFactory() instanceof XAConnectionFactory) {
-                jmsListener = new JCATransactionalMessageListenerContainer(bus); 
+            Method method = ei.getProperty(JCATransactionalMessageListenerContainer.MDB_TRANSACTED_METHOD,
+                                           java.lang.reflect.Method.class);
+            if (method != null 
+                && 
+                jmsConfig.getConnectionFactory() instanceof XAConnectionFactory) {
+                jmsListener = new JCATransactionalMessageListenerContainer(ei); 
             } else {
                 jmsListener = new DefaultMessageListenerContainer();
             }
