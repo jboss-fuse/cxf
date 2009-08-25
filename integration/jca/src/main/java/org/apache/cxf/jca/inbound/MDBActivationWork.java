@@ -18,6 +18,7 @@
  */
 package org.apache.cxf.jca.inbound;
 
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
@@ -51,6 +52,7 @@ import org.apache.cxf.jaxws.JaxWsServerFactoryBean;
 public class MDBActivationWork implements Work {
     
     private static final Logger LOG = LogUtils.getL7dLogger(MDBActivationWork.class);
+    private static final String MESSAGE_LISTENER_METHOD = "lookupTargetObject";
 
     private MDBActivationSpec spec;
     private MessageEndpointFactory endpointFactory;
@@ -125,6 +127,17 @@ public class MDBActivationWork implements Work {
         
         if (bus == null) {
             bus = BusFactory.getDefaultBus();
+        }
+
+        bus.setExtension(endpointFactory, javax.resource.spi.endpoint.MessageEndpointFactory.class);
+        
+        try {
+            Class clazz = org.apache.cxf.jca.inbound.DispatchMDBMessageListener.class;
+            Method m = clazz.getMethod(MESSAGE_LISTENER_METHOD, new Class[] {String.class});
+            bus.setExtension(m, Method.class);
+        } catch (Exception ex) {
+            LOG.severe("Failed to get method " + MESSAGE_LISTENER_METHOD
+                       + " from class DispatchMDBMessageListener.");
         }
 
         Server server = createServer(bus, serviceClass, invoker);
