@@ -188,6 +188,8 @@ public class JMSDestinationTest extends AbstractJMSTester {
         Message outMessage = new MessageImpl();
         setupMessageHeader(outMessage);
         JMSDestination destination = setupJMSDestination(true);
+        // The JMSBroker (ActiveMQ 5.x) need to take some time to setup the DurableSubscriber
+        Thread.sleep(2000);
         sendoutMessage(conduit, outMessage, true);
         // wait for the message to be get from the destination
         waitForReceiveDestMessage();
