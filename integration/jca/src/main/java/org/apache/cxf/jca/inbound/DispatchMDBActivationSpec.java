@@ -43,4 +43,3 @@ public class DispatchMDBActivationSpec extends MDBActivationSpec {
         return targetBeanJndiName;
     }
 }
-

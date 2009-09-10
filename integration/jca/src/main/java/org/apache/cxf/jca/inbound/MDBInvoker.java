@@ -99,4 +99,3 @@ public class MDBInvoker extends AbstractInvoker {
         return ep;
     }
 }
-

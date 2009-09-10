@@ -40,4 +40,3 @@ public interface DispatchMDBMessageListener {
     Object lookupTargetObject(String targetJndiName) throws Exception;
 
 }
-

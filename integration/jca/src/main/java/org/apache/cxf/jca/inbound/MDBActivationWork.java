@@ -44,9 +44,9 @@ import org.apache.cxf.service.model.EndpointInfo;
 
 /**
  *
- * MDBActivationWork is a type of {@link Work} that to be executed by 
+ * MDBActivationWork is a type of {@link Work} that is executed by 
  * {@link javax.resource.spi.work.WorkManager}.  MDBActivationWork
- * starts an CXF service endpoint which accepts inbound calls for
+ * starts an CXF service endpoint to accept inbound calls for
  * the JCA connector.
  * 
  */
@@ -179,7 +179,7 @@ public class MDBActivationWork implements Work {
         }
         
         if (spec.getWsdlLocation() != null) {   
-            factory.setWsdlURL(spec.getWsdlLocation());
+            factory.setWsdlLocation(spec.getWsdlLocation());
         }
         
         if (spec.getAddress() != null) {
