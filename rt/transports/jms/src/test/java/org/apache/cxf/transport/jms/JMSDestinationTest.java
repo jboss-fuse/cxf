@@ -148,7 +148,7 @@ public class JMSDestinationTest extends AbstractJMSTester {
         assertEquals("The borker URL is wrong", cf.getBrokerURL(), "tcp://localhost:61500");
         assertEquals("Get a wrong TargetDestination", jmsConfig.getTargetDestination(), "queue:test");
         assertEquals("Get the wrong pubSubDomain value", jmsConfig.isPubSubDomain(), false);
-        
+        destination.shutdown();
         BusFactory.setDefaultBus(null);
 
     }
@@ -170,7 +170,7 @@ public class JMSDestinationTest extends AbstractJMSTester {
         assertEquals("Can't get the right AddressPolicy's Destination",
                      "dynamicQueues/test.jmstransport.binary", destination.getJmsConfig()
                          .getTargetDestination());
-
+        destination.shutdown();
         BusFactory.setDefaultBus(null);
 
     }
@@ -197,6 +197,7 @@ public class JMSDestinationTest extends AbstractJMSTester {
         verifyHeaders(destMessage, outMessage);
         conduit.close();
         destination.shutdown();
+        BusFactory.setDefaultBus(null);
     }
 
     @Test
