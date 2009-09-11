@@ -64,8 +64,8 @@ public class GreeterImpl implements Greeter {
     
     public void pingMe() throws PingMeFault {
         // here we need to put the FaultDetail into the FaultDetailDocument
-        FaultDetailDocument faultDocument = 
-            org.apache.helloWorldSoapHttp.types.FaultDetailDocument.Factory.newInstance();        
+        FaultDetailDocument faultDocument 
+            = org.apache.helloWorldSoapHttp.types.FaultDetailDocument.Factory.newInstance();
         FaultDetail faultDetail = faultDocument.addNewFaultDetail();
         faultDetail.setMajor((short)2);
         faultDetail.setMinor((short)1);
