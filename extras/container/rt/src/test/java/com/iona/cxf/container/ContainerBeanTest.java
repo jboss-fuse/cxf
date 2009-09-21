@@ -64,7 +64,7 @@ public class ContainerBeanTest extends Assert {
         String [] appNames = containerBean.listApplicationNames();
         assertEquals(1, appNames.length);
         assertEquals("test", appNames[0]);
-        assertEquals(containerBean.getApplicationState("test"), ApplicationState.STARTED);
+        assertEquals(ApplicationState.STARTED, containerBean.getApplicationState("test"));
 
         String [] appServices = containerBean.listApplicationServices(appNames[0]);
         assertEquals(1, appServices.length);

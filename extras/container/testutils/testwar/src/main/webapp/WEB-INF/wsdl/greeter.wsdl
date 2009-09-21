@@ -136,11 +136,11 @@
     <wsdl:service name="GreeterService">
 
         <wsdl:port binding="tns:GreeterSOAPBinding" name="GreeterPort">
-            <soap:address location="http://localhost:9090/GreeterContext/GreeterPort"/>
+            <soap:address location="http://localhost:9020/GreeterContext/GreeterPort"/>
         </wsdl:port>
 
         <wsdl:port binding="tns:GreeterSOAPBinding" name="GreeterPort2">
-            <soap:address location="http://localhost:9191/GreeterContext2/GreeterPort2"/>
+            <soap:address location="http://localhost:9022/GreeterContext2/GreeterPort2"/>
         </wsdl:port>
 
     </wsdl:service>
