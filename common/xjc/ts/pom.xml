@@ -56,10 +56,4 @@
         </dependency>
     </dependencies>
 
-    <scm>
-        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk/common/xjc/ts</connection>
-        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk/common/xjc/ts</developerConnection>
-      <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-parent/cxf-xjc-ts</url>
-  </scm>
-
 </project>

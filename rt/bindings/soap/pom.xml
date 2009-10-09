@@ -110,12 +110,6 @@
     </dependencies>
 
 
-    <scm>
-        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk/rt/bindings/soap</connection>
-        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk/rt/bindings/soap</developerConnection>
-      <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-parent/cxf-rt-bindings-soap</url>
-  </scm>
-
     <profiles>
         <profile>
             <id>ibmjdk</id>

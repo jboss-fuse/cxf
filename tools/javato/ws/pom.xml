@@ -213,10 +213,5 @@
 
         </plugins>
     </build>
-    <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/tools/javato/ws</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/tools/javato/ws</developerConnection>
-      <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-parent/cxf-tools-java2ws</url>
-  </scm>
 
 </project>

@@ -28,9 +28,8 @@
     <packaging>pom</packaging>
 
     <scm>
-        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk</connection>
-        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk</developerConnection>
-        <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk</url>
+        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.2.x-fuse</connection>
+        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.2.x-fuse</developerConnection>
     </scm>
     <issueManagement>
         <system>jira</system>

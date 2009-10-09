@@ -76,12 +76,4 @@
 
     </dependencies>
 
-    <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/tools/wsdlto/frontend/javascript</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/tools/wsdlto/frontend/javascript</developerConnection>
-      <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-parent/cxf-tools-wsdlto-frontend-javascript</url>
-  </scm>
-
-
-
 </project>

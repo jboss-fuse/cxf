@@ -67,12 +67,5 @@
 
     </dependencies>
 
-    <scm>
-        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk/tools/wsdlto/frontend/jaxws</connection>
-        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk/tools/wsdlto/frontend/jaxws</developerConnection>
-        <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-parent/cxf-tools-wsdlto-frontend-jaxws</url>
-  </scm>
-
-
 
 </project>

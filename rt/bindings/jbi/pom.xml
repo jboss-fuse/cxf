@@ -156,10 +156,4 @@
 	</plugins>
     </build>    
 
-    <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/rt/bindings/jbi</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/tags/cxf-2.2/rt/bindings/jbi</developerConnection>
-      <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-parent/cxf-rt-bindings-jbi</url>
-  </scm>
-
 </project>

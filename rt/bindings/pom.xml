@@ -41,10 +41,4 @@
     </modules>
 
 
-    <scm>
-        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk/rt/bindings</connection>
-        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/trunk/rt/bindings</developerConnection>
-      <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-rt/cxf-rt-bindings</url>
-  </scm>
-
 </project>
