@@ -267,9 +267,4 @@
         </plugins>
     </build>
 
-    <scm>
-        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.1.x-fuse/distribution/bundle/minimal</connection>
-        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.1.x-fuse/distribution/bundle/minimal</developerConnection>
-    </scm>
-
 </project>

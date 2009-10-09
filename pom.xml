@@ -30,7 +30,6 @@
     <scm>
         <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.1.x-fuse</connection>
         <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.1.x-fuse</developerConnection>
-        <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk</url>
     </scm>
     <issueManagement>
         <system>jira</system>

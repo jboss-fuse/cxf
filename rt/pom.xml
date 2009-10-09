@@ -55,10 +55,4 @@
         <module>javascript</module>
     </modules>
 
-    <scm>
-        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.1.x-fuse/rt</connection>
-        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.1.x-fuse/rt</developerConnection>
-      <url>http://projects.open.iona.com/projects/trac/iona/browser/cxf/trunk/cxf-rt</url>
-  </scm>
-
 </project>
