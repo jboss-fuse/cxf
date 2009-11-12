@@ -50,7 +50,7 @@ public class JMSConfiguration implements InitializingBean {
     private boolean wrapInSingleConnectionFactory = true;
     private TaskExecutor taskExecutor;
     private boolean useJms11 = DEFAULT_USEJMS11;
-    private boolean reconnectOnException;
+    private boolean reconnectOnException = true;
     private boolean messageIdEnabled = true;
     private boolean messageTimestampEnabled = true;
     private boolean pubSubNoLocal;
@@ -63,8 +63,8 @@ public class JMSConfiguration implements InitializingBean {
     
     private int concurrentConsumers = 1;
     private int maxConcurrentConsumers = 1;
-    private int maxConcurrentTasks = 10;
     private int maxSuspendedContinuations = DEFAULT_VALUE;
+    private int reconnectPercentOfMax = 70;
 
     private volatile String messageSelector;
     private boolean subscriptionDurable;
@@ -329,6 +329,14 @@ public class JMSConfiguration implements InitializingBean {
     public void setMaxSuspendedContinuations(int maxSuspendedContinuations) {
         this.maxSuspendedContinuations = maxSuspendedContinuations;
     }
+    
+    public int getReconnectPercentOfMax() {
+        return reconnectPercentOfMax;
+    }
+
+    public void setReconnectPercentOfMax(int reconnectPercentOfMax) {
+        this.reconnectPercentOfMax = reconnectPercentOfMax;
+    }
 
     public TaskExecutor getTaskExecutor() {
         return taskExecutor;
@@ -350,14 +358,6 @@ public class JMSConfiguration implements InitializingBean {
     }
     public boolean isSetUseConduitIdSelector() {
         return useConduitIdSelector != null;
-    }
-    
-    public int getMaxConcurrentTasks() {
-        return maxConcurrentTasks;
-    }
-
-    public void setMaxConcurrentTasks(int maxConcurrentTasks) {
-        this.maxConcurrentTasks = maxConcurrentTasks;
     }
 
     public void setJndiTemplate(JndiTemplate jndiTemplate) {
