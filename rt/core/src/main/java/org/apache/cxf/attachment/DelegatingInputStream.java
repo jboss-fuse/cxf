@@ -35,14 +35,18 @@ final class DelegatingInputStream extends InputStream {
         this.is = is;
         deserializer = ads;
     }
+    DelegatingInputStream(InputStream is) {
+        this.is = is;
+        deserializer = null;
+    }
 
     @Override
     public void close() throws IOException {
         is.close();
-        isClosed = true;
-        if (!isClosed) {
+        if (!isClosed && deserializer != null) {
             deserializer.markClosed(this);
         }
+        isClosed = true;
     }
 
     public boolean isClosed() {

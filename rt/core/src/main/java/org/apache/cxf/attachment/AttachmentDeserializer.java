@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +35,8 @@ import javax.activation.DataSource;
 import javax.mail.MessagingException;
 import javax.mail.internet.InternetHeaders;
 
+import org.apache.cxf.common.util.StringUtils;
+import org.apache.cxf.helpers.HttpHeaderHelper;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.message.Attachment;
@@ -60,6 +63,7 @@ public class AttachmentDeserializer {
     private PushbackInputStream stream;
     private int createCount; 
     private int closedCount;
+    private boolean closed;
 
     private byte boundary[];
 
@@ -119,7 +123,15 @@ public class AttachmentDeserializer {
             }
 
             try {
-                message.put(InternetHeaders.class.getName(), new InternetHeaders(stream));
+                InternetHeaders ih = new InternetHeaders(stream);
+                message.put(InternetHeaders.class.getName(), ih);
+                String val = ih.getHeader("Content-Type", "; ");
+                if (!StringUtils.isEmpty(val)) {
+                    String cs = HttpHeaderHelper.findCharset(val);
+                    if (!StringUtils.isEmpty(cs)) {
+                        message.put(Message.ENCODING, HttpHeaderHelper.mapCharset(cs));
+                    }
+                }
             } catch (MessagingException e) {
                 throw new RuntimeException(e);
             }
@@ -179,6 +191,9 @@ public class AttachmentDeserializer {
     public AttachmentImpl readNext() throws IOException {
         // Cache any mime parts that are currently being streamed
         cacheStreamedAttachments();
+        if (closed) {
+            return null;
+        }
 
         int v = stream.read();
         if (v == -1) {
@@ -205,11 +220,13 @@ public class AttachmentDeserializer {
             cache((DelegatingInputStream) body, true);
         }
 
-        for (Attachment a : attachments.getLoadedAttachments()) {
+        List<Attachment> atts = new ArrayList<Attachment>(attachments.getLoadedAttachments());
+        for (Attachment a : atts) {
             DataSource s = a.getDataHandler().getDataSource();
             if (s instanceof AttachmentDataSource) {
-                if (((AttachmentDataSource)s).getDelegatingInputStream() != null) {
-                    cache(((AttachmentDataSource)s).getDelegatingInputStream(), false);
+                AttachmentDataSource ads = (AttachmentDataSource)s;
+                if (!ads.isCached()) {
+                    ads.cache();
                 }
             } else {
                 cache((DelegatingInputStream) s.getInputStream(), false);
@@ -301,8 +318,33 @@ public class AttachmentDeserializer {
 
     public void markClosed(DelegatingInputStream delegatingInputStream) throws IOException {
         closedCount++;
-        if (closedCount == createCount && !attachments.hasNext()) {
+        if (closedCount == createCount && !attachments.hasNext(false)) {
+            int x = stream.read();
+            while (x != -1) {
+                x = stream.read();
+            }
             stream.close();
+            closed = true;
         }
     }
+    /**
+     *  Check for more attachment.
+     *
+     * @return whether there is more attachment or not.  It will not deserialize the next attachment.
+     * @throws IOException
+     */
+    public boolean hasNext() throws IOException {
+        cacheStreamedAttachments();
+        if (closed) {
+            return false;
+        }
+
+        int v = stream.read();
+        if (v == -1) {
+            return false;
+        }
+        stream.unread(v);
+        return true;
+    }
+
 }
