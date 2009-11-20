@@ -542,7 +542,9 @@ public class ClientImpl
             return exchange.getInFaultMessage().getContent(Exception.class);
         } else if (exchange.getOutFaultMessage() != null) {
             return exchange.getOutFaultMessage().getContent(Exception.class);
-        } 
+        } else if (exchange.getInMessage() != null) {
+            return exchange.getInMessage().getContent(Exception.class);
+        }
         return null;
     }
 

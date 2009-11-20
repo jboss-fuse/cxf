@@ -61,6 +61,8 @@ import org.apache.hello_world_doc_lit.PingMeFault;
 import org.apache.hello_world_doc_lit.SOAPService2;
 import org.junit.Before;
 import org.junit.Test;
+
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class JMSClientServerTest extends AbstractBusClientServerTestBase {
@@ -193,6 +195,23 @@ public class JMSClientServerTest extends AbstractBusClientServerTestBase {
             throw (Exception)ex.getCause();
         }
     }
+    
+    @Test
+    public void testJmsClientWithHandler() throws Exception {
+        
+        ApplicationContext context = 
+            new ClassPathXmlApplicationContext("org/apache/cxf/systest/jms/JMSClientWithHandler.xml");
+        Greeter greeter = (Greeter) context.getBean("myClient");
+        try {
+            greeter.sayHi();
+            fail("Expect exception here");
+        } catch (Exception ex) {
+            assertTrue("Get a wrong exception", ex instanceof RuntimeException);
+            assertEquals("Get a wrong exception", "VRS Exception", ex.getMessage());
+        }
+        
+    }
+    
 
     @Test
     public void testBasicConnection() throws Exception {
