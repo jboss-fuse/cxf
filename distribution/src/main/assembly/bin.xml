@@ -36,6 +36,7 @@
                 <include>lib/*</include>
                 <include>release_notes.txt</include>
                 <include>README</include>
+                <include>sf_*.*</include>
             </includes>
         </fileSet>
         <fileSet>
