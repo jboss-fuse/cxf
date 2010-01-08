@@ -21,18 +21,18 @@
     <groupId>org.apache.cxf.benchmark</groupId>
     <artifactId>cxf-benchmark-soapdoclit</artifactId>
     <packaging>war</packaging>
-    <version>2.2.5-psc-01-00</version>
+    <version>2.2.5-psc-01-01-SNAPSHOT</version>
     <name>Apache CXF Benchmark SOAP/HTTP/Doc/Lit</name>
     <url>http://cxf.apache.org</url>
 
     <properties>
-        <cxf.version>2.2.5-psc-01-00</cxf.version>
+        <cxf.version>2.2.5-psc-01-01-SNAPSHOT</cxf.version>
     </properties>
     <dependencies>
         <dependency>
             <groupId>org.apache.cxf.benchmark</groupId>
             <artifactId>cxf-benchmark-base</artifactId>
-            <version>2.2.5-psc-01-00</version>
+            <version>2.2.5-psc-01-01-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
