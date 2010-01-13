@@ -206,12 +206,10 @@ public class JMSDestinationTest extends AbstractJMSTester {
     public void testOneWayDestination() throws Exception {
         setupServiceInfo("http://cxf.apache.org/hello_world_jms", "/wsdl/jms_test.wsdl",
                          "HWStaticReplyQBinMsgService", "HWStaticReplyQBinMsgPort");
-        JMSDestination destination = setupJMSDestination(true);
-        
         JMSConduit conduit = setupJMSConduit(true, false);
         Message outMessage = new MessageImpl();
         setupMessageHeader(outMessage);
-        
+        JMSDestination destination = setupJMSDestination(true);
         sendoutMessage(conduit, outMessage, true);
         // wait for the message to be get from the destination
         waitForReceiveDestMessage();
@@ -543,21 +541,6 @@ public class JMSDestinationTest extends AbstractJMSTester {
         assertNotNull("SecurityContext should be set in message received by JMSDestination", securityContext);
         assertEquals("Principal in SecurityContext should be", "testUser", 
                      securityContext.getUserPrincipal().getName());
-        conduit.close();
-        destination.shutdown();
-    }
-
-    @Test
-    public void testGetSpringSingleConnectionFactoryFromWSDL() throws Exception {
-        setupServiceInfo("http://cxf.apache.org/hello_world_jms", "/wsdl/jms_test.wsdl",
-                         "HelloWorldServiceSpringICF", "HelloWorldPortSpringICF");
-        final JMSDestination destination = setupJMSDestination(true);
-        // set up the conduit send to be true
-        JMSConduit conduit = setupJMSConduit(true, false);
-        final Message outMessage = new MessageImpl();
-        setupMessageHeader(outMessage, null);
-        sendoutMessage(conduit, outMessage, true);
-        waitForReceiveDestMessage();
         conduit.close();
         destination.shutdown();
     }

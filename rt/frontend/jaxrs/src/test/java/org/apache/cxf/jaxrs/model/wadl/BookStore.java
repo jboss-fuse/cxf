@@ -24,7 +24,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.MatrixParam;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -49,46 +48,20 @@ public class BookStore {
         return "store";
     }
     
-    @PUT 
-    @Consumes("text/plain")
-    public void setName(@PathParam("id") Long id, String name) {
-    }
-    
-    @Path("books/{bookid}")
-    public Object addBook(@PathParam("id") int id,
-                        @PathParam("bookid") int bookId,
-                        @MatrixParam("mid") int matrixId) {
-        return new Book(1);
-    }
-    
     @POST
     @Path("books/{bookid}")
-    @Description("Update the books collection")
-    //CHECKSTYLE:OFF
     public Book addBook(@PathParam("id") int id,
                         @PathParam("bookid") int bookId,
                         @MatrixParam("mid") int matrixId,
                         @HeaderParam("hid") int headerId,
                         @CookieParam("cid") int cookieId,
-                        @QueryParam("provider.bar") int queryParam,
                         @Context HttpHeaders headers,
                         Book b) {
         return new Book(1);
     }
     
-    @PUT
-    @Path("books/{bookid}")
-    @Description("Update the book")
-    public void addBook(@PathParam("id") int id,
-                        @PathParam("bookid") int bookId,
-                        @MatrixParam("mid") int matrixId,
-                        Book b) {
-    }
-    
-    //CHECKSTYLE:ON
     @Path("booksubresource")
-    public Book getBook(@PathParam("id") int id,
-                        @MatrixParam("mid") int matrixId) {
+    public Book getBook() {
         return new Book(1);
     }
     
@@ -110,50 +83,6 @@ public class BookStore {
     }
     
     public static class QueryBean {
-        private int a;
-        private int b;
-        private QueryBean2 bean;
-        
-        public int getA() {
-            return a;
-        }
-        
-        public int getB() {
-            return b;
-        }
-        
-        public QueryBean2 getC() {
-            return bean;
-        }
-        
-        public void setC(QueryBean2 c) {
-            bean = c;
-        }
-    }
-    
-    public static class QueryBean2 {
-        private int a;
-        private int b;
-        private QueryBean3 bean;
-        
-        public int getA() {
-            return a;
-        }
-        
-        public int getB() {
-            return b;
-        }
-        
-        public QueryBean3 getD() {
-            return bean;
-        }
-        
-        public void setD(QueryBean3 d) {
-            bean = d;
-        }
-    }
-    
-    public static class QueryBean3 {
         private int a;
         private int b;
         

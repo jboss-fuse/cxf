@@ -35,7 +35,6 @@ import org.apache.cxf.continuations.SuspendedInvocationException;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.interceptor.Interceptor;
 import org.apache.cxf.interceptor.InterceptorChain;
-import org.apache.cxf.logging.FaultListener;
 import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.FaultMode;
 import org.apache.cxf.message.Message;
@@ -83,7 +82,6 @@ public class PhaseInterceptorChain implements InterceptorChain {
     private Message pausedMessage;
     private MessageObserver faultObserver;
     private PhaseInterceptorIterator iterator;
-    private final boolean isFineLogging;
     
     // currently one chain for one request/response, use below as signal 
     // to avoid duplicate fault processing on nested calling of
@@ -93,8 +91,6 @@ public class PhaseInterceptorChain implements InterceptorChain {
     
     
     private PhaseInterceptorChain(PhaseInterceptorChain src) {
-        isFineLogging = LOG.isLoggable(Level.FINE);
-        
         //only used for clone
         state = State.EXECUTING;
         
@@ -131,8 +127,7 @@ public class PhaseInterceptorChain implements InterceptorChain {
     
     public PhaseInterceptorChain(SortedSet<Phase> ps) {
         state = State.EXECUTING;
-        isFineLogging = LOG.isLoggable(Level.FINE);
-
+        
         int numPhases = ps.size();
         phases = new Phase[numPhases];
         nameMap = new HashMap<String, Integer>();
@@ -199,7 +194,7 @@ public class PhaseInterceptorChain implements InterceptorChain {
                 + ((phaseName == null) ? ": Phase declaration is missing." 
                 : ": Phase " + phaseName + " specified does not exist."));
         } else {            
-            if (isFineLogging) {
+            if (LOG.isLoggable(Level.FINE)) {
                 LOG.fine("Adding interceptor " + i + " to phase " + phaseName);
             }
 
@@ -228,6 +223,7 @@ public class PhaseInterceptorChain implements InterceptorChain {
     @SuppressWarnings("unchecked")
     public synchronized boolean doIntercept(Message message) {
         updateIterator();
+        boolean isFineLogging = LOG.isLoggable(Level.FINE);
         pausedMessage = message;
 
         Message oldMessage = CURRENT_MESSAGE.get();
@@ -268,27 +264,45 @@ public class PhaseInterceptorChain implements InterceptorChain {
                                 description.append("\' ");
                             }
                         }
-
-                        FaultListener flogger = (FaultListener)
-                                message.getContextualProperty(FaultListener.class.getName());
-                        boolean useDefaultLogging = true;
-                        if (flogger != null) {
-                            useDefaultLogging = flogger.faultOccurred(ex, description.toString(), message);
+                        
+                        FaultMode mode = message.get(FaultMode.class);
+                        if (mode == FaultMode.CHECKED_APPLICATION_FAULT) {
+                            if (LOG.isLoggable(Level.FINE)) { 
+                                LogUtils.log(LOG, Level.FINE,
+                                             "Application " + description
+                                             + "has thrown exception, unwinding now", ex);
+                            } else if (LOG.isLoggable(Level.INFO)) {
+                                Throwable t = ex;
+                                if (ex instanceof Fault
+                                    && ex.getCause() != null) {
+                                    t = ex.getCause();
+                                }                            
+                                
+                                LogUtils.log(LOG, Level.INFO,
+                                             "Application " + description
+                                             + "has thrown exception, unwinding now: "
+                                             + t.getClass().getName() 
+                                             + ": " + ex.getMessage());
+                            }
+                        } else if (LOG.isLoggable(Level.WARNING)) {
+                            if (mode == FaultMode.UNCHECKED_APPLICATION_FAULT) {
+                                LogUtils.log(LOG, Level.WARNING,
+                                             "Application " + description
+                                             + "has thrown exception, unwinding now", ex);
+                            } else {
+                                LogUtils.log(LOG, Level.WARNING,
+                                             "Interceptor for " + description
+                                             + "has thrown exception, unwinding now", ex);
+                            }
                         }
-                        if (useDefaultLogging) {
-                            doDefaultLogging(message, ex, description);
-                        }
-
     
                         message.setContent(Exception.class, ex);
-                        boolean isOneWay = false;
                         if (message.getExchange() != null) {
                             message.getExchange().put(Exception.class, ex);
-                            isOneWay = message.getExchange().isOneWay();
                         }                    
                         unwind(message);
                         
-                        if (faultObserver != null && !isOneWay) {
+                        if (faultObserver != null) {
                             faultObserver.onMessage(message);
                         }
                     }
@@ -304,40 +318,7 @@ public class PhaseInterceptorChain implements InterceptorChain {
             CURRENT_MESSAGE.set(oldMessage);
         }
     }
-
-    private void doDefaultLogging(Message message, RuntimeException ex, StringBuilder description) {
-        FaultMode mode = message.get(FaultMode.class);
-        if (mode == FaultMode.CHECKED_APPLICATION_FAULT) {
-            if (isFineLogging) {
-                LogUtils.log(LOG, Level.FINE,
-                             "Application " + description
-                             + "has thrown exception, unwinding now", ex);
-            } else if (LOG.isLoggable(Level.INFO)) {
-                Throwable t = ex;
-                if (ex instanceof Fault
-                    && ex.getCause() != null) {
-                    t = ex.getCause();
-                }
-
-                LogUtils.log(LOG, Level.INFO,
-                             "Application " + description
-                             + "has thrown exception, unwinding now: "
-                             + t.getClass().getName()
-                             + ": " + ex.getMessage());
-            }
-        } else if (LOG.isLoggable(Level.WARNING)) {
-            if (mode == FaultMode.UNCHECKED_APPLICATION_FAULT) {
-                LogUtils.log(LOG, Level.WARNING,
-                             "Application " + description
-                             + "has thrown exception, unwinding now", ex);
-            } else {
-                LogUtils.log(LOG, Level.WARNING,
-                             "Interceptor for " + description
-                             + "has thrown exception, unwinding now", ex);
-            }
-        }
-    }
-
+    
     /**
      * Intercept a message, invoking each phase's handlers in turn,
      * starting after the specified interceptor.
@@ -390,7 +371,8 @@ public class PhaseInterceptorChain implements InterceptorChain {
     }
     
     @SuppressWarnings("unchecked")
-    public void unwind(Message message) {
+    private void unwind(Message message) {
+        boolean isFineLogging = LOG.isLoggable(Level.FINE);
         while (iterator.hasPrevious()) {
             Interceptor currentInterceptor = iterator.previous();
             if (isFineLogging) {
@@ -620,7 +602,7 @@ public class PhaseInterceptorChain implements InterceptorChain {
     }
     
     private void outputChainToLog(boolean modified) {
-        if (isFineLogging) {
+        if (LOG.isLoggable(Level.FINE)) {
             if (modified) {
                 LOG.fine(toString(" was modified"));
             } else {

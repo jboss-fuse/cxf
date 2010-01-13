@@ -33,7 +33,6 @@ import org.apache.cxf.service.Service;
 import org.apache.cxf.service.model.EndpointInfo;
 import org.apache.cxf.service.model.OperationInfo;
 import org.easymock.classextension.EasyMock;
-
 import org.junit.Assert;
 import org.junit.Before;
 
@@ -119,14 +118,15 @@ public class AbstractMessageResponseTestBase extends Assert {
         EasyMock.expect(exchange.get(Endpoint.class)).andReturn(endpoint);
         EasyMock.replay(endpointInfo);
         EasyMock.replay(endpoint);
-        setupOperationForMessage();
-    }
-      
-    protected void setupOperationForMessage() {
+        
         OperationInfo op = EasyMock.createMock(OperationInfo.class);
         EasyMock.expect(op.getName()).andReturn(OPERATION_NAME);        
         EasyMock.expect(exchange.get(OperationInfo.class)).andReturn(op);
         EasyMock.replay(op);
+      
+        
     }
+      
+    
 
 }

@@ -144,6 +144,7 @@ public class AutomaticWorkQueueImpl extends ThreadPoolExecutor implements Automa
         } catch (SecurityException e) { 
             group = new ThreadGroup(name + "-workqueue");
         }
+        group.setDaemon(true);
         return new AWQThreadFactory(group, name);
     }
     static class AWQThreadFactory implements ThreadFactory {
@@ -158,15 +159,14 @@ public class AutomaticWorkQueueImpl extends ThreadPoolExecutor implements Automa
             loader = AutomaticWorkQueueImpl.class.getClassLoader();
         }
         public Thread newThread(Runnable r) {
-            if (group.isDestroyed()) {
-                group = new ThreadGroup(group.getParent(), name + "-workqueue");
-            }
             Thread t = new Thread(group, 
                                   r, 
                                   name + "-workqueue-" + threadNumber.getAndIncrement(),
                                   0);
             t.setContextClassLoader(loader);
-            t.setDaemon(true);
+            if (!t.isDaemon()) {
+                t.setDaemon(true);
+            }
             if (t.getPriority() != Thread.NORM_PRIORITY) {
                 t.setPriority(Thread.NORM_PRIORITY);
             }

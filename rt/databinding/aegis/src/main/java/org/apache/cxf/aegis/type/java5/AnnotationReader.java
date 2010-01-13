@@ -78,24 +78,13 @@ public class AnnotationReader {
 
     // PMD incorrectly identifies this as a string comparison
     @SuppressWarnings("unchecked")
-    public Boolean isNillable(AnnotatedElement element) {
+    public boolean isNillable(AnnotatedElement element) {
         return Boolean.TRUE.equals(getAnnotationValue("nillable", // NOPMD
                 element,
                 Boolean.FALSE,
                 XmlElement.class,
                 XFIRE_XML_ELEMENT,
                 XML_ELEMENT));
-    }
-    @SuppressWarnings("unchecked")
-    public static Boolean isNillable(Annotation[] anns) {
-        if (anns == null) {
-            return null;
-        }
-        return (Boolean)getAnnotationValue("nillable", // NOPMD
-                anns,
-                XmlElement.class,
-                XFIRE_XML_ELEMENT,
-                XML_ELEMENT);
     }
 
     @SuppressWarnings("unchecked")
@@ -263,26 +252,7 @@ public class AnnotationReader {
 
         return 0;
     }
-    @SuppressWarnings("unchecked")
-    public static Integer getMinOccurs(Annotation[] anns) {
-        if (anns == null) {
-            return null;
-        }
-        String minOccurs = (String) getAnnotationValue("minOccurs",
-                anns,
-                XmlElement.class,
-                XFIRE_XML_ELEMENT);
-        if (minOccurs != null) {
-            return Integer.valueOf(minOccurs);
-        }
 
-        // check jaxb annotation
-        Boolean required = (Boolean) getAnnotationValue("required", anns, XML_ELEMENT);
-        if (Boolean.TRUE.equals(required)) {
-            return 1;
-        }
-        return null;
-    }
     @SuppressWarnings("unchecked")
     public boolean isExtensibleElements(AnnotatedElement element, boolean defaultValue) {
         Boolean extensibleElements = (Boolean) getAnnotationValue("extensibleElements",
@@ -346,27 +316,8 @@ public class AnnotationReader {
         }
         return null;
     }
-    static Object getAnnotationValue(String name,
-                                     Annotation[] anns,
-                                     Class<? extends Annotation>... annotations) {
-        for (Class<?> annotation : annotations) {
-            if (annotation != null) {
-                try {
-                    for (Annotation ann : anns) {
-                        if (annotation.isInstance(ann)) {
-                            Method method = ann.getClass().getMethod(name);
-                            return method.invoke(ann);
-                        }
-                    }
-                } catch (Exception ignored) {
-                    // annotation did not have value
-                }
-            }
-        }
-        return null;
-    }
 
-    static Object getAnnotationValue(String name,
+    Object getAnnotationValue(String name,
             Method method,
             int index,
             Object ignoredValue,

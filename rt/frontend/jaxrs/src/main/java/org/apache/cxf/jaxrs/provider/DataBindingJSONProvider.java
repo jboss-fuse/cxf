@@ -40,7 +40,7 @@ import org.apache.cxf.jaxrs.utils.JAXRSUtils;
 @Provider
 @Produces("application/json")
 @Consumes("application/json")
-public class DataBindingJSONProvider<T> extends DataBindingProvider<T> {
+public class DataBindingJSONProvider extends DataBindingProvider {
     
     private List<String> arrayKeys;
     private boolean serializeAsArray;

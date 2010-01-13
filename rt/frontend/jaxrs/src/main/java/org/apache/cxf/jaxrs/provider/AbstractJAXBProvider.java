@@ -119,8 +119,6 @@ public abstract class AbstractJAXBProvider extends AbstractConfigurableProvider
     private Map<String, Object> cProperties;
     private Map<String, Object> uProperties;
     
-    private boolean skipJaxbChecks;
-    
     public void setContextProperties(Map<String, Object> contextProperties) {
         cProperties = contextProperties;
     }
@@ -392,8 +390,7 @@ public abstract class AbstractJAXBProvider extends AbstractConfigurableProvider
     }
     
     protected boolean isSupported(Class<?> type, Type genericType, Annotation[] anns) {
-        if (jaxbElementClassMap != null && jaxbElementClassMap.containsKey(type.getName())
-            || isSkipJaxbChecks()) {
+        if (jaxbElementClassMap != null && jaxbElementClassMap.containsKey(type.getName())) {
             return true;
         }
         return type.getAnnotation(XmlRootElement.class) != null
@@ -649,14 +646,6 @@ public abstract class AbstractJAXBProvider extends AbstractConfigurableProvider
         this.attributesToElements = value;
     }
 
-    public void setSkipJaxbChecks(boolean skipJaxbChecks) {
-        this.skipJaxbChecks = skipJaxbChecks;
-    }
-
-    public boolean isSkipJaxbChecks() {
-        return skipJaxbChecks;
-    }
-
     @XmlRootElement
     protected static class CollectionWrapper {
         
@@ -758,7 +747,7 @@ public abstract class AbstractJAXBProvider extends AbstractConfigurableProvider
                     writtenUris.add(uri);
                 }
                 appendedElements.add(appendQName);
-                appendedIndexes.add(currentDepth - 1);
+                appendedIndexes.add(currentDepth - 2);
             }
             
             if (dropElements.contains(currentQName)) {

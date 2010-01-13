@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 
 import javax.ws.rs.Path;
-import javax.xml.namespace.QName;
 
 import org.apache.cxf.common.util.ClassHelper;
 import org.apache.cxf.jaxrs.lifecycle.SingletonResourceProvider;
@@ -54,14 +53,10 @@ public class JAXRSServiceFactoryBean extends AbstractServiceFactoryBean {
     private Executor executor;
     private Map<String, Object> properties;
     private boolean enableStatic;
-    private QName serviceName;
     
     public JAXRSServiceFactoryBean() {
     }
 
-    public void setServiceName(QName name) {
-        this.serviceName = name;
-    }
     
     public void setEnableStaticResolution(boolean staticResolution) {
         this.enableStatic = staticResolution;
@@ -227,7 +222,7 @@ public class JAXRSServiceFactoryBean extends AbstractServiceFactoryBean {
     
     protected void initializeServiceModel() {
         
-        JAXRSServiceImpl service = new JAXRSServiceImpl(classResourceInfos, serviceName);
+        JAXRSServiceImpl service = new JAXRSServiceImpl(classResourceInfos);
 
         setService(service);
 

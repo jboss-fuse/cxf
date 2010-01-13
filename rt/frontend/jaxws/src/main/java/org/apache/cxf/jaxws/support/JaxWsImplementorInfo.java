@@ -49,7 +49,6 @@ public class JaxWsImplementorInfo {
 
     private Class<?> implementorClass;
     private Class<?> seiClass;
-    private ParameterizedType seiType;
     private List<WebService> wsAnnotations = new ArrayList<WebService>(2);
     private WebServiceProvider wsProviderAnnotation;
 
@@ -60,9 +59,6 @@ public class JaxWsImplementorInfo {
 
     public Class<?> getSEIClass() {
         return seiClass;
-    }
-    public ParameterizedType getSEIType() {
-        return seiType;
     }
 
     public Class<?> getImplementorClass() {
@@ -291,15 +287,6 @@ public class JaxWsImplementorInfo {
                 throw new WebServiceException(expString);
             }
             wsAnnotations.add(seiAnnotation);
-            
-            for (int x = implementorClass.getInterfaces().length - 1; x >= 0; x--) {
-                if (seiClass.equals(implementorClass.getInterfaces()[x])) {
-                    Type type = implementorClass.getGenericInterfaces()[x];
-                    if (type instanceof ParameterizedType) {
-                        seiType = (ParameterizedType)type;
-                    }
-                }
-            }
         }
         wsProviderAnnotation = implementorClass.getAnnotation(WebServiceProvider.class);
     }

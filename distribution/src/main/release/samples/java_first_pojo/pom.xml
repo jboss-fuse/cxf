@@ -23,7 +23,7 @@
     <version>1.0</version>
     <name>Java First POJO Sample</name>
     <properties>
-        <cxf.version>[2,)</cxf.version>
+            <cxf.version>[2,)</cxf.version>
     </properties>
     <build>
         <sourceDirectory>src</sourceDirectory>
@@ -36,7 +36,7 @@
                 </configuration>
             </plugin>
         </plugins>
-    </build>
+    </build>   
     <profiles>
         <profile>
             <id>server</id>
@@ -90,20 +90,23 @@
                 <repository>
                     <id>apache-snapshots</id>
                     <name>Apache Snapshot Repository</name>
-                    <url>https://repository.apache.org/content/groups/snapshots-group/</url>
+                    <url>http://people.apache.org/repo/m2-snapshot-repository/</url>
                     <snapshots>
                         <enabled>true</enabled>
                     </snapshots>
-                    <releases>
-                        <enabled>false</enabled>
-                    </releases>
+                </repository>
+                    <!-- for jaxb-impl -->
+                <repository>
+                    <id>java.net</id>
+                    <url>http://download.java.net/maven/1/</url>
+                    <layout>legacy</layout>
                 </repository>
             </repositories>
             <pluginRepositories>
                 <pluginRepository>
-                    <id>apache-snapshots</id>
+                    <id>apache-plugin-snapshots</id>
                     <name>Apache Maven Plugin Snapshots</name>
-                    <url>https://repository.apache.org/content/groups/snapshots-group/</url>
+                    <url>http://people.apache.org/repo/m2-snapshot-repository</url>
                     <releases>
                         <enabled>false</enabled>
                     </releases>
@@ -114,6 +117,14 @@
             </pluginRepositories>
         </profile>
     </profiles>
+    <repositories>
+            <!-- for jaxb-impl -->
+        <repository>
+            <id>java.net</id>
+            <url>http://download.java.net/maven/1/</url>
+            <layout>legacy</layout>
+        </repository>
+    </repositories>
     <dependencies>
         <dependency>
             <groupId>org.apache.cxf</groupId>

@@ -48,7 +48,7 @@ public class SpringBeanQNameMap<V>
 
             BeanDefinition def = ctxt.getBeanFactory().getBeanDefinition(beanNames[i]);
 
-            if (!beanFactory.isSingleton(beanNames[i]) || def.isAbstract()) {
+            if (!def.isSingleton() || def.isAbstract()) {
                 continue;
             }
 

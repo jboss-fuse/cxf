@@ -23,13 +23,13 @@
     <artifactId>cxf-bundle-minimal</artifactId>
     <packaging>bundle</packaging>
     <name>Apache CXF Minimal Bundle Jar</name>
-    <version>2.2.x-fuse-SNAPSHOT</version>
+    <version>2.2.5-psc-01-01</version>
     <url>http://cxf.apache.org</url>
 
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-bundle-parent</artifactId>
-        <version>2.2.x-fuse-SNAPSHOT</version>
+        <version>2.2.5-psc-01-01</version>
     </parent>
 
     <dependencies>
@@ -173,6 +173,7 @@
                             antlr*;resolution:=optional,
                             com.ibm*;resolution:=optional,
                             com.sun*;resolution:=optional,
+                            javax.jms*;resolution:=optional,
                             javax.ws.rs*;resolution:=optional,
                             com.ctc.wstx.msv*;resolution:=optional,
                             repackage;resolution:=optional,
@@ -194,15 +195,7 @@
                             org.junit*;resolution:=optional,
                             org.mortbay*;resolution:=optional,
                             org.mozilla.javascript*;resolution:=optional,
-                            org.springframework*;resolution:=optional;version="[2.5,4)",
-                            javax.activation;version="[0.0,2)",
-                            javax.annotation;version="[0.0,2)",
-                            javax.jms;resolution:=optional;version="[0.0,2)",
-                            javax.jws*;version="[0.0,3)",
-                            javax.mail*;version="[0.0,2)",
-                            javax.servlet.*;version="[0.0,3)",
-                            javax.xml.stream*;version="[0.0,2)",
-                            javax.xml.ws*;version="[0.0,3)",
+                            org.springframework*;resolution:=optional,
                             *
                         </Import-Package>
                         <Export-Package>

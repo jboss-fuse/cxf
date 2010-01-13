@@ -29,6 +29,9 @@ public abstract class AbstractInvocationHandlerTest
     public AbstractInvocationHandlerTest() {
      
     }
+    public AbstractInvocationHandlerTest(String name) {
+        super(name);
+    }
 
     // seach for the setNext method
     @Test

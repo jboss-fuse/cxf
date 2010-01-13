@@ -41,6 +41,9 @@ public class InvocationHandlerFactoryTest extends HandlerTestBase {
         super();
     }
     
+    public InvocationHandlerFactoryTest(String name) {
+        super(name);
+    }
     
     @Before
     public void setUp() {

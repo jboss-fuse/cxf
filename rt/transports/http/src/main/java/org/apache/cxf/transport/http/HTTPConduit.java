@@ -63,8 +63,6 @@ import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.ExchangeImpl;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageImpl;
-import org.apache.cxf.message.MessageUtils;
-import org.apache.cxf.phase.PhaseInterceptorChain;
 import org.apache.cxf.service.model.EndpointInfo;
 import org.apache.cxf.transport.AbstractConduit;
 import org.apache.cxf.transport.Destination;
@@ -298,8 +296,7 @@ public class HTTPConduit
             fromEndpointReferenceType = true;
         }
 
-        initializeConfig();
-        CXFAuthenticator.addAuthenticator();
+        initializeConfig();                                    
     }
 
     /**
@@ -409,8 +406,8 @@ public class HTTPConduit
             if (LOG.isLoggable(Level.FINE)) {
                 LOG.log(Level.FINE, "Conduit '" + getConduitName()
                     + "' has been configured for TLS "
-                    + "keyManagers " + Arrays.toString(tlsClientParameters.getKeyManagers())
-                    + "trustManagers " + Arrays.toString(tlsClientParameters.getTrustManagers())
+                    + "keyManagers " + tlsClientParameters.getKeyManagers()
+                    + "trustManagers " + tlsClientParameters.getTrustManagers()
                     + "secureRandom " + tlsClientParameters.getSecureRandom()
                     + "Disable Common Name (CN) Check: " + tlsClientParameters.isDisableCNCheck());
             }
@@ -1381,8 +1378,8 @@ public class HTTPConduit
             if (LOG.isLoggable(Level.FINE)) {
                 LOG.log(Level.FINE, "Conduit '" + getConduitName()
                     + "' has been (re) configured for TLS "
-                    + "keyManagers " + Arrays.toString(tlsClientParameters.getKeyManagers())
-                    + "trustManagers " + Arrays.toString(tlsClientParameters.getTrustManagers())
+                    + "keyManagers " + tlsClientParameters.getKeyManagers()
+                    + "trustManagers " + tlsClientParameters.getTrustManagers()
                     + "secureRandom " + tlsClientParameters.getSecureRandom());
             }
             CertificateConstraintsType constraints = params.getCertConstraints();
@@ -2091,9 +2088,10 @@ public class HTTPConduit
                         try {
                             handleResponseInternal();
                         } catch (Exception e) {
-                            ((PhaseInterceptorChain)outMessage.getInterceptorChain()).unwind(outMessage);
-                            outMessage.setContent(Exception.class, e);
-                            outMessage.getInterceptorChain().getFaultObserver().onMessage(outMessage);
+                            Message inMessage = new MessageImpl();
+                            inMessage.setExchange(outMessage.getExchange());
+                            inMessage.setContent(Exception.class, e);
+                            incomingObserver.onMessage(inMessage);
                         }
                     }
                 };
@@ -2134,11 +2132,9 @@ public class HTTPConduit
             }
         
             
-            if (responseCode == HttpURLConnection.HTTP_NOT_FOUND
-                && !MessageUtils.isTrue(outMessage.getContextualProperty(
-                    "org.apache.cxf.http.no_io_exceptions"))) {
+            if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
                 throw new IOException("HTTP response '" + responseCode + ": " 
-                    + connection.getResponseMessage() + "'");
+                        + connection.getResponseMessage() + "'");
             }
 
             
@@ -2194,13 +2190,12 @@ public class HTTPConduit
                 List<String> cookies = connection.getHeaderFields().get("Set-Cookie");
                 Cookie.handleSetCookie(sessionCookies, cookies);
             }
-            if (responseCode != HttpURLConnection.HTTP_NOT_FOUND) {
-                in = in == null
-                     ? connection.getErrorStream() == null
-                       ? connection.getInputStream()
-                       : connection.getErrorStream()
-                     : in;
-            }
+
+            in = in == null
+                 ? connection.getErrorStream() == null
+                   ? connection.getInputStream()
+                   : connection.getErrorStream()
+                 : in;
                    
             // if (in == null) : it's perfectly ok for non-soap http services
             // have no response body : those interceptors which do need it will check anyway        

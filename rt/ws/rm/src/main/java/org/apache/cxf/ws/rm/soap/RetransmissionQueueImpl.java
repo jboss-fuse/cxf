@@ -23,9 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
-import java.net.ConnectException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -263,10 +261,6 @@ public class RetransmissionQueueImpl implements RetransmissionQueue {
         if (null != maps) {
             to = maps.getTo();
         }
-        if (RMUtils.getAddressingConstants().getAnonymousURI().equals(to.getValue())) {
-            LOG.log(Level.FINE, "Cannot resend to anonymous target");
-            return;
-        }
         if (null == to) {
             LOG.log(Level.SEVERE, "NO_ADDRESS_FOR_RESEND_MSG");
             return;
@@ -322,11 +316,10 @@ public class RetransmissionQueueImpl implements RetransmissionQueue {
             if (os instanceof CachedOutputStream) {
                 callbacks = ((CachedOutputStream)os).getCallbacks();
             }
-            message.removeContent(OutputStream.class);
+            
             c.prepare(message);
 
             os = message.getContent(OutputStream.class);
-            
             if (null != callbacks && callbacks.size() > 1) {
                 if (!(os instanceof CachedOutputStream)) {
                     os = RMUtils.createCachedStream(message, os);
@@ -342,7 +335,7 @@ public class RetransmissionQueueImpl implements RetransmissionQueue {
             if (null == content) {                
                 content = message.getContent(byte[].class); 
                 if (LOG.isLoggable(Level.FINE)) {
-                    LOG.fine("Using saved byte array: " + Arrays.toString(content));
+                    LOG.fine("Using saved byte array: " + content);
                 }
             } else {
                 if (LOG.isLoggable(Level.FINE)) {
@@ -355,8 +348,6 @@ public class RetransmissionQueueImpl implements RetransmissionQueue {
             IOUtils.copyAndCloseInput(bis, os);
             os.flush();
             os.close();
-        } catch (ConnectException ex) {
-            //ignore, we'll just resent again later
         } catch (IOException ex) {
             LOG.log(Level.SEVERE, "RESEND_FAILED_MSG", ex);
         }
@@ -367,7 +358,6 @@ public class RetransmissionQueueImpl implements RetransmissionQueue {
      */
     protected class ResendCandidate implements Runnable {
         private Message message;
-        private OutputStream out;
         private Date next;
         private TimerTask nextTask;
         private int resends;
@@ -382,7 +372,6 @@ public class RetransmissionQueueImpl implements RetransmissionQueue {
         protected ResendCandidate(Message m) {
             message = m;
             resends = 0;
-            out = m.getContent(OutputStream.class);
             RMAssertion rma = PolicyUtils.getRMAssertion(manager.getRMAssertion(), message);
             long baseRetransmissionInterval = 
                 rma.getBaseRetransmissionInterval().getMilliseconds().longValue();
@@ -390,18 +379,6 @@ public class RetransmissionQueueImpl implements RetransmissionQueue {
                 ? RetransmissionQueue.DEFAULT_EXPONENTIAL_BACKOFF : 1;
             next = new Date(System.currentTimeMillis() + baseRetransmissionInterval);
             nextInterval = baseRetransmissionInterval * backoff;
-            
-            
-            AddressingProperties maps = RMContextUtils.retrieveMAPs(message, false, true);
-            AttributedURIType to = null;
-            if (null != maps) {
-                to = maps.getTo();
-            }
-            if (to != null 
-                && RMUtils.getAddressingConstants().getAnonymousURI().equals(to.getValue())) {
-                LOG.log(Level.INFO, "Cannot resend to anonymous target.  Not scheduling a resend.");
-                return;
-            }
             if (null != manager.getTimer()) {
                 schedule();
             }
@@ -437,7 +414,6 @@ public class RetransmissionQueueImpl implements RetransmissionQueue {
                 // ensure ACK wasn't received while this task was enqueued
                 // on executor
                 if (isPending()) {
-                    message.setContent(OutputStream.class, out);
                     resender.resend(message, includeAckRequested);
                     includeAckRequested = false;
                 }

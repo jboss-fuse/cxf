@@ -289,8 +289,7 @@ public class JMSConduit extends AbstractConduit implements JMSExchangeSender, Me
         exchange.setInMessage(inMessage);
         LOG.log(Level.FINE, "client received reply: ", jmsMessage);
         try {
-            JMSUtils.populateIncomingContext(jmsMessage, inMessage, 
-                                             JMSConstants.JMS_CLIENT_RESPONSE_HEADERS, jmsConfig);
+            JMSUtils.populateIncomingContext(jmsMessage, inMessage, JMSConstants.JMS_CLIENT_RESPONSE_HEADERS);
         
             byte[] response = JMSUtils.retrievePayload(jmsMessage, (String)inMessage.get(Message.ENCODING));
             LOG.log(Level.FINE, "The Response Message payload is : [" + response + "]");

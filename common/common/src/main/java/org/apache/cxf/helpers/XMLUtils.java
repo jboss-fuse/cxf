@@ -114,19 +114,6 @@ public final class XMLUtils {
     public static Transformer newTransformer() throws TransformerConfigurationException {
         return getTransformerFactory().newTransformer();
     }
-    public static Transformer newTransformer(int indent) throws TransformerConfigurationException {
-        if (indent > 0) {
-            TransformerFactory f = TransformerFactory.newInstance();
-            try {
-                //sun way of setting indent
-                f.setAttribute("indent-number", Integer.toString(indent));
-            } catch (Throwable t) {
-                //ignore
-            }
-            return f.newTransformer();
-        }
-        return getTransformerFactory().newTransformer();
-    }
 
     public static DocumentBuilder getParser() throws ParserConfigurationException {
         return getDocumentBuilderFactory().newDocumentBuilder();
@@ -174,28 +161,7 @@ public final class XMLUtils {
     public static void writeTo(Source src, OutputStream os) {
         writeTo(src, os, -1);
     }
-    public static void writeTo(Node node, Writer os) {
-        writeTo(new DOMSource(node), os);
-    }
-    public static void writeTo(Node node, Writer os, int indent) {
-        writeTo(new DOMSource(node), os, indent);
-    }
-    public static void writeTo(Source src, Writer os) {
-        writeTo(src, os, -1);
-    }
     public static void writeTo(Source src, OutputStream os, int indent) {
-        String enc = null;
-        if (src instanceof DOMSource
-            && ((DOMSource)src).getNode() instanceof Document) {
-            try {
-                enc = ((Document)((DOMSource)src).getNode()).getXmlEncoding();
-            } catch (Exception ex) {
-                //ignore - not DOM level 3
-            }
-        }
-        writeTo(src, os, indent, enc, "no");
-    }
-    public static void writeTo(Source src, Writer os, int indent) {
         String enc = null;
         if (src instanceof DOMSource
             && ((DOMSource)src).getNode() instanceof Document) {
@@ -218,7 +184,7 @@ public final class XMLUtils {
                 charset = "utf-8"; 
             }
 
-            it = newTransformer(indent);
+            it = newTransformer();
             it.setOutputProperty(OutputKeys.METHOD, "xml");
             if (indent > -1) {
                 it.setOutputProperty(OutputKeys.INDENT, "yes");
@@ -231,31 +197,7 @@ public final class XMLUtils {
         } catch (TransformerException e) {
             throw new RuntimeException("Failed to configure TRaX", e);
         }
-    }
-    public static void writeTo(Source src,
-                               Writer os,
-                               int indent,
-                               String charset,
-                               String omitXmlDecl) {
-        Transformer it;
-        try {
-            if (StringUtils.isEmpty(charset)) {
-                charset = "utf-8"; 
-            }
 
-            it = newTransformer(indent);
-            it.setOutputProperty(OutputKeys.METHOD, "xml");
-            if (indent > -1) {
-                it.setOutputProperty(OutputKeys.INDENT, "yes");
-                it.setOutputProperty("{http://xml.apache.org/xslt}indent-amount",
-                                     Integer.toString(indent));
-            }
-            it.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, omitXmlDecl);
-            it.setOutputProperty(OutputKeys.ENCODING, charset);
-            it.transform(src, new StreamResult(os));
-        } catch (TransformerException e) {
-            throw new RuntimeException("Failed to configure TRaX", e);
-        }
     }
     public static String toString(Source source) throws TransformerException, IOException {
         return toString(source, null);

@@ -41,7 +41,6 @@ import org.apache.cxf.endpoint.PreexistingConduitSelector;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.interceptor.InterceptorChain;
 import org.apache.cxf.interceptor.OutgoingChainInterceptor;
-import org.apache.cxf.io.DelegatingInputStream;
 import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageImpl;
@@ -398,14 +397,6 @@ public final class ContextUtils {
                     }
                     
                     if (retrieveAsyncPostResponseDispatch(inMessage)) {
-                        //need to suck in all the data from the input stream as
-                        //the transport might discard any data on the stream when this 
-                        //thread unwinds or when the empty response is sent back
-                        DelegatingInputStream in = inMessage.get(DelegatingInputStream.class);
-                        if (in != null) {
-                            in.cacheInput();
-                        }
-                        
                         // async service invocation required *after* a response
                         // has been sent (i.e. to a oneway, or a partial response
                         // to a decoupled twoway)
@@ -802,10 +793,6 @@ public final class ContextUtils {
 
     public static String getAction(Extensible ext) {
         Object o = ext.getExtensionAttribute(JAXWSAConstants.WSAW_ACTION_QNAME);
-        if (o == null) {
-            o = ext.getExtensionAttributes().get(new QName(Names.WSA_NAMESPACE_WSDL_METADATA,
-                                                           Names.WSAW_ACTION_NAME));
-        }
         if (o == null) {
             o = ext.getExtensionAttributes().get(new QName(Names.WSA_NAMESPACE_WSDL_NAME_OLD,
                                                    Names.WSAW_ACTION_NAME));

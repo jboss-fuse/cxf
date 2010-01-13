@@ -47,7 +47,10 @@ public class HandlerTestBase extends Assert {
     
     public HandlerTestBase() {
     }
-
+    
+    public HandlerTestBase(String aName) {
+        
+    }
 
     @Before
     public void setUp() {

@@ -35,6 +35,10 @@ public class InvokingInvocationHandlerTest
     CXFInvocationHandler handler;
     CXFInvocationHandlerData data;
 
+    public InvokingInvocationHandlerTest(String name) {
+        super(name);
+    }
+    
     public InvokingInvocationHandlerTest() {
         super();
     }

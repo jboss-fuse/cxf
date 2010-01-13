@@ -28,21 +28,22 @@ import org.apache.cxf.jaxws.JaxWsProxyFactoryBean;
 import org.apache.cxf.systest.aegis.bean.Item;
 import org.apache.cxf.ws.security.wss4j.WSS4JOutInterceptor;
 
-import org.junit.Assert;
 import org.junit.Test;
-
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
+import org.springframework.test.AbstractDependencyInjectionSpringContextTests;
 
 /**
  * 
  */
-@ContextConfiguration(locations = { "classpath:aegisJaxWsBeans.xml" })
-public class AegisJaxWsTest extends AbstractJUnit4SpringContextTests {
+public class AegisJaxWsTest extends AbstractDependencyInjectionSpringContextTests {
     
     private AegisJaxWs client;
     
     public AegisJaxWsTest() {
+    }
+    
+    @Override
+    protected String[] getConfigLocations() {
+        return new String[] {"classpath:aegisJaxWsBeans.xml"};
     }
     
     private void setupForTest(boolean sec) throws Exception {
@@ -71,16 +72,16 @@ public class AegisJaxWsTest extends AbstractJUnit4SpringContextTests {
     public void testGetItemSecure() throws Exception {
         setupForTest(true);
         Item item = client.getItemByKey("   jack&jill   ", "b");
-        Assert.assertEquals(33, item.getKey().intValue());
-        Assert.assertEquals("   jack&jill   :b", item.getData());
+        assertEquals(33, item.getKey().intValue());
+        assertEquals("   jack&jill   :b", item.getData());
     }
     
     @Test
     public void testGetItem() throws Exception {
         setupForTest(false);
         Item item = client.getItemByKey(" a ", "b");
-        Assert.assertEquals(33, item.getKey().intValue());
-        Assert.assertEquals(" a :b", item.getData());
+        assertEquals(33, item.getKey().intValue());
+        assertEquals(" a :b", item.getData());
     }
     @Test 
     public void testMapSpecified() throws Exception {
@@ -91,14 +92,14 @@ public class AegisJaxWsTest extends AbstractJUnit4SpringContextTests {
         client.addItem(item);
         
         Map<Integer, Item> items = client.getItemsMapSpecified();
-        Assert.assertNotNull(items);
-        Assert.assertEquals(1, items.size());
+        assertNotNull(items);
+        assertEquals(1, items.size());
         Map.Entry<Integer, Item> entry = items.entrySet().iterator().next();
-        Assert.assertNotNull(entry);
+        assertNotNull(entry);
         Item item2 = entry.getValue();
         Integer key2 = entry.getKey();
-        Assert.assertEquals(42, key2.intValue());
-        Assert.assertEquals("Godzilla", item2.getData());
+        assertEquals(42, key2.intValue());
+        assertEquals("Godzilla", item2.getData());
     }
     
 }

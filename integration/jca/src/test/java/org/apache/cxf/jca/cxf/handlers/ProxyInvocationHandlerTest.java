@@ -35,7 +35,10 @@ public class  ProxyInvocationHandlerTest extends AbstractInvocationHandlerTest {
     public ProxyInvocationHandlerTest() {
         super();
     }
-
+    
+    public ProxyInvocationHandlerTest(String name) {
+        super(name);
+    }
 
     @Before
     public void setUp() { 

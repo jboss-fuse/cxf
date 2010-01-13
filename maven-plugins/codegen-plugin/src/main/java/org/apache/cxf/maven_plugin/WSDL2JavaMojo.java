@@ -22,7 +22,6 @@ package org.apache.cxf.maven_plugin;
 import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -51,6 +50,7 @@ import org.apache.maven.project.ProjectUtils;
  * @requiresDependencyResolution test
  */
 public class WSDL2JavaMojo extends AbstractMojo {
+    private static final String TEMPBINDINGS_DIR = "tempbindings";
 
     /**
      * @parameter expression="${cxf.testSourceRoot}"
@@ -260,12 +260,12 @@ public class WSDL2JavaMojo extends AbstractMojo {
         }
         mergeOptions(effectiveWsdlOptions);
         downloadRemoteWsdls(effectiveWsdlOptions);
-//        String buildDir = project.getBuild().getDirectory();
-//        File tempBindingDir = new File(buildDir, TEMPBINDINGS_DIR);
-//        for (WsdlOption o : effectiveWsdlOptions) {
-//            BindingFileHelper.setWsdlLocationInBindingsIfNotSet(project.getBasedir(), tempBindingDir, o,
-//                                                                getLog());
-//        }
+        String buildDir = project.getBuild().getDirectory();
+        File tempBindingDir = new File(buildDir, TEMPBINDINGS_DIR);
+        for (WsdlOption o : effectiveWsdlOptions) {
+            BindingFileHelper.setWsdlLocationInBindingsIfNotSet(project.getBasedir(), tempBindingDir, o,
+                                                                getLog());
+        }
         return effectiveWsdlOptions;
     }
     
@@ -399,7 +399,7 @@ public class WSDL2JavaMojo extends AbstractMojo {
         List<String> list = wsdlOption.generateCommandLine(outputDirFile, basedir, wsdlURI, getLog()
             .isDebugEnabled());
         String[] args = (String[])list.toArray(new String[list.size()]);
-        getLog().debug("Calling wsdl2java with args: " + Arrays.toString(args));
+        getLog().debug("Calling wsdl2java with args: " + args);
         try {
             new WSDLToJava(args).run(new ToolContext());
         } catch (Throwable e) {

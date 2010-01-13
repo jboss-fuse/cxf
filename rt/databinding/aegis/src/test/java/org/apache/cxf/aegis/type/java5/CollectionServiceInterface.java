@@ -26,8 +26,6 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.Stack;
 
-import org.w3c.dom.DocumentFragment;
-
 public interface CollectionServiceInterface {
 
     Collection<String> getStrings();
@@ -51,8 +49,4 @@ public interface CollectionServiceInterface {
     void method1(List<String> headers1);
     
     void mapOfMapWithStringAndPojo(Map<String, Map<String, BeanWithGregorianDate>> bigParam); 
-    
-    Collection<double[]> returnCollectionOfPrimitiveArrays();
-    
-    Collection<DocumentFragment[]> returnCollectionOfDOMFragments();
 }

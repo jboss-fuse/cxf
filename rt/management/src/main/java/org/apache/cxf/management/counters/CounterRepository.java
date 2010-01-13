@@ -89,9 +89,6 @@ public class CounterRepository {
             counters.put(on, counter);
         }
         counter.increase(mhtr);        
-        if (LOG.isLoggable(Level.FINE)) {
-            LOG.fine("Increase counter " + on + " with " + mhtr);
-        }
     }
     
     //find a counter
@@ -108,7 +105,7 @@ public class CounterRepository {
                 im.register(counter);
             } catch (JMException e) {
                 LOG.log(Level.WARNING, "INSTRUMENTATION_REGISTER_FAULT_MSG",
-                        new Object[]{on, e});
+                        new Object[]{e});
             }
         }    
         return counter;

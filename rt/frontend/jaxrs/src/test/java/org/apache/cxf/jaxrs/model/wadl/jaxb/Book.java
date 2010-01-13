@@ -23,17 +23,13 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
-import org.apache.cxf.jaxrs.ext.Description;
-
 @XmlRootElement(name = "thebook", namespace = "http://superbooks")
 @XmlType(name = "book", namespace = "http://superbooks")
-@Description("Book subresource")
 public class Book {
 
     private int id;
@@ -49,18 +45,12 @@ public class Book {
     
     @GET
     @Path("/book")
-    @Produces({"application/xml", "application/json" })
-    @Description("Get the book")
-    public Book getIt() {
-        return this;
+    public int getId() {
+        return id;
     }
     
     public void setId(int ident) {
         id = ident;
-    }
-    
-    public int getId() {
-        return id;
     }
     
     @Path("/chapter/{cid}")

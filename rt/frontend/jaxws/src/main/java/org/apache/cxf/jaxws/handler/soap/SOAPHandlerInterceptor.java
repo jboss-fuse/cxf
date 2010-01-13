@@ -283,9 +283,6 @@ public class SOAPHandlerInterceptor extends
     }
 
     public void handleFault(SoapMessage message) {
-        if (getInvoker(message).getProtocolHandlers().isEmpty()) {
-            return;
-        }
         if (getInvoker(message).isOutbound() 
             && !chainAlreadyContainsSAAJ(message)) {
             SAAJ_OUT.handleFault(message);

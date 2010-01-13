@@ -55,7 +55,7 @@ public class ServletController extends AbstractServletController {
     private ServletContext servletContext;
     private ServletConfig servletConfig;
     private Bus bus;
-    private volatile String lastBase = "";
+    private String lastBase = "";
     
     public ServletController(ServletTransportFactory df,
                              ServletConfig config,
@@ -89,14 +89,8 @@ public class ServletController extends AbstractServletController {
         for (String path : paths) {
             ServletDestination d2 = transport.getDestinationForPath(path);
             String ad = d2.getEndpointInfo().getAddress();
-            if (ad == null 
-                && d2.getAddress() != null
-                && d2.getAddress().getAddress() != null) {
-                ad = d2.getAddress().getAddress().getValue();
-            }
-            if (ad != null 
-                && (ad.equals(path)
-                || ad.equals(lastBase + path))) {
+            if (ad.equals(path)
+                || ad.equals(lastBase + path)) {
                 d2.getEndpointInfo().setAddress(base + path);
                 if (d2.getEndpointInfo().getExtensor(AddressType.class) != null) {
                     d2.getEndpointInfo().getExtensor(AddressType.class).setLocation(base + path);
@@ -141,9 +135,7 @@ public class ServletController extends AbstractServletController {
                 }
             } else {
                 ei = d.getEndpointInfo();
-                
-                if ("GET".equals(request.getMethod())
-                    && null != request.getQueryString() 
+                if (null != request.getQueryString() 
                     && request.getQueryString().length() > 0
                     && bus.getExtension(QueryHandlerRegistry.class) != null) {                    
                     
@@ -151,8 +143,10 @@ public class ServletController extends AbstractServletController {
                     String baseUri = request.getRequestURL().toString() 
                         + "?" + request.getQueryString();
                     // update the EndPoint Address with request url
-                    updateDests(request);
-                    
+                    if ("GET".equals(request.getMethod())) {
+                        updateDests(request);
+                    }
+
                     for (QueryHandler qh : bus.getExtension(QueryHandlerRegistry.class).getHandlers()) {
                         if (qh.isRecognizedQuery(baseUri, ctxUri, ei)) {
                             
@@ -171,8 +165,6 @@ public class ServletController extends AbstractServletController {
                             return;
                         }   
                     }
-                } else if ("/".equals(address) || address.length() == 0) {
-                    updateDests(request);
                 }
                 
                 invokeDestination(request, res, d);
@@ -225,11 +217,7 @@ public class ServletController extends AbstractServletController {
                                        + request.getRequestURI() + "/?stylesheet=1\">");            
         }
         response.getWriter().write("<meta http-equiv=content-type content=\"text/html; charset=UTF-8\">");
-        if (title != null) {
-            response.getWriter().write("<title>" + title + "</title>");
-        } else {
-            response.getWriter().write("<title>CXF - Service list</title>");
-        }
+        response.getWriter().write("<title>CXF - Service list</title>");
         response.getWriter().write("</head><body>");
         
         List<ServletDestination> destinations = getServletDestinations();

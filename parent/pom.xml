@@ -20,13 +20,13 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf</artifactId>
-        <version>2.2.x-fuse-SNAPSHOT</version>
+        <version>2.2.5-psc-01-01</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.cxf</groupId>
     <artifactId>cxf-parent</artifactId>
-    <version>2.2.x-fuse-SNAPSHOT</version>
+    <version>2.2.5-psc-01-01</version>
     <name>Apache CXF Parent</name>
     <url>http://fusesource.com/forge/projects/FUSESF</url>
 
@@ -37,7 +37,6 @@
         <surefire.format>brief</surefire.format>
         <surefire.usefile>false</surefire.usefile>
         <surefire.fork.vmargs>-ea</surefire.fork.vmargs>
-        <server.launcher.vmargs>-ea</server.launcher.vmargs>
         <surefire.extra.sysprop.name1>None</surefire.extra.sysprop.name1>
         <surefire.extra.sysprop.value1>None</surefire.extra.sysprop.value1>
         <compile.flags>-Xlint:unchecked,deprecation,fallthrough,finally</compile.flags>
@@ -58,7 +57,7 @@
         <msv.version>2009.1</msv.version>
         <rhino.version>1.7R1</rhino.version>
         <saaj.version>1.3</saaj.version>
-        <spring.version>2.5.6</spring.version>
+        <spring.version>2.5.5</spring.version>
         <spring.mock>spring-test</spring.mock>
         <stax.impl.groupId>org.codehaus.woodstox</stax.impl.groupId>
         <stax.impl.artifactId>wstx-asl</stax.impl.artifactId>
@@ -75,7 +74,7 @@
         <extra.surefire.syspropery.name>None</extra.surefire.syspropery.name>
         <extra.surefire.syspropery.value>None</extra.surefire.syspropery.value>
 
-        <resources.base.path/>
+        <resources.base.path />
 
     </properties>
 
@@ -295,8 +294,8 @@
                                 <value>${spring.validation.mode}</value>
                             </property>
                             <property>
-                                <name>server.launcher.vmargs</name>
-                                <value>${server.launcher.vmargs}</value>
+                                <name>surefire.fork.vmargs</name>
+                                <value>${surefire.fork.vmargs}</value>
                             </property>
                             <property>
                                 <name>${extra.surefire.syspropery.name}</name>
@@ -387,7 +386,7 @@
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
-                <version>4.7</version>
+                <version>4.4</version>
                 <scope>test</scope>
             </dependency>
 
@@ -528,7 +527,7 @@
             <dependency>
                 <groupId>org.codehaus.jettison</groupId>
                 <artifactId>jettison</artifactId>
-                <version>1.2-SNAPSHOT</version>
+                <version>1.1</version>
                 <exclusions>
                     <exclusion>
                         <groupId>stax</groupId>
@@ -1375,9 +1374,10 @@
             </build>
         </profile>
         <profile>
-            <id>spring3</id>
+            <id>spring2.0</id>
             <properties>
-                <spring.version>3.0.0.RELEASE</spring.version>
+                <spring.version>2.0.8</spring.version>
+                <spring.mock>spring-mock</spring.mock>
             </properties>
         </profile> 
         <profile>
@@ -1395,20 +1395,6 @@
             </build>
         </profile>
     </profiles>
-    <repositories>
-        <repository>
-            <id>codehaus-snapshots</id>
-            <name>Codehaus Snapshots Repository</name>
-            <url>http://snapshots.repository.codehaus.org</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-        </repository> 
-    </repositories>
-
 
 </project>
 

@@ -71,14 +71,11 @@ import org.apache.cxf.ws.security.policy.model.SignedEncryptedElements;
 import org.apache.cxf.ws.security.policy.model.SignedEncryptedParts;
 import org.apache.cxf.ws.security.policy.model.SymmetricBinding;
 import org.apache.cxf.ws.security.policy.model.Token;
-import org.apache.cxf.ws.security.policy.model.UsernameToken;
 import org.apache.cxf.ws.security.policy.model.Wss11;
 import org.apache.cxf.ws.security.policy.model.X509Token;
 import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSDataRef;
 import org.apache.ws.security.WSSecurityEngineResult;
-import org.apache.ws.security.WSSecurityException;
-import org.apache.ws.security.WSUsernameTokenPrincipal;
 import org.apache.ws.security.handler.RequestData;
 import org.apache.ws.security.handler.WSHandlerConstants;
 
@@ -498,9 +495,7 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
     }
     
     protected void doResults(SoapMessage msg, String actor, 
-                             SOAPMessage doc, Vector results) 
-        throws SOAPException, XMLStreamException, WSSecurityException {
-        
+                             SOAPMessage doc, Vector results) throws SOAPException, XMLStreamException {
         AssertionInfoMap aim = msg.get(AssertionInfoMap.class);
         Collection<WSDataRef> signed = new HashSet<WSDataRef>();
         Collection<WSDataRef> encrypted = new HashSet<WSDataRef>();
@@ -540,20 +535,7 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
                 }
                 break;
             case WSConstants.UT:
-                Collection<AssertionInfo> ais = aim.get(SP12Constants.USERNAME_TOKEN);
-                if (ais != null) {
-                    for (AssertionInfo ai : ais) {
-                        ai.setAsserted(true);
-                    }
-                    WSUsernameTokenPrincipal princ 
-                        = (WSUsernameTokenPrincipal)wser.get(WSSecurityEngineResult.TAG_PRINCIPAL);
-                    for (AssertionInfo ai : ais) {
-                        UsernameToken tok = (UsernameToken)ai.getAssertion();
-                        if (tok.isHashPassword() != princ.isPasswordDigest()) {
-                            ai.setNotAsserted("Password hashing policy not enforced");
-                        }
-                    }
-                }
+                assertPolicy(aim, SP12Constants.USERNAME_TOKEN);
                 break;
             case WSConstants.TS:
                 assertPolicy(aim, SP12Constants.INCLUDE_TIMESTAMP);

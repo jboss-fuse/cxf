@@ -54,4 +54,5 @@ public class JAXRSDataBindingTest extends AbstractBusClientServerTestBase {
         assertEquals("CXF in Action", book.getName());
     }
     
+    
 }

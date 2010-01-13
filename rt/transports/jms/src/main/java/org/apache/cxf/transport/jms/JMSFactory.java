@@ -32,7 +32,6 @@ import javax.naming.NamingException;
 
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.service.model.EndpointInfo;
-import org.springframework.jms.connection.SingleConnectionFactory;
 import org.springframework.jms.connection.UserCredentialsConnectionFactoryAdapter;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.JmsTemplate102;
@@ -74,15 +73,12 @@ public final class JMSFactory {
         try {
             ConnectionFactory cf = (ConnectionFactory)jmsConfig.getJndiTemplate().
                 lookup(connectionFactoryName);
-            if (!(cf instanceof SingleConnectionFactory)) {
-                UserCredentialsConnectionFactoryAdapter uccf = new UserCredentialsConnectionFactoryAdapter();
-                uccf.setUsername(userName);
-                uccf.setPassword(password);
-                uccf.setTargetConnectionFactory(cf);
-                cf = uccf;
-            }
+            UserCredentialsConnectionFactoryAdapter uccf = new UserCredentialsConnectionFactoryAdapter();
+            uccf.setUsername(userName);
+            uccf.setPassword(password);
+            uccf.setTargetConnectionFactory(cf);
             
-            return cf;
+            return uccf;
         } catch (NamingException e) {
             throw new RuntimeException(e);
         }
@@ -246,7 +242,6 @@ public final class JMSFactory {
             jmsListener.setDestination(dest);
         }
         jmsListener.initialize();
-        jmsListener.start();
         return jmsListener;
     }
 

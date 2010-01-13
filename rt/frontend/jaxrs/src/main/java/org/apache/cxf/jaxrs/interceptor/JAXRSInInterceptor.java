@@ -21,7 +21,6 @@ package org.apache.cxf.jaxrs.interceptor;
 
 import java.util.List;
 import java.util.ResourceBundle;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.ws.rs.WebApplicationException;
@@ -149,7 +148,7 @@ public class JAXRSInInterceptor extends AbstractPhaseInterceptor<Message> {
                     ori = JAXRSUtils.findTargetMethod(resource, 
                         message, httpMethod, values, 
                         requestContentType, acceptContentTypes, false);
-                    setMessageProperties(message, ori, values, resources.size());
+                    setMessageProperties(message, ori, values);
                 } catch (WebApplicationException ex) {
                     operChecked = true;
                 }
@@ -179,7 +178,7 @@ public class JAXRSInInterceptor extends AbstractPhaseInterceptor<Message> {
             try {                
                 ori = JAXRSUtils.findTargetMethod(resource, message, 
                                             httpMethod, values, requestContentType, acceptContentTypes, true);
-                setMessageProperties(message, ori, values, resources.size());
+                setMessageProperties(message, ori, values);
             } catch (WebApplicationException ex) {
                 if (ex.getResponse() != null && ex.getResponse().getStatus() == 405 
                     && "OPTIONS".equalsIgnoreCase(httpMethod)) {
@@ -192,15 +191,14 @@ public class JAXRSInInterceptor extends AbstractPhaseInterceptor<Message> {
             }
         }
 
-        if (LOG.isLoggable(Level.FINE)) {
-            LOG.fine("Request path is: " + rawPath);
-            LOG.fine("Request HTTP method is: " + httpMethod);
-            LOG.fine("Request contentType is: " + requestContentType);
-            LOG.fine("Accept contentType is: " + acceptTypes);
-
-            LOG.fine("Found operation: " + ori.getMethodToInvoke().getName());
-        }
-        setMessageProperties(message, ori, values, resources.size());  
+        
+        LOG.fine("Request path is: " + rawPath);
+        LOG.fine("Request HTTP method is: " + httpMethod);
+        LOG.fine("Request contentType is: " + requestContentType);
+        LOG.fine("Accept contentType is: " + acceptTypes);
+        
+        LOG.fine("Found operation: " + ori.getMethodToInvoke().getName());
+        setMessageProperties(message, ori, values);  
       
         //Process parameters
         List<Object> params = JAXRSUtils.processParameters(ori, values, message);
@@ -208,16 +206,8 @@ public class JAXRSInInterceptor extends AbstractPhaseInterceptor<Message> {
     }
     
     private void setMessageProperties(Message message, OperationResourceInfo ori, 
-                                      MultivaluedMap<String, String> values,
-                                      int numberOfResources) {
+                                      MultivaluedMap<String, String> values) {
         message.getExchange().put(OperationResourceInfo.class, ori);
         message.put(URITemplate.TEMPLATE_PARAMETERS, values);
-        
-        String plainOperationName = ori.getMethodToInvoke().getName();
-        if (numberOfResources > 1) {
-            plainOperationName = ori.getClassResourceInfo().getServiceClass().getSimpleName()
-                + "#" + plainOperationName;
-        }
-        message.getExchange().put("org.apache.cxf.resource.operation.name", plainOperationName);    
     }
 }

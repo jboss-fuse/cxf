@@ -36,8 +36,7 @@ import org.apache.cxf.phase.Phase;
  * 
  */
 public class LoggingOutInterceptor extends AbstractPhaseInterceptor {
-    private static final String LOG_SETUP = LoggingOutInterceptor.class.getName() + ".log-setup";
-    
+   
     private static final Logger LOG = LogUtils.getL7dLogger(LoggingOutInterceptor.class); 
 
     private int limit = 100 * 1024;
@@ -76,13 +75,9 @@ public class LoggingOutInterceptor extends AbstractPhaseInterceptor {
 
         if (LOG.isLoggable(Level.INFO) || writer != null) {
             // Write the output while caching it for the log message
-            boolean hasLogged = message.containsKey(LOG_SETUP);
-            if (!hasLogged) {
-                message.put(LOG_SETUP, Boolean.TRUE);
-                final CacheAndWriteOutputStream newOut = new CacheAndWriteOutputStream(os);
-                message.setContent(OutputStream.class, newOut);
-                newOut.registerCallback(new LoggingCallback(message, os));
-            }
+            final CacheAndWriteOutputStream newOut = new CacheAndWriteOutputStream(os);
+            message.setContent(OutputStream.class, newOut);
+            newOut.registerCallback(new LoggingCallback(message, os));
         }
     }
     
@@ -121,11 +116,6 @@ public class LoggingOutInterceptor extends AbstractPhaseInterceptor {
             final LoggingMessage buffer 
                 = new LoggingMessage("Outbound Message\n---------------------------",
                                      id);
-            
-            Integer responseCode = (Integer)message.get(Message.RESPONSE_CODE);
-            if (responseCode != null) {
-                buffer.getResponseCode().append(responseCode);
-            }
             
             String encoding = (String)message.get(Message.ENCODING);
 

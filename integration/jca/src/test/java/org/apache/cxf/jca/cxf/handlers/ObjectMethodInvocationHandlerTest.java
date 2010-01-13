@@ -39,6 +39,9 @@ public class ObjectMethodInvocationHandlerTest extends AbstractInvocationHandler
     public ObjectMethodInvocationHandlerTest() {
         super();
     }
+    public ObjectMethodInvocationHandlerTest(String name) {
+        super(name);
+    }
 
     @Before
     public void setUp() { 

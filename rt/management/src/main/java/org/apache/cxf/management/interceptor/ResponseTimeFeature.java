@@ -33,7 +33,6 @@ public class ResponseTimeFeature extends AbstractFeature {
     @Override
     protected void initializeProvider(InterceptorProvider provider, Bus bus) {
         provider.getInInterceptors().add(IN);
-        provider.getInFaultInterceptors().add(IN);
         provider.getInInterceptors().add(INVOKER);
         provider.getOutInterceptors().add(OUT);
         

@@ -76,8 +76,7 @@ public class SoapOutInterceptor extends AbstractSoapInterceptor {
     
     public void handleMessage(SoapMessage message) {
         // Yes this is ugly, but it avoids us from having to implement any kind of caching strategy
-        boolean wroteStart = MessageUtils.isTrue(message.get(WROTE_ENVELOPE_START));
-        if (!wroteStart) {
+        if (!MessageUtils.isTrue(message.get(WROTE_ENVELOPE_START))) {
             writeSoapEnvelopeStart(message);
             
             OutputStream os = message.getContent(OutputStream.class);

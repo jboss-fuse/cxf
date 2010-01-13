@@ -33,42 +33,39 @@ import org.apache.cxf.systest.jaxb.model.ExtendedWidget;
 import org.apache.cxf.systest.jaxb.model.Widget;
 import org.apache.cxf.systest.jaxb.service.TestService;
 import org.apache.cxf.test.TestUtilities;
-
-import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.test.AbstractDependencyInjectionSpringContextTests;
 
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 
-@ContextConfiguration(locations = { "classpath:extrajaxbclass.xml" })
-public class TestServiceTest extends AbstractJUnit4SpringContextTests {
+public class TestServiceTest extends AbstractDependencyInjectionSpringContextTests {
 
+    private TestService testClient;
     private TestUtilities testUtilities;
 
     public TestServiceTest() {
+        setAutowireMode(AbstractDependencyInjectionSpringContextTests.AUTOWIRE_BY_NAME);
         testUtilities = new TestUtilities(getClass());
     }
 
     @Test
     public void testExtraSubClassWithJaxb() throws Throwable {
         Widget expected = new ExtendedWidget(42, "blah", "blah", true, true);
-        TestService testClient = getTestClient();
+
         Widget widgetFromService = testClient.getWidgetById((long)42);
 
-        Assert.assertEquals(expected, widgetFromService);
+        assertEquals(expected, widgetFromService);
     }
 
     @Test
     public void testExtraSubClassWithJaxbFromEndpoint() throws Throwable {
         Widget expected = new ExtendedWidget(42, "blah", "blah", true, true);
-            
-        TestService testClient = getTestClient();
+        
         ((BindingProvider)testClient).getRequestContext()
             .put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, 
                  "http://localhost:7081/service/TestEndpoint");
         Widget widgetFromService = testClient.getWidgetById((long)42);
 
-        Assert.assertEquals(expected, widgetFromService);
+        assertEquals(expected, widgetFromService);
     }
 
     
@@ -76,7 +73,7 @@ public class TestServiceTest extends AbstractJUnit4SpringContextTests {
     public void testSchema() throws Exception {
         URL url = new URL("http://localhost:7081/service/TestService?wsdl");
         String s = IOUtils.toString(url.openStream());
-        Assert.assertTrue(s, s.contains("application/octet-stream"));
+        assertTrue(s, s.contains("application/octet-stream"));
     }
     
     @Test
@@ -95,11 +92,27 @@ public class TestServiceTest extends AbstractJUnit4SpringContextTests {
                                     + "/xsd:sequence/xsd:element[@name='publicString']", wsdl);
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.springframework.test.AbstractSingleSpringContextTests#getConfigLocations()
+     */
+    @Override
+    protected String[] getConfigLocations() {
+        return new String[] {"classpath:extrajaxbclass.xml"};
+    }
 
     /**
      * @return the testClient
      */
     public TestService getTestClient() {
-        return (TestService)applicationContext.getBean("testClient", TestService.class);
+        return testClient;
+    }
+
+    /**
+     * @param testClient the testClient to set
+     */
+    public void setTestClient(TestService testClient) {
+        this.testClient = testClient;
     }
 }

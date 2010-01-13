@@ -76,7 +76,6 @@ public class HttpUtilsTest extends Assert {
     public void testPathToMatch() {
         assertEquals("/", HttpUtils.getPathToMatch("/", "/", true));
         assertEquals("/", HttpUtils.getPathToMatch("/", "/bar", true));
-        assertEquals("/", HttpUtils.getPathToMatch("/bar", "/bar/", true));
         assertEquals("/bar", HttpUtils.getPathToMatch("/bar", "/", true));
         
         assertEquals("/", HttpUtils.getPathToMatch("/bar", "/bar", true));

@@ -221,19 +221,10 @@ public final class ProviderFactory {
                 for (int i = 0; i < args.length; i++) {
                     Type arg = args[i];
                     if (arg instanceof TypeVariable) {
-                        TypeVariable var = (TypeVariable)arg;
-                        Type[] bounds = var.getBounds();
-                        boolean isResolved = false;
-                        for (int j = 0; j < bounds.length; j++) {
-                            Class<?> cls = InjectionUtils.getRawType(bounds[j]);
-                            if (cls != null && cls.isAssignableFrom(expectedType)) {
-                                isResolved = true;
-                                break;
-                            }
-                        }
-                        if (!isResolved) {
-                            return;
-                        }
+                        // give or take wildcards, this implies that the provider is generic, and 
+                        // is willing to take whatever we throw at it. We could, I suppose,
+                        // do wildcard analysis. It would be more correct to look at the bounds
+                        // and check that they are Object or compatible.
                         if (m != null) {
                             InjectionUtils.injectContextFields(em.getProvider(), em, m);
                             InjectionUtils.injectContextMethods(em.getProvider(), em, m);
@@ -280,26 +271,15 @@ public final class ProviderFactory {
                                                         parameterAnnotations, mediaType, m);
     }
     
+    
+    
     public List<ProviderInfo<RequestHandler>> getRequestHandlers() {
         List<ProviderInfo<RequestHandler>> handlers = null;
         if (requestHandlers.size() == 0) {
             handlers = SHARED_FACTORY.requestHandlers;
         } else {
-            handlers = new ArrayList<ProviderInfo<RequestHandler>>();
-            boolean customWADLHandler = false;
-            for (int i = 0; i < requestHandlers.size(); i++) {
-                if (requestHandlers.get(i).getProvider() instanceof WadlGenerator) {
-                    customWADLHandler = true;
-                    break;
-                }
-            }
-            if (!customWADLHandler) {
-                // TODO : this works only because we know we only have a single 
-                // system handler which is a default WADLGenerator, think of a better approach
-                handlers.addAll(SHARED_FACTORY.requestHandlers);    
-            }
+            handlers = new ArrayList<ProviderInfo<RequestHandler>>(SHARED_FACTORY.requestHandlers);
             handlers.addAll(requestHandlers);
-            
         }
         return Collections.unmodifiableList(handlers);
     }

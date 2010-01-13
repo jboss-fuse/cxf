@@ -67,7 +67,6 @@ import org.apache.cxf.message.MessageImpl;
 import org.apache.cxf.phase.PhaseChainCache;
 import org.apache.cxf.phase.PhaseInterceptorChain;
 import org.apache.cxf.phase.PhaseManager;
-import org.apache.cxf.service.Service;
 import org.apache.cxf.transport.ConduitInitiatorManager;
 import org.apache.cxf.transport.MessageObserver;
 import org.apache.cxf.transport.http.ClientOnlyHTTPTransportFactory;
@@ -372,7 +371,7 @@ public class AbstractClient implements Client {
 
         InputStream inputStream = (InputStream)r.getEntity();
         if (inputStream == null) {
-            return cls == Response.class ? r : null;
+            return cls == Response.class ? cls : null;
         }
         try {
             int status = conn.getResponseCode();
@@ -380,7 +379,7 @@ public class AbstractClient implements Client {
                 Object length = r.getMetadata().getFirst(HttpHeaders.CONTENT_LENGTH);
                 if (length == null || Integer.parseInt(length.toString()) == 0
                     || status >= 400) {
-                    return cls == Response.class ? r : cls == InputStream.class ? inputStream : null;
+                    return cls == Response.class ? cls : null;
                 }
             }
         } catch (IOException ex) {
@@ -551,6 +550,7 @@ public class AbstractClient implements Client {
         
         m.put(Message.CONTENT_TYPE, headers.getFirst(HttpHeaders.CONTENT_TYPE));
         
+        
         Exchange exchange = new ExchangeImpl();
         exchange.setSynchronous(true);
         exchange.setOutMessage(m);
@@ -575,19 +575,8 @@ public class AbstractClient implements Client {
         
         //setup conduit selector
         prepareConduitSelector(m);
-        exchange.put(Service.class, cfg.getConduitSelector().getEndpoint().getService());
         
         return m;
     }
 
-    protected void setEmptyRequestProperty(Message outMessage, String httpMethod) {
-        if ("POST".equals(httpMethod)) {
-            outMessage.put("org.apache.cxf.post.empty", true);
-        }
-    }
-    
-    protected void setPlainOperationNameProperty(Message outMessage, String name) {
-        outMessage.getExchange().put("org.apache.cxf.resource.operation.name", name);
-    }
-    
 }

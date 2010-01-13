@@ -28,7 +28,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -153,9 +152,7 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
     protected String wsdlURL;
 
     protected Class<?> serviceClass;
-    protected ParameterizedType serviceType;
-    protected Map<Type, Map<String, Class<?>>> parameterizedTypes;
-    
+
     protected final Map<String, String> schemaLocationMapping = new HashMap<String, String>();
 
     private List<AbstractServiceConfiguration> serviceConfigurations = 
@@ -219,11 +216,7 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
             JAXBDataBinding db = new JAXBDataBinding(getQualifyWrapperSchema());
             Map props = this.getProperties();
             if (props != null && props.get("jaxb.additionalContextClasses") != null) {
-                Object o = this.getProperties().get("jaxb.additionalContextClasses");
-                if (o instanceof Class) {
-                    o = new Class[] {(Class)o};
-                } 
-                Class[] extraClass = (Class[])o;
+                Class[] extraClass = (Class[])this.getProperties().get("jaxb.additionalContextClasses");
                 db.setExtraClass(extraClass);
             }
             retVal = db;
@@ -1449,9 +1442,6 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
             if (isInParam(method, j)) {
                 final QName q = getInParameterName(op, method, j);
                 MessagePartInfo part = inMsg.addMessagePart(getInPartName(op, method, j));
-                
-                
-                
                 initializeParameter(part, paramClasses[j], method.getGenericParameterTypes()[j]);
                 //TODO:remove method param annotations
                 part.setProperty(METHOD_PARAM_ANNOTATIONS, method.getParameterAnnotations());
@@ -1719,21 +1709,6 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
             if (c != null) {
                 type = c;
                 rawClass = getClass(type);
-            }
-        }
-        if (type instanceof TypeVariable) {
-            if (parameterizedTypes == null) {
-                processParameterizedTypes();
-            }
-            TypeVariable var = (TypeVariable)type;
-            Map<String, Class<?>> mp = parameterizedTypes.get(var.getGenericDeclaration());
-            if (mp != null) {
-                Class<?> c = parameterizedTypes.get(var.getGenericDeclaration()).get(var.getName());
-                if (c != null) {
-                    rawClass = c;
-                    type = c;
-                    part.getMessageInfo().setProperty("parameterized", Boolean.TRUE);
-                }
             }
         }
         part.setProperty(GENERIC_TYPE, type);
@@ -2264,35 +2239,7 @@ public class ReflectionServiceFactoryBean extends AbstractServiceFactoryBean {
     public Class<?> getServiceClass() {
         return serviceClass;
     }
-    private void processParameterizedTypes() {
-        parameterizedTypes = new HashMap<Type, Map<String, Class<?>>>();
-        if (serviceClass.isInterface()) {
-            processTypes(serviceClass, serviceType);
-        } else {
-            for (int x = 0; x < serviceClass.getInterfaces().length; x++) {
-                processTypes(serviceClass.getInterfaces()[x], serviceClass.getGenericInterfaces()[x]);
-            }
-            processTypes(serviceClass.getSuperclass(), serviceClass.getGenericSuperclass());            
-        }
-    }
-    protected void processTypes(Class sc, Type tp) {
-        if (tp instanceof ParameterizedType) { 
-            ParameterizedType ptp = (ParameterizedType)tp;
-            Type c = (Class)ptp.getRawType();
-            Map<String, Class<?>> m = new HashMap<String, Class<?>>();
-            parameterizedTypes.put(c, m);
-            for (int x = 0; x < ptp.getActualTypeArguments().length; x++) {
-                Type t = ptp.getActualTypeArguments()[x];
-                TypeVariable<?> tv = sc.getTypeParameters()[x];
-                if (t instanceof Class) {
-                    m.put(tv.getName(), (Class)t);
-                }
-            }
-        }
-    }
-    public void setServiceType(ParameterizedType servicetype) {
-        serviceType = servicetype;
-    }
+
     public void setServiceClass(Class<?> serviceClass) {
         this.serviceClass = serviceClass;
         checkServiceClassAnnotations(serviceClass);

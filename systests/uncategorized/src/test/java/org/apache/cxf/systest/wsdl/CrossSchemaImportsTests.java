@@ -25,24 +25,22 @@ import org.w3c.dom.Document;
 import org.apache.cxf.Bus;
 import org.apache.cxf.endpoint.Server;
 import org.apache.cxf.test.TestUtilities;
-
-import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.test.AbstractDependencyInjectionSpringContextTests;
 
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 
-@ContextConfiguration(locations = { "classpath:crossSchemaBeans.xml" })
-public class CrossSchemaImportsTests extends AbstractJUnit4SpringContextTests {
+public class CrossSchemaImportsTests extends AbstractDependencyInjectionSpringContextTests {
 
     private TestUtilities testUtilities;
 
     public CrossSchemaImportsTests() {
+        setAutowireMode(AbstractDependencyInjectionSpringContextTests.AUTOWIRE_BY_NAME);
         testUtilities = new TestUtilities(getClass());
     }
 
     @Test
     public void testJaxbCrossSchemaImport() throws Exception {
+        System.out.println("TEst");
         testUtilities.setBus((Bus)applicationContext.getBean("cxf"));
         testUtilities.addDefaultNamespaces();
         Server s = testUtilities.getServerForService(new QName("http://apache.org/type_test/doc", 
@@ -52,7 +50,16 @@ public class CrossSchemaImportsTests extends AbstractJUnit4SpringContextTests {
              assertValid("//xsd:schema[@targetNamespace='http://apache.org/type_test/doc']/"
                          + "xsd:import[@namespace='http://apache.org/type_test/types1']", wsdl);
         
-        Assert.assertEquals(1, LifeCycleListenerTester.getInitCount());
+        assertEquals(1, LifeCycleListenerTester.getInitCount());
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.springframework.test.AbstractSingleSpringContextTests#getConfigLocations()
+     */
+    @Override
+    protected String[] getConfigLocations() {
+        return new String[] {"classpath:crossSchemaBeans.xml"};
+    }
 }

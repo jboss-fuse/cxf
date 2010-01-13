@@ -41,7 +41,6 @@ import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactory;
-import org.apache.cxf.jaxrs.client.JAXRSClientFactoryBean;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.jaxrs.ext.xml.XMLSource;
 import org.apache.cxf.jaxrs.provider.XSLTJaxbProvider;
@@ -213,16 +212,6 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
             WebClient.create("http://localhost:9080/bookstore/emptypost");
         Response response = wc.post(null);
         assertEquals(204, response.getStatus());
-    }
-    
-    @Test
-    public void testEmptyPostProxy() throws Exception {
-        JAXRSClientFactoryBean bean = new JAXRSClientFactoryBean(); 
-        bean.setAddress("http://localhost:9080");
-        bean.setResourceClass(BookStore.class);
-        BookStore store = bean.create(BookStore.class);
-        store.emptypost();
-        assertEquals(204, WebClient.client(store).getResponse().getStatus());
     }
     
     @Test
@@ -1117,5 +1106,4 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
         return bos.getOut().toString();        
     }
 
-    
 }

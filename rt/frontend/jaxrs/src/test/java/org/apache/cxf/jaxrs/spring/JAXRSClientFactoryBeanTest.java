@@ -18,8 +18,6 @@
  */
 package org.apache.cxf.jaxrs.spring;
 
-import javax.xml.namespace.QName;
-
 import junit.framework.Assert;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactoryBean;
@@ -51,8 +49,6 @@ public class JAXRSClientFactoryBeanTest extends Assert {
         assertEquals("Get a wrong map size", cfb.getHeaders().size(), 1);
         assertEquals("Get a wrong username", cfb.getUsername(), "username");
         assertEquals("Get a wrong password", cfb.getPassword(), "password");
-        assertEquals(new QName("http://books.com", "BookService"), 
-                     cfb.getServiceName());
         
         bean = ctx.getBean("ModelClient.proxyFactory");
         assertNotNull(bean);

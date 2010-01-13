@@ -43,9 +43,7 @@ import org.apache.cxf.databinding.DataBinding;
 import org.apache.cxf.databinding.DataReader;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.helpers.XPathUtils;
-import org.apache.cxf.message.FaultMode;
 import org.apache.cxf.message.Message;
-import org.apache.cxf.message.MessageUtils;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
 import org.apache.cxf.service.Service;
@@ -60,7 +58,6 @@ import org.apache.cxf.staxutils.W3CDOMStreamReader;
  * @author Dan Diephouse
  */
 public class ClientFaultConverter extends AbstractPhaseInterceptor<Message> {
-    public static final String DISABLE_FAULT_MAPPING = "disable-fault-mapping";
     private static final Logger LOG = LogUtils.getLogger(ClientFaultConverter.class);
 
     public ClientFaultConverter() {
@@ -73,29 +70,10 @@ public class ClientFaultConverter extends AbstractPhaseInterceptor<Message> {
     public void handleMessage(Message msg) {
         Fault fault = (Fault) msg.getContent(Exception.class);
 
-        if (fault.getDetail() != null 
-            && !MessageUtils.getContextualBoolean(msg,
-                                                 DISABLE_FAULT_MAPPING,
-                                                 false)) {
+        if (fault.getDetail() != null) {
             processFaultDetail(fault, msg);
             setStackTrace(fault, msg);
         }
-
-        FaultMode faultMode = FaultMode.UNCHECKED_APPLICATION_FAULT;
-
-        // Check if the raised exception is declared in the WSDL or by the JAX-RS resource
-        Method m = msg.getExchange().get(Method.class);
-        if (m != null) {
-            Exception e = msg.getContent(Exception.class);
-            for (Class<?> cl : m.getExceptionTypes()) {
-                if (cl.isInstance(e)) {
-                    faultMode = FaultMode.CHECKED_APPLICATION_FAULT;
-                    break;
-                }
-            }
-        }
-        
-        msg.getExchange().put(FaultMode.class, faultMode);
     }
 
     protected void processFaultDetail(Fault fault, Message msg) {

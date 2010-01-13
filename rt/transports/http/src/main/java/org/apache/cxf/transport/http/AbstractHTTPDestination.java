@@ -54,7 +54,6 @@ import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.helpers.HttpHeaderHelper;
 import org.apache.cxf.interceptor.Interceptor;
 import org.apache.cxf.io.AbstractWrappedOutputStream;
-import org.apache.cxf.io.DelegatingInputStream;
 import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.security.SecurityContext;
@@ -277,9 +276,7 @@ public abstract class AbstractHTTPDestination extends AbstractMultiplexDestinati
                                 final HttpServletRequest req, 
                                 final HttpServletResponse resp) throws IOException {
 
-        DelegatingInputStream in = new DelegatingInputStream(req.getInputStream());
-        inMessage.setContent(DelegatingInputStream.class, in);
-        inMessage.setContent(InputStream.class, in);
+        inMessage.setContent(InputStream.class, req.getInputStream());
         inMessage.put(HTTP_REQUEST, req);
         inMessage.put(HTTP_RESPONSE, resp);
         inMessage.put(HTTP_CONTEXT, context);
@@ -540,11 +537,8 @@ public abstract class AbstractHTTPDestination extends AbstractMultiplexDestinati
          */
         public void prepare(Message message) throws IOException {
             message.put(HTTP_RESPONSE, response);
-            OutputStream os = message.getContent(OutputStream.class);
-            if (os == null) {
-                message.setContent(OutputStream.class, 
+            message.setContent(OutputStream.class, 
                                new WrappedOutputStream(message, response));
-            }
         }
     }
 

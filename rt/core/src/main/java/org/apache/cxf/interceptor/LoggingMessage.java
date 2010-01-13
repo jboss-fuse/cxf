@@ -31,7 +31,6 @@ public final class LoggingMessage {
     private final StringBuilder header;
     private final StringBuilder message;
     private final StringBuilder payload;
-    private final StringBuilder responseCode;
     private final String id;
     
 
@@ -45,7 +44,6 @@ public final class LoggingMessage {
         header = new StringBuilder();
         message = new StringBuilder();
         payload = new StringBuilder();
-        responseCode = new StringBuilder();
     }
     
     public static String nextId() {
@@ -77,10 +75,6 @@ public final class LoggingMessage {
         return payload;
     }
 
-    public StringBuilder getResponseCode() {
-        return responseCode;
-    }
-
     public String toString() {
         StringBuilder buffer = new StringBuilder();
         buffer.append(heading);
@@ -89,14 +83,8 @@ public final class LoggingMessage {
             buffer.append("\nAddress: ");
             buffer.append(address);
         }
-        if (responseCode.length() > 0) {
-            buffer.append("\nResponse-Code: ");
-            buffer.append(responseCode);
-        }
-        if (encoding.length() > 0) {
-            buffer.append("\nEncoding: ");
-            buffer.append(encoding);
-        }
+        buffer.append("\nEncoding: ");
+        buffer.append(encoding);
         buffer.append("\nContent-Type: ");
         buffer.append(contentType);
         buffer.append("\nHeaders: ");
@@ -105,10 +93,8 @@ public final class LoggingMessage {
             buffer.append("\nMessages: ");
             buffer.append(message);
         }
-        if (payload.length() > 0) {
-            buffer.append("\nPayload: ");
-            buffer.append(payload);
-        }
+        buffer.append("\nPayload: ");
+        buffer.append(payload);
         buffer.append("\n--------------------------------------");
         return buffer.toString();
     }

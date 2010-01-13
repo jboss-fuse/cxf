@@ -57,7 +57,6 @@ import org.junit.Test;
 
 public class JSONProviderTest extends Assert {
 
-    
     @Test
     public void testWriteCollectionWithoutXmlRootElement() 
         throws Exception {
