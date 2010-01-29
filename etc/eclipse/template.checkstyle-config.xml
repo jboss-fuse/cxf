@@ -20,7 +20,6 @@
 <checkstyle-configurations file-format-version="5.0.0">
     <check-configuration name="CXF Checks" location="@CHECKSTYLE_CONFIG_FILE@" type="external" description="">        
     </check-configuration>
-    <check-configuration name="IONA Extras Checks" location="@IONA_CHECKSTYLE_CONFIG_FILE@" type="external" description=""/>
     <check-configuration name="CXF CORBA Checks" location="@CHECKSTYLE_CORBA_CONFIG_FILE@" type="external" description="">        
     </check-configuration>
 </checkstyle-configurations>
