@@ -34,6 +34,7 @@ import org.apache.cxf.Bus;
 import org.apache.cxf.binding.soap.SoapBindingConstants;
 import org.apache.cxf.binding.soap.model.SoapOperationInfo;
 import org.apache.cxf.common.logging.LogUtils;
+import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.endpoint.ConduitSelector;
 import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.endpoint.NullConduitSelector;
@@ -729,14 +730,6 @@ public final class ContextUtils {
             }
             if (fault == null) {
                 action = (String) message.get(SoapBindingConstants.SOAP_ACTION);
-                if (action == null) {
-                    SoapOperationInfo soi = 
-                        bindingOpInfo.getExtensor(SoapOperationInfo.class);
-                    if (null != soi) {
-                        action = soi.getAction();
-                    }
-
-                }
                 if (action == null || "".equals(action)) {
                     MessageInfo msgInfo = 
                         ContextUtils.isRequestor(message)
@@ -747,6 +740,12 @@ public final class ContextUtils {
                         action = getActionFromMessageAttributes(msgInfo);
                     } else {
                         action = cachedAction;
+                    }
+                    if (action == null && ContextUtils.isRequestor(message)) {
+                        SoapOperationInfo soi = 
+                            bindingOpInfo.getExtensor(SoapOperationInfo.class);
+                        action = soi == null ? null : soi.getAction();
+                        action = StringUtils.isEmpty(action) ? null : action; 
                     }
                 }
             } else {
