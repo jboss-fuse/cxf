@@ -280,11 +280,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.iona.fuse.cxf.container</groupId>
-            <artifactId>it-soa-container-rt</artifactId>
-            <version>${pom.version}</version>
-        </dependency>
-        <dependency>
             <groupId>commons-httpclient</groupId>
             <artifactId>commons-httpclient</artifactId>
         </dependency>
@@ -450,22 +445,6 @@
                                     </filterset>
                                 </copy>
                                 <delete file="build.xml" />
-                            </tasks>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>generate-container-manifest</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <tasks>
-                                <jar destfile="target/it-soa-container.jar"> 
-                                    <manifest>
-                                        <attribute name="Class-Path" value="it-soa-container-rt-${pom.version}.jar it-soa-container-api-${pom.version}.jar" />
-                                    </manifest>      
-                                </jar>
                             </tasks>
                         </configuration>
                     </execution>
