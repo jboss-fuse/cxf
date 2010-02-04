@@ -20,13 +20,13 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf</artifactId>
-        <version>2.2.99-fuse-SNAPSHOT</version>
+        <version>2.2.6-fuse-01-00</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.cxf</groupId>
     <artifactId>cxf-parent</artifactId>
-    <version>2.2.99-fuse-SNAPSHOT</version>
+    <version>2.2.6-fuse-01-00</version>
     <name>Apache CXF Parent</name>
     <url>http://fusesource.com/forge/projects/FUSESF</url>
 
@@ -36,7 +36,7 @@
         <surefire.fork.mode>once</surefire.fork.mode>
         <surefire.format>brief</surefire.format>
         <surefire.usefile>false</surefire.usefile>
-        <surefire.parallel.mode/>
+        <surefire.parallel.mode />
         <surefire.fork.vmargs>-ea</surefire.fork.vmargs>
         <server.launcher.vmargs>-ea</server.launcher.vmargs>
         <compile.flags>-Xlint:unchecked,deprecation,fallthrough,finally</compile.flags>
@@ -71,7 +71,7 @@
 
         <downloadSources>true</downloadSources>
 
-        <resources.base.path/>
+        <resources.base.path />
 
     </properties>
 
