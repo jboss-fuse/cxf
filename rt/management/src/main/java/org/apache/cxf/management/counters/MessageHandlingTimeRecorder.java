@@ -46,11 +46,11 @@ public class MessageHandlingTimeRecorder {
     }
     
     public void beginHandling() {
-        beginTime = System.nanoTime() / 1000;
+        beginTime = System.nanoTime() / 1000000;
     }
     
     public void endHandling() {
-        endTime = System.nanoTime() / 1000;
+        endTime = System.nanoTime() / 1000000;
     }
     
     public long getEndTime() {

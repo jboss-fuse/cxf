@@ -35,7 +35,7 @@ public class ResponseTimeCounter implements ResponseTimeCounterMBean, Counter {
         objectName = on;     
     }
     
-    public void  increase(MessageHandlingTimeRecorder mhtr) {
+    public synchronized void  increase(MessageHandlingTimeRecorder mhtr) {
         invocations.getAndIncrement();
         long handlingTime = 0;
         if (mhtr.isOneWay()) {
@@ -56,7 +56,12 @@ public class ResponseTimeCounter implements ResponseTimeCounterMBean, Counter {
         }         
     }
     
-    
+    public synchronized void reset() {
+        invocations.set(0);
+        totalHandlingTime = 0;    
+        maxHandlingTime = 0;
+        minHandlingTime = Integer.MAX_VALUE;   
+    }
     
     public ObjectName getObjectName() {
         return objectName;
