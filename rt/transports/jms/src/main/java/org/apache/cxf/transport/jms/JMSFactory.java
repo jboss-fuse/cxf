@@ -117,7 +117,8 @@ public final class JMSFactory {
     public static DefaultMessageListenerContainer createJmsListener(JMSConfiguration jmsConfig,
                                                                     MessageListener listenerHandler,
                                                                     String destinationName, 
-                                                                    String messageSelectorPrefix) {
+                                                                    String messageSelectorPrefix,
+                                                                    boolean initialize) {
         DefaultMessageListenerContainer jmsListener = jmsConfig.isUseJms11()
             ? new DefaultMessageListenerContainer() : new DefaultMessageListenerContainer102();
         jmsListener.setConcurrentConsumers(jmsConfig.getConcurrentConsumers());
@@ -167,7 +168,9 @@ public final class JMSFactory {
                 .isPubSubDomain());
             jmsListener.setDestination(dest);
         }
-        jmsListener.initialize();
+        if (initialize) {
+            jmsListener.initialize();
+        }
         return jmsListener;
     }
 

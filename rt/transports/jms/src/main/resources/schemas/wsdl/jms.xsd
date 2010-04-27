@@ -57,6 +57,7 @@
                 <xs:attribute name="conduitSelectorPrefix" type="xs:string" use="optional" default=""/>    				
                 <xs:attribute name="useConduitIdSelector" type="xs:boolean" use="optional" default="true"/>
                 <xs:attribute name="enforceSpec" type="xs:boolean" use="optional" default="true"/>
+                <xs:attribute name="useMessageIDAsCorrelationID" type="xs:boolean" use="optional" default="false"/>
     		</xs:extension>
     	</xs:complexContent>
     </xs:complexType>
@@ -202,6 +203,24 @@
     					</xs:documentation>
     				</xs:annotation>
     			</xs:attribute>
+    			
+    			<xs:attribute name="jndiReplyToDestinationName"
+    				type="xs:string">
+    				<xs:annotation>
+    					<xs:documentation>
+
+    					</xs:documentation>
+    				</xs:annotation>
+    			</xs:attribute>
+
+    			<xs:attribute name="jmsReplyToDestinationName"
+    				type="xs:string">
+    				<xs:annotation>
+    					<xs:documentation>
+
+    					</xs:documentation>
+    				</xs:annotation>
+    			</xs:attribute>    			
 
     			<xs:attribute name="connectionUserName"
     				type="xs:string">

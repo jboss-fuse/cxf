@@ -72,6 +72,7 @@ public class JMSConfiguration implements InitializingBean {
 
     private String targetDestination;
     private String replyDestination;
+    private String replyToDestination;
     private String messageType = JMSConstants.TEXT_MESSAGE_TYPE;
     private boolean pubSubDomain;
     private boolean useConduitIdSelector = true;
@@ -81,6 +82,7 @@ public class JMSConfiguration implements InitializingBean {
     private int cacheLevel = DEFAULT_VALUE;
     private String cacheLevelName;
     private boolean enforceSpec = true;
+    private boolean useMessageIDAsCorrelationID;
     
     private ConnectionFactory wrappedConnectionFactory;
     
@@ -256,6 +258,14 @@ public class JMSConfiguration implements InitializingBean {
         this.replyDestination = replyDestination;
     }
 
+    public String getReplyToDestination() {
+        return replyToDestination;
+    }
+
+    public void setReplyToDestination(String replyToDestination) {
+        this.replyToDestination = replyToDestination;
+    }
+    
     public String getMessageType() {
         return messageType;
     }
@@ -366,6 +376,14 @@ public class JMSConfiguration implements InitializingBean {
 
     public void setReconnectOnException(boolean reconnectOnException) {
         this.reconnectOnException = reconnectOnException;
+    }
+    
+    public boolean isUseMessageIDAsCorrelationID() {
+        return this.useMessageIDAsCorrelationID;
+    }
+    
+    public void setUseMessageIDAsCorrelationID(boolean value) {
+        this.useMessageIDAsCorrelationID = value;
     }
          
     /**

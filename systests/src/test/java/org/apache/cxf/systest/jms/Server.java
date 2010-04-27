@@ -39,7 +39,9 @@ public class Server extends AbstractBusTestServerBase {
         Object i4 = new GreeterImplTwoWayJMSRuntimeCorrelationIDDynamicPrefix();
         Object i5 = new GreeterImplTwoWayJMSRuntimeCorrelationIDStaticPrefixEng();
         Object i6 = new GreeterImplTwoWayJMSRuntimeCorrelationIDStaticPrefixSales();
-        
+        Object i7 = new GreeterImplMessageIDAsCorrelationID();
+        Object i8 =  new SoapService8SoapPort8Impl();
+        Object i9 =  new GreeterImplJMSMessageIDAsCorrelationID();
         
         Endpoint.publish(null, impleDoc);
         String address = "http://localhost:9000/SoapContext/SoapPort";
@@ -55,6 +57,9 @@ public class Server extends AbstractBusTestServerBase {
         Endpoint.publish("", i4);
         Endpoint.publish("", i5);
         Endpoint.publish("", i6);
+        Endpoint.publish("", i7);
+        Endpoint.publish("", i8);
+        Endpoint.publish("", i9);
     }
 
 

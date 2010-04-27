@@ -109,7 +109,12 @@ public class JMSOldConfigHolder {
             }
             long timeToLive = isConduit ? clientConfig.getMessageTimeToLive() : serverConfig
                 .getMessageTimeToLive();
-            jmsConfig.setTimeToLive(timeToLive);            
+            jmsConfig.setTimeToLive(timeToLive);   
+            
+            boolean useMessageIDAsCorrelationID = 
+                isConduit ? clientConfig.isUseMessageIDAsCorrelationID() : false;
+            jmsConfig.setUseMessageIDAsCorrelationID(useMessageIDAsCorrelationID);
+            
             if (address.isSetUseJms11()) {                
                 jmsConfig.setUseJms11(address.isUseJms11());        
             }
@@ -124,10 +129,12 @@ public class JMSOldConfigHolder {
                 jmsConfig.setDestinationResolver(jndiDestinationResolver);
                 jmsConfig.setTargetDestination(address.getJndiDestinationName());
                 jmsConfig.setReplyDestination(address.getJndiReplyDestinationName());
+                jmsConfig.setReplyToDestination(address.getJndiReplyToDestinationName());
             } else {
                 // Use the default dynamic destination resolver
                 jmsConfig.setTargetDestination(address.getJmsDestinationName());
                 jmsConfig.setReplyDestination(address.getJmsReplyDestinationName());
+                jmsConfig.setReplyToDestination(address.getJmsReplyToDestinationName());
             }
         }
         return jmsConfig;

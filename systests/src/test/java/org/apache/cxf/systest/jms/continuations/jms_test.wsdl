@@ -170,6 +170,7 @@
                <jms:server durableSubscriberName="CXF_subscriber"/>
            </port>
     </service>
+
     
         
 </definitions>
