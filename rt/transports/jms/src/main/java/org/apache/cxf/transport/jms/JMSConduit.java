@@ -290,7 +290,7 @@ public class JMSConduit extends AbstractConduit implements JMSExchangeSender, Me
             try {
                 listenerPool.returnObject(listener);
             } catch (Exception ex) {
-                //
+                LOG.log(Level.WARNING, "Could not return listener to pool: " + ex);
             }
         }
         
