@@ -126,7 +126,8 @@ public class JMSConduit extends AbstractConduit implements JMSExchangeSender, Me
                     try {
                         listener = (DefaultMessageListenerContainer)listenerPool.borrowObject();
                     } catch (Exception ex) {
-                        ex.printStackTrace();
+                        LOG.log(Level.SEVERE, "Unable to borrow listener from pool: " + ex);
+                        throw new RuntimeException("Unable to borrow listener from pool.", ex);
                     }
                     replyTo = listener.getDestination();
                 } else {
