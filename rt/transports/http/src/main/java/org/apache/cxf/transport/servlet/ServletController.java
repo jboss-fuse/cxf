@@ -77,7 +77,9 @@ public class ServletController extends AbstractServletController {
     }
     
     protected synchronized void updateDests(HttpServletRequest request) {
-        
+        if (disableAddressUpdates) {
+            return;
+        }
         String base = forcedBaseAddress == null ? getBaseURL(request) : forcedBaseAddress;
                 
         if (base.equals(lastBase)) {
@@ -95,18 +97,11 @@ public class ServletController extends AbstractServletController {
             if (ad != null 
                 && (ad.equals(path)
                 || ad.equals(lastBase + path))) {
-                if (disableAddressUpdates) {
-                    request.setAttribute("org.apache.cxf.transport.endpoint.address", base + path);
-                } else {
-                    d2.getEndpointInfo().setAddress(base + path);
-                    if (d2.getEndpointInfo().getExtensor(AddressType.class) != null) {
-                        d2.getEndpointInfo().getExtensor(AddressType.class).setLocation(base + path);
-                    }
+                d2.getEndpointInfo().setAddress(base + path);
+                if (d2.getEndpointInfo().getExtensor(AddressType.class) != null) {
+                    d2.getEndpointInfo().getExtensor(AddressType.class).setLocation(base + path);
                 }
             }
-        }
-        if (disableAddressUpdates) {
-            return;
         }
         lastBase = base;
     }

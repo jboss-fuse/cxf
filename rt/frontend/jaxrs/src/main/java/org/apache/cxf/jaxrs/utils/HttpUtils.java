@@ -48,7 +48,6 @@ import org.apache.cxf.jaxrs.impl.HttpHeadersImpl;
 import org.apache.cxf.jaxrs.impl.PathSegmentImpl;
 import org.apache.cxf.jaxrs.model.ParameterType;
 import org.apache.cxf.message.Message;
-import org.apache.cxf.service.model.EndpointInfo;
 import org.apache.cxf.transport.Destination;
 import org.apache.cxf.transport.http.AbstractHTTPDestination;
 
@@ -208,11 +207,7 @@ public final class HttpUtils {
         Destination d = m.getExchange().getDestination();
         if (d != null) {
             if (d instanceof AbstractHTTPDestination) {
-                EndpointInfo ei = ((AbstractHTTPDestination)d).getEndpointInfo();
-                HttpServletRequest request = (HttpServletRequest)m.get(AbstractHTTPDestination.HTTP_REQUEST); 
-                Object property = request != null 
-                    ? request.getAttribute("org.apache.cxf.transport.endpoint.address") : null;
-                address = property != null ? property.toString() : ei.getAddress();
+                address = ((AbstractHTTPDestination)d).getEndpointInfo().getAddress();
             } else {
                 address = d.getAddress().getAddress().getValue();
             }
