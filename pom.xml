@@ -41,13 +41,25 @@
     </prerequisites>
 
     <properties>
-         <release-repo-url>scpexe://repo.fusesource.com/www/repo.fusesource.com/maven2</release-repo-url>
-         <snapshot-repo-url>scpexe://repo.fusesource.com/www/repo.fusesource.com/maven2-snapshot</snapshot-repo-url>
+         <release-repo-url>http://repo.fusesource.com/nexus/service/local/staging/deploy/maven2</release-repo-url>
+         <snapshot-repo-url>http://repo.fusesource.com/nexus/content/repositories/snapshots</snapshot-repo-url>
          <m1-repo-url>scpexe://repo.fusesource.com/www/repo.fusesource.com/maven1</m1-repo-url>
          <compiler.fork>false</compiler.fork>
      </properties>
 
      <distributionManagement>
+         <repository>
+             <id>fusesource-nexus-staging</id>
+             <name>FuseSource Release Repository</name>
+             <url>${release-repo-url}</url>
+         </repository>
+         <snapshotRepository>
+             <id>fusesource-nexus-snapshots</id>
+             <name>FuseSource Nexus Snapshots</name>
+             <url>${snapshot-repo-url}</url>
+         </snapshotRepository>
+     </distributionManagement>
+     <!--distributionManagement>
        <repository>
          <id>fusesource.m2</id>
          <name>FUSESource Community Release Repository</name>
@@ -60,7 +72,7 @@
          <url>${snapshot-repo-url}</url>
          <uniqueVersion>false</uniqueVersion>
        </snapshotRepository>
-     </distributionManagement>
+     </distributionManagement-->
     <inceptionYear>2006</inceptionYear>
     <mailingLists>
         <mailingList>

@@ -31,6 +31,7 @@ import org.apache.cxf.jaxws.EndpointImpl;
 import org.apache.cxf.service.model.EndpointInfo;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class WSDLAddressRewriteTest extends AbstractBusClientServerTestBase {
@@ -58,7 +59,7 @@ public class WSDLAddressRewriteTest extends AbstractBusClientServerTestBase {
         }
     }
 
-    @Test
+    @Ignore
     public void testWithEquivalentAddress() throws Exception {
         Endpoint endpoint = null;
         try {
