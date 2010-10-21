@@ -28,7 +28,7 @@
     <artifactId>cxf-parent</artifactId>
     <version>2.3.1-SNAPSHOT</version>
     <name>Apache CXF Parent</name>
-    <url>http://cxf.apache.org</url>
+    <url>http://fusesource.com/forge/projects/FUSESF</url>
 
     <packaging>pom</packaging>
 
