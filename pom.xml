@@ -21,15 +21,15 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.cxf</groupId>
     <artifactId>cxf</artifactId>
-    <version>2.2.99-fuse-SNAPSHOT</version>
+    <version>2.2.11-fuse-00-00</version>
     <name>FUSE Services Framework</name>
     <url>http://fusesource.com/forge/projects/FUSESF</url>
 
     <packaging>pom</packaging>
 
     <scm>
-        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.2.x-fuse</connection>
-        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.2.x-fuse</developerConnection>
+        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/tags/cxf-2.2.11-fuse-00-00</connection>
+        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/tags/cxf-2.2.11-fuse-00-00</developerConnection>
     </scm>
     <issueManagement>
         <system>jira</system>

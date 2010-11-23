@@ -26,7 +26,7 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>2.2.99-fuse-SNAPSHOT</version>
+        <version>2.2.11-fuse-00-00</version>
         <relativePath>../../../parent/pom.xml</relativePath>
     </parent>
 

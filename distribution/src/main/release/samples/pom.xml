@@ -21,7 +21,7 @@
     <groupId>org.apache.cxf.samples</groupId>
     <artifactId>cxf-samples</artifactId>
     <packaging>pom</packaging>
-    <version>2.2.99-fuse-SNAPSHOT</version>
+    <version>2.2.11-fuse-00-00</version>
     <name>Apache CXF Samples</name>
     <url>http://cxf.apache.org</url>
 
