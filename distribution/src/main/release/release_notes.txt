@@ -1,0 +1,176 @@
+Apache CXF 2.2.6 Release Notes
+
+1. Overview
+ 
+Apache CXF 2.2.6 delivers the third major version of 
+the Celtix project (http://celtix.objectweb.org) and the XFire project
+(http://xfire.codehaus.org) merge.  This release is a major update from 
+the 2.1.x series.   The major new additions include:
+
+ * WS-SecurityPolicy
+ * WS-SecureConversation
+ * Partial support for WS-Trust
+ * Initial support for JAX-RS 1.0 including a client API for accessing 
+   REST services   
+
+2.2.6 fixes over 78 JIRA issues reported by users and the community.
+
+
+2. Installation Prerequisites 
+
+Before installing Apache CXF, make sure the following products,
+with the specified versions, are installed on your system:
+
+    * Java 5 Development Kit
+    * Apache ant 1.6
+
+2.1 Java 5 Development Kit
+
+You must install the J2SE Development Kit (JDK) 5.0 or 6, which can be downloaded
+from:
+
+    http://java.sun.com/j2se/1.5.0/download.jsp
+
+After installing the JDK, set or modify the following environment variables:
+
+    * JAVA_HOME -- set this environment variable
+      to point at the root directory of the JDK 5.0 installation.
+
+    * PATH -- make sure that your PATH includes: 
+      %JAVA_HOME%\bin  (Windows) 
+      $JAVA_HOME/bin   (UNIX)
+
+2.2 Apache Ant 1.6.5 (or newer, 1.7.0 should work as well)
+
+To run samples included in the binary distribution of Apache CXF,
+you must install the Apache Ant 1.6.5 build utility, which can be downloaded
+from:
+
+    http://ant.apache.org/bindownload.cgi
+
+After installing Apache Ant, add the <AntInstallDir>/bin directory to your PATH.
+
+For more details, see the Installation Guide.
+
+
+3. Building the Samples
+
+Building the samples included in the binary distribution is easy. Change to
+the samples directory and follow the build instructions in the README.txt file 
+included with each sample.
+
+4. Reporting Problems
+
+If you have any problems or want to send feedback of any kind, please e-mail the
+cxf dev list, dev@cxf.apache.org.  You can also file issues in JIRA at:
+
+http://issues.apache.org/jira/browse/CXF
+
+
+5. Migration notes:
+
+See the migration guide at:
+http://cxf.apache.org/22-migration-guide.html
+for caveats when upgrading from CXF 2.1.x to 2.2.x.
+
+
+6. Specific issues, features, and improvements fixed in this version
+
+Release Notes - CXF - Version 2.2.6
+
+
+** Sub-task
+    * [CXF-1510] - Cannot handle anonymous bare requests
+
+** Bug
+    * [CXF-685] - WS-RM: Inappropriate exception handling in RM Servant
+    * [CXF-1758] - Simple front end does not figure out generic implementation beans.
+    * [CXF-1816] - Undeploying a CXF web app from tomcat on windows does not delete some CXF files
+    * [CXF-1818] - java2ws -createxsdimports with packages that reference other packages should have schemaLocation in schema import
+    * [CXF-1886] - Disappearing types from @XmlRootElement and no particular namespace
+    * [CXF-2035] - Issues with SOAPAction 
+    * [CXF-2091] - CXF Bundle is hardly usable under OSGi
+    * [CXF-2093] - CXF Compatiblity
+    * [CXF-2135] - JAXB binding files with no schemaLocation don't work
+    * [CXF-2150] - Web service provider using UsernameToken profile should throw an exception if SOAP client's password type <> web service provider's.
+    * [CXF-2216] - CXF Import-Package version specifiers causes 'uses' conflict
+    * [CXF-2223] - Proxy authentication failure with SSL tunneling
+    * [CXF-2296] - Aegis XMLTypeCreator causes a warning stack trace when used by JAXRS runtime
+    * [CXF-2376] - CXF Maven Plugin fails to read WSDL file from classpath or jar file
+    * [CXF-2386] - abdera-extensions-main and abdera-i18n are required by cxf-bundle-minimal but not present in any repository
+    * [CXF-2422] - DataBindingProvider should be <T>
+    * [CXF-2466] - CXF WS-RM impl displays exceptions
+    * [CXF-2471] - The HttpServletResponse statuses is lost after is set in a service implementation (where the response is injected through @Context).
+    * [CXF-2540] - JMX ResponseTimeFeature does not count client side exceptions
+    * [CXF-2541] - JMX Per Operation ResponseTime not collected for JAX-RS services
+    * [CXF-2542] - DelegatingInputStream.close() causes MessageImpl.getContextualProperty throw NullPointerException
+    * [CXF-2543] - CXF client processes bar() response message when making foo() request
+    * [CXF-2545] - WS Addressing asynchronous transport and NullPointerException with Apache tomcat (threading problem ?) 
+    * [CXF-2546] - NullPointerException when trying to find WS-Addressing Action
+    * [CXF-2547] - AsymmetricBindingHandler doesn't add value(s) for SignatureConfirmation check (Client Side Problem)
+    * [CXF-2549] - Wrong classpath for dynamic client compilation in Weblogic
+    * [CXF-2550] - transactions don't work in jaxws Endpoint  with jms transport
+    * [CXF-2551] - NullPointerException 	at org.apache.cxf.transport.servlet.ServletController.updateDests(ServletController.java:92)
+    * [CXF-2552] - CXF should use Spring's BeanFactory.isSingleton(name) instead of BeanDefinition.isSingleton() because any such checks break when using bean definition inheritance or bean definition post-processing
+    * [CXF-2554] - JaxWsDynamicClientFactory.createClient(URL) and o.a.cxf.endpoint.Client.invoke(String operationName, Object... params) generates illegal XML, WstxParsingException on server.
+    * [CXF-2555] - JaxWsDynamicClientFactory unable to handle custom exceptions
+    * [CXF-2556] - UnsupportedOperationException in WadlGenerator
+    * [CXF-2558] - ClientProxyFactoryBeanDefinitionParser is called multiple times
+    * [CXF-2561] - cxf-codegen-plugin throws NullPointerException when defaultOptions defined without packagenames
+    * [CXF-2566] - Missing translation for INSTRUMENTATION_REGISTER_FAULT_MSG
+    * [CXF-2568] - default values don't get quoted properly in generated Javascript
+    * [CXF-2569] - Consuming a wsdl file which is having a nested complex types in xsd
+    * [CXF-2571] - wsdl2java and jax-ws-catalog: failing to resolve schemas included with xsd:include in jar-file
+    * [CXF-2572] - WS-Addressing interceptors throw NPE when processing JAX-WS @WebServiceProvider requests in MESSAGE mode
+    * [CXF-2577] - JMS IlegalStateException when attempting to use Spring SingleConnectionFactory retrieved from JNDI
+    * [CXF-2581] - Improper toString of Arrays during logging
+    * [CXF-2582] - wrapper InOuts not being generated per spec for single response part
+    * [CXF-2583] - Please remove Maven dependency on slf4j-jdk14
+    * [CXF-2584] - NullPointerException in CXFAuthenticator.getPasswordAuthentication() if password is null
+    * [CXF-2585] - Already connected exception when using a proxy created with JAXRSClientFactory
+    * [CXF-2587] - wsdl2java error when there are several nested wsdl:import 
+    * [CXF-2588] - Add directories to svn:ignore created by build
+    * [CXF-2591] - MAPCodec : memory leak with an async client with network issues (connection timeout, read timeout etc)
+    * [CXF-2592] - evaluatePreconditions() in RequestImpl should also check the If-None-Match header
+    * [CXF-2593] - Get XML parse error when return type is Collection<double[]>
+    * [CXF-2594] - No SOAP fault XML elements when a Fault is thrown in the output chain after SAAJOutInterceptor
+    * [CXF-2598] - Can/t set minOccurs="1" with annotations
+    * [CXF-2599] - cxf-codgen-plugin cannot resolve xs:group element referenced in an XSD
+    * [CXF-2601] - Faults generated with XMLBeans binding are not wrapped correctly
+    * [CXF-2605] - Object argument is passed as null
+    * [CXF-2609] - Schema validation failure when null system ID passed to LSResourceResolver.resolveResource()
+    * [CXF-2613] - WSSecurity11 tests failing with IBM jdk 1.6 and restricted jars
+    * [CXF-2616] - wsdl2java script doesn't put #!/bin/sh on the first line of the script
+    * [CXF-2618] - secureSocketProtocol in TLSClientParams and TLSServerParams is not pushed into the SSLSocketFactory
+    * [CXF-2619] - Deadlock when echoing MTOM attachments back to client
+    * [CXF-2620] - CXFServlet fails to init with NPE at line 125 (updateContext) when run with embedded Jetty and Spring3 - works with Spring 2.5.6
+    * [CXF-2622] - ThreadLocal variables may not be cleared in case of exception
+    * [CXF-2623] - AttachmentDeserializer doesn't work when no boundary message in content type
+    * [CXF-2624] - Classloader leakage in org.apache.cxf.common.util.ASMHelper.LOADER_MAP
+    * [CXF-2625] - Class-loader leakage in org.apache.cxf.jaxb.JAXBDataBinding.JAXBCONTEXT_CACHE 
+
+** Improvement
+    * [CXF-2537] - Proposal : enhancement of HTTP exceptions messages
+    * [CXF-2538] - Proposal : enhancement of PhaseInterceptorChain warning message
+    * [CXF-2553] - WS-Security UsernameToken sample using WS-SecurityPolicy
+    * [CXF-2562] - Make it possible to change the title of the service list page
+    * [CXF-2597] - Add response code to LoggingFeature for REST/JAX-RS specific response codes
+    * [CXF-2600] - Improve Error Message of Wsdl2Java
+    * [CXF-2606] - ThreadGroup in the default workqueue gets prematurely destroyed
+    * [CXF-2610] - Trim white spaces in logger class name
+    * [CXF-2611] - Remove code to set wsdllocation in copy of binding.xml
+    * [CXF-2612] - Interceptor to work around SoapAction bug in Tibco Business Works
+
+** New Feature
+    * [CXF-2459] - Allow setting SecurityContext from JMS Message for Tibco JMS
+    * [CXF-2596] - Default logging in interceptor chain may pollute the log with stacktrace from application exceptions that are a part of the normal flow (should not be logged).
+
+
+
+
+
+
+
+
+
+
