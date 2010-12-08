@@ -68,6 +68,7 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
     public static final String TIMESTAMP_RESULT = "wss4j.timestamp.result";
     public static final String SIGNATURE_RESULT = "wss4j.signature.result";
     public static final String PRINCIPAL_RESULT = "wss4j.principal.result";
+    public static final String BST_RESULT = "wss4j.bst.result";
     public static final String PROCESSOR_MAP = "wss4j.processor.map";
 
     private static final Logger LOG = LogUtils.getL7dLogger(WSS4JInInterceptor.class);
@@ -196,18 +197,9 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
             // Extract the signature action result from the action vector
             WSSecurityEngineResult actionResult = WSSecurityUtil
                 .fetchActionResult(wsResult, WSConstants.SIGN);
-
-            if (actionResult != null) {
-                X509Certificate returnCert = (X509Certificate)actionResult
-                    .get(WSSecurityEngineResult.TAG_X509_CERTIFICATE);
-
-                if (returnCert != null && !verifyTrust(returnCert, reqData)) {
-                    LOG.warning("The certificate used for the signature is not trusted");
-                    throw new WSSecurityException(WSSecurityException.FAILED_CHECK);
-                }
-                msg.put(SIGNATURE_RESULT, actionResult);
-            }
-
+            verifyTrust(actionResult, reqData);
+            msg.put(SIGNATURE_RESULT, actionResult);            
+            
             /*
              * Perform further checks on the timestamp that was transmitted in
              * the header. In the following implementation the timestamp is
@@ -419,5 +411,28 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
         }
         return fault;
     }
-    
+
+    private void verifyTrust(WSSecurityEngineResult actionResult, RequestData reqData)
+        throws WSSecurityException {
+        if (actionResult != null) {
+            X509Certificate[] certs = 
+                (X509Certificate[])actionResult.get(WSSecurityEngineResult.TAG_X509_CERTIFICATES);
+            if (certs != null && certs.length > 0) {
+                if (!verifyTrust(certs, reqData)) {
+                    LOG.warning("The certificate chain used for the signature is not trusted");
+                    throw new WSSecurityException(WSSecurityException.FAILED_CHECK);
+                }
+            } else {                
+                X509Certificate returnCert = (X509Certificate)actionResult
+                    .get(WSSecurityEngineResult.TAG_X509_CERTIFICATE);
+                
+                if (returnCert != null && !verifyTrust(returnCert, reqData)) {
+                    LOG.warning("The certificate used for the signature is not trusted");
+                    throw new WSSecurityException(WSSecurityException.FAILED_CHECK);
+                }
+            }
+        }        
+    }
+
 }
+
