@@ -21,7 +21,7 @@
     <groupId>org.apache.cxf.samples</groupId>
     <artifactId>cxf-samples</artifactId>
     <packaging>pom</packaging>
-    <version>2.3.x-fuse-SNAPSHOT</version>
+    <version>2.3.1-fuse-00-00</version>
     <name>Apache CXF Samples</name>
     <url>http://cxf.apache.org</url>
 
@@ -85,11 +85,11 @@
         <!--
         these are a bit fragile as they need to go off to external sites to get stuff like
         wsdl's and certs and such
-        -->
-        <module>ws_security/interopfest/wssc</module>
+        As the http://131.107.72.15/ilab/Certs/Certs.zip is not working, we comment out these modules temperately  -->
+        <!--module>ws_security/interopfest/wssc</module>
         <module>ws_security/interopfest/wstrust10</module>
         <module>ws_security/interopfest/wssec10</module>
-        <module>ws_security/interopfest/wssec11</module>
+        <module>ws_security/interopfest/wssec11</module-->
         <!--module>ws_security/interopfest/wstrust13</module-->
     </modules>
     <dependencyManagement>
