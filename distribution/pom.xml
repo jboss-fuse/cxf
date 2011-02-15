@@ -22,13 +22,13 @@
     <artifactId>apache-cxf</artifactId>
     <packaging>pom</packaging>
     <name>Apache CXF Distribution</name>
-    <version>2.2.13-SNAPSHOT</version>
+    <version>2.2.99-fuse-SNAPSHOT</version>
     <url>http://cxf.apache.org</url>
 
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>2.2.13-SNAPSHOT</version>
+        <version>2.2.99-fuse-SNAPSHOT</version>
         <relativePath>../parent</relativePath>
     </parent>
 
@@ -278,6 +278,11 @@
             <artifactId>cxf-bundle</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>commons-httpclient</groupId>
+            <artifactId>commons-httpclient</artifactId>
+        </dependency>
         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
@@ -404,6 +409,9 @@
                     <execution>
                         <id>process-sources-xsl</id>
                         <phase>process-sources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
                         <configuration>
                             <tasks>
                                 <mkdir dir="${basedir}/target" />
@@ -427,9 +435,6 @@
                                 <delete file="build.xml" />
                             </tasks>
                         </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
                     </execution>
                 </executions>
             </plugin>

@@ -21,19 +21,19 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.cxf</groupId>
     <artifactId>cxf</artifactId>
-    <version>2.2.13-SNAPSHOT</version>
-    <name>Apache CXF</name>
-    <url>http://cxf.apache.org</url>
+    <version>2.2.99-fuse-SNAPSHOT</version>
+    <name>FUSE Services Framework</name>
+    <url>http://fusesource.com/forge/projects/FUSESF</url>
 
     <packaging>pom</packaging>
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/branches/2.2.x-fixes</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/branches/2.2.x-fixes</developerConnection>
+        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.2.x-fuse</connection>
+        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.2.x-fuse</developerConnection>
     </scm>
     <issueManagement>
         <system>jira</system>
-        <url>https://issues.apache.org/jira/browse/CXF</url>
+        <url>http://fusesource.com/issues/browse/SF</url>
     </issueManagement>
 
     <prerequisites>
@@ -41,27 +41,38 @@
     </prerequisites>
 
     <properties>
-        <compiler.fork>false</compiler.fork>
-    </properties>
+         <release-repo-url>http://repo.fusesource.com/nexus/service/local/staging/deploy/maven2</release-repo-url>
+         <snapshot-repo-url>http://repo.fusesource.com/nexus/content/repositories/snapshots</snapshot-repo-url>
+         <m1-repo-url>scpexe://repo.fusesource.com/www/repo.fusesource.com/maven1</m1-repo-url>
+         <compiler.fork>false</compiler.fork>
+     </properties>
 
-    <distributionManagement>
-        <repository>
-            <id>apache.releases.https</id>
-            <name>Apache Release Distribution Repository</name>
-            <url>https://repository.apache.org/service/local/staging/deploy/maven2</url>
-        </repository>
-        <snapshotRepository>
-            <id>apache.snapshots.https</id>
-            <name>Apache Development Snapshot Repository</name>
-            <url>https://repository.apache.org/content/repositories/snapshots</url>
-            <uniqueVersion>false</uniqueVersion>
-        </snapshotRepository>
-        <site>
-            <id>apache.cxf.site</id>
-            <url>scpexe://people.apache.org/www/cxf.apache.org/cxf/mvn_site</url>
-        </site>
-    </distributionManagement>
-
+     <distributionManagement>
+         <repository>
+             <id>fusesource-nexus-staging</id>
+             <name>FuseSource Release Repository</name>
+             <url>${release-repo-url}</url>
+         </repository>
+         <snapshotRepository>
+             <id>fusesource-nexus-snapshots</id>
+             <name>FuseSource Nexus Snapshots</name>
+             <url>${snapshot-repo-url}</url>
+         </snapshotRepository>
+     </distributionManagement>
+     <!--distributionManagement>
+       <repository>
+         <id>fusesource.m2</id>
+         <name>FUSESource Community Release Repository</name>
+         <url>${release-repo-url}</url>
+         <uniqueVersion>false</uniqueVersion>
+       </repository>
+       <snapshotRepository>
+         <id>fusesource.m2-snapshot</id>
+         <name>FUSESource Community Snapshot Repository</name>
+         <url>${snapshot-repo-url}</url>
+         <uniqueVersion>false</uniqueVersion>
+       </snapshotRepository>
+     </distributionManagement-->
     <inceptionYear>2006</inceptionYear>
     <mailingLists>
         <mailingList>
@@ -100,18 +111,6 @@
             <archive>http://mail-archives.apache.org/mod_mbox/cxf-notifications</archive>
         </mailingList>
     </mailingLists>
-    <ciManagement>
-        <system>Hudson</system>
-        <url>http://hudson.zones.apache.org/hudson/view/CXF/</url>
-        <notifiers>
-            <notifier>
-                <type>mail</type>
-                <configuration>
-                    <address>notifications@cxf.apache.org</address>
-                </configuration>
-            </notifier>
-        </notifiers>
-    </ciManagement>
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
@@ -141,10 +140,22 @@
 
     <profiles>
         <profile>
+            <id>unique.version</id>
+            <distributionManagement>
+                <snapshotRepository>
+                    <uniqueVersion>true</uniqueVersion>
+                    <id>fusesource-snapshot</id>
+                    <name>FUSESource Maven Snapshot Repository</name>
+                    <url>${snapshot-repo-url}</url>
+                </snapshotRepository>
+            </distributionManagement>
+        </profile>
+        <profile>
             <!-- default profile enables checkstyle and Xlint stuff -->
             <id>everything</id>
             <modules>
                 <module>distribution</module>
+                <!--module>iona_samples</module-->
             </modules>
         </profile>
         <profile>
@@ -311,6 +322,7 @@
             <build>
                 <plugins>
                     <!-- We want to deploy the artifact to a staging location for perusal -->
+        <!--
                     <plugin>
                         <inherited>true</inherited>
                         <artifactId>maven-deploy-plugin</artifactId>
@@ -320,7 +332,9 @@
                             <updateReleaseInfo>true</updateReleaseInfo>
                         </configuration>
                     </plugin>
+        -->
                     <!-- We want to sign the artifact, the POM, and all attached artifacts -->
+        <!--
                     <plugin>
                         <artifactId>maven-gpg-plugin</artifactId>
                         <version>1.0</version>
@@ -332,6 +346,7 @@
                             </execution>
                         </executions>
                     </plugin>
+        -->
                 </plugins>
             </build>
         </profile>
@@ -339,6 +354,9 @@
             <id>deploy</id>
             <modules>
                 <module>distribution</module>
+                <!-- Not yet included.
+                <module>iona_samples</module>
+                -->
             </modules>
             <build>
                 <defaultGoal>deploy</defaultGoal>
@@ -409,7 +427,7 @@
                     <artifactId>maven-release-plugin</artifactId>
                     <version>2.0</version>
                     <configuration>
-                        <tagBase>https://svn.apache.org/repos/asf/cxf/tags</tagBase>
+                        <tagBase>http://fusesource.com/forge/svn/fusesf/tags/</tagBase>
                         <useReleaseProfile>false</useReleaseProfile>
                         <preparationGoals>clean install</preparationGoals>
                         <goals>deploy</goals>

@@ -20,15 +20,15 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf</artifactId>
-        <version>2.2.13-SNAPSHOT</version>
+        <version>2.2.99-fuse-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.cxf</groupId>
     <artifactId>cxf-parent</artifactId>
-    <version>2.2.13-SNAPSHOT</version>
+    <version>2.2.99-fuse-SNAPSHOT</version>
     <name>Apache CXF Parent</name>
-    <url>http://cxf.apache.org</url>
+    <url>http://fusesource.com/forge/projects/FUSESF</url>
 
     <packaging>pom</packaging>
 
@@ -319,7 +319,7 @@
                                 <supplementalModel>notice-supplements.xml</supplementalModel>
                             </supplementalModels>
                             <properties>
-                                <projectName>Apache CXF</projectName>
+                                <projectName>FUSE Services Framework</projectName>
                             </properties>
                         </configuration>
                     </execution>
