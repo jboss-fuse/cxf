@@ -17,9 +17,15 @@
   specific language governing permissions and limitations
   under the License.
 -->
-<checkstyle-configurations file-format-version="5.0.0">
-    <check-configuration name="CXF Checks" location="@CHECKSTYLE_CONFIG_FILE@" type="external" description="">        
-    </check-configuration>
-    <check-configuration name="CXF CORBA Checks" location="@CHECKSTYLE_CORBA_CONFIG_FILE@" type="external" description="">        
-    </check-configuration>
-</checkstyle-configurations>
+<endpoints>
+
+    <endpoint
+        name="complex_type"
+        interface="org.apache.cxf.performance.complex_type.ComplexPortType"
+        implementation="org.apache.cxf.performance.complex_type.server.ServerImpl"
+        wsdl="WEB-INF/wsdl/complex_type.wsdl"
+        service="{http://cxf.apache.org/performance/complex_type}ComplexService"
+        port="{http://cxf.apache.org/performance/complex_type}SoapPort"
+        url-pattern="/complex_type" />
+
+</endpoints>

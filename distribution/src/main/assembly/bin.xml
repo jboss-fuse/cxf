@@ -36,6 +36,7 @@
                 <include>lib/*</include>
                 <include>release_notes.txt</include>
                 <include>README</include>
+                <include>sf_*.*</include>
             </includes>
         </fileSet>
         <fileSet>
@@ -110,6 +111,13 @@
             <outputDirectory>apache-cxf-${cxf.version}/lib</outputDirectory>
             <includes>
                 <include>**/cxf-manifest.jar</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>target</directory>
+            <outputDirectory>apache-cxf-${cxf.version}/lib</outputDirectory>
+            <includes>
+                <include>it-soa-container.jar</include>
             </includes>
         </fileSet>
         <fileSet>
