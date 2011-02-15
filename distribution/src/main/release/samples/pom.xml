@@ -21,7 +21,7 @@
     <groupId>org.apache.cxf.samples</groupId>
     <artifactId>cxf-samples</artifactId>
     <packaging>pom</packaging>
-    <version>2.3.3-SNAPSHOT</version>
+    <version>2.3.x-fuse-SNAPSHOT</version>
     <name>Apache CXF Samples</name>
     <url>http://cxf.apache.org</url>
 
@@ -116,7 +116,32 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
+    <repositories>
+        <repository>
+            <id>fuse-repo</id>
+            <name>FuseSource Maven Repository</name>
+            <url>http://repo.fusesource.com/maven2/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>fuse-repo</id>
+            <name>FuseSource Maven Plugin Repository</name>
+            <url>http://repo.fusesource.com/maven2/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>    
     <build>
         <pluginManagement>
             <plugins>
