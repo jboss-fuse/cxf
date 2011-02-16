@@ -477,7 +477,7 @@
                         <tagBase>http://fusesource.com/forge/svn/fusesf/tags/</tagBase>
                         <useReleaseProfile>false</useReleaseProfile>
                         <!-- <preparationGoals>clean install</preparationGoals> -->
-                        <preparationGoals></preparationGoals>
+                        <preparationGoals>clean</preparationGoals>
                         <goals>deploy</goals>
                         <arguments>${arguments}</arguments>
                         <autoVersionSubmodules>true</autoVersionSubmodules>
