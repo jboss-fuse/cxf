@@ -53,6 +53,7 @@
         <cxf.build-utils.version>2.3.1</cxf.build-utils.version>
         <cxf.xjc-utils.version>2.3.2</cxf.xjc-utils.version>
         <cxf.jdk.version>1.6</cxf.jdk.version>
+		<arguments>-Prelease,deploy</arguments>
     </properties>
 
     <distributionManagement>
@@ -473,7 +474,7 @@
                         <useReleaseProfile>false</useReleaseProfile>
                         <preparationGoals>clean install</preparationGoals>
                         <goals>deploy</goals>
-                        <arguments>-Prelease,deploy</arguments>
+                        <arguments>${arguments}</arguments>
                         <autoVersionSubmodules>true</autoVersionSubmodules>
                     </configuration>
                 </plugin>
