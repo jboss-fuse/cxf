@@ -358,6 +358,9 @@
                 <test>false</test>
                 <failIfNoTests>false</failIfNoTests>
             </properties>
+            <modules>
+                <module>distribution</module>
+            </modules>
             <build>
                 <plugins>
                     <plugin>
