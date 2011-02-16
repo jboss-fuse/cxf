@@ -19,6 +19,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.fusesource</groupId>
+        <artifactId>fusesource-pom</artifactId>
+        <version>1.0</version>
+    </parent>
     <groupId>org.apache.cxf</groupId>
     <artifactId>cxf</artifactId>
     <version>2.3.x-fuse-SNAPSHOT</version>
@@ -28,8 +33,8 @@
     <packaging>pom</packaging>
 
     <scm>
-        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.3.x-fuse</connection>
-        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.3.x-fuse</developerConnection>
+        <connection>scm:git:git://forge.fusesource.com/cxf.git</connection>
+        <developerConnection>scm:git:ssh://git@forge.fusesource.com/git.git</developerConnection>
     </scm>
     <issueManagement>
         <system>jira</system>
