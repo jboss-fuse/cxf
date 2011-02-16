@@ -355,6 +355,10 @@
         </profile>
         <profile>
             <id>release</id>
+            <properties>
+                <test>false</test>
+                <failIfNoTests>false</failIfNoTests>
+            </properties>
             <build>
                 <plugins>
                     <!-- We want to deploy the artifact to a staging location for perusal -->
@@ -472,10 +476,12 @@
                     <configuration>
                         <tagBase>http://fusesource.com/forge/svn/fusesf/tags/</tagBase>
                         <useReleaseProfile>false</useReleaseProfile>
-                        <preparationGoals>clean install</preparationGoals>
+                        <!-- <preparationGoals>clean install</preparationGoals> -->
+                        <preparationGoals></preparationGoals>
                         <goals>deploy</goals>
                         <arguments>${arguments}</arguments>
                         <autoVersionSubmodules>true</autoVersionSubmodules>
+                        <pushChanges>true</pushChanges>
                     </configuration>
                 </plugin>
                 <plugin>
