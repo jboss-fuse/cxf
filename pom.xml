@@ -34,7 +34,7 @@
 
     <scm>
         <connection>scm:git:git://forge.fusesource.com/cxf.git</connection>
-        <developerConnection>scm:git:ssh://git@forge.fusesource.com/git.git</developerConnection>
+        <developerConnection>scm:git:ssh://git@forge.fusesource.com/cxf.git</developerConnection>
     </scm>
     <issueManagement>
         <system>jira</system>
