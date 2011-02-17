@@ -34,7 +34,6 @@ import org.apache.cxf.phase.Phase;
  */
 @NoJSR250Annotations
 public class LoggingInInterceptor extends AbstractLoggingInterceptor {
-
     
     public LoggingInInterceptor() {
         super(Phase.RECEIVE);
@@ -43,8 +42,9 @@ public class LoggingInInterceptor extends AbstractLoggingInterceptor {
     public LoggingInInterceptor(String phase) {
         super(phase);
     }
+
     public LoggingInInterceptor(String id, String phase) {
-        super(id, id);
+        super(id, phase);
     }
 
     public LoggingInInterceptor(int lim) {
@@ -52,7 +52,7 @@ public class LoggingInInterceptor extends AbstractLoggingInterceptor {
         limit = lim;
     }
     public LoggingInInterceptor(String id, int lim) {
-        this(Phase.RECEIVE, id);
+        this(id, Phase.RECEIVE);
         limit = lim;
     }
 
@@ -61,7 +61,7 @@ public class LoggingInInterceptor extends AbstractLoggingInterceptor {
         this.writer = w;
     }
     public LoggingInInterceptor(String id, PrintWriter w) {
-        this(Phase.RECEIVE, id);
+        this(id, Phase.RECEIVE);
         this.writer = w;
     }
     
@@ -93,6 +93,10 @@ public class LoggingInInterceptor extends AbstractLoggingInterceptor {
 
         if (encoding != null) {
             buffer.getEncoding().append(encoding);
+        }
+        String httpMethod = (String)message.get(Message.HTTP_REQUEST_METHOD);
+        if (httpMethod != null) {
+            buffer.getHttpMethod().append(httpMethod);
         }
         String ct = (String)message.get(Message.CONTENT_TYPE);
         if (ct != null) {

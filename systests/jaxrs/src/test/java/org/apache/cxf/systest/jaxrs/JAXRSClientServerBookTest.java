@@ -67,6 +67,18 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
     }
     
     @Test
+    public void testGetBookWithNameInQuery() throws Exception {
+        
+        String endpointAddress =
+            "http://localhost:" + PORT + "/bookstore/name-in-query"; 
+        WebClient wc = WebClient.create(endpointAddress);
+        String name = "Many        spaces";
+        wc.query("name", name);
+        Book b = wc.get(Book.class);
+        assertEquals(name, b.getName());
+    }
+    
+    @Test
     public void testPostAnd401WithText() throws Exception {
         
         String endpointAddress =
@@ -152,13 +164,13 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
     }
     
     @Test
-    public void testSetTwoCookieWebClient() throws Exception {
-        WebClient client = WebClient.create("http://localhost:" + PORT + "/bookstore/settwocookies");
+    public void testSetManyCookiesWebClient() throws Exception {
+        WebClient client = WebClient.create("http://localhost:" + PORT + "/bookstore/setmanycookies");
         Response r = client.type("*/*").get();
         assertEquals(200, r.getStatus());
         List<Object> cookies = r.getMetadata().get("Set-Cookie");
         assertNotNull(cookies);
-        assertEquals(2, cookies.size());
+        assertEquals(3, cookies.size());
     }
 
     
