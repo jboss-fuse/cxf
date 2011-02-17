@@ -118,17 +118,17 @@
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-frontend-jaxws</artifactId>
-            <version>2.3.x-fuse-SNAPSHOT</version>
+            <version>2.3.3-fuse-00001</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-transports-http</artifactId>
-            <version>2.3.x-fuse-SNAPSHOT</version>
+            <version>2.3.3-fuse-00001</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-transports-jms</artifactId>
-            <version>2.3.x-fuse-SNAPSHOT</version>
+            <version>2.3.3-fuse-00001</version>
         </dependency>
 	</dependencies>
 </project>
