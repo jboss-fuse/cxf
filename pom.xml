@@ -354,29 +354,11 @@
         </profile>
         <profile>
             <id>release</id>
-            <properties>
-                <test>false</test>
-                <failIfNoTests>false</failIfNoTests>
-            </properties>
             <modules>
                 <module>distribution</module>
             </modules>
             <build>
                 <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-release-plugin</artifactId>
-                        <version>2.1</version>
-                        <configuration>
-                            <useReleaseProfile>false</useReleaseProfile>
-                            <preparationGoals></preparationGoals>
-                            <goals>deploy</goals>
-                            <arguments>-Prelease,deploy</arguments>
-                            <autoVersionSubmodules>true</autoVersionSubmodules>
-                            <pushChanges>true</pushChanges>
-                        </configuration>
-                    </plugin>
-
                     <!-- We want to deploy the artifact to a staging location for perusal -->
                     <plugin>
                         <inherited>true</inherited>
@@ -490,12 +472,12 @@
                     <artifactId>maven-release-plugin</artifactId>
                     <version>2.1</version>
                     <configuration>
+                        <tagBase>http://fusesource.com/forge/svn/fusesf/tags/</tagBase>
                         <useReleaseProfile>false</useReleaseProfile>
-                        <preparationGoals></preparationGoals>
+                        <preparationGoals>clean install</preparationGoals>
                         <goals>deploy</goals>
                         <arguments>-Prelease,deploy</arguments>
                         <autoVersionSubmodules>true</autoVersionSubmodules>
-                        <pushChanges>true</pushChanges>
                     </configuration>
                 </plugin>
                 <plugin>
