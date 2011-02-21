@@ -16,18 +16,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.jaxrs.fortest.jaxb.packageinfo;
 
-package demo.wssec.common;
 
-import java.util.logging.LogRecord;
-import java.util.logging.SimpleFormatter;
+public class Book2NoRootElement {
 
-public class ConciseFormatter extends SimpleFormatter {
-    public synchronized String format(LogRecord record) {
-        String longForm = super.format(record);
-        String shortForm = longForm.indexOf("INFO: ") > 0
-                           ? longForm.substring(longForm.indexOf("INFO: ") + 6)
-                           : longForm;
-        return shortForm;
+    private int id;
+    
+    public Book2NoRootElement() {
+    }
+    
+    public Book2NoRootElement(int id) {
+        this.id = id;
+    }
+    
+    public int getId() {
+        return id;
+    }
+    
+    public void setId(int ident) {
+        id = ident;
     }
 }
