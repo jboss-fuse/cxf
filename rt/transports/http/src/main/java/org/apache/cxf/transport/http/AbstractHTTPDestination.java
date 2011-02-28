@@ -95,6 +95,7 @@ public abstract class AbstractHTTPDestination
     public static final String RESPONSE_COMMITED = "http.response.done";
     public static final String REQUEST_REDIRECTED = "http.request.redirected";
     public static final String CXF_CONTINUATION_MESSAGE = "cxf.continuation.message";
+    public static final String CXF_ASYNC_CONTEXT = "cxf.async.context";
     
     private static final String HTTP_HEADERS_SETCOOKIE = "Set-Cookie";
     
@@ -375,18 +376,25 @@ public abstract class AbstractHTTPDestination
         }
         return retrieveFromServlet3Async(req);
     }
+    
     protected Message retrieveFromServlet3Async(HttpServletRequest req) {
-        if (req.isAsyncStarted()) {
+        try {
             return (Message)req.getAttribute(CXF_CONTINUATION_MESSAGE);
+        } catch (Throwable ex) {
+            // the request may not implement the Servlet3 API
         }
         return null;
     }
     protected void setupContinuation(Message inMessage,
                       final HttpServletRequest req, 
                       final HttpServletResponse resp) {
-        if (isServlet3) {
-            inMessage.put(ContinuationProvider.class.getName(), 
+        try {
+            if (isServlet3 && req.isAsyncSupported()) {
+                inMessage.put(ContinuationProvider.class.getName(), 
                           new Servlet3ContinuationProvider(req, resp, inMessage));
+            }
+        } catch (Throwable ex) {
+            // the request may not implement the Servlet3 API
         }
     }
     protected String getBasePath(String contextPath) throws IOException {

@@ -38,6 +38,8 @@ public class Servlet3ContinuationProvider implements ContinuationProvider {
     HttpServletRequest req;
     HttpServletResponse resp; 
     Message inMessage;
+    Servlet3Continuation continuation;
+    
     
     public Servlet3ContinuationProvider(HttpServletRequest req,
                                         HttpServletResponse resp, 
@@ -53,7 +55,10 @@ public class Servlet3ContinuationProvider implements ContinuationProvider {
             return null;
         }
 
-        return new Servlet3Continuation();
+        if (continuation == null) {
+            continuation = new Servlet3Continuation();
+        }
+        return continuation;
     }
     
     public class Servlet3Continuation implements Continuation, AsyncListener {
@@ -64,15 +69,19 @@ public class Servlet3ContinuationProvider implements ContinuationProvider {
         Object obj;
         
         public Servlet3Continuation() {
-            isNew = !req.isAsyncStarted();
+            // It looks current Servlet3 implementation request doesn't pass the isAsyncStart 
+            // status to the redispatched request, so we use the attribute to check the statues
+            isNew = req.getAttribute(AbstractHTTPDestination.CXF_CONTINUATION_MESSAGE) == null;
             if (isNew) {
                 req.setAttribute(AbstractHTTPDestination.CXF_CONTINUATION_MESSAGE,
                                  inMessage.getExchange().getInMessage());
                 context = req.startAsync(req, resp);
+                req.setAttribute(AbstractHTTPDestination.CXF_ASYNC_CONTEXT, context);
                 context.addListener(this);
             } else {
-                context = req.getAsyncContext();
+                context = (AsyncContext)req.getAttribute(AbstractHTTPDestination.CXF_ASYNC_CONTEXT);
             }
+            
         }
         
         public boolean suspend(long timeout) {
@@ -83,7 +92,6 @@ public class Servlet3ContinuationProvider implements ContinuationProvider {
             isNew = false;
             // Need to get the right message which is handled in the interceptor chain
             inMessage.getExchange().getInMessage().getInterceptorChain().suspend();
-                
             isPending = true;
             return true;
         }
