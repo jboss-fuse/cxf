@@ -28,8 +28,8 @@
     <packaging>pom</packaging>
 
     <scm>
-        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/tags/cxf-2.2.6-fuse-SNAPSHOT</connection>
-        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/tags/cxf-2.2.6-fuse-SNAPSHOT</developerConnection>
+        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.2.6-fuse</connection>
+        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.2.6-fuse</developerConnection>
     </scm>
     <issueManagement>
         <system>jira</system>
@@ -41,24 +41,22 @@
     </prerequisites>
 
     <properties>
-         <release-repo-url>scpexe://repo.fusesource.com/www/repo.fusesource.com/maven2</release-repo-url>
-         <snapshot-repo-url>scpexe://repo.fusesource.com/www/repo.fusesource.com/maven2-snapshot</snapshot-repo-url>
+         <release-repo-url>http://repo.fusesource.com/nexus/service/local/staging/deploy/maven2</release-repo-url>
+         <snapshot-repo-url>http://repo.fusesource.com/nexus/content/repositories/snapshots</snapshot-repo-url>
          <m1-repo-url>scpexe://repo.fusesource.com/www/repo.fusesource.com/maven1</m1-repo-url>
          <compiler.fork>false</compiler.fork>
      </properties>
 
      <distributionManagement>
        <repository>
-         <id>fusesource.m2</id>
-         <name>FUSESource Community Release Repository</name>
-         <url>${release-repo-url}</url>
-         <uniqueVersion>false</uniqueVersion>
+           <id>fusesource-nexus-staging</id>
+           <name>FuseSource Release Repository</name>
+           <url>${release-repo-url}</url>
        </repository>
        <snapshotRepository>
-         <id>fusesource.m2-snapshot</id>
-         <name>FUSESource Community Snapshot Repository</name>
-         <url>${snapshot-repo-url}</url>
-         <uniqueVersion>false</uniqueVersion>
+           <id>fusesource-nexus-snapshots</id>
+           <name>FuseSource Nexus Snapshots</name>
+           <url>${snapshot-repo-url}</url>
        </snapshotRepository>
      </distributionManagement>
     <inceptionYear>2006</inceptionYear>
