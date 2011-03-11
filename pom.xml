@@ -28,9 +28,10 @@
     <packaging>pom</packaging>
 
     <scm>
-        <connection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.2.6-fuse-01</connection>
-        <developerConnection>scm:svn:http://fusesource.com/forge/svn/fusesf/branches/cxf-2.2.6-fuse-01</developerConnection>
+        <connection>scm:git:git://forge.fusesource.com/cxf.git</connection>
+        <developerConnection>scm:git:ssh://git@forge.fusesource.com/cxf.git</developerConnection>
     </scm>
+
     <issueManagement>
         <system>jira</system>
         <url>http://fusesource.com/issues/browse/SF</url>
