@@ -429,7 +429,6 @@
                     <artifactId>maven-release-plugin</artifactId>
                     <version>2.0</version>
                     <configuration>
-                        <tagBase>http://fusesource.com/forge/svn/fusesf/tags/</tagBase>
                         <useReleaseProfile>false</useReleaseProfile>
                         <preparationGoals>clean install</preparationGoals>
                         <goals>deploy</goals>
