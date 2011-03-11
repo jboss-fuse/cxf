@@ -32,7 +32,6 @@
         <developerConnection>scm:git:ssh://git@forge.fusesource.com/cxf.git</developerConnection>
     </scm>
 
-    </scm>
     <issueManagement>
         <system>jira</system>
         <url>http://fusesource.com/issues/browse/SF</url>
