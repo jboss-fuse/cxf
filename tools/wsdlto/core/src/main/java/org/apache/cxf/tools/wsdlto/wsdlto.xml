@@ -173,6 +173,11 @@ under the License.
                     <valueenum>true|false</valueenum>
                 </associatedArgument>
             </option>
+            
+            <option id="notypes" maxOccurs="1">
+                <annotation>Turns off generating types</annotation>
+                <switch>noTypes</switch>
+            </option>
 
             <option id="validate" maxOccurs="1">
                 <annotation>

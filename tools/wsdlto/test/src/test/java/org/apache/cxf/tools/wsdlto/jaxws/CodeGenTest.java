@@ -45,6 +45,7 @@ import org.apache.cxf.tools.common.ToolConstants;
 import org.apache.cxf.tools.common.ToolException;
 import org.apache.cxf.tools.util.AnnotationUtil;
 import org.apache.cxf.tools.wsdlto.AbstractCodeGenTest;
+
 import org.junit.Test;
 
 public class CodeGenTest extends AbstractCodeGenTest {
@@ -1331,6 +1332,21 @@ public class CodeGenTest extends AbstractCodeGenTest {
         assertTrue(m[0].getParameterAnnotations()[1][0] instanceof WebParam);
         WebParam wp = (WebParam)m[0].getParameterAnnotations()[1][0];
         assertTrue(wp.header());
+    }
+    
+    @Test
+    public void testCXFNotType() throws Exception {
+        env.put(ToolConstants.CFG_WSDLURL, getLocation("/wsdl2java_wsdl/hello_world.wsdl"));
+        env.put(ToolConstants.CFG_USE_FQCN_FAULT_SERIAL_VERSION_UID, Boolean.TRUE);
+        processor.setContext(env);
+        processor.execute();
+        
+        File sayHiResponseFile =
+            new File(output, "org/apache/cxf/w2j/hello_world_soap_http/types/SayHiResponse");
+        assertFalse(sayHiResponseFile.exists());
+        File greetMeResponseFile =
+            new File(output, "org/apache/cxf/w2j/hello_world_soap_http/types/GreetMeResponse");
+        assertFalse(greetMeResponseFile.exists());
     }
 
     @Test

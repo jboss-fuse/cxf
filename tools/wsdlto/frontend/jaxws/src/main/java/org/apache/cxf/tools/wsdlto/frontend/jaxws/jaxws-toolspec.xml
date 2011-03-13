@@ -235,6 +235,11 @@ Examples:
                     <valueenum>true|false</valueenum>
                 </associatedArgument>
             </option>
+            
+            <option id="notypes" maxOccurs="1">
+                <annotation>Turns off generating types</annotation>
+                <switch>noTypes</switch>
+            </option>
 
             <option id="defaultns" maxOccurs="1">
                 <annotation>

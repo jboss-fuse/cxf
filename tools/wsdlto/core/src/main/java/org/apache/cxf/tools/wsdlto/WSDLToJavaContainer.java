@@ -237,6 +237,13 @@ public class WSDLToJavaContainer extends AbstractCXFToolContainer {
                 context.put(ServiceInfo.class, null);
             }
         }
+        
+        if (context.optionSet(ToolConstants.CFG_NO_TYPES)) {
+            context.remove(ToolConstants.CFG_TYPES);
+            context.remove(ToolConstants.CFG_ALL);
+            context.remove(ToolConstants.CFG_COMPILE);
+        }
+        
         generateTypes();
 
         for (ServiceInfo service : serviceList) {
@@ -571,6 +578,9 @@ public class WSDLToJavaContainer extends AbstractCXFToolContainer {
             || context.optionSet(ToolConstants.CFG_GEN_SERVER)
             || context.optionSet(ToolConstants.CFG_GEN_SERVICE)
             || context.optionSet(ToolConstants.CFG_GEN_FAULT)) {
+            return true;
+        }
+        if (context.optionSet(ToolConstants.CFG_NO_TYPES)) {
             return true;
         }
         return false;

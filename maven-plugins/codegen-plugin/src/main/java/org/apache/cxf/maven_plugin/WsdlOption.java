@@ -148,6 +148,7 @@ public class WsdlOption extends Option {
             list.add("-exsh");
             list.add("true");
         }
+        addIfTrue(list, isNoTypes(), "-noTypes");
         addIfTrue(list, isAllowElementRefs(), "-allowElementRefs");
         addIfTrue(list, isValidateWsdl(), "-validate");
         addIfTrue(list, isUseFQCNForFaultSerialVersionUID(), "-useFQCNForFaultSerialVersionUID");
