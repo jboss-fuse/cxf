@@ -33,6 +33,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -46,11 +47,15 @@ import javax.ws.rs.ext.Providers;
 import javax.xml.bind.JAXBContext;
 
 import org.apache.cxf.endpoint.Endpoint;
+import org.apache.cxf.endpoint.Server;
 import org.apache.cxf.jaxrs.Customer;
 import org.apache.cxf.jaxrs.Customer2;
+import org.apache.cxf.jaxrs.CustomerApplication;
 import org.apache.cxf.jaxrs.CustomerGender;
 import org.apache.cxf.jaxrs.CustomerParameterHandler;
 import org.apache.cxf.jaxrs.JAXBContextProvider;
+import org.apache.cxf.jaxrs.JAXRSInvoker;
+import org.apache.cxf.jaxrs.JAXRSServerFactoryBean;
 import org.apache.cxf.jaxrs.JAXRSServiceFactoryBean;
 import org.apache.cxf.jaxrs.JAXRSServiceImpl;
 import org.apache.cxf.jaxrs.SimpleFactory;
@@ -110,6 +115,57 @@ public class JAXRSUtilsTest extends Assert {
         bStore = JAXRSUtils.selectResourceClass(resources, "/bookstore/bar", map, null);
         assertEquals(bStore.getResourceClass(), 
                      org.apache.cxf.jaxrs.resources.BookStoreNoSubResource.class);
+    }
+    
+    @Test
+    public void testInjectApplicationInSingleton() throws Exception {
+        Application app = new CustomerApplication();
+        JAXRSServerFactoryBean sf = new JAXRSServerFactoryBean();
+        Customer customer = new Customer();
+        sf.setServiceBeanObjects(customer);
+        sf.setApplication(app);
+        sf.setStart(false);
+        Server server = sf.create();  
+        assertSame(app, customer.getApplication1());
+        assertSame(app, customer.getApplication2());
+        invokeCustomerMethod(sf.getServiceFactory().getClassResourceInfo().get(0),
+                             customer, server);
+        assertSame(app, customer.getApplication2());
+    }
+    
+    @Test
+    public void testInjectApplicationInPerRequestResource() throws Exception {
+        Application app = new CustomerApplication();
+        JAXRSServerFactoryBean sf = new JAXRSServerFactoryBean();
+        sf.setServiceClass(Customer.class);
+        sf.setApplication(app);
+        sf.setStart(false);
+        Server server = sf.create();  
+        
+        ClassResourceInfo cri = sf.getServiceFactory().getClassResourceInfo().get(0);
+        
+        Customer customer = (Customer)cri.getResourceProvider().getInstance(
+             new MessageImpl());
+        
+        assertNull(customer.getApplication1());
+        assertNull(customer.getApplication2());
+        
+        invokeCustomerMethod(cri, customer, server);
+        assertSame(app, customer.getApplication1());
+        assertSame(app, customer.getApplication2());
+    }
+    
+    private void invokeCustomerMethod(ClassResourceInfo cri, 
+        Customer customer, Server server) throws Exception {
+        OperationResourceInfo ori = cri.getMethodDispatcher().getOperationResourceInfo(
+            Customer.class.getMethod("test", new Class[]{}));
+        JAXRSInvoker invoker = new JAXRSInvoker();
+        Exchange exc = new ExchangeImpl();
+        exc.put(Endpoint.class, server.getEndpoint());
+        Message inMessage = new MessageImpl();
+        exc.setInMessage(inMessage);
+        exc.put(OperationResourceInfo.class, ori);
+        invoker.invoke(exc, Collections.emptyList(), customer);
     }
     
     @Test
@@ -1003,14 +1059,14 @@ public class JAXRSUtilsTest extends Assert {
     @SuppressWarnings("unchecked")
     @Test
     public void testMatrixParameters() throws Exception {
-        Class[] argType = {String.class, String.class, String.class, String.class, List.class};
+        Class[] argType = {String.class, String.class, String.class, String.class, List.class, String.class};
         Method m = Customer.class.getMethod("testMatrixParam", argType);
         MessageImpl messageImpl = new MessageImpl();
         
-        messageImpl.put(Message.REQUEST_URI, "/foo;p4=0;p3=3/bar;p1=1;p2/baz;p4=4;p4=5");
+        messageImpl.put(Message.REQUEST_URI, "/foo;p4=0;p3=3/bar;p1=1;p2/baz;p4=4;p4=5;p5");
         List<Object> params = JAXRSUtils.processParameters(new OperationResourceInfo(m, null), 
                                                            null, messageImpl);
-        assertEquals("5 Matrix params should've been identified", 5, params.size());
+        assertEquals("5 Matrix params should've been identified", 6, params.size());
         
         assertEquals("First Matrix Parameter not matched correctly", 
                      "1", params.get(0));
@@ -1025,6 +1081,8 @@ public class JAXRSUtilsTest extends Assert {
         assertEquals("0", list.get(0));
         assertEquals("4", list.get(1));
         assertEquals("5", list.get(2));
+        assertEquals("Sixth Matrix Parameter was not matched correctly", 
+                     "", params.get(5));
     }
     
     @Test
@@ -1383,7 +1441,7 @@ public class JAXRSUtilsTest extends Assert {
         Customer c = new Customer();
         OperationResourceInfo ori = new OperationResourceInfo(Customer.class.getMethods()[0],
                                                               cri);
-        Message m = new MessageImpl();
+        Message m = createMessage();
         MultivaluedMap<String, String> headers = new MetadataMap<String, String>();
         headers.add("AHeader2", "theAHeader2");
         m.put(Message.PROTOCOL_HEADERS, headers);
@@ -1400,7 +1458,8 @@ public class JAXRSUtilsTest extends Assert {
         Customer c = new Customer();
         OperationResourceInfo ori = new OperationResourceInfo(Customer.class.getMethods()[0],
                                                               cri);
-        Message m = new MessageImpl();
+        Message m = createMessage();
+        
         MultivaluedMap<String, String> headers = new MetadataMap<String, String>();
         headers.add("AHeader", "theAHeader");
         m.put(Message.PROTOCOL_HEADERS, headers);
@@ -1409,7 +1468,7 @@ public class JAXRSUtilsTest extends Assert {
         assertEquals("bValue", c.getB());
         assertEquals("theAHeader", c.getAHeader());
     }
-
+    
     @Test
     public void testContextResolverParam() throws Exception {
         
@@ -1552,6 +1611,8 @@ public class JAXRSUtilsTest extends Assert {
         Endpoint endpoint = EasyMock.createMock(Endpoint.class);
         endpoint.getEndpointInfo();
         EasyMock.expectLastCall().andReturn(null).anyTimes();
+        endpoint.get(Application.class.getName());
+        EasyMock.expectLastCall().andReturn(null);
         endpoint.size();
         EasyMock.expectLastCall().andReturn(0).anyTimes();
         endpoint.isEmpty();
