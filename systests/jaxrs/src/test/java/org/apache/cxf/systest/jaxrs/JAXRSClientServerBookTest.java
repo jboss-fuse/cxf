@@ -68,6 +68,32 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
     }
     
     @Test
+    public void testGetBookWithCustomHeader() throws Exception {
+        
+        String endpointAddress =
+            "http://localhost:" + PORT + "/bookstore/books/123"; 
+        WebClient wc = WebClient.create(endpointAddress);
+        Book b = wc.get(Book.class);
+        assertEquals(123L, b.getId());
+        
+        MultivaluedMap<String, Object> headers = wc.getResponse().getMetadata();
+        assertEquals("123", headers.getFirst("BookId"));
+        assertEquals(MultivaluedMap.class.getName(), headers.getFirst("MAP-NAME"));
+        
+        assertNotNull(headers.getFirst("Date"));
+        
+        wc.header("PLAIN-MAP", "true");
+        b = wc.get(Book.class);
+        assertEquals(123L, b.getId());
+        
+        headers = wc.getResponse().getMetadata();
+        assertEquals("321", headers.getFirst("BookId"));
+        assertEquals(Map.class.getName(), headers.getFirst("MAP-NAME"));
+        
+        assertNotNull(headers.getFirst("Date"));
+    }
+    
+    @Test
     public void testGetBookWithNameInQuery() throws Exception {
         
         String endpointAddress =
@@ -252,6 +278,24 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
             assertEquals(500, ex.getStatus());
             assertEquals("This is a WebApplicationException", ex.getMessage());
             assertTrue(ex.toString().contains("This is a WebApplicationException"));
+        }
+    }
+    
+    @Test
+    public void testServerWebApplicationExceptionXML() throws Exception {
+        ResponseReader reader = new ResponseReader();
+        reader.setEntityClass(Book.class);
+        WebClient wc = WebClient.create("http://localhost:" + PORT + "/bookstore/webappexceptionXML",
+                                        Collections.singletonList(reader));
+        wc.accept("application/xml");
+        try {
+            wc.get(Book.class);
+            fail("Exception expected");
+        } catch (ServerWebApplicationException ex) {
+            assertEquals(406, ex.getStatus());
+            Book exBook = reader.readEntity(wc, ex.getResponse(), Book.class);
+            assertEquals("Exception", exBook.getName());
+            assertEquals(999L, exBook.getId());
         }
     }
     
