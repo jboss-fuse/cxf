@@ -77,14 +77,14 @@ public class JMSContinuation implements Continuation {
         return isResumed;
     }
 
-    public void reset() {
+    public synchronized void reset() {
         cancelTimerTask();
         isNew = true;
         isPending = false;
         isResumed = false;
     }
 
-    public void resume() {
+    public synchronized void resume() {
         if (isResumed || !isPending) {
             return;
         }
@@ -93,7 +93,7 @@ public class JMSContinuation implements Continuation {
         doResume();
     }
     
-    protected synchronized void doResume() {
+    protected void doResume() {
         updateContinuations(true);
         
         BusFactory.setThreadDefaultBus(bus);
@@ -109,7 +109,7 @@ public class JMSContinuation implements Continuation {
         userObject = o;
     }
 
-    public boolean suspend(long timeout) {
+    public synchronized boolean suspend(long timeout) {
         
         if (isPending) {
             return false;
