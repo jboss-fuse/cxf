@@ -16,27 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jaxrs.fortest.jaxb.packageinfo;
+package org.apache.cxf.clustering.spring;
 
-import javax.xml.bind.annotation.XmlType;
+import org.w3c.dom.Element;
 
-@XmlType(name = "book2")
-public class Book2NoRootElement {
+import org.apache.cxf.clustering.LoadDistributorFeature;
+import org.apache.cxf.configuration.spring.AbstractBeanDefinitionParser;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.xml.ParserContext;
 
-    private int id;
-    
-    public Book2NoRootElement() {
+public class LoadDistributorBeanDefinitionParser extends AbstractBeanDefinitionParser {
+
+    @Override
+    protected Class getBeanClass(Element element) {
+        return LoadDistributorFeature.class;
     }
-    
-    public Book2NoRootElement(int id) {
-        this.id = id;
-    }
-    
-    public int getId() {
-        return id;
-    }
-    
-    public void setId(int ident) {
-        id = ident;
+ 
+    @Override
+    protected void mapElement(ParserContext ctx, BeanDefinitionBuilder bean, Element e, String name) {
+        setFirstChildAsProperty(e, ctx, bean, name);
     }
 }

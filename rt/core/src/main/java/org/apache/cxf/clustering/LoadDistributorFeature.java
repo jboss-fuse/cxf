@@ -16,27 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jaxrs.fortest.jaxb.packageinfo;
+package org.apache.cxf.clustering;
 
-import javax.xml.bind.annotation.XmlType;
+import org.apache.cxf.Bus;
+import org.apache.cxf.common.injection.NoJSR250Annotations;
+import org.apache.cxf.endpoint.Client;
 
-@XmlType(name = "book2")
-public class Book2NoRootElement {
+/**
+ * This feature may be applied to a Client so as to enable
+ * load distribution amongst a set of target endpoints or addresses
+ * Note that this feature changes the conduit on the fly and thus makes
+ * the Client not thread safe.
+ */
+@NoJSR250Annotations
+public class LoadDistributorFeature extends FailoverFeature {
 
-    private int id;
-    
-    public Book2NoRootElement() {
+    @Override
+    public void initialize(Client client, Bus bus) {
+        LoadDistributorTargetSelector selector =
+            new LoadDistributorTargetSelector();
+        selector.setEndpoint(client.getEndpoint());
+        selector.setStrategy(getStrategy());
+        client.setConduitSelector(selector);
     }
-    
-    public Book2NoRootElement(int id) {
-        this.id = id;
-    }
-    
-    public int getId() {
-        return id;
-    }
-    
-    public void setId(int ident) {
-        id = ident;
-    }
+
 }
