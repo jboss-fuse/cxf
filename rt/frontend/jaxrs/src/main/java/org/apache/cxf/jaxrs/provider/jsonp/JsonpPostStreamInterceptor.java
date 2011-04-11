@@ -17,37 +17,37 @@
  * under the License.
  */
 
-package org.apache.cxf.jaxrs.ext.form;
+package org.apache.cxf.jaxrs.provider.jsonp;
 
-import javax.ws.rs.core.MultivaluedMap;
-
-import org.apache.cxf.jaxrs.impl.MetadataMap;
-import org.apache.cxf.jaxrs.utils.FormUtils;
+import org.apache.cxf.common.util.StringUtils;
+import org.apache.cxf.interceptor.Fault;
+import org.apache.cxf.message.Message;
+import org.apache.cxf.phase.Phase;
 
 /**
- * Simple MultivaluedMap wrapper 
- *
+ * Appends the jsonp callback to json responses when the '_jsonp' parameter has been set in the querystring.
  */
-public class Form {
-    private MultivaluedMap<String, String> map = 
-        new MetadataMap<String, String>();
+public class JsonpPostStreamInterceptor extends AbstractJsonpOutInterceptor {
+
+    private String paddingEnd = ");";
     
-    public Form() {
-        
+    public JsonpPostStreamInterceptor() {
+        super(Phase.POST_STREAM);
     }
-    
-    public Form(MultivaluedMap<String, String> map) {
-        this.map = map;
+
+    public void handleMessage(Message message) throws Fault {
+        if (!StringUtils.isEmpty(getCallbackValue(message))) {
+            writeValue(message, getPaddingEnd());
+        }
     }
-    
-    public Form set(String name, Object value) {
-        
-        FormUtils.addPropertyToForm(map, name, value);
-        return this;
+
+    public void setPaddingEnd(String paddingEnd) {
+        this.paddingEnd = paddingEnd;
     }
-    
-    public MultivaluedMap<String, String> getData() {
-        return map;
+
+    public String getPaddingEnd() {
+        return paddingEnd;
     }
+
     
 }
