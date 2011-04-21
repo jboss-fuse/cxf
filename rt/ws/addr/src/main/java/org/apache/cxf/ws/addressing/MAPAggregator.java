@@ -607,8 +607,10 @@ public class MAPAggregator extends AbstractPhaseInterceptor<Message> {
                         MetadataConstants.USING_ADDRESSING_2006_QNAME
                     };
                     for (QName type : types) {
-                        if (aim.containsKey(type) && aim.get(type).size() > 0) {
-                            missingWsaHeader = false;
+                        for (AssertionInfo assertInfo : aim.getAssertionInfo(type)) {
+                            if (assertInfo.isAsserted()) {
+                                missingWsaHeader = false;
+                            }
                         }
                     }
                 }
@@ -1247,6 +1249,10 @@ public class MAPAggregator extends AbstractPhaseInterceptor<Message> {
             ContextUtils.storeMAPFaultName(Names.HEADER_REQUIRED_NAME,
                                            message);
             ContextUtils.storeMAPFaultReason(reason, message);
+            valid = false;
+        }
+        
+        if (Names.INVALID_CARDINALITY_NAME.equals(ContextUtils.retrieveMAPFaultName(message))) {
             valid = false;
         }
         
