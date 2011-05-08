@@ -22,7 +22,7 @@
     <artifactId>jms_spring_config</artifactId>
     <packaging>jar</packaging>
     <name>WSDL first demo using the jms transport and jmsConfigFeature</name>
-    <version>2.4.0-fuse-SNAPSHOT</version>
+    <version>2.4.x-fuse-SNAPSHOT</version>
 
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
