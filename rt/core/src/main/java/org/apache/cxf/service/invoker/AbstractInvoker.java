@@ -131,7 +131,7 @@ public abstract class AbstractInvoker implements Invoker {
             checkSuspendedInvocation(exchange, serviceObject, m, params, e);
             exchange.getInMessage().put(FaultMode.class, FaultMode.UNCHECKED_APPLICATION_FAULT);
             throw createFault(e, m, params, false);
-        }
+        } 
     }
     
     protected void checkSuspendedInvocation(Exchange exchange,
