@@ -21,6 +21,7 @@ package org.apache.cxf.systest.jaxrs;
 
 import java.io.File;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
@@ -164,6 +165,9 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
         assertTrue(headers.size() > 0);
         Object etag = headers.getFirst("ETag");
         assertNotNull(etag);
+        assertTrue(etag.toString().startsWith("\""));
+        assertTrue(etag.toString().endsWith("\""));
+
     }
     
     
@@ -373,6 +377,32 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
     }
     
     @Test 
+    public void testGetBookCollection2() throws Exception {
+        JAXBElementProvider provider = new JAXBElementProvider();
+        provider.setMarshallAsJaxbElement(true);
+        provider.setUnmarshallAsJaxbElement(true);
+        BookStore store = JAXRSClientFactory.create("http://localhost:" + PORT,
+                                                    BookStore.class,
+                                                    Collections.singletonList(provider));
+        BookNoXmlRootElement b1 = new BookNoXmlRootElement("CXF in Action", 123L);
+        BookNoXmlRootElement b2 = new BookNoXmlRootElement("CXF Rocks", 124L);
+        List<BookNoXmlRootElement> books = new ArrayList<BookNoXmlRootElement>();
+        books.add(b1);
+        books.add(b2);
+        WebClient.getConfig(store).getHttpConduit().getClient().setReceiveTimeout(10000000L);
+        List<BookNoXmlRootElement> books2 = store.getBookCollection2(books);
+        assertNotNull(books2);
+        assertNotSame(books, books2);
+        assertEquals(2, books2.size());
+        BookNoXmlRootElement b11 = books.get(0);
+        assertEquals(123L, b11.getId());
+        assertEquals("CXF in Action", b11.getName());
+        BookNoXmlRootElement b22 = books.get(1);
+        assertEquals(124L, b22.getId());
+        assertEquals("CXF Rocks", b22.getName());
+    }
+    
+    @Test 
     public void testGetBookArray() throws Exception {
         BookStore store = JAXRSClientFactory.create("http://localhost:" + PORT, BookStore.class);
         Book b1 = new Book("CXF in Action", 123L);
@@ -552,7 +582,21 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
                       + "parameter, static valueOf(String) or fromString(String) methods",
                       "*/*", 500);
     }
-    
+
+    @Test
+    public void testWrongContentType() throws Exception {
+        // can't use WebClient here because WebClient plays around with the Content-Type
+        // (and makes sure it's syntactically correct) before sending it to the server
+        String endpointAddress = "http://localhost:" + PORT + "/bookstore/unsupportedcontenttype";
+        URL url = new URL(endpointAddress);
+        HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
+        urlConnection.setReadTimeout(30000); // 30 seconds tops
+        urlConnection.setConnectTimeout(30000); // 30 second tops
+        urlConnection.addRequestProperty("Content-Type", "MissingSeparator");
+        urlConnection.setRequestMethod("POST");
+        assertEquals(415, urlConnection.getResponseCode());
+    }
+
     @Test
     public void testExceptionDuringConstruction() throws Exception {
         getAndCompare("http://localhost:" + PORT + "/bookstore/exceptionconstruction?p=1",
@@ -1322,8 +1366,7 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
                                "resources/expected_get_cd.txt",
                                "application/xml", 200);
     }
-    
-    
+
     @Test
     public void testGetCDWithMultiContentTypesXML() throws Exception {
         
@@ -1391,8 +1434,67 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
                       expected,
                       "text/plain", "text/plain", 200);
     }
-    
-    private void getAndCompareAsStrings(String address, 
+
+    @Test
+    public void testQuotedHeaders() throws Exception {
+
+        String endpointAddress =
+            "http://localhost:" + PORT + "/bookstore/quotedheaders";
+        Response r = WebClient.create(endpointAddress).get();
+
+        List<Object> header1 = r.getMetadata().get("SomeHeader1");
+        assertEquals(1, header1.size());
+        assertEquals("\"some text, some more text\"", header1.get(0));
+
+        List<Object> header2 = r.getMetadata().get("SomeHeader2");
+        assertEquals(3, header2.size());
+        assertEquals("\"some text\"", header2.get(0));
+        assertEquals("\"quoted,text\"", header2.get(1));
+        assertEquals("\"even more text\"", header2.get(2));
+
+        List<Object> header3 = r.getMetadata().get("SomeHeader3");
+        assertEquals(1, header3.size());
+        assertEquals("\"some text, some more text with inlined \"\"", header3.get(0));
+
+        List<Object> header4 = r.getMetadata().get("SomeHeader4");
+        assertEquals(1, header4.size());
+        assertEquals("\"\"", header4.get(0));
+
+    }
+
+    @Test
+    public void testBadlyQuotedHeaders() throws Exception {
+
+        String endpointAddress =
+            "http://localhost:" + PORT + "/bookstore/badlyquotedheaders";
+
+        String[] responses = new String[] {
+            "\"some text",
+            "\"some text, some more text with inlined \"",
+            "\"some te\\",
+        };
+
+        // technically speaking, for these test cases, the client should return an error
+        // however, servers do send bad data from time to time so we try to be forgiving
+        for (int i = 0; i < 3; i++) {
+            Response r = WebClient.create(endpointAddress).query("type", Integer.toString(i)).get();
+            assertEquals(responses[i], r.getMetadata().get("SomeHeader" + i).get(0));
+        }
+
+        // this test currently returns the WRONG result per RFC2616, however it is correct
+        // per the discussion in CXF-3518
+        Response r3 = WebClient.create(endpointAddress).query("type", "3").get();
+        List<Object> r3values = r3.getMetadata().get("SomeHeader3");
+        assertEquals(4, r3values.size());
+        assertEquals("some text", r3values.get(0));
+        assertEquals("\"other quoted\"", r3values.get(1));
+        assertEquals("text", r3values.get(2));
+        assertEquals("blah", r3values.get(3));
+
+    }
+
+
+    private void getAndCompareAsStrings(String address,
                                         String resourcePath,
                                         String acceptType,
                                         int status) throws Exception {

@@ -302,9 +302,14 @@ public final class JAXRSUtils {
             new TreeMap<OperationResourceInfo, MultivaluedMap<String, String>>(
                 new OperationResourceInfoComparator(message, httpMethod));
 
-        MediaType requestType = requestContentType == null 
+        MediaType requestType;
+        try {
+            requestType = requestContentType == null
                                 ? ALL_TYPES : MediaType.valueOf(requestContentType);
-        
+        } catch (IllegalArgumentException ex) {
+            throw new WebApplicationException(ex, 415);
+        }
+
         int pathMatched = 0;
         int methodMatched = 0;
         int consumeMatched = 0;
@@ -392,6 +397,7 @@ public final class JAXRSUtils {
         org.apache.cxf.common.i18n.Message errorMsg = 
             new org.apache.cxf.common.i18n.Message(name, 
                                                    BUNDLE,
+                                                   message.get(Message.REQUEST_URI),
                                                    path,
                                                    httpMethod,
                                                    requestType.toString(),

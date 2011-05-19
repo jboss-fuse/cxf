@@ -136,8 +136,8 @@ public class JAXBElementProvider extends AbstractJAXBProvider  {
             addAttachmentUnmarshaller(unmarshaller);
             Object response = null;
             if (JAXBElement.class.isAssignableFrom(type) 
-                || unmarshalAsJaxbElement 
-                || jaxbElementClassMap != null && jaxbElementClassMap.containsKey(theType.getName())) {
+                || !isCollection && (unmarshalAsJaxbElement  
+                || jaxbElementClassMap != null && jaxbElementClassMap.containsKey(theType.getName()))) {
                 XMLStreamReader reader = getStreamReader(is, type, mt);
                 response = unmarshaller.unmarshal(
                      createNewReaderIfNeeded(reader, is), 
@@ -396,13 +396,8 @@ public class JAXBElementProvider extends AbstractJAXBProvider  {
                 }
                 mc.put(XMLStreamWriter.class.getName(), writer);    
             }
-                
             marshalToWriter(ms, obj, writer, mt);
-            if (mc != null && mc.getContent(XMLStreamWriter.class) != null) {
-                writer.writeEndDocument();
-                writer.flush();
-                writer.close();
-            }
+            writer.writeEndDocument();
         } else {
             marshalToOutputStream(ms, obj, os, mt);
         }
