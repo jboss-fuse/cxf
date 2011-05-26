@@ -141,6 +141,7 @@ public class UsernameToken extends Token {
                     writer.writeStartElement(prefix, SPConstants.REQUIRE_IMPLIED_DERIVED_KEYS, namespaceURI);
                     writer.writeEndElement();
                 }
+                
 
             }
             writer.writeEndElement();

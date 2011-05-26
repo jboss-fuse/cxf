@@ -144,7 +144,7 @@ public class ServerPersistenceTest extends AbstractBusClientServerTestBase {
         verifyMissingResponse(responses);
         control.stopGreeter(SERVER_LOSS_CFG);
         LOG.fine("Stopped greeter server");
-       
+        
         out.getOutboundMessages().clear();
         in.getInboundMessages().clear();
         
@@ -153,13 +153,13 @@ public class ServerPersistenceTest extends AbstractBusClientServerTestBase {
         LOG.fine("Restarted greeter server" + nl + nl);
         
         verifyServerRecovery(responses);
+        responses[3] = greeter.greetMeAsync("four");
+        
+        verifyRetransmissionQueue();
         
         out.getOutboundMessages().clear();
         in.getInboundMessages().clear();
-            
-        responses[3] = greeter.greetMeAsync("four");
-        verifyRetransmissionQueue();
-        
+
         greeterBus.shutdown(true);
         
         control.stopGreeter(CFG);
@@ -167,10 +167,8 @@ public class ServerPersistenceTest extends AbstractBusClientServerTestBase {
     }
     
     void verifyMissingResponse(Response<GreetMeResponse> responses[]) throws Exception {
-        awaitMessages(5, 8, 60000);
-
-        // wait another while to prove that response to second request is indeed lost
-        Thread.sleep(4000);
+        awaitMessages(5, 8, 10000);
+        
         int nDone = 0;
         for (int i = 0; i < 3; i++) {
             if (responses[i].isDone()) {
@@ -239,8 +237,9 @@ public class ServerPersistenceTest extends AbstractBusClientServerTestBase {
   
     
     void verifyRetransmissionQueue() throws Exception {
-        awaitMessages(3, 5, 60000);
+        awaitMessages(2, 5, 60000);
         
+        Thread.sleep(5000);
         boolean empty = greeterBus.getExtension(RMManager.class).getRetransmissionQueue().isEmpty();
         assertTrue("Retransmission Queue is not empty", empty);
     }
