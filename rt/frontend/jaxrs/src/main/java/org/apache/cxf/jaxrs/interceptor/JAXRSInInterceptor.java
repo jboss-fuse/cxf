@@ -142,7 +142,8 @@ public class JAXRSInInterceptor extends AbstractPhaseInterceptor<Message> {
         if (resource == null) {
             org.apache.cxf.common.i18n.Message errorMsg = 
                 new org.apache.cxf.common.i18n.Message("NO_ROOT_EXC", 
-                                                   BUNDLE, 
+                                                   BUNDLE,
+                                                   message.get(Message.REQUEST_URI),
                                                    rawPath);
             LOG.warning(errorMsg.toString());
 
@@ -205,9 +206,8 @@ public class JAXRSInInterceptor extends AbstractPhaseInterceptor<Message> {
                                             httpMethod, values, requestContentType, acceptContentTypes, true);
                 setExchangeProperties(message, ori, values, resources.size());
             } catch (WebApplicationException ex) {
-                if (ex.getResponse() != null && ex.getResponse().getStatus() == 405 
-                    && "OPTIONS".equalsIgnoreCase(httpMethod)) {
-                    Response response = JAXRSUtils.createResponseBuilder(resource, 200, true).build();
+                if (JAXRSUtils.noResourceMethodForOptions(ex.getResponse(), httpMethod)) {
+                    Response response = JAXRSUtils.createResponse(resource, 200, true);
                     message.getExchange().put(Response.class, response);
                     return;
                 } else {

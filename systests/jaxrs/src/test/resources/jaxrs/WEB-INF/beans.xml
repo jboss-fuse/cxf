@@ -52,6 +52,13 @@ http://cxf.apache.org/schemas/core.xsd">
     <jaxrs:providers>
        <ref bean="jaxbProvider"/>
        <ref bean="jsonProvider"/>
+       <bean class="org.apache.cxf.jaxrs.model.wadl.WadlGenerator">
+           <property name="externalLinks">
+               <list>
+                  <value>classpath:/WEB-INF/schemas/book.xsd</value>
+               </list>
+           </property>
+       </bean>
     </jaxrs:providers>
   </jaxrs:server>
 
@@ -181,6 +188,25 @@ http://cxf.apache.org/schemas/core.xsd">
       <bean class="org.apache.cxf.systest.jaxrs.GenericRestServiceImpl"/>
     </jaxrs:serviceBeans>
   </jaxrs:server>
+
+  <jaxrs:server id="bookserviceGenerated" address="/generated"
+    docLocation="classpath:/wadl/bookstoreImport.xml">
+    <jaxrs:serviceBeans>
+      <bean class="org.apache.cxf.systest.jaxrs.codegen.service.BookStore"/>
+    </jaxrs:serviceBeans>
+    <jaxrs:providers>
+       <ref bean="jaxbProviderForTypes"/>
+    </jaxrs:providers>
+  </jaxrs:server>
+
+  <bean id="jaxbProviderForTypes" class="org.apache.cxf.jaxrs.provider.JAXBElementProvider">
+      <property name="unmarshallAsJaxbElement" value="true"/>
+      <property name="schemaLocations" ref="theSchemaLocations"/>
+  </bean>
+
+  <util:list id="theSchemaLocations">
+    <value>classpath:/wadl/schemas/book.xsd</value>
+  </util:list>
 
   <bean id="jaxbProvider" class="org.apache.cxf.jaxrs.provider.JAXBElementProvider">
       <property name="schemaHandler" ref="schemaHolder"/>

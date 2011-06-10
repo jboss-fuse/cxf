@@ -23,6 +23,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
 import org.apache.cxf.ws.security.policy.SP12Constants;
+import org.apache.cxf.ws.security.policy.SP13Constants;
 import org.apache.cxf.ws.security.policy.SPConstants;
 
 public class UsernameToken extends Token {
@@ -30,6 +31,8 @@ public class UsernameToken extends Token {
     private boolean useUTProfile11;
     private boolean noPassword;
     private boolean hashPassword;
+    private boolean requireCreated;
+    private boolean requireNonce;
 
     public UsernameToken(SPConstants version) {
         super(version);
@@ -55,6 +58,22 @@ public class UsernameToken extends Token {
 
     public void setNoPassword(boolean noPassword) {
         this.noPassword = noPassword;
+    }
+    
+    public boolean isRequireCreated() {
+        return requireCreated;
+    }
+    
+    public void setRequireCreated(boolean requireCreated) {
+        this.requireCreated = requireCreated;
+    }
+    
+    public boolean isRequireNonce() {
+        return requireNonce;
+    }
+    
+    public void setRequireNonce(boolean requireNonce) {
+        this.requireNonce = requireNonce;
     }
 
     public boolean isHashPassword() {
@@ -139,6 +158,17 @@ public class UsernameToken extends Token {
                     writer.writeEndElement();
                 } else if (isImpliedDerivedKeys()) {
                     writer.writeStartElement(prefix, SPConstants.REQUIRE_IMPLIED_DERIVED_KEYS, namespaceURI);
+                    writer.writeEndElement();
+                }
+                
+                if (isRequireCreated()) {
+                    writer.writeStartElement(SP13Constants.SP_PREFIX, "Created", SP13Constants.SP_NS);
+                    writer.writeNamespace(SP13Constants.SP_PREFIX, SP13Constants.SP_NS);
+                    writer.writeEndElement();
+                }
+                if (isRequireNonce()) {
+                    writer.writeStartElement(SP13Constants.SP_PREFIX, "Nonce", SP13Constants.SP_NS);
+                    writer.writeNamespace(SP13Constants.SP_PREFIX, SP13Constants.SP_NS);
                     writer.writeEndElement();
                 }
 

@@ -109,6 +109,7 @@ public final class JAXRSUtils {
     public static final String IGNORE_MESSAGE_WRITERS = "ignore.message.writers";
     public static final String ROOT_INSTANCE = "service.root.instance";
     public static final String ROOT_PROVIDER = "service.root.provider";
+    public static final String DOC_LOCATION = "wadl.location";
     
     private static final Logger LOG = LogUtils.getL7dLogger(JAXRSUtils.class);
     private static final ResourceBundle BUNDLE = BundleUtils.getBundle(JAXRSUtils.class);
@@ -303,9 +304,14 @@ public final class JAXRSUtils {
             new TreeMap<OperationResourceInfo, MultivaluedMap<String, String>>(
                 new OperationResourceInfoComparator(message, httpMethod));
 
-        MediaType requestType = requestContentType == null 
+        MediaType requestType;
+        try {
+            requestType = requestContentType == null
                                 ? ALL_TYPES : MediaType.valueOf(requestContentType);
-        
+        } catch (IllegalArgumentException ex) {
+            throw new WebApplicationException(ex, 415);
+        }
+
         int pathMatched = 0;
         int methodMatched = 0;
         int consumeMatched = 0;
@@ -393,6 +399,7 @@ public final class JAXRSUtils {
         org.apache.cxf.common.i18n.Message errorMsg = 
             new org.apache.cxf.common.i18n.Message(name, 
                                                    BUNDLE,
+                                                   message.get(Message.REQUEST_URI),
                                                    path,
                                                    httpMethod,
                                                    requestType.toString(),
@@ -400,10 +407,15 @@ public final class JAXRSUtils {
         if (!"OPTIONS".equalsIgnoreCase(httpMethod) && logNow) {
             LOG.warning(errorMsg.toString());
         }
-        ResponseBuilder rb = createResponseBuilder(resource, status, methodMatched == 0);
-        throw new WebApplicationException(rb.build());
+        Response response = createResponse(resource, status, methodMatched == 0);
+        throw new WebApplicationException(response);
         
     }    
+    
+    public static boolean noResourceMethodForOptions(Response exResponse, String httpMethod) {
+        return exResponse != null && exResponse.getStatus() == 405 
+            && "OPTIONS".equalsIgnoreCase(httpMethod);
+    }
     
     private static void logNoMatchMessage(OperationResourceInfo ori, 
         String path, String httpMethod, MediaType requestType, List<MediaType> acceptContentTypes) {
@@ -425,7 +437,7 @@ public final class JAXRSUtils {
         LOG.fine(errorMsg.toString());
     }
 
-    public static ResponseBuilder createResponseBuilder(ClassResourceInfo cri, int status, boolean addAllow) {
+    public static Response createResponse(ClassResourceInfo cri, int status, boolean addAllow) {
         ResponseBuilder rb = Response.status(status);
         if (addAllow) {
             Set<String> allowedMethods = cri.getAllowedMethods();
@@ -440,7 +452,7 @@ public final class JAXRSUtils {
                 rb.header("Allow", "HEAD");
             }
         }
-        return rb;
+        return rb.build();
     }
     
     private static boolean matchHttpMethod(String expectedMethod, String httpMethod) {

@@ -46,6 +46,7 @@ import javax.wsdl.Part;
 import javax.wsdl.Port;
 import javax.wsdl.PortType;
 import javax.wsdl.Service;
+import javax.wsdl.WSDLElement;
 import javax.wsdl.extensions.ExtensibilityElement;
 import javax.wsdl.extensions.soap.SOAPBinding;
 import javax.wsdl.extensions.soap12.SOAP12Binding;
@@ -59,6 +60,7 @@ import org.apache.cxf.binding.BindingFactory;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.xmlschema.SchemaCollection;
 import org.apache.cxf.helpers.CastUtils;
+import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.service.model.AbstractMessageContainer;
 import org.apache.cxf.service.model.AbstractPropertiesHolder;
 import org.apache.cxf.service.model.BindingFaultInfo;
@@ -83,6 +85,7 @@ import org.apache.ws.commons.schema.XmlSchemaComplexType;
 import org.apache.ws.commons.schema.XmlSchemaElement;
 import org.apache.ws.commons.schema.XmlSchemaSequence;
 import org.apache.ws.commons.schema.XmlSchemaSequenceMember;
+import org.apache.ws.commons.schema.XmlSchemaType;
 
 import static org.apache.cxf.helpers.CastUtils.cast;
 
@@ -139,6 +142,13 @@ public class WSDLServiceBuilder {
             info.setExtensionAttributes(attrs);
         }
     }
+    
+    private void copyDocumentation(AbstractPropertiesHolder info, WSDLElement el) {
+        if (el.getDocumentationElement() != null) {
+            String doc = DOMUtils.getRawContent(el.getDocumentationElement());
+            info.setDocumentation(doc);
+        }
+    }
 
     public List<ServiceInfo> buildServices(Definition d) {
         DescriptionInfo description = new DescriptionInfo();
@@ -163,7 +173,7 @@ public class WSDLServiceBuilder {
         return buildServices(d, name, null, null);
     }
     public List<ServiceInfo> buildServices(Definition d, QName name, QName endpointName) {
-        return buildServices(d, name, endpointName);
+        return buildServices(d, name, endpointName, null);
     }
 
     private List<ServiceInfo> buildServices(Definition d,
@@ -322,7 +332,7 @@ public class WSDLServiceBuilder {
                     service.setProperty(WSDL_SERVICE, serv);
                 }
                 getSchemas(def, service);
-
+                copyDocumentation(service, serv);
                 service.setProperty(WSDL_SCHEMA_ELEMENT_LIST, this.schemaList);
                 service.setTargetNamespace(def.getTargetNamespace());
                 service.setName(serv.getQName());
@@ -453,7 +463,7 @@ public class WSDLServiceBuilder {
         if (ei == null) {
             ei = new EndpointInfo(service, ns);
         }
-
+        copyDocumentation(ei, port);
         ei.setName(new QName(service.getName().getNamespaceURI(), port.getName()));
         ei.setBinding(bi);
         copyExtensors(ei, port.getExtensibilityElements());
@@ -554,6 +564,7 @@ public class WSDLServiceBuilder {
             inf.setDescription(si.getDescription());
             d.getDescribed().add(inf);
         }
+        copyDocumentation(inf, p);
         this.copyExtensors(inf, p.getExtensibilityElements());
         this.copyExtensionAttributes(inf, p);
         if (recordOriginal) {
@@ -570,6 +581,7 @@ public class WSDLServiceBuilder {
         if (recordOriginal) {
             opInfo.setProperty(WSDL_OPERATION, op);
         }
+        copyDocumentation(opInfo, op);
         List<String> porderList = CastUtils.cast((List)op.getParameterOrdering());
         opInfo.setParameterOrdering(porderList);
         this.copyExtensors(opInfo, op.getExtensibilityElements());
@@ -601,6 +613,7 @@ public class WSDLServiceBuilder {
             Map.Entry<String, Fault> entry = cast(rawentry, String.class, Fault.class);
             FaultInfo finfo = opInfo.addFault(new QName(inf.getName().getNamespaceURI(), entry.getKey()),
                                               entry.getValue().getMessage().getQName());
+            copyDocumentation(finfo, entry.getValue());
             buildMessage(finfo, entry.getValue().getMessage());
             copyExtensors(finfo, entry.getValue().getExtensibilityElements());
             copyExtensionAttributes(finfo, entry.getValue());
@@ -742,55 +755,76 @@ public class WSDLServiceBuilder {
                                                MessageInfo wrapper, boolean allowRefs) {
         if (type.getParticle() instanceof XmlSchemaSequence) {
             XmlSchemaSequence seq = (XmlSchemaSequence)type.getParticle();
-            List<XmlSchemaSequenceMember> items = seq.getItems();
-            boolean ret = true;
-            for (XmlSchemaSequenceMember seqItem : items) {
-                if (!(seqItem instanceof XmlSchemaElement)) {
-                    return false;
-                }
-                XmlSchemaElement el = (XmlSchemaElement)seqItem;
-
-                if (el.getSchemaTypeName() != null) {
-                    MessagePartInfo mpi = wrapper.addMessagePart(new QName(namespaceURI, el.getName()));
-                    mpi.setTypeQName(el.getSchemaTypeName());
-                    mpi.setElement(true);
-                    mpi.setElementQName(el.getWireName());
-                    mpi.setConcreteName(el.getWireName());
-                    mpi.setXmlSchema(el);
-                } else if (el.getRef().getTargetQName() != null) {
-                    MessagePartInfo mpi = wrapper.addMessagePart(el.getRef().getTargetQName());
-                    mpi.setTypeQName(el.getRef().getTargetQName());
-                    mpi.setElementQName(el.getRef().getTargetQName());
-                    mpi.setElement(true);
-                    mpi.setXmlSchema(el);
-                    mpi.setProperty("isRefElement", true);
-                    // element reference is not permitted for wrapper element
-                    if (!allowRefs) {
-                        ret = false;
-                    }
-                } else {
-                    // anonymous type
-                    MessagePartInfo mpi = wrapper.addMessagePart(new QName(namespaceURI, el.getName()));
-                    mpi.setElementQName(mpi.getName());
-                    mpi.setConcreteName(el.getWireName());
-                    mpi.setElement(true);
-                    mpi.setXmlSchema(el);
-                }
-            }
-
-            return ret;
+            return buildMessageParts(seq, namespaceURI, wrapper, allowRefs);
         } else if (type.getParticle() == null) {
             if (type.getContentModel() == null) {
                 return true;
             }
             if (type.getContentModel().getContent() instanceof XmlSchemaComplexContentExtension) {
-                return false;
+                XmlSchemaComplexContentExtension extension = (XmlSchemaComplexContentExtension)type
+                    .getContentModel().getContent();
+                QName baseTypeName = extension.getBaseTypeName();
+                ServiceInfo serviceInfo = wrapper.getOperation().getInterface().getService();
+                XmlSchemaType schemaType = serviceInfo.getXmlSchemaCollection().getTypeByQName(baseTypeName);
+                if (!(schemaType instanceof XmlSchemaComplexType)
+                    || !isWrappableSequence((XmlSchemaComplexType)schemaType, namespaceURI, wrapper,
+                                            allowRefs)) {
+                    return false;
+                }
+                             
+                if (extension.getParticle() instanceof XmlSchemaSequence) {
+                    XmlSchemaSequence seq = (XmlSchemaSequence)extension.getParticle();
+                    return buildMessageParts(seq, namespaceURI, wrapper, allowRefs);
+                }  
+                
             }
             return true;
         }
         return false;
     }
 
+        
+    private static boolean buildMessageParts(XmlSchemaSequence seq, String namespaceURI, MessageInfo wrapper,
+                                             boolean allowRefs) {
+        List<XmlSchemaSequenceMember> items = seq.getItems();
+        boolean ret = true;
+        for (XmlSchemaSequenceMember seqItem : items) {
+            if (!(seqItem instanceof XmlSchemaElement)) {
+                return false;
+            }
+            XmlSchemaElement el = (XmlSchemaElement)seqItem;
+
+            if (el.getSchemaTypeName() != null) {
+                MessagePartInfo mpi = wrapper.addMessagePart(new QName(namespaceURI, el.getName()));
+                mpi.setTypeQName(el.getSchemaTypeName());
+                mpi.setElement(true);
+                mpi.setElementQName(el.getWireName());
+                mpi.setConcreteName(el.getWireName());
+                mpi.setXmlSchema(el);
+            } else if (el.getRef().getTargetQName() != null) {
+                MessagePartInfo mpi = wrapper.addMessagePart(el.getRef().getTargetQName());
+                mpi.setTypeQName(el.getRef().getTargetQName());
+                mpi.setElementQName(el.getRef().getTargetQName());
+                mpi.setElement(true);
+                mpi.setXmlSchema(el);
+                mpi.setProperty("isRefElement", true);
+                // element reference is not permitted for wrapper element
+                if (!allowRefs) {
+                    ret = false;
+                }
+            } else {
+                // anonymous type
+                MessagePartInfo mpi = wrapper.addMessagePart(new QName(namespaceURI, el.getName()));
+                mpi.setElementQName(mpi.getName());
+                mpi.setConcreteName(el.getWireName());
+                mpi.setElement(true);
+                mpi.setXmlSchema(el);
+            }
+        }
+        return ret;
+    }
+        
+        
     private void buildMessage(AbstractMessageContainer minfo, Message msg) {
         SchemaCollection schemas = minfo.getOperation().getInterface().getService()
             .getXmlSchemaCollection();

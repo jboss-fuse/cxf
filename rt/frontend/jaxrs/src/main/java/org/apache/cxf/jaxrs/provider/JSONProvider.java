@@ -85,6 +85,12 @@ public class JSONProvider extends AbstractJAXBProvider  {
     private boolean ignoreNamespaces;
     private String convention = MAPPED_CONVENTION;
     private TypeConverter typeConverter;
+    private boolean attributesToElements;
+    
+    @Override
+    public void setAttributesToElements(boolean value) {
+        this.attributesToElements = value;
+    }
     
     public void setConvention(String value) {
         if (!MAPPED_CONVENTION.equals(value) && !BADGER_FISH_CONVENTION.equals(value)) {
@@ -174,8 +180,8 @@ public class JSONProvider extends AbstractJAXBProvider  {
         
         try {
             boolean isCollection = InjectionUtils.isSupportedCollectionOrArray(type);
-            Class<?> theType = isCollection ? InjectionUtils.getActualType(genericType) : type;
-            theType = getActualType(theType, genericType, anns);
+            Class<?> theGenericType = isCollection ? InjectionUtils.getActualType(genericType) : type;
+            Class<?> theType = getActualType(theGenericType, genericType, anns);
             
             Unmarshaller unmarshaller = createUnmarshaller(theType, genericType, isCollection);
             
@@ -195,7 +201,7 @@ public class JSONProvider extends AbstractJAXBProvider  {
             }
             if (isCollection) {
                 response = ((CollectionWrapper)response).getCollectionOrArray(theType, type, 
-                                                         getAdapter(theType, anns)); 
+                               org.apache.cxf.jaxrs.utils.JAXBUtils.getAdapter(theGenericType, anns)); 
             } else {
                 response = checkAdapter(response, type, anns, false);
             }
@@ -351,7 +357,8 @@ public class JSONProvider extends AbstractJAXBProvider  {
         
         os.write(startTag.getBytes());
         if (firstObj != null) {
-            XmlJavaTypeAdapter adapter = getAdapter(firstObj.getClass(), anns);
+            XmlJavaTypeAdapter adapter = 
+                org.apache.cxf.jaxrs.utils.JAXBUtils.getAdapter(firstObj.getClass(), anns);
             marshalCollectionMember(JAXBUtils.useAdapter(firstObj, adapter, true),
                                     actualClass, genericType, encoding, os);
             while (it.hasNext()) {
@@ -398,7 +405,10 @@ public class JSONProvider extends AbstractJAXBProvider  {
         QName qname = getQName(actualClass, genericType, actualObject, true);
         
         Configuration config = 
-            JSONUtils.createConfiguration(namespaceMap, writeXsiType && !ignoreNamespaces, typeConverter);
+            JSONUtils.createConfiguration(namespaceMap, 
+                                          writeXsiType && !ignoreNamespaces,
+                                          attributesToElements,
+                                          typeConverter);
         
         XMLStreamWriter writer = JSONUtils.createStreamWriter(os, qname, 
              writeXsiType && !ignoreNamespaces, config, serializeAsArray, arrayKeys,

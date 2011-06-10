@@ -142,9 +142,9 @@ public class Option {
     Boolean noTypes;
 
     /**
-     * Enables generation of fault Exception's SUID based on hash of classname.
+     * specify how to generate fault Exception's SUID, default is NONE
      */
-    Boolean useFQCNForFaultSerialVersionUID;
+    String faultSerialVersionUID;
 
     /**
      * Uses @Generated annotation in all generated java classes if the flag is set to true.
@@ -329,12 +329,12 @@ public class Option {
         this.noTypes = noTypes;
     }
 
-    public boolean isUseFQCNForFaultSerialVersionUID() {
-        return useFQCNForFaultSerialVersionUID == null ? false : useFQCNForFaultSerialVersionUID;
+    public String getFaultSerialVersionUID() {
+        return faultSerialVersionUID == null ? "none" : faultSerialVersionUID;
     }
 
-    public void setUseFQCNForFaultSerialVersionUID(boolean useFQCNForFaultSerialVersionUID) {
-        this.useFQCNForFaultSerialVersionUID = useFQCNForFaultSerialVersionUID;
+    public void setFaultSerialVersionUID(String faultSerialVersionUID) {
+        this.faultSerialVersionUID = faultSerialVersionUID;
     }
 
     public Boolean isMarkGenerated() {
@@ -413,7 +413,7 @@ public class Option {
         destination.setServiceName(getServiceName());
         destination.setValidateWsdl(isValidateWsdl());
         destination.setNoTypes(isNoTypes());
-        destination.setUseFQCNForFaultSerialVersionUID(isUseFQCNForFaultSerialVersionUID());
+        destination.setFaultSerialVersionUID(getFaultSerialVersionUID());
         destination.setMarkGenerated(isMarkGenerated());
         destination.setAllowElementRefs(isAllowElementRefs());
         if (isSetWsdlLocation()) {
@@ -434,8 +434,8 @@ public class Option {
         extendedSoapHeaders = setIfNull(extendedSoapHeaders, defaultOptions.extendedSoapHeaders);
         noTypes = setIfNull(noTypes, defaultOptions.noTypes);
         validateWsdl = setIfNull(validateWsdl, defaultOptions.validateWsdl);
-        useFQCNForFaultSerialVersionUID = setIfNull(useFQCNForFaultSerialVersionUID,
-            defaultOptions.useFQCNForFaultSerialVersionUID);
+        faultSerialVersionUID = setIfNull(faultSerialVersionUID,
+            defaultOptions.faultSerialVersionUID);
         markGenerated = setIfNull(markGenerated, defaultOptions.markGenerated);
         autoNameResolution = setIfNull(autoNameResolution, defaultOptions.autoNameResolution);
         noAddressBinding = setIfNull(noAddressBinding, defaultOptions.noAddressBinding);

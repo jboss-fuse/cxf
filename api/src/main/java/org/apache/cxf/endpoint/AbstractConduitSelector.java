@@ -27,6 +27,7 @@ import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.Message;
+import org.apache.cxf.message.MessageUtils;
 import org.apache.cxf.service.model.EndpointInfo;
 import org.apache.cxf.transport.Conduit;
 import org.apache.cxf.transport.ConduitInitiator;
@@ -41,7 +42,8 @@ import org.apache.cxf.ws.addressing.EndpointReferenceType;
  * that retreives a Conduit from the ConduitInitiator.
  */
 public abstract class AbstractConduitSelector implements ConduitSelector {
-
+    protected static final String KEEP_CONDUIT_ALIVE = "KeepConduitAlive";
+    
     protected Conduit selectedConduit;
     protected Endpoint endpoint;
 
@@ -75,6 +77,7 @@ public abstract class AbstractConduitSelector implements ConduitSelector {
                         String add = (String)message.get(Message.ENDPOINT_ADDRESS);
                         if (StringUtils.isEmpty(add)
                             || add.equals(ei.getAddress())) {
+                            replaceEndpointAddressPropertyIfNeeded(message, add);
                             selectedConduit = conduitInitiator.getConduit(ei);
                         } else {
                             EndpointReferenceType epr = new EndpointReferenceType();
@@ -106,6 +109,28 @@ public abstract class AbstractConduitSelector implements ConduitSelector {
         return selectedConduit;
     }
 
+    // Some conduits may replace the endpoint address after it has already been prepared
+    // but before the invocation has been done (ex, org.apache.cxf.clustering.LoadDistributorTargetSelector)
+    // which may affect JAX-RS clients where actual endpoint address property may include additional path 
+    // segments.  
+    protected void replaceEndpointAddressPropertyIfNeeded(Message message, String endpointAddress) {
+        String requestURI = (String)message.get(Message.REQUEST_URI);
+        if (requestURI != null && !requestURI.startsWith(endpointAddress)) {
+            String basePath = (String)message.get(Message.BASE_PATH);
+            if (basePath != null && requestURI.startsWith(basePath)) {
+                String pathInfo = requestURI.substring(basePath.length());
+                final String slash = "/";
+                boolean startsWithSlash = pathInfo.startsWith(slash);
+                if (endpointAddress.endsWith(slash)) {
+                    endpointAddress = endpointAddress + (startsWithSlash ? pathInfo.substring(1) : pathInfo);
+                } else {
+                    endpointAddress = endpointAddress + (startsWithSlash ? pathInfo : (slash + pathInfo));
+                }
+                message.put(Message.ENDPOINT_ADDRESS, endpointAddress);
+            }
+        }
+    }
+    
     /**
      * @return the encapsulated Endpoint
      */
@@ -126,6 +151,13 @@ public abstract class AbstractConduitSelector implements ConduitSelector {
      * @param exchange represents the completed MEP
      */
     public void complete(Exchange exchange) {
+        // Clients expecting explicit InputStream responses
+        // will need to keep low level conduits operating on InputStreams open
+        // and will be responsible for closing the streams
+        
+        if (MessageUtils.isTrue(exchange.get(KEEP_CONDUIT_ALIVE))) {
+            return;
+        }
         try {
             if (exchange.getInMessage() != null) {
                 getSelectedConduit(exchange.getInMessage()).close(exchange.getInMessage());

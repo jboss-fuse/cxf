@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -87,6 +88,40 @@ import org.junit.Test;
 
 public class JAXBElementProviderTest extends Assert {
 
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testReadFromISO() throws Exception {
+        
+        String eWithAcute = "\u00E9";
+        String nameStringUTF16 = "F" + eWithAcute + "lix";
+        String bookStringUTF16 = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>"
+                                 + "<Book><name>" + nameStringUTF16 + "</name></Book>";
+        
+        byte[] iso88591bytes = bookStringUTF16.getBytes("ISO-8859-1");
+        
+        JAXBElementProvider p = new JAXBElementProvider();
+        Book book = (Book)p.readFrom((Class)Book.class, null,
+                new Annotation[]{}, 
+                MediaType.valueOf(MediaType.APPLICATION_XML), null, 
+                new ByteArrayInputStream(iso88591bytes));
+        assertEquals(book.getName(), nameStringUTF16);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testReadChineeseChars() throws Exception {
+        
+        String nameStringUTF16 = "中文";
+        
+        String bookStringUTF16 = "<Book><name>" + nameStringUTF16 + "</name></Book>";
+        JAXBElementProvider p = new JAXBElementProvider();
+        Book book = (Book)p.readFrom((Class)Book.class, null,
+                new Annotation[]{}, 
+                MediaType.valueOf(MediaType.APPLICATION_XML + ";charset=UTF-8"), null, 
+                new ByteArrayInputStream(bookStringUTF16.getBytes("UTF-8")));
+        assertEquals(book.getName(), nameStringUTF16);
+    }
+    
     @Test
     public void testSingleJAXBContext() throws Exception {
         ClassResourceInfo cri = 
@@ -716,6 +751,42 @@ public class JAXBElementProviderTest extends Assert {
             + "<thetag><group>B</group><name>A</name></thetag></tagholder>";
         assertEquals(expected, bos.toString());
     }
+    @Test
+    public void testOutAttributesAsElementsForList() throws Exception {
+
+        //Provider
+        JAXBElementProvider provider = new JAXBElementProvider();
+        provider.setCollectionWrapperName("tagholders");
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("{http://tags}*", "*");
+        provider.setOutTransformElements(map);
+        provider.setAttributesToElements(true);
+    
+        //data setup
+        TagVO2 tag = new TagVO2("A", "B");
+        TagVO2Holder holder = new TagVO2Holder();
+        holder.setTag(tag);
+        List<TagVO2Holder> list = new ArrayList<JAXBElementProviderTest.TagVO2Holder>();
+        list.add(holder);
+    
+        //ParameterizedType required for Lists of Objects
+        ParameterizedType type = new ParameterizedType() {
+            public Type getRawType() { return List.class; }
+            public Type getOwnerType() { return null; }
+            public Type[] getActualTypeArguments() {
+                return new Type[] {TagVO2Holder.class};
+            }
+        };
+    
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        provider.writeTo(list, ArrayList.class, type,
+            new Annotation[0], MediaType.TEXT_XML_TYPE, new MetadataMap<String, Object>(), bos);
+    
+        String expected = "<tagholders><tagholder><attr>attribute</attr>"
+            + "<thetag><group>B</group><name>A</name></thetag></tagholder></tagholders>";
+        assertEquals(expected, bos.toString());
+    }
+    
     
     @Test
     public void testOutAppendElementsDiffNs() throws Exception {

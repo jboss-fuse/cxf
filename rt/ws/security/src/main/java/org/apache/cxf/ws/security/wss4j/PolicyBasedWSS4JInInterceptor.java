@@ -69,19 +69,19 @@ import org.apache.cxf.ws.security.policy.model.SymmetricBinding;
 import org.apache.cxf.ws.security.policy.model.Token;
 import org.apache.cxf.ws.security.policy.model.TransportBinding;
 import org.apache.cxf.ws.security.policy.model.TransportToken;
-import org.apache.cxf.ws.security.policy.model.UsernameToken;
 import org.apache.cxf.ws.security.policy.model.Wss11;
 import org.apache.cxf.ws.security.policy.model.X509Token;
 import org.apache.cxf.ws.security.wss4j.CryptoCoverageUtil.CoverageScope;
 import org.apache.cxf.ws.security.wss4j.CryptoCoverageUtil.CoverageType;
 import org.apache.cxf.ws.security.wss4j.policyvalidators.EndorsingTokenPolicyValidator;
 import org.apache.cxf.ws.security.wss4j.policyvalidators.SamlTokenPolicyValidator;
+import org.apache.cxf.ws.security.wss4j.policyvalidators.UsernameTokenPolicyValidator;
+import org.apache.cxf.ws.security.wss4j.policyvalidators.X509TokenPolicyValidator;
 import org.apache.neethi.Assertion;
 import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSDataRef;
 import org.apache.ws.security.WSSecurityEngineResult;
 import org.apache.ws.security.WSSecurityException;
-import org.apache.ws.security.WSUsernameTokenPrincipal;
 import org.apache.ws.security.handler.RequestData;
 import org.apache.ws.security.handler.WSHandlerConstants;
 import org.apache.ws.security.util.WSSecurityUtil;
@@ -130,11 +130,7 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
                     url = ClassLoaderUtils.getResource((String)o, AbstractWSS4JInterceptor.class);
                 }
                 if (url == null) {
-                    try {
-                        url = new URL((String)o);
-                    } catch (Exception ex) {
-                        //ignore
-                    }
+                    url = new URL((String)o);
                 }
                 if (url != null) {
                     properties = new Properties();
@@ -468,7 +464,6 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
             
             //stuff we can default to asserted and un-assert if a condition isn't met
             assertPolicy(aim, SP12Constants.KEYVALUE_TOKEN);
-            assertPolicy(aim, SP12Constants.X509_TOKEN);
 
             message.put(WSHandlerConstants.ACTION, action.trim());
         }
@@ -563,20 +558,16 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
                 }
                 break;
             case WSConstants.UT:
-                Collection<AssertionInfo> ais = aim.get(SP12Constants.USERNAME_TOKEN);
-                if (ais != null) {
-                    for (AssertionInfo ai : ais) {
-                        ai.setAsserted(true);
-                    }
-                    
-                    if (utWithCallbacks) {
-                        WSUsernameTokenPrincipal princ 
-                            = (WSUsernameTokenPrincipal)wser.get(WSSecurityEngineResult.TAG_PRINCIPAL);
+            case WSConstants.UT_NOPASSWORD:
+                if (utWithCallbacks) {
+                    UsernameTokenPolicyValidator utValidator = 
+                        new UsernameTokenPolicyValidator(msg);
+                    utValidator.validatePolicy(aim, wser);
+                } else {
+                    Collection<AssertionInfo> ais = aim.get(SP12Constants.USERNAME_TOKEN);
+                    if (ais != null) {
                         for (AssertionInfo ai : ais) {
-                            UsernameToken tok = (UsernameToken)ai.getAssertion();
-                            if (tok.isHashPassword() != princ.isPasswordDigest()) {
-                                ai.setNotAsserted("Password hashing policy not enforced");
-                            }
+                            ai.setAsserted(true);
                         }
                     }
                 }
@@ -629,6 +620,9 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
         assertAsymetricBinding(aim, msg, prots, hasDerivedKeys);
         assertSymetricBinding(aim, msg, prots, hasDerivedKeys);
         assertTransportBinding(aim);
+        
+        X509TokenPolicyValidator x509Validator = new X509TokenPolicyValidator(msg, results);
+        x509Validator.validatePolicy(aim);
         
         //REVISIT - probably can verify some of these like if UT is encrypted and/or signed, etc...
         assertPolicy(aim, SP12Constants.SIGNED_SUPPORTING_TOKENS);

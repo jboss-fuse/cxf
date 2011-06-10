@@ -496,8 +496,7 @@ public abstract class AbstractBindingBuilder {
                     this.encryptedTokensIdList.add(secToken.getId());
                 }
         
-                if (secToken.getX509Certificate() == null) {   
-                    //Add the extracted token
+                if (secToken.getX509Certificate() == null) {  
                     ret.put(token, new WSSecurityTokenHolder(wssConfig, secToken));
                 } else {
                     WSSecSignature sig = new WSSecSignature(wssConfig);                    
@@ -627,13 +626,40 @@ public abstract class AbstractBindingBuilder {
                 if (!selfSignAssertion) {
                     AssertionWrapper assertionWrapper = (AssertionWrapper)tempTok;
                     
+                    Document doc = assertionWrapper.getElement().getOwnerDocument();
+                    boolean saml1 = assertionWrapper.getSaml1() != null;
                     // TODO We only support using a KeyIdentifier for the moment
                     SecurityTokenReference secRef = 
-                        createSTRForSamlAssertion(assertionWrapper, false);
+                        createSTRForSamlAssertion(doc, assertionWrapper.getId(), saml1, false);
                     addSupportingElement(secRef.getElement());
                     part = new WSEncryptionPart("STRTransform", null, "Element");
                     part.setId(secRef.getID());
                     part.setElement(secRef.getElement());
+                }
+            } else if (tempTok instanceof WSSecurityTokenHolder) {
+                SecurityToken token = ((WSSecurityTokenHolder)tempTok).getToken();
+                String tokenType = token.getTokenType();
+                if (WSConstants.WSS_SAML_TOKEN_TYPE.equals(tokenType)
+                    || WSConstants.SAML_NS.equals(tokenType)
+                    || WSConstants.WSS_SAML2_TOKEN_TYPE.equals(tokenType)
+                    || WSConstants.SAML2_NS.equals(tokenType)) {
+                    Document doc = token.getToken().getOwnerDocument();
+                    boolean saml1 = WSConstants.WSS_SAML_TOKEN_TYPE.equals(tokenType)
+                        || WSConstants.SAML_NS.equals(tokenType);
+                    String id = null;
+                    if (saml1) {
+                        id = token.getToken().getAttributeNS(null, "AssertionID");
+                    } else {
+                        id = token.getToken().getAttributeNS(null, "ID");
+                    }
+                    SecurityTokenReference secRef = 
+                        createSTRForSamlAssertion(doc, id, saml1, false);
+                    addSupportingElement(cloneElement(secRef.getElement()));
+                    part = new WSEncryptionPart("STRTransform", null, "Element");
+                    part.setId(secRef.getID());
+                    part.setElement(secRef.getElement());
+                } else {
+                    policyNotAsserted(entry.getKey(), "UnsupportedTokenInSupportingToken: " + tempTok);  
                 }
             } else {
                 policyNotAsserted(entry.getKey(), "UnsupportedTokenInSupportingToken: " + tempTok);  
@@ -646,44 +672,47 @@ public abstract class AbstractBindingBuilder {
     
     /**
      * Create a SecurityTokenReference to point to a SAML Assertion
-     * @param assertion the SAML AssertionWrapper
+     * @param doc The owner Document instance
+     * @param id The Assertion ID
+     * @param saml1 Whether the Assertion is a SAML1 or SAML2 Assertion
      * @param useDirectReferenceToAssertion whether to refer directly to the assertion or not
      * @return a SecurityTokenReference to a SAML Assertion
      */
     private SecurityTokenReference createSTRForSamlAssertion(
-        AssertionWrapper assertion,
+        Document doc,
+        String id,
+        boolean saml1,
         boolean useDirectReferenceToAssertion
     ) {
-        Document doc = assertion.getElement().getOwnerDocument();
         SecurityTokenReference secRefSaml = new SecurityTokenReference(doc);
-        String secRefID = wssConfig.getIdAllocator().createSecureId("STRSAMLId-", secRefSaml);
+        String secRefID = wssConfig.getIdAllocator().createSecureId("STR-", secRefSaml);
         secRefSaml.setID(secRefID);
 
         if (useDirectReferenceToAssertion) {
             org.apache.ws.security.message.token.Reference ref = 
                 new org.apache.ws.security.message.token.Reference(doc);
-            ref.setURI("#" + assertion.getId());
-            if (assertion.getSaml1() != null) {
+            ref.setURI("#" + id);
+            if (saml1) {
                 ref.setValueType(WSConstants.WSS_SAML_KI_VALUE_TYPE);
                 secRefSaml.addTokenType(WSConstants.WSS_SAML_TOKEN_TYPE);
-            } else if (assertion.getSaml2() != null) {
+            } else {
                 secRefSaml.addTokenType(WSConstants.WSS_SAML2_TOKEN_TYPE);
             }
             secRefSaml.setReference(ref);
         } else {
             Element keyId = doc.createElementNS(WSConstants.WSSE_NS, "wsse:KeyIdentifier");
             String valueType = null;
-            if (assertion.getSaml1() != null) {
+            if (saml1) {
                 valueType = WSConstants.WSS_SAML_KI_VALUE_TYPE;
                 secRefSaml.addTokenType(WSConstants.WSS_SAML_TOKEN_TYPE);
-            } else if (assertion.getSaml2() != null) {
+            } else {
                 valueType = WSConstants.WSS_SAML2_KI_VALUE_TYPE;
                 secRefSaml.addTokenType(WSConstants.WSS_SAML2_TOKEN_TYPE);
             }
             keyId.setAttributeNS(
                 null, "ValueType", valueType
             );
-            keyId.appendChild(doc.createTextNode(assertion.getId()));
+            keyId.appendChild(doc.createTextNode(id));
             Element elem = secRefSaml.getElement();
             elem.appendChild(keyId);
         }
@@ -705,39 +734,44 @@ public abstract class AbstractBindingBuilder {
         
         String userName = (String)message.getContextualProperty(SecurityConstants.USERNAME);
         if (!StringUtils.isEmpty(userName)) {
+            WSSecUsernameToken utBuilder = new WSSecUsernameToken(wssConfig);
             // If NoPassword property is set we don't need to set the password
             if (token.isNoPassword()) {
-                WSSecUsernameToken utBuilder = new WSSecUsernameToken(wssConfig);
                 utBuilder.setUserInfo(userName, null);
                 utBuilder.setPasswordType(null);
-                info.setAsserted(true);
-                return utBuilder;
-            }
-            
-            String password = (String)message.getContextualProperty(SecurityConstants.PASSWORD);
-            if (StringUtils.isEmpty(password)) {
-                password = getPassword(userName, token, WSPasswordCallback.USERNAME_TOKEN);
-            }
-            
-            if (!StringUtils.isEmpty(password)) {
-                //If the password is available then build the token
-                WSSecUsernameToken utBuilder = new WSSecUsernameToken(wssConfig);
-                if (token.isHashPassword()) {
-                    utBuilder.setPasswordType(WSConstants.PASSWORD_DIGEST);  
-                } else {
-                    utBuilder.setPasswordType(WSConstants.PASSWORD_TEXT);
-                }
-                
-                utBuilder.setUserInfo(userName, password);
-                info.setAsserted(true);
-                return utBuilder;
             } else {
-                policyNotAsserted(token, "No username available");
+                String password = (String)message.getContextualProperty(SecurityConstants.PASSWORD);
+                if (StringUtils.isEmpty(password)) {
+                    password = getPassword(userName, token, WSPasswordCallback.USERNAME_TOKEN);
+                }
+            
+                if (!StringUtils.isEmpty(password)) {
+                    // If the password is available then build the token
+                    if (token.isHashPassword()) {
+                        utBuilder.setPasswordType(WSConstants.PASSWORD_DIGEST);  
+                    } else {
+                        utBuilder.setPasswordType(WSConstants.PASSWORD_TEXT);
+                    }
+                    utBuilder.setUserInfo(userName, password);
+                } else {
+                    policyNotAsserted(token, "No password available");
+                    return null;
+                }
             }
+            
+            if (token.isRequireCreated() && !token.isHashPassword()) {
+                utBuilder.addCreated();
+            }
+            if (token.isRequireNonce() && !token.isHashPassword()) {
+                utBuilder.addNonce();
+            }
+            
+            info.setAsserted(true);
+            return utBuilder;
         } else {
             policyNotAsserted(token, "No username available");
+            return null;
         }
-        return null;
     }
     
     protected AssertionWrapper addSamlToken(SamlToken token) throws WSSecurityException {
@@ -1466,19 +1500,33 @@ public abstract class AbstractBindingBuilder {
             SecurityToken securityToken = getSecurityToken();
             String tokenType = securityToken.getTokenType();
             
-            int type = attached ? WSConstants.CUSTOM_SYMM_SIGNING 
-                : WSConstants.CUSTOM_SYMM_SIGNING_DIRECT;
-            if (WSConstants.WSS_SAML_TOKEN_TYPE.equals(tokenType)
-                || WSConstants.SAML_NS.equals(tokenType)) {
-                sig.setCustomTokenValueType(WSConstants.WSS_SAML_KI_VALUE_TYPE);
-                sig.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
-            } else if (WSConstants.WSS_SAML2_TOKEN_TYPE.equals(tokenType)
-                || WSConstants.SAML2_NS.equals(tokenType)) {
-                sig.setCustomTokenValueType(WSConstants.WSS_SAML2_KI_VALUE_TYPE);
+            Element ref;
+            if (attached) {
+                ref = securityToken.getAttachedReference();
+            } else {
+                ref = securityToken.getUnattachedReference();
+            }
+            
+            if (ref != null) {
+                SecurityTokenReference secRef = 
+                    new SecurityTokenReference(cloneElement(ref), false);
+                sig.setSecurityTokenReference(secRef);
                 sig.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
             } else {
-                sig.setCustomTokenValueType(tokenType);
-                sig.setKeyIdentifierType(type);
+                int type = attached ? WSConstants.CUSTOM_SYMM_SIGNING 
+                    : WSConstants.CUSTOM_SYMM_SIGNING_DIRECT;
+                if (WSConstants.WSS_SAML_TOKEN_TYPE.equals(tokenType)
+                    || WSConstants.SAML_NS.equals(tokenType)) {
+                    sig.setCustomTokenValueType(WSConstants.WSS_SAML_KI_VALUE_TYPE);
+                    sig.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
+                } else if (WSConstants.WSS_SAML2_TOKEN_TYPE.equals(tokenType)
+                    || WSConstants.SAML2_NS.equals(tokenType)) {
+                    sig.setCustomTokenValueType(WSConstants.WSS_SAML2_KI_VALUE_TYPE);
+                    sig.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
+                } else {
+                    sig.setCustomTokenValueType(tokenType);
+                    sig.setKeyIdentifierType(type);
+                }
             }
             
             String sigTokId;
@@ -1554,7 +1602,7 @@ public abstract class AbstractBindingBuilder {
                                         boolean isSigProtect) {
         
         for (Map.Entry<Token, Object> ent : tokenMap.entrySet()) {
-            WSSecBase tempTok = (WSSecBase)ent.getValue();
+            Object tempTok = ent.getValue();
             
             List<WSEncryptionPart> sigParts = new ArrayList<WSEncryptionPart>();
             WSEncryptionPart sigPart = new WSEncryptionPart(mainSigId);

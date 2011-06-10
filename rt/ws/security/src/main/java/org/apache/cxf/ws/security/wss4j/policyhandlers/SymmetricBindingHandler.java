@@ -301,8 +301,7 @@ public class SymmetricBindingHandler extends AbstractBindingBuilder {
                 this.addEncryptedKeyElement(sigTokElem);
             } else if (isRequestor() && sigToken instanceof X509Token) {
                 Element el = sigTok.getToken();
-                sigTokElem = (Element)secHeader.getSecurityHeader().getOwnerDocument()
-                        .importNode(el, true);
+                sigTokElem = cloneElement(el);
                 this.addEncryptedKeyElement(sigTokElem);
             } else {
                 tokIncluded = false;
@@ -387,23 +386,20 @@ public class SymmetricBindingHandler extends AbstractBindingBuilder {
             }
 
             if (attached && encrTok.getAttachedReference() != null) {
-                dkEncr.setExternalKey(encrTok.getSecret(),
-                                      (Element)saaj.getSOAPPart()
-                                          .importNode((Element) encrTok.getAttachedReference(),
-                                true));
+                dkEncr.setExternalKey(
+                    encrTok.getSecret(), cloneElement(encrTok.getAttachedReference())
+                );
             } else if (encrTok.getUnattachedReference() != null) {
-                dkEncr.setExternalKey(encrTok.getSecret(), (Element)saaj.getSOAPPart()
-                        .importNode((Element) encrTok.getUnattachedReference(),
-                                true));
-            } else if (!isRequestor()) { 
+                dkEncr.setExternalKey(
+                    encrTok.getSecret(), cloneElement(encrTok.getUnattachedReference())
+                );
+            } else if (!isRequestor() && encrTok.getSHA1() != null) {
                 // If the Encrypted key used to create the derived key is not
                 // attached use key identifier as defined in WSS1.1 section
                 // 7.7 Encrypted Key reference
                 SecurityTokenReference tokenRef = new SecurityTokenReference(saaj.getSOAPPart());
-                if (encrTok.getSHA1() != null) {
-                    tokenRef.setKeyIdentifierEncKeySHA1(encrTok.getSHA1());
-                    tokenRef.addTokenType(WSConstants.WSS_ENC_KEY_VALUE_TYPE);
-                }
+                tokenRef.setKeyIdentifierEncKeySHA1(encrTok.getSHA1());
+                tokenRef.addTokenType(WSConstants.WSS_ENC_KEY_VALUE_TYPE);
                 dkEncr.setExternalKey(encrTok.getSecret(), tokenRef.getElement());
             } else {
                 if (attached) {
@@ -428,7 +424,18 @@ public class SymmetricBindingHandler extends AbstractBindingBuilder {
                 dkEncr.setCustomValueType(WSConstants.SOAPMESSAGE_NS11 + "#"
                         + WSConstants.ENC_KEY_VALUE_TYPE);
             } else {
-                dkEncr.setCustomValueType(encrTok.getTokenType());
+                String tokenType = encrTok.getTokenType();
+                if (WSConstants.WSS_SAML_TOKEN_TYPE.equals(tokenType)
+                    || WSConstants.SAML_NS.equals(tokenType)) {
+                    dkEncr.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
+                    dkEncr.setCustomValueType(WSConstants.WSS_SAML_KI_VALUE_TYPE);
+                } else if (WSConstants.WSS_SAML2_TOKEN_TYPE.equals(tokenType)
+                    || WSConstants.SAML2_NS.equals(tokenType)) {
+                    dkEncr.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
+                    dkEncr.setCustomValueType(WSConstants.WSS_SAML2_KI_VALUE_TYPE);
+                } else {
+                    dkEncr.setCustomValueType(tokenType);
+                }
             }
             
             dkEncr.setSymmetricEncAlgorithm(sbinding.getAlgorithmSuite().getEncryption());
@@ -498,26 +505,38 @@ public class SymmetricBindingHandler extends AbstractBindingBuilder {
                     encr.setEncryptSymmKey(false);
                     encr.setSymmetricEncAlgorithm(algorithmSuite.getEncryption());
                     
-                    if (!isRequestor()) {
+                    if (encrToken instanceof IssuedToken) {
+                        //Setting the AttachedReference or the UnattachedReference according to the flag
+                        Element ref;
+                        if (attached) {
+                            ref = encrTok.getAttachedReference();
+                        } else {
+                            ref = encrTok.getUnattachedReference();
+                        }
+
+                        String tokenType = encrTok.getTokenType();
+                        if (ref != null) {
+                            SecurityTokenReference secRef = 
+                                new SecurityTokenReference(cloneElement(ref), false);
+                            encr.setSecurityTokenReference(secRef);
+                        } else if (WSConstants.WSS_SAML_TOKEN_TYPE.equals(tokenType)
+                            || WSConstants.SAML_NS.equals(tokenType)) {
+                            encr.setCustomReferenceValue(WSConstants.WSS_SAML_KI_VALUE_TYPE);
+                            encr.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
+                        } else if (WSConstants.WSS_SAML2_TOKEN_TYPE.equals(tokenType)
+                            || WSConstants.SAML2_NS.equals(tokenType)) {
+                            encr.setCustomReferenceValue(WSConstants.WSS_SAML2_KI_VALUE_TYPE);
+                            encr.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
+                        } else {
+                            encr.setCustomReferenceValue(tokenType);
+                            encr.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
+                        }
+                    } else if (!isRequestor()) {
                         if (encrTok.getSHA1() != null) {
                             encr.setCustomReferenceValue(encrTok.getSHA1());
                             encr.setKeyIdentifierType(WSConstants.ENCRYPTED_KEY_SHA1_IDENTIFIER);
                         } else {
                             encr.setKeyIdentifierType(WSConstants.EMBED_SECURITY_TOKEN_REF);
-                        }
-                    } else {
-                        if (encrToken instanceof IssuedToken) {
-                            encr.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
-                            String tokenType = encrTok.getTokenType();
-                            if (WSConstants.WSS_SAML_TOKEN_TYPE.equals(tokenType)
-                                || WSConstants.SAML_NS.equals(tokenType)) {
-                                encr.setCustomReferenceValue(WSConstants.WSS_SAML_KI_VALUE_TYPE);
-                            } else if (WSConstants.WSS_SAML2_TOKEN_TYPE.equals(tokenType)
-                                || WSConstants.SAML2_NS.equals(tokenType)) {
-                                encr.setCustomReferenceValue(WSConstants.WSS_SAML2_KI_VALUE_TYPE);
-                            } else {
-                                encr.setCustomReferenceValue(tokenType);
-                            }
                         }
                     }
 
@@ -569,9 +588,8 @@ public class SymmetricBindingHandler extends AbstractBindingBuilder {
         }
         
         if (ref != null) {
-            dkSign.setExternalKey(tok.getSecret(), 
-                                  (Element)saaj.getSOAPPart().importNode(ref, true));
-        } else if (!isRequestor() && policyToken.isDerivedKeys()) { 
+            dkSign.setExternalKey(tok.getSecret(), cloneElement(ref));
+        } else if (!isRequestor() && policyToken.isDerivedKeys() && tok.getSHA1() != null) {            
             // If the Encrypted key used to create the derived key is not
             // attached use key identifier as defined in WSS1.1 section
             // 7.7 Encrypted Key reference
@@ -595,7 +613,18 @@ public class SymmetricBindingHandler extends AbstractBindingBuilder {
             //Set the value type of the reference
             dkSign.setCustomValueType(WSConstants.WSS_ENC_KEY_VALUE_TYPE);
         } else {
-            dkSign.setCustomValueType(tok.getTokenType());
+            String tokenType = tok.getTokenType();
+            if (WSConstants.WSS_SAML_TOKEN_TYPE.equals(tokenType)
+                || WSConstants.SAML_NS.equals(tokenType)) {
+                dkSign.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
+                dkSign.setCustomValueType(WSConstants.WSS_SAML_KI_VALUE_TYPE);
+            } else if (WSConstants.WSS_SAML2_TOKEN_TYPE.equals(tokenType)
+                || WSConstants.SAML2_NS.equals(tokenType)) {
+                dkSign.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
+                dkSign.setCustomValueType(WSConstants.WSS_SAML2_KI_VALUE_TYPE);
+            } else {
+                dkSign.setCustomValueType(tokenType);
+            }
         }
         
         try {
@@ -664,18 +693,33 @@ public class SymmetricBindingHandler extends AbstractBindingBuilder {
                     sig.setKeyIdentifierType(WSConstants.ENCRYPTED_KEY_SHA1_IDENTIFIER);
                 }
             } else {
-                String tokenType = tok.getTokenType();
-                if (WSConstants.WSS_SAML_TOKEN_TYPE.equals(tokenType)
-                    || WSConstants.SAML_NS.equals(tokenType)) {
-                    sig.setCustomTokenValueType(WSConstants.WSS_SAML_KI_VALUE_TYPE);
-                    sig.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
-                } else if (WSConstants.WSS_SAML2_TOKEN_TYPE.equals(tokenType)
-                    || WSConstants.SAML2_NS.equals(tokenType)) {
-                    sig.setCustomTokenValueType(WSConstants.WSS_SAML2_KI_VALUE_TYPE);
+                //Setting the AttachedReference or the UnattachedReference according to the flag
+                Element ref;
+                if (included) {
+                    ref = tok.getAttachedReference();
+                } else {
+                    ref = tok.getUnattachedReference();
+                }
+                
+                if (ref != null) {
+                    SecurityTokenReference secRef = 
+                        new SecurityTokenReference(cloneElement(ref), false);
+                    sig.setSecurityTokenReference(secRef);
                     sig.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
                 } else {
-                    sig.setCustomTokenValueType(tokenType);
-                    sig.setKeyIdentifierType(type);
+                    String tokenType = tok.getTokenType();
+                    if (WSConstants.WSS_SAML_TOKEN_TYPE.equals(tokenType)
+                        || WSConstants.SAML_NS.equals(tokenType)) {
+                        sig.setCustomTokenValueType(WSConstants.WSS_SAML_KI_VALUE_TYPE);
+                        sig.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
+                    } else if (WSConstants.WSS_SAML2_TOKEN_TYPE.equals(tokenType)
+                        || WSConstants.SAML2_NS.equals(tokenType)) {
+                        sig.setCustomTokenValueType(WSConstants.WSS_SAML2_KI_VALUE_TYPE);
+                        sig.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
+                    } else {
+                        sig.setCustomTokenValueType(tokenType);
+                        sig.setKeyIdentifierType(type);
+                    }
                 }
             }
             

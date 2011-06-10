@@ -21,6 +21,7 @@ package org.apache.cxf.jaxrs;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.annotation.PostConstruct;
@@ -62,15 +63,21 @@ import org.apache.cxf.jaxrs.impl.PathSegmentImpl;
 
 public class Customer extends AbstractCustomer implements CustomerInfo {
     
+    public static interface CustomerBeanInterface {
+        
+    }
+    
     @XmlRootElement(name = "CustomerBean")
-    public static class CustomerBean {
+    public static class CustomerBean implements CustomerBeanInterface {
         private String a;
         private Long b;
         private List<String> c;
         private CustomerBean d;
+        private Map<String, List<String>> g;
         //CHECKSTYLE:OFF
         public List<CustomerBean> e;
         //CHECKSTYLE:ON
+        
         public void setA(String aString) {
             this.a = aString;
         }
@@ -94,6 +101,12 @@ public class Customer extends AbstractCustomer implements CustomerInfo {
         }
         public CustomerBean getD() {
             return d;
+        }
+        public void setG(Map<String, List<String>> g) {
+            this.g = g;
+        }
+        public Map<String, List<String>> getG() {
+            return g;
         }
         
     }
@@ -184,6 +197,12 @@ public class Customer extends AbstractCustomer implements CustomerInfo {
                                @XmlJavaTypeAdapter(CustomerBeanAdapter2.class) 
                                CustomerBean cb) {
         
+    }
+    
+    public void testXmlAdapter3(@QueryParam("") 
+                                @XmlJavaTypeAdapter(CustomerBeanAdapter3.class) 
+                                CustomerBeanInterface cb) {
+         
     }
     
     public void testPathBean(@PathParam("") CustomerBean cb) {
@@ -475,4 +494,15 @@ public class Customer extends AbstractCustomer implements CustomerInfo {
         }
         
     }
+    
+    public class CustomerBeanAdapter3 extends XmlAdapter<CustomerBean, CustomerBeanInterface> {
+        public CustomerBean marshal(CustomerBeanInterface v) throws Exception {
+            return null;
+        }
+
+        public CustomerBeanInterface unmarshal(CustomerBean v) throws Exception {
+            return v;
+        }
+    }
+    
 };

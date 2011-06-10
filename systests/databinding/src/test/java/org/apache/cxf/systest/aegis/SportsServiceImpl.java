@@ -21,7 +21,11 @@ package org.apache.cxf.systest.aegis;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
 
 /**
  * 
@@ -46,5 +50,47 @@ public class SportsServiceImpl implements SportsService {
     public BeanWithCharacter getCharBean() {
         return new BeanWithCharacter();
     }
+    
+   
+    public Map<String, Map<Integer, Integer>> testComplexMapResult() {
+        CustomerMap result 
+            = new CustomerMap();
+        Map<Integer, Integer> map1 = new HashMap<Integer, Integer>();
+        map1.put(1, 3);
+        result.put("key1", map1);
+        return result;
 
+    }
+
+   
+    public <T> T getGeneric(Collection<T> collection) {
+        Iterator<T> iter = collection.iterator();
+        
+        T ret = null;
+        if (iter.hasNext()) {
+            ret = iter.next();
+        }
+        return ret;
+    }
+
+    
+    public <T1, T2> Pair<T1, T2> getReturnGenericPair(T1 first, T2 second) {
+        return new Pair<T1, T2>(first, second);
+    }
+
+   
+    public Pair<Integer, String> getReturnQualifiedPair(Integer first, String second) {
+        return new Pair<Integer, String>(first, second);
+    }
+
+    
+    public <T1, T2> int getGenericPair(Pair<T1, T2> pair) {
+        return (Integer) pair.getFirst();
+    }
+
+   
+    public int getQualifiedPair(Pair<Integer, String> pair) {
+        return pair.getFirst();
+    }
+      
 }

@@ -40,8 +40,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -61,6 +63,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.common.WSDLConstants;
 import org.apache.cxf.common.logging.LogUtils;
@@ -70,6 +73,7 @@ import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.common.util.XmlSchemaPrimitiveUtils;
 import org.apache.cxf.common.xmlschema.SchemaCollection;
 import org.apache.cxf.common.xmlschema.XmlSchemaConstants;
+import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.helpers.IOUtils;
@@ -94,7 +98,6 @@ import org.apache.cxf.jaxrs.utils.JAXRSUtils;
 import org.apache.cxf.jaxrs.utils.ResourceUtils;
 import org.apache.cxf.jaxrs.utils.schemas.SchemaHandler;
 import org.apache.cxf.message.Message;
-import org.apache.cxf.message.MessageUtils;
 import org.apache.cxf.service.Service;
 import org.apache.cxf.staxutils.DelegatingXMLStreamWriter;
 import org.apache.cxf.staxutils.StaxUtils;
@@ -118,12 +121,17 @@ public class WadlGenerator implements RequestHandler {
     private boolean useSingleSlashResource;
     private boolean ignoreForwardSlash;
     private boolean addResourceAndMethodIds;
-
+    private boolean ignoreRequests;
+    
     private boolean useJaxbContextForQnames = true;
 
     private List<String> externalSchemasCache;
     private List<URI> externalSchemaLinks;
     private Map<String, List<String>> externalQnamesMap;
+    
+    private ConcurrentHashMap<String, String> schemaLocationMap = 
+        new ConcurrentHashMap<String, String>();
+        
     private ElementQNameResolver resolver;
     private List<String> privateAddresses;
     private String applicationTitle;
@@ -155,13 +163,31 @@ public class WadlGenerator implements RequestHandler {
 
         UriInfo ui = new UriInfoImpl(m);
         if (!ui.getQueryParameters().containsKey(WADL_QUERY)) {
+            if (!schemaLocationMap.isEmpty()) {
+                String path = ui.getPath(false);
+                if (path.startsWith("/") && path.length() > 0) {
+                    path = path.substring(1);
+                }
+                if (schemaLocationMap.containsKey(path)) {
+                    return getExistingSchema(m, ui, path);
+                }
+            }
             return null;
         }
 
-        if (isPrivate(m)) {
-            return Response.status(401).build();
+        if (ignoreRequests) {
+            return Response.status(404).build();
         }
 
+        HttpHeaders headers = new HttpHeadersImpl(m);
+        MediaType type = headers.getAcceptableMediaTypes().contains(MediaType.APPLICATION_XML_TYPE)
+            ? MediaType.APPLICATION_XML_TYPE : WADL_TYPE;
+        
+        Response response = getExistingWadl(m, ui, type);
+        if (response != null) {
+            return response;
+        }
+        
         StringBuilder sbMain = new StringBuilder();
         sbMain.append("<application xmlns=\"").append(getNamespace())
               .append("\" xmlns:xs=\"").append(XmlSchemaConstants.XSD_NAMESPACE_URI).append("\"");
@@ -169,7 +195,7 @@ public class WadlGenerator implements RequestHandler {
         sbGrammars.append("<grammars>");
 
         StringBuilder sbResources = new StringBuilder();
-        sbResources.append("<resources base=\"").append(ui.getBaseUri().toString()).append("\">");
+        sbResources.append("<resources base=\"").append(getBaseURI(ui)).append("\">");
 
         List<ClassResourceInfo> cris = getResourcesList(m, resource);
 
@@ -202,13 +228,13 @@ public class WadlGenerator implements RequestHandler {
         sbMain.append("</application>");
 
         m.getExchange().put(JAXRSUtils.IGNORE_MESSAGE_WRITERS, ignoreMessageWriters);
-
-        HttpHeaders headers = new HttpHeadersImpl(m);
-        MediaType type = headers.getAcceptableMediaTypes().contains(MediaType.APPLICATION_XML_TYPE)
-                      ? MediaType.APPLICATION_XML_TYPE : WADL_TYPE;
         return Response.ok().type(type).entity(sbMain.toString()).build();
     }
 
+    private String getBaseURI(UriInfo ui) {
+        return ui.getBaseUri().toString();
+    }
+    
     private void handleGrammars(StringBuilder sbApp, StringBuilder sbGrammars,
                                 SchemaWriter writer, Map<Class<?>, QName> clsMap) {
         if (writer == null) {
@@ -272,7 +298,8 @@ public class WadlGenerator implements RequestHandler {
                 : jaxbQname.getNamespaceURI();
             String localName = jaxbQname == null ? serviceClass.getSimpleName()
                 : jaxbQname.getLocalPart();
-            sb.append(" id=\"").append("{" + pName + "}" + localName).append("\"");
+            String finalName = jaxbQname == null ? pName + "." : "{" + pName + "}";
+            sb.append(" id=\"").append(finalName + localName).append("\"");
         }
         sb.append(">");
     }
@@ -643,7 +670,82 @@ public class WadlGenerator implements RequestHandler {
         return cri != null ? Collections.singletonList(cri)
                : ((JAXRSServiceImpl)m.getExchange().get(Service.class)).getClassResourceInfos();
     }
+    
+    //TODO: deal with caching later on
+    public Response getExistingWadl(Message m, UriInfo ui, MediaType mt) {
+        Endpoint ep = m.getExchange().get(Endpoint.class);
+        if (ep != null) {
+            String loc = (String)ep.get(JAXRSUtils.DOC_LOCATION);
+            if (loc != null) {
+                try {
+                    InputStream is = ResourceUtils.getResourceStream(loc, (Bus)ep.get(Bus.class.getName()));
+                    if (is != null) {
+                        Element appEl = DOMUtils.readXml(is).getDocumentElement();
+                        
+                        List<Element> grammarEls = DOMUtils.getChildrenWithName(appEl, 
+                                                                                WadlGenerator.WADL_NS, 
+                                                                                "grammars");
+                        if (grammarEls.size() == 1) {
+                            handleSchemaRefs(DOMUtils.getChildrenWithName(grammarEls.get(0), 
+                                WadlGenerator.WADL_NS, "include"), "href", loc, "", ui);
+                        }
+                        
+                        List<Element> resourceEls = DOMUtils.getChildrenWithName(appEl, 
+                                                                                 WadlGenerator.WADL_NS, 
+                                                                                 "resources");
+                        if (resourceEls.size() == 1) {
+                            DOMUtils.setAttribute(resourceEls.get(0), "base", getBaseURI(ui));
+                            return Response.ok().type(mt).entity(new DOMSource(appEl)).build();
+                        }
+                        
+                    }
+                } catch (Exception ex) {
+                    throw new WebApplicationException(ex, 400);
+                }
+            }
+        }
+        return null;
+    }
+    
+    //TODO: deal with caching later on
+    public Response getExistingSchema(Message m, UriInfo ui, String href) {
+        String loc = schemaLocationMap.get(href);
+        Endpoint ep = m.getExchange().get(Endpoint.class);
+        if (ep != null && loc != null) {
+            try {
+                InputStream is = ResourceUtils.getResourceStream(loc, (Bus)ep.get(Bus.class.getName()));
+                if (is != null) {
+                    Element docEl = DOMUtils.readXml(is).getDocumentElement();
+                    handleSchemaRefs(DOMUtils.getChildrenWithName(docEl, 
+                        XmlSchemaConstants.XSD_NAMESPACE_URI, "import"), "schemaLocation", loc, href, ui);
+                    handleSchemaRefs(DOMUtils.getChildrenWithName(docEl, 
+                        XmlSchemaConstants.XSD_NAMESPACE_URI, "include"), "schemaLocation", loc, href, ui);
+                    return Response.ok().type(MediaType.APPLICATION_XML_TYPE).entity(
+                        new DOMSource(docEl)).build();
+                }
+            } catch (Exception ex) {
+                throw new WebApplicationException(ex, 400);
+            }
+            
+        }
+        return null;
+    }
 
+    private void handleSchemaRefs(List<Element> schemaRefEls, String attrName, 
+                                  String parentDocLoc, String parentRef, UriInfo ui) {
+        int index = parentDocLoc.lastIndexOf('/');
+        parentDocLoc = index == -1 ? parentDocLoc : parentDocLoc.substring(0, index + 1);
+        
+        index = parentRef.lastIndexOf('/');
+        parentRef = index == -1 ? "" : parentRef.substring(0, index + 1);    
+        
+        for (Element schemaRefEl : schemaRefEls) {
+            String href = schemaRefEl.getAttribute(attrName);
+            String actualRef = parentRef + href;
+            schemaLocationMap.put(actualRef, parentDocLoc + href);    
+            DOMUtils.setAttribute(schemaRefEl, attrName, getBaseURI(ui) + "/" + actualRef);
+        }
+    }
 
     private void generateQName(StringBuilder sb,
                                ElementQNameResolver qnameResolver,
@@ -934,21 +1036,7 @@ public class WadlGenerator implements RequestHandler {
         for (int i = 0; i < locations.size(); i++) {
             String loc = locations.get(i);
             try {
-                InputStream is = ResourceUtils.getResourceStream(loc, BusFactory.getDefaultBus());
-                if (is == null) {
-                    return;
-                }
-                ByteArrayInputStream bis = IOUtils.loadIntoBAIS(is);
-                XMLSource source = new XMLSource(bis);
-                source.setBuffering(true);
-                String targetNs = source.getValue("/*/@targetNamespace");
-
-                Map<String, String> nsMap =
-                    Collections.singletonMap("xs", XmlSchemaConstants.XSD_NAMESPACE_URI);
-                String[] elementNames = source.getValues("/*/xs:element/@name", nsMap);
-                externalQnamesMap.put(targetNs, Arrays.asList(elementNames));
-                String schemaValue = source.getNode("/xs:schema", nsMap, String.class);
-                externalSchemasCache.add(schemaValue);
+                loadSchemasIntoCache(loc);
             } catch (Exception ex) {
                 LOG.warning("No schema resource " + loc + " can be loaded : " + ex.getMessage());
                 externalSchemasCache = null;
@@ -956,9 +1044,26 @@ public class WadlGenerator implements RequestHandler {
                 return;
             }
         }
-
     }
 
+    private void loadSchemasIntoCache(String loc) throws Exception {
+        InputStream is = ResourceUtils.getResourceStream(loc, BusFactory.getDefaultBus());
+        if (is == null) {
+            return;
+        }
+        ByteArrayInputStream bis = IOUtils.loadIntoBAIS(is);
+        XMLSource source = new XMLSource(bis);
+        source.setBuffering(true);
+        String targetNs = source.getValue("/*/@targetNamespace");
+
+        Map<String, String> nsMap =
+            Collections.singletonMap("xs", XmlSchemaConstants.XSD_NAMESPACE_URI);
+        String[] elementNames = source.getValues("/*/xs:element/@name", nsMap);
+        externalQnamesMap.put(targetNs, Arrays.asList(elementNames));
+        String schemaValue = source.getNode("/xs:schema", nsMap, String.class);
+        externalSchemasCache.add(schemaValue);
+    }
+    
     public void setUseJaxbContextForQnames(boolean checkJaxbOnly) {
         this.useJaxbContextForQnames = checkJaxbOnly;
     }
@@ -1002,7 +1107,13 @@ public class WadlGenerator implements RequestHandler {
         externalSchemaLinks = new LinkedList<URI>();
         for (String s : externalLinks) {
             try {
-                externalSchemaLinks.add(URI.create(s));
+                String href = s;
+                if (href.startsWith("classpath:")) {
+                    int index = href.lastIndexOf('/');
+                    href = index == -1 ? href.substring(9) : href.substring(index + 1);
+                    schemaLocationMap.put(href, s);
+                }
+                externalSchemaLinks.add(URI.create(href));
             } catch (Exception ex) {
                 LOG.warning("Not a valid URI : " + s);
                 externalSchemaLinks = null;
@@ -1027,6 +1138,7 @@ public class WadlGenerator implements RequestHandler {
                 XMLSource source = new XMLSource(new ByteArrayInputStream(s.getBytes()));
                 source.setBuffering(true);
                 Map<String, String> locs = getLocationsMap(source, "import", links, ui);
+                locs.putAll(getLocationsMap(source, "include", links, ui));
                 String actualSchema = !locs.isEmpty() ? transformSchema(s, locs) : s;
                 theSchemas.add(actualSchema);
             }
@@ -1210,10 +1322,6 @@ public class WadlGenerator implements RequestHandler {
         return privateAddresses;
     }
 
-    private boolean isPrivate(Message m) {
-        return MessageUtils.isTrue(m.getContextualProperty("org.apache.cxf.endpoint.private"));
-    }
-
     public void setAddResourceAndMethodIds(boolean addResourceAndMethodIds) {
         this.addResourceAndMethodIds = addResourceAndMethodIds;
     }
@@ -1233,6 +1341,10 @@ public class WadlGenerator implements RequestHandler {
 
     public void setIgnoreForwardSlash(boolean ignoreForwardSlash) {
         this.ignoreForwardSlash = ignoreForwardSlash;
+    }
+
+    public void setIgnoreRequests(boolean ignoreRequests) {
+        this.ignoreRequests = ignoreRequests;
     }
 
     private static class SchemaConverter extends DelegatingXMLStreamWriter {

@@ -28,22 +28,30 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.core.Response;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.FileRequestEntity;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.RequestEntity;
+import org.apache.cxf.common.xmlschema.XmlSchemaConstants;
+import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactory;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.jaxrs.ext.xml.XMLSource;
+import org.apache.cxf.jaxrs.model.wadl.WadlGenerator;
 import org.apache.cxf.jaxrs.provider.AegisElementProvider;
+import org.apache.cxf.jaxrs.provider.JAXBElementProvider;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 
 import org.junit.BeforeClass;
@@ -67,6 +75,88 @@ public class JAXRSClientServerSpringBookTest extends AbstractBusClientServerTest
         assertEquals(new Long(1), id);
         Book book = wc.accept("application/xml").query("id", 1L).get(Book.class);
         assertEquals("CXF", book.getName());
+    }
+    
+    @Test
+    public void testPostGeneratedBook() throws Exception {
+        String baseAddress = "http://localhost:" + PORT + "/the/generated/bookstore/books/1";
+        JAXBElementProvider provider = new JAXBElementProvider();
+        provider.setJaxbElementClassMap(Collections.singletonMap(
+                                          "org.apache.cxf.systest.jaxrs.codegen.schema.Book", 
+                                          "{http://superbooks}thebook"));
+        
+        WebClient wc = WebClient.create(baseAddress,
+                                        Collections.singletonList(provider));
+        wc.type("application/xml");
+        
+        org.apache.cxf.systest.jaxrs.codegen.schema.Book book = 
+            new org.apache.cxf.systest.jaxrs.codegen.schema.Book();
+        book.setId(123);
+        Response r = wc.post(book);
+        assertEquals(204, r.getStatus());
+    }
+    
+    @Test
+    public void testGetWadlFromWadlLocation() throws Exception {
+        String address = "http://localhost:" + PORT + "/the/generated";    
+        checkWadlResourcesInfo(address, address + "/bookstore", "/schemas/book.xsd", 1);
+    
+        checkSchemas(address, "/schemas/book.xsd", "/schemas/chapter.xsd", "include");
+        checkSchemas(address, "/schemas/chapter.xsd", null, null);
+    }
+    
+    @Test
+    public void testGetGeneratedWadlWithExternalSchemas() throws Exception {
+        String address = "http://localhost:" + PORT + "/the/bookstore";    
+        checkWadlResourcesInfo(address, address, "/book.xsd", 1);
+    
+        checkSchemas(address, "/book.xsd", "/bookid.xsd", "import");
+        checkSchemas(address, "/bookid.xsd", null, null);
+    }
+    
+    private void checkSchemas(String address, String schemaSegment, 
+                              String includedSchema,
+                              String refAttrName) throws Exception {
+        WebClient client = WebClient.create(address + schemaSegment);
+        WebClient.getConfig(client).getHttpConduit().getClient().setReceiveTimeout(10000000L);
+        Document doc = DOMUtils.readXml(new InputStreamReader(client.get(InputStream.class), "UTF-8"));
+        Element root = doc.getDocumentElement();
+        assertEquals(XmlSchemaConstants.XSD_NAMESPACE_URI, root.getNamespaceURI());
+        assertEquals("schema", root.getLocalName());
+        if (includedSchema != null) {
+            List<Element> includeEls = DOMUtils.getChildrenWithName(root, 
+                         XmlSchemaConstants.XSD_NAMESPACE_URI, refAttrName);
+            assertEquals(1, includeEls.size());
+            String href = includeEls.get(0).getAttribute("schemaLocation");
+            assertEquals(address + includedSchema, href);
+        }
+        
+    }
+    
+    private void checkWadlResourcesInfo(String baseURI, String requestURI, 
+                                        String schemaRef, int size) throws Exception {
+        WebClient client = WebClient.create(requestURI + "?_wadl&_type=xml");
+        Document doc = DOMUtils.readXml(new InputStreamReader(client.get(InputStream.class), "UTF-8"));
+        Element root = doc.getDocumentElement();
+        assertEquals(WadlGenerator.WADL_NS, root.getNamespaceURI());
+        assertEquals("application", root.getLocalName());
+        List<Element> grammarEls = DOMUtils.getChildrenWithName(root, 
+                                                                  WadlGenerator.WADL_NS, "grammars");
+        assertEquals(1, grammarEls.size());
+        List<Element> includeEls = DOMUtils.getChildrenWithName(grammarEls.get(0), 
+                                                                WadlGenerator.WADL_NS, "include");
+        assertEquals(1, includeEls.size());
+        String href = includeEls.get(0).getAttribute("href");
+        assertEquals(baseURI + schemaRef, href);
+        List<Element> resourcesEls = DOMUtils.getChildrenWithName(root, 
+                                                                  WadlGenerator.WADL_NS, "resources");
+        assertEquals(1, resourcesEls.size());
+        Element resourcesEl =  resourcesEls.get(0);
+        assertEquals(baseURI, resourcesEl.getAttribute("base"));
+        List<Element> resourceEls = 
+            DOMUtils.getChildrenWithName(resourcesEl, 
+                                         WadlGenerator.WADL_NS, "resource");
+        assertEquals(size, resourceEls.size());
     }
     
     @Test

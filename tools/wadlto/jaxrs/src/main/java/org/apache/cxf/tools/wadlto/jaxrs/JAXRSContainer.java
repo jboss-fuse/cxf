@@ -22,7 +22,11 @@ package org.apache.cxf.tools.wadlto.jaxrs;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import org.xml.sax.InputSource;
 
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.jaxrs.ext.codegen.SourceGenerator;
@@ -34,6 +38,7 @@ import org.apache.cxf.tools.common.toolspec.parser.BadUsageException;
 import org.apache.cxf.tools.util.ClassCollector;
 import org.apache.cxf.tools.util.URIParserUtil;
 import org.apache.cxf.tools.wadlto.WadlToolConstants;
+import org.apache.cxf.tools.wadlto.jaxb.CustomizationParser;
 
 public class JAXRSContainer extends AbstractCXFToolContainer {
     
@@ -75,11 +80,17 @@ public class JAXRSContainer extends AbstractCXFToolContainer {
 
     public void buildToolContext() {
         getContext();
+        context.addParameters(getParametersMap(getArrayKeys()));
         if (context.get(WadlToolConstants.CFG_OUTPUTDIR) == null) {
             context.put(WadlToolConstants.CFG_OUTPUTDIR, ".");
         }
+        setPackageAndNamespaces();
     }
 
+    public Set<String> getArrayKeys() {
+        return new HashSet<String>();
+    }
+    
     private void processWadl() {
         File outDir = new File((String)context.get(WadlToolConstants.CFG_OUTPUTDIR));
         String wadlURL = getAbsoluteWadlURL();
@@ -88,20 +99,28 @@ public class JAXRSContainer extends AbstractCXFToolContainer {
         
         SourceGenerator sg = new SourceGenerator();
         sg.setBus(getBus());
-        boolean isInterface = context.optionSet(WadlToolConstants.CFG_INTERFACE);
-        boolean isServer = context.optionSet(WadlToolConstants.CFG_SERVER);
-        if (isServer) {
-            sg.setGenerateInterfaces(isInterface);
-            sg.setGenerateImplementation(true);
+
+        boolean generateImpl = context.optionSet(WadlToolConstants.CFG_IMPL);
+        sg.setGenerateImplementation(generateImpl);
+        if (generateImpl) {
+            sg.setGenerateInterfaces(context.optionSet(WadlToolConstants.CFG_INTERFACE));
         }
         sg.setPackageName((String)context.get(WadlToolConstants.CFG_PACKAGENAME));
         sg.setResourceName((String)context.get(WadlToolConstants.CFG_RESOURCENAME));
 
-        // find the base path
-        int lastSep = wadlURL.lastIndexOf("/");
-        if (lastSep != -1) {
-            sg.setBaseWadlPath(wadlURL.substring(0, lastSep + 1));
-        }
+        // set the base path
+        sg.setWadlPath(wadlURL);
+                
+        CustomizationParser parser = new CustomizationParser(context);
+        parser.parse(context);
+        
+        List<InputSource> bindingFiles = parser.getJaxbBindings();
+        sg.setBindingFiles(bindingFiles);
+        
+        List<InputSource> schemaPackageFiles = parser.getSchemaPackageFiles();
+        sg.setSchemaPackageFiles(schemaPackageFiles);
+        sg.setSchemaPackageMap(context.getNamespacePackageMap());
+        // sg.setSchemaPackageName((String)context.get(WadlToolConstants.CFG_TOOLS_PACKAGENAME)));
         
         // generate
         String codeType = context.optionSet(WadlToolConstants.CFG_TYPES)
@@ -144,6 +163,34 @@ public class JAXRSContainer extends AbstractCXFToolContainer {
     
     protected String getAbsoluteWadlURL() {
         String wadlURL = (String)context.get(WadlToolConstants.CFG_WADLURL);
-        return URIParserUtil.getAbsoluteURI(wadlURL);
+        String absoluteWadlURL = URIParserUtil.getAbsoluteURI(wadlURL);
+        context.put(WadlToolConstants.CFG_WADLURL, absoluteWadlURL);
+        return absoluteWadlURL;
     }
+    
+    //TODO: this belongs to JAXB Databinding, should we just reuse 
+    // org.apache.cxf.tools.wsdlto.databinding.jaxb ?
+    private void setPackageAndNamespaces() {
+        String[] schemaPackageNamespaces = new String[]{};
+        Object value = context.get(WadlToolConstants.CFG_SCHEMA_PACKAGENAME);
+        if (value != null) {
+            schemaPackageNamespaces = value instanceof String ? new String[]{(String)value}
+                                                   : (String[])value;
+        }
+        for (int i = 0; i < schemaPackageNamespaces.length; i++) {
+            int pos = schemaPackageNamespaces[i].indexOf("=");
+            String packagename = schemaPackageNamespaces[i];
+            if (pos != -1) {
+                String ns = schemaPackageNamespaces[i].substring(0, pos);
+                packagename = schemaPackageNamespaces[i].substring(pos + 1);
+                context.addNamespacePackageMap(ns, packagename);
+            } else {
+                // this is the default schema package name
+                // if CFG_PACKAGENAME is set then it's only used for JAX-RS resource 
+                // classes
+                context.put(WadlToolConstants.CFG_SCHEMA_PACKAGENAME, packagename);
+            }
+        }
+        
+    }    
 }

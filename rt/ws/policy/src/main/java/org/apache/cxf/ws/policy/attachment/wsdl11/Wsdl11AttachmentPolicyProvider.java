@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.logging.Logger;
 
 import javax.wsdl.Definition;
 import javax.wsdl.extensions.ExtensibilityElement;
@@ -31,6 +32,8 @@ import javax.xml.namespace.QName;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.common.injection.NoJSR250Annotations;
+import org.apache.cxf.common.logging.LogUtils;
+import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.service.model.AbstractDescriptionElement;
 import org.apache.cxf.service.model.BindingFaultInfo;
@@ -42,6 +45,7 @@ import org.apache.cxf.service.model.Extensible;
 import org.apache.cxf.service.model.FaultInfo;
 import org.apache.cxf.service.model.MessageInfo;
 import org.apache.cxf.service.model.ServiceInfo;
+import org.apache.cxf.ws.policy.PolicyConstants;
 import org.apache.cxf.ws.policy.PolicyProvider;
 import org.apache.cxf.ws.policy.attachment.AbstractPolicyProvider;
 import org.apache.cxf.ws.policy.attachment.reference.LocalServiceModelReferenceResolver;
@@ -59,6 +63,7 @@ import org.apache.neethi.PolicyReference;
 @NoJSR250Annotations
 public class Wsdl11AttachmentPolicyProvider extends AbstractPolicyProvider 
     implements PolicyProvider {
+    private static final Logger LOG = LogUtils.getL7dLogger(Wsdl11AttachmentPolicyProvider.class);
 
     public Wsdl11AttachmentPolicyProvider() {
         this(null);
@@ -169,14 +174,41 @@ public class Wsdl11AttachmentPolicyProvider extends AbstractPolicyProvider
         if (null == ex || null == di) {
             return null;
         }
+        
+        if (di.getProperty("registeredPolicy") == null) {
+            List<UnknownExtensibilityElement> diext = 
+                di.getExtensors(UnknownExtensibilityElement.class);
+            if (diext != null) {
+                for (UnknownExtensibilityElement e : diext) {
+                    String uri = e.getElement().getAttributeNS(PolicyConstants.WSU_NAMESPACE_URI,
+                                                  PolicyConstants.WSU_ID_ATTR_NAME);
+                    
+                    if (Constants.isPolicyElement(e.getElementType())
+                        && !StringUtils.isEmpty(uri)) {
+                        try {
+                            Policy policy = builder.getPolicy(e.getElement());
+                            String fragement = "#" + uri;
+                            registry.register(fragement, policy);
+                            registry.register(di.getBaseURI() + fragement, policy);
+                        } catch (Exception policyEx) {
+                            //ignore the policy can not be built
+                            LOG.warning("Failed to build the policy '" + uri + "':" + policyEx.getMessage());
+                        }
+                    }
+                }
+            }
+            di.setProperty("registeredPolicy", true);
+        }
+        
         Policy elementPolicy = null;
         List<UnknownExtensibilityElement> extensions = 
             ex.getExtensors(UnknownExtensibilityElement.class);
+        
         if (null != extensions) {
             for (UnknownExtensibilityElement e : extensions) {
                 Policy p = null;
                 if (Constants.isPolicyElement(e.getElementType())) {
-                    p = builder.getPolicy(e.getElement());                    
+                    p = builder.getPolicy(e.getElement());
 
                 } else if (Constants.isPolicyRef(e.getElementType())) {
                     PolicyReference ref = builder.getPolicyReference(e.getElement());
@@ -242,6 +274,7 @@ public class Wsdl11AttachmentPolicyProvider extends AbstractPolicyProvider
         if (null != resolved) {
             return resolved;
         }
+        
         ReferenceResolver resolver = new LocalServiceModelReferenceResolver(di, builder);
         resolved = resolver.resolveReference(uri);
         if (null != resolved) {

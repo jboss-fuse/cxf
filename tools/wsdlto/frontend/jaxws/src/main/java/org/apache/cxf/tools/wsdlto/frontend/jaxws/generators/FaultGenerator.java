@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.cxf.tools.wsdlto.frontend.jaxws.generators;
 
 import java.text.SimpleDateFormat;
@@ -81,10 +80,29 @@ public class FaultGenerator extends AbstractJAXWSGenerator {
                     exceptionClasses.get(expClassName);
     
                 clearAttributes();
-                if (penv.containsKey(ToolConstants.CFG_USE_FQCN_FAULT_SERIAL_VERSION_UID)) {
-                    setAttributes("suid", generateHashSUID(expClz.getFullClassName()));
+                
+                if (penv.containsKey(ToolConstants.CFG_FAULT_SERIAL_VERSION_UID)) {
+                    String faultSerialVersionUID 
+                        = penv.get(ToolConstants.CFG_FAULT_SERIAL_VERSION_UID).toString();
+                    setAttributes("faultSerialVersionUID", faultSerialVersionUID);
+                    if ("FQCN".equalsIgnoreCase(faultSerialVersionUID)) {
+                        setAttributes("suid", generateHashSUID(expClz.getFullClassName()));
+                    } else if ("TIMESTAMP".equalsIgnoreCase(faultSerialVersionUID)) {
+                        setAttributes("suid", generateTimestampSUID());
+                    } else if ("NONE".equalsIgnoreCase(faultSerialVersionUID)) {
+                        //nothing
+                        setAttributes("suid", "");
+                    } else {
+                        //do a quick Parse to make sure it looks like a Long
+                        try {
+                            Long.parseLong(faultSerialVersionUID);
+                        } catch (NumberFormatException nfe) {
+                            throw new ToolException(nfe);
+                        }
+                        setAttributes("suid", faultSerialVersionUID);
+                    }
                 } else {
-                    setAttributes("suid", generateTimestampSUID());
+                    setAttributes("suid", "");
                 }
                 setAttributes("expClass", expClz);
                 String exceptionSuperclass = "Exception";

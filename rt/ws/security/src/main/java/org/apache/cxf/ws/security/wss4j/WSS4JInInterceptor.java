@@ -60,6 +60,7 @@ import org.apache.cxf.staxutils.StaxUtils;
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.cxf.ws.security.tokenstore.SecurityToken;
 import org.apache.cxf.ws.security.tokenstore.TokenStore;
+import org.apache.ws.security.CustomTokenPrincipal;
 import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSDerivedKeyTokenPrincipal;
 import org.apache.ws.security.WSPasswordCallback;
@@ -157,7 +158,7 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
         
         // handle the special case of the SEND_SIGV
         if (result == null 
-            && key == WSHandlerConstants.SEND_SIGV
+            && WSHandlerConstants.SEND_SIGV.equals(key)
             && this.isRequestor((SoapMessage)msgContext)) {
             result = ((SoapMessage)msgContext).getExchange().getOutMessage().get(key);
         }               
@@ -422,11 +423,11 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
      */
     protected boolean isSecurityContextPrincipal(Principal p, List<WSSecurityEngineResult> wsResult) {
         boolean derivedKeyPrincipal = p instanceof WSDerivedKeyTokenPrincipal;
-        if (derivedKeyPrincipal) {
-            // If it is a derived key principal then let it be a SecurityContext
-            // principal only if no other principals are available.
-            // The derived key principal will still be visible to
-            // custom interceptors as part of the WSHandlerConstants.RECV_RESULTS value
+        if (derivedKeyPrincipal || p instanceof CustomTokenPrincipal) {
+            // If it is a derived key principal or a Custom Token Principal then let it 
+            // be a SecurityContext principal only if no other principals are available.
+            // The principal will still be visible to custom interceptors as part of the 
+            // WSHandlerConstants.RECV_RESULTS value
             return wsResult.size() > 1 ? false : true;
         } else {
             return true;
@@ -553,7 +554,7 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
                         TokenStore store = (TokenStore)ep.getEndpointInfo()
                             .getProperty(TokenStore.class.getName());
                         if (store != null) {
-                            return new TokenStoreCallbackHandler(cbHandler, store);
+                            return new TokenStoreCallbackHandler(null, store);
                         }
                     }                    
                     throw sec;
@@ -616,7 +617,7 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
             } else if (val instanceof Validator) {
                 config.setValidator(key, (Validator)val);
             } else if (val == null) {
-                config.setProcessor(key, (Class<?>)val);
+                config.setProcessor(key, (Class<?>)null);
             }
         }
         final WSSecurityEngine ret = new WSSecurityEngine();

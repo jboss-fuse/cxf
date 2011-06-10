@@ -132,15 +132,15 @@ public class JAXBElementProvider extends AbstractJAXBProvider  {
             checkContentLength();
             
             boolean isCollection = InjectionUtils.isSupportedCollectionOrArray(type);
-            Class<?> theType = isCollection ? InjectionUtils.getActualType(genericType) : type;
-            theType = getActualType(theType, genericType, anns);
+            Class<?> theGenericType = isCollection ? InjectionUtils.getActualType(genericType) : type;
+            Class<?> theType = getActualType(theGenericType, genericType, anns);
 
             Unmarshaller unmarshaller = createUnmarshaller(theType, genericType, isCollection);
             addAttachmentUnmarshaller(unmarshaller);
             Object response = null;
             if (JAXBElement.class.isAssignableFrom(type) 
-                || unmarshalAsJaxbElement 
-                || jaxbElementClassMap != null && jaxbElementClassMap.containsKey(theType.getName())) {
+                || !isCollection && (unmarshalAsJaxbElement  
+                || jaxbElementClassMap != null && jaxbElementClassMap.containsKey(theType.getName()))) {
                 XMLStreamReader reader = getStreamReader(is, type, mt);
                 response = unmarshaller.unmarshal(
                      TransformUtils.createNewReaderIfNeeded(reader, is), 
@@ -153,7 +153,7 @@ public class JAXBElementProvider extends AbstractJAXBProvider  {
             }
             if (isCollection) {
                 response = ((CollectionWrapper)response).getCollectionOrArray(theType, type, 
-                                                         getAdapter(theType, anns)); 
+                                 org.apache.cxf.jaxrs.utils.JAXBUtils.getAdapter(theGenericType, anns)); 
             } else {
                 response = checkAdapter(response, type, anns, false);
             }
@@ -284,7 +284,8 @@ public class JAXBElementProvider extends AbstractJAXBProvider  {
         }
         os.write(startTag.getBytes());
         if (firstObj != null) {
-            XmlJavaTypeAdapter adapter = getAdapter(firstObj.getClass(), anns);
+            XmlJavaTypeAdapter adapter = 
+                org.apache.cxf.jaxrs.utils.JAXBUtils.getAdapter(firstObj.getClass(), anns);
             marshalCollectionMember(JAXBUtils.useAdapter(firstObj, adapter, true), 
                                     actualClass, genericType, encoding, os, m, 
                                     qname.getNamespaceURI());
@@ -399,13 +400,8 @@ public class JAXBElementProvider extends AbstractJAXBProvider  {
                 }
                 mc.put(XMLStreamWriter.class.getName(), writer);    
             }
-                
             marshalToWriter(ms, obj, writer, mt);
-            if (mc != null && mc.getContent(XMLStreamWriter.class) != null) {
-                writer.writeEndDocument();
-                writer.flush();
-                writer.close();
-            }
+            writer.writeEndDocument();
         } else {
             marshalToOutputStream(ms, obj, os, mt);
         }

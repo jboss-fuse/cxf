@@ -24,8 +24,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -52,6 +52,8 @@ import org.apache.cxf.common.i18n.BundleUtils;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.endpoint.ConduitSelector;
 import org.apache.cxf.endpoint.Endpoint;
+import org.apache.cxf.endpoint.Retryable;
+import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.interceptor.Interceptor;
 import org.apache.cxf.jaxrs.impl.MetadataMap;
@@ -64,22 +66,26 @@ import org.apache.cxf.jaxrs.utils.InjectionUtils;
 import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.ExchangeImpl;
 import org.apache.cxf.message.Message;
-import org.apache.cxf.message.MessageImpl;
+import org.apache.cxf.message.MessageContentsList;
 import org.apache.cxf.phase.PhaseChainCache;
 import org.apache.cxf.phase.PhaseInterceptorChain;
 import org.apache.cxf.phase.PhaseManager;
 import org.apache.cxf.service.Service;
+import org.apache.cxf.service.model.BindingOperationInfo;
 import org.apache.cxf.transport.MessageObserver;
+import org.apache.cxf.transport.http.HTTPConduit;
 
 /**
  * Common proxy and http-centric client implementation
  *
  */
-public class AbstractClient implements Client {
+public abstract class AbstractClient implements Client, Retryable {
+    protected static final String REQUEST_CONTEXT = "RequestContext";
+    protected static final String RESPONSE_CONTEXT = "ResponseContext";
+    protected static final String KEEP_CONDUIT_ALIVE = "KeepConduitAlive";
+    
     private static final Logger LOG = LogUtils.getL7dLogger(AbstractClient.class);
     private static final ResourceBundle BUNDLE = BundleUtils.getBundle(AbstractClient.class);
-    private static final String REQUEST_CONTEXT = "RequestContext";
-    private static final String RESPONSE_CONTEXT = "ResponseContext";
     
     protected ClientConfiguration cfg = new ClientConfiguration();
     private ClientState state;
@@ -307,27 +313,15 @@ public class AbstractClient implements Client {
         return null;
     }
     
-    protected ResponseBuilder setResponseBuilder(HttpURLConnection conn, Exchange exchange) throws Throwable {
-        Message inMessage = exchange.getInMessage();
+    protected ResponseBuilder setResponseBuilder(Message outMessage, Exchange exchange) throws Exception {
+        HttpURLConnection conn = (HttpURLConnection)outMessage.get(HTTPConduit.KEY_HTTP_CONNECTION);
+        
         if (conn == null) {
-            // unlikely to occur
             throw new ClientWebApplicationException("HTTP Connection is null"); 
         }
-        Integer responseCode = (Integer)exchange.get(Message.RESPONSE_CODE);
-        if (responseCode == null) {
-            //Invocation was never made to server, something stopped the outbound 
-            //interceptor chain, we dont have a response code.
-            //Do not call conn.getResponseCode() as that will
-            //result in a call to the server when we have already decided not to.
-            //Throw an exception if we have one
-            Exception ex = exchange.getOutMessage().getContent(Exception.class);
-            if (ex != null) {
-                throw ex; 
-            } else {
-                throw new RuntimeException("Unknown client side exception");
-            }
-        } 
-        int status = responseCode.intValue();
+        checkClientException(exchange.getOutMessage(), exchange.getOutMessage().getContent(Exception.class));
+        
+        int status = (Integer)exchange.get(Message.RESPONSE_CODE);
         ResponseBuilder currentResponseBuilder = Response.status(status);
         
         for (Map.Entry<String, List<String>> entry : conn.getHeaderFields().entrySet()) {
@@ -340,9 +334,18 @@ public class AbstractClient implements Client {
                     continue;                    
                 }
                 for (String val : entry.getValue()) {
-                    boolean splitPossible = !(HttpHeaders.SET_COOKIE.equalsIgnoreCase(entry.getKey())
-                        && val.toUpperCase().contains(HttpHeaders.EXPIRES.toUpperCase()));
-                    String[] values = splitPossible ? val.split(",") : new String[]{val};
+                    String[] values;
+                    if (val == null || val.length() == 0) {
+                        values = new String[]{""};
+                    } else if (val.charAt(0) == '"' && val.charAt(val.length() - 1) == '"') {
+                        // if the value starts with a quote and ends with a quote, we do a best
+                        // effort attempt to determine what the individual values are.
+                        values = parseQuotedHeaderValue(val);
+                    } else {
+                        boolean splitPossible = !(HttpHeaders.SET_COOKIE.equalsIgnoreCase(entry.getKey())
+                            && val.toUpperCase().contains(HttpHeaders.EXPIRES.toUpperCase()));
+                        values = splitPossible ? val.split(",") : new String[]{val};
+                    }
                     for (String s : values) {
                         String theValue = s.trim();
                         if (theValue.length() > 0) {
@@ -353,6 +356,8 @@ public class AbstractClient implements Client {
             }
         }
         InputStream mStream = null;
+        
+        Message inMessage = exchange.getInMessage();
         if (inMessage != null) {
             mStream = inMessage.getContent(InputStream.class);
         }
@@ -440,6 +445,99 @@ public class AbstractClient implements Client {
         return null;                                                
     }
     
+    protected void completeExchange(Object response, Exchange exchange) {
+        // higher level conduits such as FailoverTargetSelector need to
+        // clear the request state but a fair number of response objects 
+        // depend on InputStream being still open thus lower-level conduits
+        // operating on InputStream don't have to close streams pro-actively
+        exchange.put(KEEP_CONDUIT_ALIVE, true);    
+        getConfiguration().getConduitSelector().complete(exchange);
+    }
+    
+    protected Object[] preProcessResult(Message message) throws Exception {
+        
+        Exchange exchange = message.getExchange(); 
+      
+        Exception ex = null;
+        // Check to see if there is a Fault from the outgoing chain if it's an out Message
+        if (!message.get(Message.INBOUND_MESSAGE).equals(Boolean.TRUE)) {
+            ex = message.getContent(Exception.class);
+        }
+        if (ex != null) {
+            getConfiguration().getConduitSelector().complete(exchange);
+            checkClientException(message, message.getContent(Exception.class));
+        }
+        checkClientException(message, message.getExchange().get(Exception.class));
+        
+        List result = message.getExchange().get(List.class);
+        return result != null ? result.toArray() : null;
+    }
+    
+    protected void checkClientException(Message message, Exception ex) throws Exception {
+        if (message.getExchange().get(Message.RESPONSE_CODE) == null) {
+            if (ex instanceof ClientWebApplicationException) {
+                throw ex;
+            } else if (ex != null) {
+                throw new ClientWebApplicationException(ex);
+            } else {
+                throw new ClientWebApplicationException();
+            }
+        }
+    }
+    
+    protected URI calculateNewRequestURI(Map<String, Object> reqContext) {
+        URI newBaseURI = URI.create(reqContext.get(Message.ENDPOINT_ADDRESS).toString());
+        URI requestURI = URI.create(reqContext.get(Message.REQUEST_URI).toString());
+        return calculateNewRequestURI(newBaseURI, requestURI);
+    }
+    
+    private URI calculateNewRequestURI(URI newBaseURI, URI requestURI) {
+        String baseURIPath = newBaseURI.getRawPath();
+        String reqURIPath = requestURI.getRawPath();
+        
+        UriBuilder builder = UriBuilder.fromUri(newBaseURI);
+        String basePath = reqURIPath.startsWith(baseURIPath) ? baseURIPath : getBaseURI().getRawPath(); 
+        builder.path(reqURIPath.equals(basePath) ? "" : reqURIPath.substring(basePath.length()));
+        URI newRequestURI = builder.replaceQuery(requestURI.getRawQuery()).build();
+        
+        resetBaseAddress(newBaseURI);
+        resetCurrentBuilder(newRequestURI);
+        
+        return newRequestURI;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public Object[] invoke(BindingOperationInfo oi, Object[] params, Map<String, Object> context,
+                           Exchange exchange) throws Exception {
+        
+        try {
+            Object body = params.length == 0 ? null : params[0];
+            Map<String, Object> reqContext = CastUtils.cast((Map)context.get(REQUEST_CONTEXT));
+            MultivaluedMap<String, String> headers = 
+                (MultivaluedMap<String, String>)reqContext.get(Message.PROTOCOL_HEADERS);
+                        
+            URI newRequestURI = calculateNewRequestURI(reqContext);
+            // TODO: if failover conduit selector fails to find a failover target
+            // then it will revert to the previous endpoint; that is not very likely
+            // but possible - thus ideally we need to resert base and current URI only
+            // if we get the same ConduitInitiatior endpoint instance before and after
+            // retryInvoke.
+            Object response = retryInvoke(newRequestURI, headers, body, exchange, context);
+            exchange.put(List.class, getContentsList(response));
+            return new Object[]{response};
+        } catch (Throwable t) {
+            Exception ex = t instanceof Exception ? (Exception)t : new Exception(t);
+            exchange.put(Exception.class, ex);
+            return null;
+        }
+    }
+    
+    protected abstract Object retryInvoke(URI newRequestURI, 
+                                 MultivaluedMap<String, String> headers,
+                                 Object body,
+                                 Exchange exchange, 
+                                 Map<String, Object> invContext) throws Throwable;
+    
     // TODO : shall we just do the reflective invocation here ?
     protected static void addParametersToBuilder(UriBuilder ub, String paramName, Object pValue,
                                                  ParameterType pt) {
@@ -499,18 +597,6 @@ public class AbstractClient implements Client {
         return MediaType.WILDCARD_TYPE;
     }
     
-    protected static HttpURLConnection createHttpConnection(URI uri, String methodName) {
-        try {
-            URL url = uri.toURL();
-            HttpURLConnection connect = (HttpURLConnection)url.openConnection();
-            connect.setDoOutput(true);
-            connect.setRequestMethod(methodName);
-            return connect;
-        } catch (Exception ex) {
-            throw new ClientWebApplicationException("REMOTE_CONNECTION_PROBLEM", ex, null);
-        }
-    }
-    
     protected static void setAllHeaders(MultivaluedMap<String, String> headers, HttpURLConnection conn) {
         for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
             StringBuilder b = new StringBuilder();    
@@ -524,7 +610,58 @@ public class AbstractClient implements Client {
             conn.setRequestProperty(entry.getKey(), b.toString());
         }
     }
-    
+
+    protected String[] parseQuotedHeaderValue(String originalValue) {
+        // this algorithm isn't perfect; see CXF-3518 for further discussion.
+        List<String> results = new ArrayList<String>();
+        char[] chars = originalValue.toCharArray();
+
+        int lastIndex = chars.length - 1;
+
+        boolean quote = false;
+        StringBuilder sb = new StringBuilder();
+
+        for (int pos = 0; pos <= lastIndex; pos++) {
+            char c = chars[pos];
+            if (pos == lastIndex) {
+                sb.append(c);
+                results.add(sb.toString());
+            } else {
+                switch(c) {
+                case '\"':
+                    sb.append(c);
+                    quote = !quote;
+                    break;
+                case '\\':
+                    if (quote) {
+                        pos++;
+                        if (pos <= lastIndex) {
+                            c = chars[pos];
+                            sb.append(c);
+                        }
+                        if (pos == lastIndex) {
+                            results.add(sb.toString());
+                        }
+                    } else {
+                        sb.append(c);
+                    }
+                    break;
+                case ',':
+                    if (quote) {
+                        sb.append(c);
+                    } else {
+                        results.add(sb.toString());
+                        sb = new StringBuilder();
+                    }
+                    break;
+                default:
+                    sb.append(c);
+                }
+            }
+        }
+        return results.toArray(new String[results.size()]);
+    }
+
     protected ClientConfiguration getConfiguration() {
         return cfg;
     }
@@ -533,13 +670,29 @@ public class AbstractClient implements Client {
         cfg = config;
     }
     
-    protected void prepareConduitSelector(Message message) {
+    // Note that some conduit selectors may update Message.ENDPOINT_ADDRESS
+    // after the conduit selector has been prepared but before the actual 
+    // invocation thus it is also important to have baseURI and currentURI 
+    // synched up with the latest endpoint address, after a successful proxy 
+    // or web client invocation has returned
+    protected void prepareConduitSelector(Message message, URI currentURI) {
         try {
             cfg.prepareConduitSelector(message);
+            
         } catch (Fault ex) {
             LOG.warning("Failure to prepare a message from conduit selector");
         }
         message.getExchange().put(ConduitSelector.class, cfg.getConduitSelector());
+        message.getExchange().put(Service.class, cfg.getConduitSelector().getEndpoint().getService());
+        
+        String address = (String)message.get(Message.ENDPOINT_ADDRESS);
+        // custom conduits may override the initial/current address
+        if (!address.equals(currentURI.toString())) {
+            currentURI = calculateNewRequestURI(URI.create(address), currentURI);
+            message.put(Message.ENDPOINT_ADDRESS, currentURI.toString());
+            message.put(Message.REQUEST_URI, currentURI.toString());
+        }
+        message.put(Message.BASE_PATH, getBaseURI().toString());
     }
     
     protected static PhaseInterceptorChain setupOutInterceptorChain(ClientConfiguration cfg) { 
@@ -559,15 +712,12 @@ public class AbstractClient implements Client {
         return new PhaseChainCache().get(pm.getInPhases(), i1, i2, i3);
     }
     
-    protected Message createSimpleMessage() {
-        Message m = new MessageImpl();
-        m.put(Message.PROTOCOL_HEADERS, getHeaders());
-        return m;
-    }
-    
-    protected Message createMessage(String httpMethod, 
+    protected Message createMessage(Object body,
+                                    String httpMethod, 
                                     MultivaluedMap<String, String> headers,
-                                    URI currentURI) {
+                                    URI currentURI,
+                                    Exchange exchange,
+                                    Map<String, Object> invocationContext) {
         Message m = cfg.getConduitSelector().getEndpoint().getBinding().createMessage();
         m.put(Message.REQUESTOR_ROLE, Boolean.TRUE);
         m.put(Message.INBOUND_MESSAGE, Boolean.FALSE);
@@ -579,39 +729,78 @@ public class AbstractClient implements Client {
         
         m.put(Message.CONTENT_TYPE, headers.getFirst(HttpHeaders.CONTENT_TYPE));
         
-        Exchange exchange = new ExchangeImpl();
+        m.setContent(List.class, getContentsList(body));
+        if (body == null) {
+            setEmptyRequestProperty(m, httpMethod);
+        }
+        
+        m.put(URITemplate.TEMPLATE_PARAMETERS, getState().getTemplates());
+        
+        PhaseInterceptorChain chain = setupOutInterceptorChain(cfg);
+        m.setInterceptorChain(chain);
+        
+        exchange = createExchange(m, exchange);
+        exchange.setOneWay("true".equals(headers.getFirst(Message.ONE_WAY_REQUEST)));
+        exchange.put(Retryable.class, this);
+        
+        // context
+        setContexts(m, exchange, invocationContext);
+        
+        //setup conduit selector
+        prepareConduitSelector(m, currentURI);
+        return m;
+    }
+    
+    protected Map<String, Object> getRequestContext(Message outMessage) {
+        Map<String, Object> invContext = CastUtils.cast((Map)outMessage.get(Message.INVOCATION_CONTEXT));
+        return CastUtils.cast((Map)invContext.get(REQUEST_CONTEXT));
+    }
+    
+    protected List getContentsList(Object body) {
+        return body == null ? new MessageContentsList() : new MessageContentsList(body);
+    }
+    
+    protected Exchange createExchange(Message m, Exchange exchange) {
+        if (exchange == null) {
+            exchange = new ExchangeImpl();
+        }
         exchange.setSynchronous(true);
         exchange.setOutMessage(m);
         exchange.put(Bus.class, cfg.getBus());
         exchange.put(MessageObserver.class, new ClientMessageObserver(cfg));
         exchange.put(Endpoint.class, cfg.getConduitSelector().getEndpoint());
-        exchange.setOneWay("true".equals(headers.getFirst(Message.ONE_WAY_REQUEST)));
-        // no need for the underlying conduit to throw the IO exceptions in case of
-        // client requests returning error HTTP code, it can be overridden if really needed 
         exchange.put("org.apache.cxf.http.no_io_exceptions", true);
         m.setExchange(exchange);
+        return exchange;
+    }
+    
+    protected void setContexts(Message message, Exchange exchange, 
+                               Map<String, Object> context) {
+        Map<String, Object> reqContext = null;
+        Map<String, Object> resContext = null;
+        if (context == null) {
+            context = new HashMap<String, Object>();
+        }
+        reqContext = CastUtils.cast((Map)context.get(REQUEST_CONTEXT));
+        resContext = CastUtils.cast((Map)context.get(RESPONSE_CONTEXT));
+        if (reqContext == null) { 
+            reqContext = new HashMap<String, Object>(cfg.getRequestContext());
+            context.put(REQUEST_CONTEXT, reqContext);
+        }
+        reqContext.put(Message.PROTOCOL_HEADERS, message.get(Message.PROTOCOL_HEADERS));
+        reqContext.put(Message.REQUEST_URI, message.get(Message.REQUEST_URI));
+        reqContext.put(Message.ENDPOINT_ADDRESS, message.get(Message.ENDPOINT_ADDRESS));
         
-        PhaseInterceptorChain chain = setupOutInterceptorChain(cfg);
-        m.setInterceptorChain(chain);
-        
-        // context
-        if (cfg.getRequestContext().size() > 0 || cfg.getResponseContext().size() > 0) {
-            Map<String, Object> context = new HashMap<String, Object>();
-            context.put(REQUEST_CONTEXT, cfg.getRequestContext());
-            context.put(RESPONSE_CONTEXT, cfg.getResponseContext());
-            m.put(Message.INVOCATION_CONTEXT, context);
-            m.putAll(cfg.getRequestContext());
-            exchange.putAll(cfg.getRequestContext());
-            exchange.putAll(cfg.getResponseContext());
+        if (resContext == null) {
+            resContext = new HashMap<String, Object>();
+            context.put(RESPONSE_CONTEXT, resContext);
         }
         
-        //setup conduit selector
-        prepareConduitSelector(m);
-        exchange.put(Service.class, cfg.getConduitSelector().getEndpoint().getService());
-        
-        return m;
+        message.put(Message.INVOCATION_CONTEXT, context);
+        message.putAll(reqContext);
+        exchange.putAll(reqContext);
     }
-
+    
     protected void setEmptyRequestProperty(Message outMessage, String httpMethod) {
         if ("POST".equals(httpMethod)) {
             outMessage.put("org.apache.cxf.post.empty", true);

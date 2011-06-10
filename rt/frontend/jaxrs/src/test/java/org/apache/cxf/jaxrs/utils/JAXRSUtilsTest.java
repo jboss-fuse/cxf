@@ -883,6 +883,21 @@ public class JAXRSUtilsTest extends Assert {
         assertEquals("aValue", bean.getA());
     }
     
+    @Test
+    public void testXmlAdapterBean3() throws Exception {
+        Class[] argType = {Customer.CustomerBeanInterface.class};
+        Method m = Customer.class.getMethod("testXmlAdapter3", argType);
+        Message messageImpl = createMessage();
+        messageImpl.put(Message.QUERY_STRING, "a=aValue");
+
+        List<Object> params = JAXRSUtils.processParameters(new OperationResourceInfo(m, null), 
+                                                           null, messageImpl);
+        assertEquals(1, params.size());
+        
+        Customer.CustomerBean bean = (Customer.CustomerBean)params.get(0);
+        assertEquals("aValue", bean.getA());
+    }
+    
     
     @Test
     public void testPathParametersBean() throws Exception {
@@ -983,6 +998,31 @@ public class JAXRSUtilsTest extends Assert {
         complexMessageImpl.setContent(InputStream.class, new ByteArrayInputStream(body.getBytes()));
 
         verifyParametersBean(m, null, messageImpl, null, complexMessageImpl);
+    }
+    
+    @Test
+    public void testFormParametersBeanWithMap() throws Exception {
+        Class[] argType = {Customer.CustomerBean.class};
+        Method m = Customer.class.getMethod("testFormBean", argType);
+        Message messageImpl = createMessage();
+        messageImpl.put(Message.REQUEST_URI, "/bar");
+        MultivaluedMap<String, String> headers = new MetadataMap<String, String>();
+        headers.putSingle("Content-Type", MediaType.APPLICATION_FORM_URLENCODED);
+        messageImpl.put(Message.PROTOCOL_HEADERS, headers);
+        String body = "g.b=1&g.b=2";
+        messageImpl.setContent(InputStream.class, new ByteArrayInputStream(body.getBytes()));
+        List<Object> params = JAXRSUtils.processParameters(new OperationResourceInfo(m, null),
+                                                           null, 
+                                                           messageImpl);
+        assertEquals("Bean should be created", 1, params.size());
+        Customer.CustomerBean cb = (Customer.CustomerBean)params.get(0);
+        assertNotNull(cb);
+        assertNotNull(cb.getG());
+        List<String> values = cb.getG().get("b");
+        assertEquals(2, values.size());
+        assertEquals("1", values.get(0));
+        assertEquals("2", values.get(1));
+        
     }
 
     private void verifyParametersBean(Method m,

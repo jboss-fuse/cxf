@@ -121,7 +121,11 @@
             <artifactId>cxf-tools-wsdlto-frontend-jaxws</artifactId>
             <version>${project.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>cxf-tools-wadlto-jaxrs</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>cxf-tools-wsdlto-frontend-javascript</artifactId>
@@ -347,7 +351,7 @@
                             org.jibx*;resolution:=optional;version="[1.2.3,2)",
                             org.junit*;resolution:=optional,
                             org.mozilla.javascript*;resolution:=optional,
-                            org.objectweb.asm*;version="[2.0,4)",
+                            org.objectweb.asm*;version="[2.0,4)";resolution:=optional,
                             org.omg*;resolution:=optional,
                             org.opensaml*;resolution:=optional,
                             org.slf4j*;resolution:=optional;version="[1.5,2)",
@@ -363,6 +367,7 @@
                             javax.xml.ws*;version="[0.0,3)",
                             *
                         </Import-Package>
+                        <Bundle-Activator>org.apache.cxf.bus.osgi.OSGiExtensionLocator</Bundle-Activator>
                         <Export-Package>
                             org.apache.cxf.*;version=${cxf.osgi.version.clean};-split-package:=merge-first,
                             '=META-INF.cxf.osgi',

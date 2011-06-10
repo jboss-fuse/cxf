@@ -45,6 +45,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.MatrixParam;
+import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -248,6 +249,16 @@ public class BookStore {
         return doGetBook(url2.substring(index + 1));
     }
     
+    @OPTIONS
+    @Path("/options")
+    public Response getOptions() throws Exception {
+        return Response.ok().header("Allow", "POST")
+                            .header("Allow", "PUT")
+                            .header("Allow", "GET")
+                            .header("Allow", "DELETE")
+                            .build();
+    }
+    
     @POST
     @Path("post401")
     public Response get401WithText() throws Exception {
@@ -259,6 +270,17 @@ public class BookStore {
     @Produces({"application/xml", "application/json" })
     @Consumes({"application/xml", "application/json" })
     public List<Book> getBookCollection(List<Book> bs) throws Exception {
+        if (bs == null || bs.size() != 2) {
+            throw new RuntimeException();
+        }
+        return bs;
+    }
+    
+    @POST
+    @Path("/collections2")
+    @Produces({"application/xml", "application/json" })
+    @Consumes({"application/xml", "application/json" })
+    public List<BookNoXmlRootElement> getBookCollection2(List<BookNoXmlRootElement> bs) throws Exception {
         if (bs == null || bs.size() != 2) {
             throw new RuntimeException();
         }
@@ -566,6 +588,23 @@ public class BookStore {
         return new BookInfo2(doGetBook("123"));
     }
     
+    @GET
+    @Path("/books/interface/adapter-list")
+    public List<? extends BookInfoInterface> getBookAdapterInterfaceList() throws Exception {
+        List<BookInfoInterface> list = new ArrayList<BookInfoInterface>();
+        list.add(new BookInfo2(doGetBook("123")));
+        return list;
+    }
+    
+    @GET
+    @Path("/books/adapter-list")
+    @XmlJavaTypeAdapter(BookInfoAdapter.class)
+    public List<? extends BookInfo> getBookAdapterList() throws Exception {
+        List<BookInfo> list = new ArrayList<BookInfo>();
+        list.add(new BookInfo(doGetBook("123")));
+        return list;
+    }
+    
     @PathParam("bookId")
     public void setBookId(String id) {
         currentBookId = id;
@@ -841,7 +880,50 @@ public class BookStore {
         c.setCD(cds.values());
         return c;
     }
-    
+
+    @GET
+    @Path("quotedheaders")
+    public Response getQuotedHeader() {
+        return Response.
+                ok().
+                header("SomeHeader1", "\"some text, some more text\"").
+                header("SomeHeader2", "\"some text\"").
+                header("SomeHeader2", "\"quoted,text\"").
+                header("SomeHeader2", "\"even more text\"").
+                header("SomeHeader3", "\"some text, some more text with inlined \\\"\"").
+                header("SomeHeader4", "\"\"").
+                build();
+    }
+
+    @GET
+    @Path("badlyquotedheaders")
+    public Response getBadlyQuotedHeader(@QueryParam("type")int t) {
+        Response.ResponseBuilder rb = Response.ok();
+        switch(t) {
+        case 0:
+            // problem: no trailing quote - doesn't trigger AbstractClient.parseQuotedHeaderValue
+            rb.header("SomeHeader0", "\"some text");
+            break;
+        case 1:
+            // problem: text doesn't end with " - triggers AbstractClient.parseQuotedHeaderValue
+            rb.header("SomeHeader1", "\"some text, some more text with inlined \\\"");
+            break;
+        case 2:
+            // problem: no character after \ - doesn't trigger AbstractClient.parseQuotedHeaderValue
+            rb.header("SomeHeader2", "\"some te\\");
+            break;
+        case 3:
+            // problem: mix of plain text and quoted text in same line - doesn't trigger
+            // AbstractClient.parseQuotedHeaderValue
+            rb.header("SomeHeader3", "some text").header("SomeHeader3", "\"other quoted\", text").
+                header("SomeHeader3", "blah");
+            break;
+        default:
+            throw new RuntimeException("Don't know how to handle type: " + t);
+        }
+        return rb.build();
+    }
+
     @Path("/interface")
     public BookSubresource getBookFromSubresource() {
         return new BookSubresourceImpl();
@@ -863,8 +945,8 @@ public class BookStore {
         cds.put(cd1.getId(), cd1);
     }
     
-    @XmlJavaTypeAdapter(BookInfoAdapter.class)
-    private static interface BookInfoInterface {
+    @XmlJavaTypeAdapter(BookInfoAdapter2.class)
+    static interface BookInfoInterface {
         String getName();
         
         long getId();
@@ -912,6 +994,18 @@ public class BookStore {
         }
     }
         
+    public static class BookInfoAdapter2 extends XmlAdapter<Book, BookInfo2> {
+        @Override
+        public Book marshal(BookInfo2 v) throws Exception {
+            return new Book(v.getName(), v.getId());
+        }
+
+        @Override
+        public BookInfo2 unmarshal(Book b) throws Exception {
+            return new BookInfo2(b);
+        }
+    }
+    
     public static class BookInfoAdapter extends XmlAdapter<Book, BookInfo> {
 
         @Override
