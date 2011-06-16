@@ -52,6 +52,7 @@ import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 
 import org.apache.cxf.Bus;
+import org.apache.cxf.binding.soap.interceptor.EndpointSelectionInterceptor;
 import org.apache.cxf.catalog.OASISCatalogManager;
 import org.apache.cxf.catalog.OASISCatalogManagerHelper;
 import org.apache.cxf.common.logging.LogUtils;
@@ -89,6 +90,7 @@ public class WSDLGetInterceptor extends AbstractPhaseInterceptor<Message> {
     
     public WSDLGetInterceptor() {
         super(Phase.READ);
+        getAfter().add(EndpointSelectionInterceptor.class.getName());
     }
 
     public void handleMessage(Message message) throws Fault {
@@ -349,12 +351,8 @@ public class WSDLGetInterceptor extends AbstractPhaseInterceptor<Message> {
                         if (name.equals(message.getExchange().getEndpoint().getEndpointInfo()
                                             .getName().getLocalPart())) {
                             
-                            List<Element> sadEls = DOMUtils.findAllElementsByTagNameNS(el,
-                                                                 "http://schemas.xmlsoap.org/wsdl/soap/",
-                                                                 "address");
-                            for (Element soapAddress : sadEls) {
-                                soapAddress.setAttribute("location", base);
-                            }
+                            rewriteAddress(base, el, "http://schemas.xmlsoap.org/wsdl/soap/");
+                            rewriteAddress(base, el, "http://schemas.xmlsoap.org/wsdl/soap12/");
                         }
                     }
                 }
@@ -364,6 +362,15 @@ public class WSDLGetInterceptor extends AbstractPhaseInterceptor<Message> {
             doc.setXmlStandalone(true);
         } catch (Exception ex) {
             //likely not DOM level 3
+        }
+    }
+
+    private void rewriteAddress(String base, Element el, String soapNS) {
+        List<Element> sadEls = DOMUtils.findAllElementsByTagNameNS(el,
+                                             soapNS,
+                                             "address");
+        for (Element soapAddress : sadEls) {
+            soapAddress.setAttribute("location", base);
         }
     }
 
