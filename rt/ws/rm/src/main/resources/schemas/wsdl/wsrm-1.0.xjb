@@ -27,41 +27,41 @@
             <jaxb:package name="org.apache.cxf.ws.addressing.v200408"/>
         </jaxb:schemaBindings>
     </jaxb:bindings>
-    <jaxb:bindings schemaLocation="wsrm.xsd" node="/xs:schema">
+    <jaxb:bindings schemaLocation="wsrm-1.0.xsd" node="/xs:schema">
         <jaxb:schemaBindings>
-            <jaxb:package name="org.apache.cxf.ws.rm"/>
+            <jaxb:package name="org.apache.cxf.ws.rm.v200502"/>
         </jaxb:schemaBindings>
         <jaxb:globalBindings generateIsSetMethod="true"/>
     </jaxb:bindings>
-    <jaxb:bindings schemaLocation="wsrm.xsd" node="//xs:element[@name='Nack']">
+    <jaxb:bindings schemaLocation="wsrm-1.0.xsd" node="//xs:element[@name='Nack']">
         <jaxb:property>
             <jaxb:baseType>
                 <jaxb:javaType name="java.lang.Long"/>
             </jaxb:baseType>
         </jaxb:property>
     </jaxb:bindings>
-    <jaxb:bindings schemaLocation="wsrm.xsd" node="//xs:element[@name='MessageNumber']">
+    <jaxb:bindings schemaLocation="wsrm-1.0.xsd" node="//xs:element[@name='MessageNumber']">
         <jaxb:property>
             <jaxb:baseType>
                 <jaxb:javaType name="java.lang.Long"/>
             </jaxb:baseType>
         </jaxb:property>
     </jaxb:bindings>
-    <jaxb:bindings schemaLocation="wsrm.xsd" node="//xs:element[@name='MaxMessageNumberUsed']">
+    <jaxb:bindings schemaLocation="wsrm-1.0.xsd" node="//xs:element[@name='MaxMessageNumberUsed']">
         <jaxb:property>
             <jaxb:baseType>
                 <jaxb:javaType name="java.lang.Long"/>
             </jaxb:baseType>
         </jaxb:property>
     </jaxb:bindings>
-    <jaxb:bindings schemaLocation="wsrm.xsd" node="//xs:attribute[@name='Upper']">
+    <jaxb:bindings schemaLocation="wsrm-1.0.xsd" node="//xs:attribute[@name='Upper']">
         <jaxb:property>
             <jaxb:baseType>
                 <jaxb:javaType name="java.lang.Long"/>
             </jaxb:baseType>
         </jaxb:property>
     </jaxb:bindings>
-    <jaxb:bindings schemaLocation="wsrm.xsd" node="//xs:attribute[@name='Lower']">
+    <jaxb:bindings schemaLocation="wsrm-1.0.xsd" node="//xs:attribute[@name='Lower']">
         <jaxb:property>
             <jaxb:baseType>
                 <jaxb:javaType name="java.lang.Long"/>
