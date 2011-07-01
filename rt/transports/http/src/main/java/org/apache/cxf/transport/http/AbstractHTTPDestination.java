@@ -101,8 +101,6 @@ public abstract class AbstractHTTPDestination
     
     private static final Logger LOG = LogUtils.getL7dLogger(AbstractHTTPDestination.class);
     
-    private static final long serialVersionUID = 1L;
-
     protected final Bus bus;
 
     // Configuration values
@@ -633,7 +631,7 @@ public abstract class AbstractHTTPDestination
                 return;
             }
             Message m = msg.getExchange().getInMessage();
-            if (m == null || msg.getExchange().isOneWay()) {
+            if (m == null) {
                 return;
             }
             InputStream is = m.getContent(InputStream.class);
