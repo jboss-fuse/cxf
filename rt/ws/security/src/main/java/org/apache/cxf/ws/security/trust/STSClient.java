@@ -144,6 +144,7 @@ public class STSClient implements Configurable, InterceptorProvider {
     String namespace = STSUtils.WST_NS_05_12;
     String addressingNamespace;
     Object onBehalfOf;
+    boolean enableAppliesTo = true;
 
     boolean useCertificateForConfirmationKeyInfo;
     boolean isSecureConv;
@@ -154,6 +155,7 @@ public class STSClient implements Configurable, InterceptorProvider {
     String keyType;
     boolean sendKeyType = true;
     Message message;
+    String context;
 
     Map<String, Object> ctx = new HashMap<String, Object>();
     
@@ -256,6 +258,22 @@ public class STSClient implements Configurable, InterceptorProvider {
 
     public void setSecureConv(boolean secureConv) {
         this.isSecureConv = secureConv;
+    }
+    
+    public boolean isEnableAppliesTo() {
+        return enableAppliesTo;
+    }
+    
+    public void setEnableAppliesTo(boolean enableAppliesTo) {
+        this.enableAppliesTo = enableAppliesTo;
+    }
+    
+    public String getContext() {
+        return context;
+    }
+    
+    public void setContext(String context) {
+        this.context = context;
     }
 
     public void setAlgorithmSuite(AlgorithmSuite ag) {
@@ -463,8 +481,11 @@ public class STSClient implements Configurable, InterceptorProvider {
         W3CDOMStreamWriter writer = new W3CDOMStreamWriter();
         writer.writeStartElement("wst", "RequestSecurityToken", namespace);
         writer.writeNamespace("wst", namespace);
-        boolean wroteKeySize = false;
+        if (context != null) {
+            writer.writeAttribute(null, "Context", context);
+        }
         
+        boolean wroteKeySize = false;
         String keyTypeTemplate = null;
         String sptt = null;
         
@@ -493,7 +514,9 @@ public class STSClient implements Configurable, InterceptorProvider {
         }
 
         addRequestType(requestType, writer);
-        addAppliesTo(writer, appliesTo);
+        if (enableAppliesTo) {
+            addAppliesTo(writer, appliesTo);
+        }
         addOnBehalfOf(writer);
         if (sptt == null) {
             addTokenType(writer);
