@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.apache.cxf.systest.jaxrs.security.saml;
+package org.apache.cxf.systest.jaxrs.security.xml;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,10 +31,10 @@ import org.apache.cxf.systest.jaxrs.security.BookStore;
 import org.apache.cxf.testutil.common.AbstractBusTestServerBase;
 import org.apache.cxf.testutil.common.TestUtil;
     
-public class BookServerSaml extends AbstractBusTestServerBase {
-    public static final String PORT = TestUtil.getPortNumber("jaxrs-saml");
+public class BookServerXmlSec extends AbstractBusTestServerBase {
+    public static final String PORT = TestUtil.getPortNumber("jaxrs-xmlsig");
     private static final String SERVER_CONFIG_FILE =
-        "org/apache/cxf/systest/jaxrs/security/saml/server.xml";
+        "org/apache/cxf/systest/jaxrs/security/xml/server.xml";
     
     protected void run() {
         SpringBusFactory bf = new SpringBusFactory();
@@ -45,7 +45,7 @@ public class BookServerSaml extends AbstractBusTestServerBase {
         
         sf.setResourceClasses(BookStore.class);
         
-        sf.setProvider(new SamlHeaderInHandler());
+        sf.setProvider(new XmlSigInHandler());
         
         sf.setResourceProvider(BookStore.class,
                                new SingletonResourceProvider(new BookStore(), true));
@@ -63,7 +63,7 @@ public class BookServerSaml extends AbstractBusTestServerBase {
 
     public static void main(String[] args) {
         try {
-            BookServerSaml s = new BookServerSaml();
+            BookServerXmlSec s = new BookServerXmlSec();
             s.start();
         } catch (Exception ex) {
             ex.printStackTrace();

@@ -23,21 +23,16 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
-import java.util.zip.Deflater;
 
 import javax.security.auth.callback.CallbackHandler;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.common.classloader.ClassLoaderUtils;
 import org.apache.cxf.common.logging.LogUtils;
-import org.apache.cxf.common.util.Base64Utility;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.helpers.CastUtils;
@@ -56,16 +51,17 @@ import org.apache.ws.security.components.crypto.CryptoFactory;
 import org.apache.ws.security.saml.ext.AssertionWrapper;
 import org.apache.ws.security.saml.ext.SAMLParms;
 
-public class SamlOutInterceptor extends AbstractPhaseInterceptor<Message> {
+public abstract class AbstractSamlOutInterceptor extends AbstractPhaseInterceptor<Message> {
     private static final Logger LOG = 
-        LogUtils.getL7dLogger(SamlOutInterceptor.class);
+        LogUtils.getL7dLogger(AbstractSamlOutInterceptor.class);
     private static final String CRYPTO_CACHE = "ws-security.crypto.cache";
     
-    public SamlOutInterceptor() {
+    protected AbstractSamlOutInterceptor() {
         super(Phase.PRE_MARSHAL);
     } 
 
-    public void handleMessage(Message message) throws Fault {
+    
+    protected AssertionWrapper createAssertion(Message message) throws Fault {
         SAMLParms samlParms = new SAMLParms();
         samlParms.setCallbackHandler(new SamlCallbackHandler());
         try {
@@ -75,55 +71,23 @@ public class SamlOutInterceptor extends AbstractPhaseInterceptor<Message> {
                     message, SecurityConstants.SELF_SIGN_SAML_ASSERTION, false
                 );
             if (selfSignAssertion) {
+                //--- This code will be moved to a common utility class
                 Crypto crypto = getCrypto(message, 
                                           SecurityConstants.SIGNATURE_CRYPTO,
                                           SecurityConstants.SIGNATURE_PROPERTIES);
                 
-                String userNameKey = SecurityConstants.SIGNATURE_USERNAME;
-                String user = (String)message.getContextualProperty(userNameKey);
-                if (crypto != null && StringUtils.isEmpty(user)) {
-                    try {
-                        user = crypto.getDefaultX509Identifier();
-                    } catch (WSSecurityException e1) {
-                        throw new Fault(e1);
-                    }
-                }
+                String user = getUserName(message, crypto);
                 if (StringUtils.isEmpty(user)) {
-                    return;
+                    return assertion;
                 }
         
-                CallbackHandler handler = getCallbackHandler(message);
-                String password = getPassword(handler, user, WSPasswordCallback.SIGNATURE);
-                if (password == null) {
-                    password = "";
-                }
-             
+                String password = getPassword(message, user, WSPasswordCallback.SIGNATURE);
+                //---
+                
                 // TODO configure using a KeyValue here
                 assertion.signAssertion(user, password, crypto, false);
-                
-                String assertionValue = assertion.assertionToString();
-                
-                Deflater compresser = new Deflater();
-                compresser.setInput(assertionValue.getBytes("UTF-8"));
-                compresser.finish();
-                
-                byte[] output = new byte[4096];
-                int compressedDataLength = compresser.deflate(output);
-                
-                StringWriter writer = new StringWriter();
-                Base64Utility.encode(output, 0, compressedDataLength, writer);
-                
-                Map<String, List<String>> headers = 
-                    CastUtils.cast((Map)message.get(Message.PROTOCOL_HEADERS));
-                if (headers == null) {
-                    headers = new HashMap<String, List<String>>();
-                }
-                
-                StringBuilder builder = new StringBuilder();
-                builder.append("SAML").append(" ").append(writer.toString());
-                headers.put("Authorization", 
-                    CastUtils.cast(Collections.singletonList(builder.toString()), String.class));
             }
+            return assertion;
         } catch (Exception ex) {
             StringWriter sw = new StringWriter();
             ex.printStackTrace(new PrintWriter(sw));
@@ -133,7 +97,23 @@ public class SamlOutInterceptor extends AbstractPhaseInterceptor<Message> {
         
     }
         
-    private String getPassword(CallbackHandler handler, String userName, int type) {
+    // This code will be moved to a common utility class
+    private String getUserName(Message message, Crypto crypto) {
+        String userNameKey = SecurityConstants.SIGNATURE_USERNAME;
+        String user = (String)message.getContextualProperty(userNameKey);
+        if (crypto != null && StringUtils.isEmpty(user)) {
+            try {
+                user = crypto.getDefaultX509Identifier();
+            } catch (WSSecurityException e1) {
+                throw new Fault(e1);
+            }
+        }
+        return user;
+    }
+    
+    
+    private String getPassword(Message message, String userName, int type) {
+        CallbackHandler handler = getCallbackHandler(message);
         if (handler == null) {
             return null;
         }
@@ -146,7 +126,8 @@ public class SamlOutInterceptor extends AbstractPhaseInterceptor<Message> {
         }
         
         //get the password
-        return cb[0].getPassword();
+        String password = cb[0].getPassword();
+        return password == null ? "" : password;
     }
     
     private CallbackHandler getCallbackHandler(Message message) {

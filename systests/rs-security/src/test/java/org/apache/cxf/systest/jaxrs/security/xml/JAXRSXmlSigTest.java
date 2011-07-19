@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.apache.cxf.systest.jaxrs.security.saml;
+package org.apache.cxf.systest.jaxrs.security.xml;
 
 import java.net.URL;
 import java.util.HashMap;
@@ -35,23 +35,23 @@ import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class JAXRSSamlTest extends AbstractBusClientServerTestBase {
-    public static final String PORT = BookServerSaml.PORT;
+public class JAXRSXmlSigTest extends AbstractBusClientServerTestBase {
+    public static final String PORT = BookServerXmlSec.PORT;
 
     @BeforeClass
     public static void startServers() throws Exception {
         assertTrue("server did not launch correctly", 
-                   launchServer(BookServerSaml.class, true));
+                   launchServer(BookServerXmlSec.class, true));
     }
     
     @Test
-    public void testGetBookSAMLTokenAsHeader() throws Exception {
-        String address = "https://localhost:" + PORT + "/bookstore/books/123";
+    public void testPostBookWithEnvelopedSig() throws Exception {
+        String address = "https://localhost:" + PORT + "/bookstore/books";
         JAXRSClientFactoryBean bean = new JAXRSClientFactoryBean();
         bean.setAddress(address);
         
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = JAXRSSamlTest.class.getResource("client.xml");
+        URL busFile = JAXRSXmlSigTest.class.getResource("client.xml");
         Bus springBus = bf.createBus(busFile.toString());
         bean.setBus(springBus);
 
@@ -61,15 +61,14 @@ public class JAXRSSamlTest extends AbstractBusClientServerTestBase {
         properties.put("ws-security.signature.username", "alice");
         properties.put("ws-security.signature.properties", 
                        "org/apache/cxf/systest/jaxrs/security/alice.properties");
-        properties.put("ws-security.self-sign-saml-assertion", "true");
         bean.setProperties(properties);
-        bean.getOutInterceptors().add(new SamlHeaderOutInterceptor());
+        bean.getOutInterceptors().add(new XmlSigOutInterceptor());
         
         
         WebClient wc = bean.createWebClient();
         try {
-            Book book = wc.get(Book.class);
-            assertEquals(123L, book.getId());
+            Book book = wc.post(new Book("CXF", 126L), Book.class);
+            assertEquals(126L, book.getId());
         } catch (ServerWebApplicationException ex) {
             fail(ex.getMessage());
         } catch (ClientWebApplicationException ex) {
