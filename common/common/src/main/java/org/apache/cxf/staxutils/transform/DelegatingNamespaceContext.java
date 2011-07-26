@@ -50,7 +50,7 @@ class DelegatingNamespaceContext implements NamespaceContext {
         
         int i = 0;
         while (true) {
-            if (!prefixes.containsKey("ps" + ++i)) {
+            if (!prefixes.containsValue("ps" + ++i)) {
                 String prefix = "ps" + i;
                 addPrefix(prefix, namespace);
                 return prefix;
