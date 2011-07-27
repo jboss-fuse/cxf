@@ -571,8 +571,9 @@ public abstract class AbstractBindingBuilder {
                 }
             } else if (token instanceof KerberosToken) {
                 BinarySecurity binarySecurity = addKerberosToken((KerberosToken)token);
-                addSupportingElement(cloneElement(binarySecurity.getElement()));
-                ret.put(token, binarySecurity);
+                Element clone = cloneElement(binarySecurity.getElement());
+                addSupportingElement(clone);
+                ret.put(token, new BinarySecurity(clone));
             }
         }
         return ret;
@@ -664,10 +665,11 @@ public abstract class AbstractBindingBuilder {
                     }
                     SecurityTokenReference secRef = 
                         createSTRForSamlAssertion(doc, id, saml1, false);
-                    addSupportingElement(cloneElement(secRef.getElement()));
+                    Element clone = cloneElement(secRef.getElement());
+                    addSupportingElement(clone);
                     part = new WSEncryptionPart("STRTransform", null, "Element");
                     part.setId(secRef.getID());
-                    part.setElement(secRef.getElement());
+                    part.setElement(clone);
                 } else {
                     policyNotAsserted(entry.getKey(), "UnsupportedTokenInSupportingToken: " + tempTok);  
                 }
