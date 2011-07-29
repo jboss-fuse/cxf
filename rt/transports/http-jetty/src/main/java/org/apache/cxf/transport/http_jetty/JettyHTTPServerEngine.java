@@ -68,12 +68,6 @@ public class JettyHTTPServerEngine
     private static final Logger LOG =
         LogUtils.getL7dLogger(JettyHTTPServerEngine.class);
    
-
-    /**
-     * The bus.
-     */
-    protected Bus bus;
-    
     /**
      * This is the Jetty HTTP Server Engine Factory. This factory caches some 
      * engines based on port numbers.
@@ -132,10 +126,8 @@ public class JettyHTTPServerEngine
      */
     public JettyHTTPServerEngine(
         JettyHTTPServerEngineFactory fac, 
-        Bus bus,
         String host,
         int port) {
-        this.bus     = bus;
         this.factory = fac;
         this.host    = host;
         this.port    = port;
@@ -169,14 +161,11 @@ public class JettyHTTPServerEngine
      * The bus.
      */
     @Resource(name = "cxf")
-    public void setBus(Bus b) {
-        bus = b;
+    public void setBus(Bus bus) {
+        if (null != bus && null == factory) {
+            factory = bus.getExtension(JettyHTTPServerEngineFactory.class);
+        }        
     }
-    
-    public Bus getBus() {
-        return bus;
-    }
-    
     
     /**
      * Returns the protocol "http" or "https" for which this engine
@@ -227,7 +216,10 @@ public class JettyHTTPServerEngine
         //this is most often seen in our unit/system tests that 
         //test things in the same VM.
         
-        String s = System.getProperty("org.apache.cxf.transports.http_jetty.DontClosePort");
+        String s = System.getProperty("org.apache.cxf.transports.http_jetty.DontClosePort." + port);
+        if (s == null) {
+            s = System.getProperty("org.apache.cxf.transports.http_jetty.DontClosePort");
+        }
         return !Boolean.valueOf(s);
     }
     
@@ -654,18 +646,11 @@ public class JettyHTTPServerEngine
     public void finalizeConfig() 
         throws GeneralSecurityException,
                IOException {
-        retrieveEngineFactory();
         retrieveListenerFactory();
         checkConnectorPort();
         this.configFinalized = true;
     }
     
-    protected void retrieveEngineFactory() {
-        if (null != bus && null == factory) {
-            factory = bus.getExtension(JettyHTTPServerEngineFactory.class);
-        }        
-    }
-
     private void checkConnectorPort() throws IOException {
         if (null != connector && port != connector.getPort()) {
             throw new IOException("Error: Connector port " + connector.getPort() + " does not match"
