@@ -19,21 +19,26 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.fusesource</groupId>
+        <artifactId>fusesource-pom</artifactId>
+        <version>1.5</version>
+    </parent>
     <groupId>org.apache.cxf</groupId>
     <artifactId>cxf</artifactId>
-    <version>2.3.6-SNAPSHOT</version>
-    <name>Apache CXF</name>
-    <url>http://cxf.apache.org</url>
+    <version>2.3.x-fuse-SNAPSHOT</version>
+    <name>FUSE Services Framework</name>
+    <url>http://fusesource.com/forge/projects/FUSESF</url>
 
     <packaging>pom</packaging>
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/cxf/branches/2.3.x-fixes</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/cxf/branches/2.3.x-fixes</developerConnection>
+        <connection>scm:git:git://forge.fusesource.com/cxf.git</connection>
+        <developerConnection>scm:git:ssh://git@forge.fusesource.com/cxf.git</developerConnection>
     </scm>
     <issueManagement>
         <system>jira</system>
-        <url>https://issues.apache.org/jira/browse/CXF</url>
+        <url>http://fusesource.com/issues/browse/SF</url>
     </issueManagement>
 
     <prerequisites>
@@ -41,6 +46,9 @@
     </prerequisites>
 
     <properties>
+        <release-repo-url>http://repo.fusesource.com/nexus/service/local/staging/deploy/maven2</release-repo-url>
+        <snapshot-repo-url>http://repo.fusesource.com/nexus/content/repositories/snapshots</snapshot-repo-url>
+        <m1-repo-url>scpexe://repo.fusesource.com/www/repo.fusesource.com/maven1</m1-repo-url>
         <cxf.compiler.fork>false</cxf.compiler.fork>
         <cxf.build-utils.version>2.3.2</cxf.build-utils.version>
         <cxf.xjc-utils.version>2.3.2</cxf.xjc-utils.version>
@@ -49,22 +57,18 @@
     </properties>
 
     <distributionManagement>
-        <repository>
-            <id>apache.releases.https</id>
-            <name>Apache Release Distribution Repository</name>
-            <url>https://repository.apache.org/service/local/staging/deploy/maven2</url>
-        </repository>
-        <snapshotRepository>
-            <id>apache.snapshots.https</id>
-            <name>Apache Development Snapshot Repository</name>
-            <url>https://repository.apache.org/content/repositories/snapshots</url>
-            <!--uniqueVersion>false</uniqueVersion-->
-        </snapshotRepository>
-        <site>
-            <id>apache.cxf.site</id>
-            <url>scpexe://people.apache.org/www/cxf.apache.org/cxf/mvn_site</url>
-        </site>
+         <repository>
+             <id>fusesource-nexus-staging</id>
+             <name>FuseSource Release Repository</name>
+             <url>${release-repo-url}</url>
+         </repository>
+         <snapshotRepository>
+             <id>fusesource-nexus-snapshots</id>
+             <name>FuseSource Nexus Snapshots</name>
+             <url>${snapshot-repo-url}</url>
+         </snapshotRepository>
     </distributionManagement>
+ 
     <repositories>
           <repository>
               <id>apache.snapshots</id>
@@ -129,7 +133,7 @@
             <archive>http://mail-archives.apache.org/mod_mbox/cxf-notifications</archive>
         </mailingList>
     </mailingLists>
-    <ciManagement>
+    <!--ciManagement>
         <system>Hudson</system>
         <url>http://hudson.zones.apache.org/hudson/view/CXF/</url>
         <notifiers>
@@ -140,7 +144,7 @@
                 </configuration>
             </notifier>
         </notifiers>
-    </ciManagement>
+    </ciManagement-->
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
@@ -351,6 +355,9 @@
         </profile>
         <profile>
             <id>release</id>
+            <modules>
+                <module>distribution</module>
+            </modules>
             <build>
                 <plugins>
                     <!-- We want to deploy the artifact to a staging location for perusal -->
@@ -464,9 +471,9 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-release-plugin</artifactId>
-                    <version>2.0</version>
+                    <version>2.1</version>
                     <configuration>
-                        <tagBase>https://svn.apache.org/repos/asf/cxf/tags</tagBase>
+                        <tagBase>http://fusesource.com/forge/svn/fusesf/tags/</tagBase>
                         <useReleaseProfile>false</useReleaseProfile>
                         <preparationGoals>clean install</preparationGoals>
                         <goals>deploy</goals>
