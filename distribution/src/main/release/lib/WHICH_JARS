@@ -37,7 +37,6 @@ For Java2WSDL and WSDL2Java:
 - The above jars
 - jaxb-xjc.jar
 - velocity.jar
-- oro.jar
 - commons-collections.jar
 - commons-lang.jar
 - cxf-xjc*.jar (optional, these are xjc extensions for providing enhanced
@@ -77,6 +76,12 @@ For WS-Security support:
 - serializer.jar
 - wss4j.jar
 - xmlsec.jar
+
+For SAML support in WS-Security
+- joda-time.jar 
+- opensaml.jar
+- openws.jar
+- xmltooling.jar
 
 For HTTP Binding support:
 - jra.jar
