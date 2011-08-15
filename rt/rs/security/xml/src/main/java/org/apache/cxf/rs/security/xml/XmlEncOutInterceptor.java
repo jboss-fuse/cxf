@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.systest.jaxrs.security.xml;
+package org.apache.cxf.rs.security.xml;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
@@ -40,8 +40,8 @@ import org.apache.cxf.common.util.Base64Utility;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.message.Message;
-import org.apache.cxf.systest.jaxrs.security.common.CryptoLoader;
-import org.apache.cxf.systest.jaxrs.security.common.SecurityUtils;
+import org.apache.cxf.rs.security.common.CryptoLoader;
+import org.apache.cxf.rs.security.common.SecurityUtils;
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSSecurityException;
@@ -53,6 +53,7 @@ import org.apache.ws.security.util.UUIDGenerator;
 import org.apache.ws.security.util.WSSecurityUtil;
 import org.apache.xml.security.algorithms.JCEMapper;
 import org.apache.xml.security.encryption.XMLCipher;
+import org.apache.xml.security.utils.EncryptionConstants;
 
 public class XmlEncOutInterceptor extends AbstractXmlSecOutInterceptor {
     
@@ -76,6 +77,9 @@ public class XmlEncOutInterceptor extends AbstractXmlSecOutInterceptor {
     }
     
     public void setSymmetricEncAlgorithm(String algo) {
+        if (!algo.startsWith(EncryptionConstants.EncryptionSpecNS)) {
+            algo = EncryptionConstants.EncryptionSpecNS + algo;
+        }
         symEncAlgo = algo;
     }
     

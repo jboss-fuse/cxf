@@ -29,8 +29,12 @@ import org.apache.cxf.jaxrs.client.ClientWebApplicationException;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactoryBean;
 import org.apache.cxf.jaxrs.client.ServerWebApplicationException;
 import org.apache.cxf.jaxrs.client.WebClient;
+import org.apache.cxf.rs.security.common.SecurityUtils;
+import org.apache.cxf.rs.security.xml.XmlEncInInterceptor;
+import org.apache.cxf.rs.security.xml.XmlEncOutInterceptor;
+import org.apache.cxf.rs.security.xml.XmlSigOutInterceptor;
 import org.apache.cxf.systest.jaxrs.security.Book;
-import org.apache.cxf.systest.jaxrs.security.common.SecurityUtils;
+import org.apache.cxf.systest.jaxrs.security.BookStore;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 import org.apache.xml.security.encryption.XMLCipher;
 import org.junit.BeforeClass;
@@ -46,8 +50,12 @@ public class JAXRSXmlSecTest extends AbstractBusClientServerTestBase {
     }
     
     @Test
-    public void testPostBookWithEnvelopedSig() throws Exception {
-        String address = "https://localhost:" + PORT + "/xmlsig/bookstore/books";
+    public void testPostBookWithEnvelopedSigAndProxy() throws Exception {
+        String address = "https://localhost:" + PORT + "/xmlsig";
+        doTestSignatureProxy(address, false);
+    }
+    
+    private void doTestSignatureProxy(String address, boolean enveloping) {
         JAXRSClientFactoryBean bean = new JAXRSClientFactoryBean();
         bean.setAddress(address);
         
@@ -63,7 +71,57 @@ public class JAXRSXmlSecTest extends AbstractBusClientServerTestBase {
         properties.put("ws-security.signature.properties", 
                        "org/apache/cxf/systest/jaxrs/security/alice.properties");
         bean.setProperties(properties);
-        bean.getOutInterceptors().add(new XmlSigOutInterceptor());
+        XmlSigOutInterceptor sigInterceptor = new XmlSigOutInterceptor();
+        sigInterceptor.setEnveloping(enveloping);
+        bean.getOutInterceptors().add(sigInterceptor);
+        bean.setServiceClass(BookStore.class);
+        
+        BookStore store = bean.create(BookStore.class);
+        try {
+            Book book = store.addBook(new Book("CXF", 126L));
+            assertEquals(126L, book.getId());
+        } catch (ServerWebApplicationException ex) {
+            fail(ex.getMessage());
+        } catch (ClientWebApplicationException ex) {
+            if (ex.getCause() != null && ex.getCause().getMessage() != null) {
+                fail(ex.getCause().getMessage());
+            } else {
+                fail(ex.getMessage());
+            }
+        }
+    }
+    
+    @Test
+    public void testPostBookWithEnvelopedSig() throws Exception {
+        String address = "https://localhost:" + PORT + "/xmlsig/bookstore/books";
+        doTestSignature(address, false);
+    }
+    
+    @Test
+    public void testPostBookWithEnvelopingSig() throws Exception {
+        String address = "https://localhost:" + PORT + "/xmlsig/bookstore/books";
+        doTestSignature(address, true);
+    }
+    
+    private void doTestSignature(String address, boolean enveloping) {
+        JAXRSClientFactoryBean bean = new JAXRSClientFactoryBean();
+        bean.setAddress(address);
+        
+        SpringBusFactory bf = new SpringBusFactory();
+        URL busFile = JAXRSXmlSecTest.class.getResource("client.xml");
+        Bus springBus = bf.createBus(busFile.toString());
+        bean.setBus(springBus);
+
+        Map<String, Object> properties = new HashMap<String, Object>();
+        properties.put("ws-security.callback-handler", 
+                       "org.apache.cxf.systest.jaxrs.security.saml.KeystorePasswordCallback");
+        properties.put("ws-security.signature.username", "alice");
+        properties.put("ws-security.signature.properties", 
+                       "org/apache/cxf/systest/jaxrs/security/alice.properties");
+        bean.setProperties(properties);
+        XmlSigOutInterceptor sigInterceptor = new XmlSigOutInterceptor();
+        sigInterceptor.setEnveloping(enveloping);
+        bean.getOutInterceptors().add(sigInterceptor);
         
         
         WebClient wc = bean.createWebClient();
@@ -79,7 +137,6 @@ public class JAXRSXmlSecTest extends AbstractBusClientServerTestBase {
                 fail(ex.getMessage());
             }
         }
-        
     }
     
     @Test
@@ -159,6 +216,7 @@ public class JAXRSXmlSecTest extends AbstractBusClientServerTestBase {
         encInterceptor.setSymmetricEncAlgorithm(XMLCipher.AES_128);
         bean.getOutInterceptors().add(encInterceptor);
         
+        bean.getInInterceptors().add(new XmlEncInInterceptor());
         
         WebClient wc = bean.createWebClient();
         try {

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.apache.cxf.systest.jaxrs.security.xml;
+package org.apache.cxf.rs.security.xml;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -29,26 +29,21 @@ import java.util.logging.Logger;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.security.auth.callback.CallbackHandler;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
 import javax.xml.stream.XMLStreamReader;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.Base64Exception;
 import org.apache.cxf.common.util.Base64Utility;
 import org.apache.cxf.helpers.DOMUtils;
-import org.apache.cxf.jaxrs.ext.RequestHandler;
-import org.apache.cxf.jaxrs.model.ClassResourceInfo;
 import org.apache.cxf.message.Message;
+import org.apache.cxf.rs.security.common.CryptoLoader;
+import org.apache.cxf.rs.security.common.SecurityUtils;
+import org.apache.cxf.rs.security.common.TrustValidator;
 import org.apache.cxf.staxutils.W3CDOMStreamReader;
-import org.apache.cxf.systest.jaxrs.security.common.CryptoLoader;
-import org.apache.cxf.systest.jaxrs.security.common.SecurityUtils;
-import org.apache.cxf.systest.jaxrs.security.common.TrustValidator;
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSSConfig;
@@ -59,20 +54,22 @@ import org.apache.xml.security.encryption.XMLCipher;
 import org.apache.xml.security.encryption.XMLEncryptionException;
 import org.apache.xml.security.utils.Constants;
 
-public class XmlEncInHandler implements RequestHandler {
+
+public abstract class AbstractXmlEncInHandler {
     private static final Logger LOG = 
-        LogUtils.getL7dLogger(XmlEncInHandler.class);
+        LogUtils.getL7dLogger(AbstractXmlEncInHandler.class);
     
     static {
         WSSConfig.init();
     }
     
     
-    public Response handleRequest(Message message, ClassResourceInfo resourceClass) {
-        
-        String method = (String)message.get(Message.HTTP_REQUEST_METHOD);
+    public void decryptContent(Message message) {
+        Message outMs = message.getExchange().getOutMessage();
+        Message inMsg = outMs == null ? message : outMs.getExchange().getInMessage();
+        String method = (String)inMsg.get(Message.HTTP_REQUEST_METHOD);
         if ("GET".equals(method)) {
-            return null;
+            return;
         }
         
         InputStream is = message.getContent(InputStream.class);
@@ -80,7 +77,9 @@ public class XmlEncInHandler implements RequestHandler {
         try {
             doc = DOMUtils.readXml(is);
         } catch (Exception ex) {
-            throwFault("Invalid XML payload", ex);
+            String errorMessage = "Invalid XML payload";
+            LOG.warning(errorMessage);
+            throwFault(errorMessage, ex);
         }
         
 
@@ -106,7 +105,6 @@ public class XmlEncInHandler implements RequestHandler {
         message.setContent(XMLStreamReader.class, 
                            new W3CDOMStreamReader(payloadDoc));
         message.setContent(InputStream.class, null);
-        return null;
     }
     
     // Subclasses can overwrite it and return the bytes, assuming they know the actual key
@@ -244,13 +242,6 @@ public class XmlEncInHandler implements RequestHandler {
     }
     
        
-    protected void throwFault(String error, Exception ex) {
-        // TODO: get bundle resource message once this filter is moved 
-        // to rt/rs/security
-        LOG.warning(error);
-        Response response = Response.status(401).entity(error).build();
-        throw ex != null ? new WebApplicationException(ex, response) : new WebApplicationException(response);
-    }
-    
+    protected abstract void throwFault(String error, Exception ex);
     
 }

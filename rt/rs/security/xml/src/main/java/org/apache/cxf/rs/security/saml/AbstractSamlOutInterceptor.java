@@ -16,11 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.systest.jaxrs.security.saml;
+package org.apache.cxf.rs.security.saml;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.logging.Logger;
+
+import javax.security.auth.callback.CallbackHandler;
 
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.StringUtils;
@@ -29,8 +31,8 @@ import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageUtils;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
-import org.apache.cxf.systest.jaxrs.security.common.CryptoLoader;
-import org.apache.cxf.systest.jaxrs.security.common.SecurityUtils;
+import org.apache.cxf.rs.security.common.CryptoLoader;
+import org.apache.cxf.rs.security.common.SecurityUtils;
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.ws.security.WSPasswordCallback;
 import org.apache.ws.security.components.crypto.Crypto;
@@ -47,8 +49,10 @@ public abstract class AbstractSamlOutInterceptor extends AbstractPhaseIntercepto
 
     
     protected AssertionWrapper createAssertion(Message message) throws Fault {
+        CallbackHandler handler = SecurityUtils.getCallbackHandler(
+             message, this.getClass(), SecurityConstants.SAML_CALLBACK_HANDLER);
         SAMLParms samlParms = new SAMLParms();
-        samlParms.setCallbackHandler(new SamlCallbackHandler());
+        samlParms.setCallbackHandler(handler);
         try {
             AssertionWrapper assertion = new AssertionWrapper(samlParms);
             boolean selfSignAssertion = 
