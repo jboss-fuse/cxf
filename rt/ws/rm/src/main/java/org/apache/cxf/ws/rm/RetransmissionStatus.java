@@ -17,20 +17,46 @@
  * under the License.
  */
 
-package org.apache.cxf.rs.security.xml;
+package org.apache.cxf.ws.rm;
 
-import javax.ws.rs.core.Response;
+import java.util.Date;
 
-import org.apache.cxf.jaxrs.ext.RequestHandler;
-import org.apache.cxf.jaxrs.model.ClassResourceInfo;
-import org.apache.cxf.message.Message;
+/**
+ * 
+ */
+public interface RetransmissionStatus {
+    /**
+     * @return the next transmission time
+     */
+    Date getNext();
 
-public class XmlEncInHandler extends AbstractXmlEncInHandler implements RequestHandler {
+    /**
+     * @return the previous transmission time
+     */
+    Date getPrevious();
     
-    public Response handleRequest(Message message, ClassResourceInfo resourceClass) {
-        
-        decryptContent(message);
-        return null;
-    }
+    /**
+     * @return the resends
+     */
+    int getResends();
     
+    /**
+     * @return the nextInterval
+     */
+    long getNextInterval();
+    
+    /**
+     * @return the backoff
+     */
+    long getBackoff();
+    
+    /**
+     * @return the pending
+     */
+    boolean isPending();
+    
+    /**
+     * @return the suspended
+     */
+    boolean isSuspended();
 }
