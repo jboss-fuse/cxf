@@ -16,32 +16,32 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.systest.aegis;
 
-import java.util.List;
+package org.apache.cxf.ws.mex;
 
-import javax.jws.WebService;
+import javax.xml.namespace.QName;
 
-import org.apache.cxf.annotations.Logging;
+import org.apache.cxf.binding.soap.SoapBinding;
+import org.apache.cxf.endpoint.Server;
+import org.apache.cxf.endpoint.ServerLifeCycleListener;
 
-@Logging
-@WebService(endpointInterface = "org.apache.cxf.systest.aegis.AegisJaxWsWsdlNs",
-        targetNamespace = "http://v1_1_2.rtf2pdf.doc.ws.daisy.marbes.cz")
-public class AegisJaxWsWsdlNsImpl implements AegisJaxWsWsdlNs {
-    
+/**
+ * 
+ */
+public class MEXServerListener implements ServerLifeCycleListener {
 
-    public void updateVO(VO vo) {
-        //System.out.println(vo.getStr());
+    public void startServer(Server serv) {
+        if (serv.getEndpoint().getBinding() instanceof SoapBinding) {
+            QName qn = serv.getEndpoint().getService().getName();
+            if (!qn.getNamespaceURI().equals("http://mex.ws.cxf.apache.org/")) {
+                serv.getEndpoint().getInInterceptors().add(new MEXInInterceptor(serv));
+            }
+        }
     }
 
-    
-    public Integer updateInteger(Integer idInteger) {
-        return idInteger;
-    }
+    /** {@inheritDoc}*/
+    public void stopServer(Server arg0) {
 
-    
-    public void updateIntegerList(List<Integer> idIntegerList) {
-        //
     }
 
 }
