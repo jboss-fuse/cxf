@@ -16,32 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.systest.aegis;
-
-import java.util.List;
+package org.apache.cxf.systest.jms;
 
 import javax.jws.WebService;
 
-import org.apache.cxf.annotations.Logging;
 
-@Logging
-@WebService(endpointInterface = "org.apache.cxf.systest.aegis.AegisJaxWsWsdlNs",
-        targetNamespace = "http://v1_1_2.rtf2pdf.doc.ws.daisy.marbes.cz")
-public class AegisJaxWsWsdlNsImpl implements AegisJaxWsWsdlNs {
-    
-
-    public void updateVO(VO vo) {
-        //System.out.println(vo.getStr());
-    }
-
-    
-    public Integer updateInteger(Integer idInteger) {
-        return idInteger;
-    }
-
-    
-    public void updateIntegerList(List<Integer> idIntegerList) {
-        //
-    }
+@WebService(serviceName = "SOAPService8", 
+            portName = "SoapPort8", 
+            endpointInterface = "org.apache.hello_world_doc_lit.Greeter",
+            targetNamespace = "http://apache.org/hello_world_doc_lit",
+            wsdlLocation = "testutils/hello_world_doc_lit.wsdl")
+public class GreeterImplSoap12 extends GreeterImplDocBase {
 
 }
