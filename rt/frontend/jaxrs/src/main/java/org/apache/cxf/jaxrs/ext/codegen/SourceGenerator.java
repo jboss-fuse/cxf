@@ -62,9 +62,9 @@ import javax.xml.namespace.QName;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
-
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXParseException;
+
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.catalog.OASISCatalogManager;
@@ -133,6 +133,7 @@ public class SourceGenerator {
     private List<String> generatedTypeClasses = new ArrayList<String>();
     private List<InputSource> bindingFiles = Collections.emptyList();
     private List<InputSource> schemaPackageFiles = Collections.emptyList();
+    private List<String> compilerArgs = new ArrayList<String>();
     private Map<String, String> schemaPackageMap = Collections.emptyMap();
     private Bus bus;
     
@@ -581,7 +582,7 @@ public class SourceGenerator {
             Element okResponse = null;
             if (responseEls.size() > 1) {
                 for (int i = 0; i < responseEls.size(); i++) {
-                    String statusValue = responseEls.get(0).getAttribute("status");
+                    String statusValue = responseEls.get(i).getAttribute("status");
                     try {
                         int status = statusValue.length() == 0 ? 200 : Integer.valueOf(statusValue);
                         if (status == 200) {
@@ -836,8 +837,12 @@ public class SourceGenerator {
         List<SchemaInfo> schemas = new ArrayList<SchemaInfo>();
         List<Element> schemasEls = DOMUtils.getChildrenWithName(grammarEls.get(0), 
              XmlSchemaConstants.XSD_NAMESPACE_URI, "schema");
-        for (Element schemaEl : schemasEls) {
-            schemas.add(createSchemaInfo(schemaEl, app.getWadlPath()));
+        for (int i = 0; i < schemasEls.size(); i++) {
+            String systemId = app.getWadlPath();
+            if (schemasEls.size() > 1) {
+                systemId += "#grammar" + (i + 1);
+            }
+            schemas.add(createSchemaInfo(schemasEls.get(i), systemId));
         }
         List<Element> includeEls = DOMUtils.getChildrenWithName(grammarEls.get(0), 
              WadlGenerator.WADL_NS, "include");
@@ -900,6 +905,10 @@ public class SourceGenerator {
         
 
         SchemaCompiler compiler = createCompiler(type);
+        if (compilerArgs.size() > 0) {
+            compiler.getOptions().addGrammar(new InputSource("null"));
+            compiler.getOptions().parseArguments(compilerArgs.toArray(new String[] {}));
+        }
         addSchemas(schemaElements, compiler);
         for (InputSource is : bindingFiles) {
             compiler.getOptions().addBindFile(is);
@@ -990,6 +999,10 @@ public class SourceGenerator {
     
     public void setSchemaPackageFiles(List<InputSource> files) {
         this.schemaPackageFiles = files;
+    }
+    
+    public void setCompilerArgs(List<String> args) {
+        this.compilerArgs = args;
     }
 
     public void setSchemaPackageMap(Map<String, String> map) {
