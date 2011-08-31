@@ -22,7 +22,6 @@ package org.apache.cxf.ws.security.kerberos;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.crypto.SecretKey;
 import javax.security.auth.callback.CallbackHandler;
 
 import org.apache.cxf.Bus;
@@ -115,11 +114,7 @@ public class KerberosClient implements Configurable {
         
         SecurityToken token = new SecurityToken(bst.getID());
         token.setToken(bst.getElement());
-        token.setWsuId(bst.getID());
-        SecretKey secretKey = bst.getSecretKey();
-        if (secretKey != null) {
-            token.setSecret(secretKey.getEncoded());
-        }
+        //token.setSecret(bst.getToken());
         token.setTokenType(bst.getValueType());
 
         return token;

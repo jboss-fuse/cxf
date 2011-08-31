@@ -172,16 +172,13 @@ public class KerberosTokenInterceptorProvider extends AbstractPolicyInterceptorP
         ) {
             if (results != null) {
                 for (WSHandlerResult rResult : results) {
-                    List<WSSecurityEngineResult> kerberosResults = findKerberosResults(rResult.getResults());
-                    for (WSSecurityEngineResult wser : kerberosResults) {
-                        KerberosSecurity kerberosToken = 
-                            (KerberosSecurity)wser.get(WSSecurityEngineResult.TAG_BINARY_SECURITY_TOKEN);
+                    List<KerberosSecurity> kerberosResults = findKerberosResults(rResult.getResults());
+                    for (KerberosSecurity kerberosToken : kerberosResults) {
                         KerberosTokenPolicyValidator kerberosValidator = 
                             new KerberosTokenPolicyValidator(message);
                         boolean valid = kerberosValidator.validatePolicy(aim, kerberosToken);
                         if (valid) {
                             SecurityToken token = createSecurityToken(kerberosToken);
-                            token.setSecret((byte[])wser.get(WSSecurityEngineResult.TAG_SECRET));
                             message.getExchange().put(SecurityConstants.TOKEN, token);
                             return;
                         }
@@ -190,17 +187,17 @@ public class KerberosTokenInterceptorProvider extends AbstractPolicyInterceptorP
             }
         }
         
-        private List<WSSecurityEngineResult> findKerberosResults(
+        private List<KerberosSecurity> findKerberosResults(
             List<WSSecurityEngineResult> wsSecEngineResults
         ) {
-            List<WSSecurityEngineResult> results = new ArrayList<WSSecurityEngineResult>();
+            List<KerberosSecurity> results = new ArrayList<KerberosSecurity>();
             for (WSSecurityEngineResult wser : wsSecEngineResults) {
                 Integer actInt = (Integer)wser.get(WSSecurityEngineResult.TAG_ACTION);
                 if (actInt.intValue() == WSConstants.BST) {
                     BinarySecurity binarySecurity = 
                         (BinarySecurity)wser.get(WSSecurityEngineResult.TAG_BINARY_SECURITY_TOKEN);
                     if (binarySecurity instanceof KerberosSecurity) {
-                        results.add(wser);
+                        results.add((KerberosSecurity)binarySecurity);
                     }
                 }
             }
@@ -208,10 +205,12 @@ public class KerberosTokenInterceptorProvider extends AbstractPolicyInterceptorP
         }
     }
     
-    private static SecurityToken createSecurityToken(KerberosSecurity binarySecurityToken) {
+    private static SecurityToken createSecurityToken(BinarySecurity binarySecurityToken) {
         SecurityToken token = new SecurityToken(binarySecurityToken.getID());
         token.setToken(binarySecurityToken.getElement());
+        token.setSecret(binarySecurityToken.getToken());
         token.setTokenType(binarySecurityToken.getValueType());
+
         return token;
     }
         

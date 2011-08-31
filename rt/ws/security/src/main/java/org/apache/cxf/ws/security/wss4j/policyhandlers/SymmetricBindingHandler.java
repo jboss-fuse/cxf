@@ -40,7 +40,6 @@ import org.apache.cxf.ws.security.policy.SP12Constants;
 import org.apache.cxf.ws.security.policy.SPConstants;
 import org.apache.cxf.ws.security.policy.model.AlgorithmSuite;
 import org.apache.cxf.ws.security.policy.model.IssuedToken;
-import org.apache.cxf.ws.security.policy.model.KerberosToken;
 import org.apache.cxf.ws.security.policy.model.SecureConversationToken;
 import org.apache.cxf.ws.security.policy.model.SymmetricBinding;
 import org.apache.cxf.ws.security.policy.model.Token;
@@ -154,7 +153,7 @@ public class SymmetricBindingHandler extends AbstractBindingBuilder {
                 //SecureConversationToken
                 String tokenId = null;
                 SecurityToken tok = null;
-                if (encryptionToken instanceof IssuedToken || encryptionToken instanceof KerberosToken) {
+                if (encryptionToken instanceof IssuedToken) {
                     tok = getSecurityToken();
                 } else if (encryptionToken instanceof SecureConversationToken) {
                     tok = getSecurityToken();
@@ -270,7 +269,7 @@ public class SymmetricBindingHandler extends AbstractBindingBuilder {
             if (sigToken != null) {
                 if (sigToken instanceof SecureConversationToken) {
                     sigTok = getSecurityToken();
-                } else if (sigToken instanceof IssuedToken || sigToken instanceof KerberosToken) {
+                } else if (sigToken instanceof IssuedToken) {
                     sigTok = getSecurityToken();
                 } else if (sigToken instanceof X509Token) {
                     if (isRequestor()) {
@@ -603,7 +602,7 @@ public class SymmetricBindingHandler extends AbstractBindingBuilder {
             }
             dkSign.setExternalKey(tok.getSecret(), tokenRef.getElement());
         } else {
-            if (!attached || policyToken instanceof SecureConversationToken) {
+            if (policyToken instanceof SecureConversationToken) {
                 dkSign.setTokenIdDirectId(true);
             }
             dkSign.setExternalKey(tok.getSecret(), tok.getId());

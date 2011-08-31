@@ -166,8 +166,7 @@ public class TransportBindingHandler extends AbstractBindingBuilder {
                         for (Token token : sgndSuppTokens.getTokens()) {
                             if (token instanceof IssuedToken
                                 || token instanceof SecureConversationToken
-                                || token instanceof KeyValueToken
-                                || token instanceof KerberosToken) {
+                                || token instanceof KeyValueToken) {
                                 addSig(signatureValues, doIssuedTokenSignature(token, signdParts,
                                                                                sgndSuppTokens,
                                                                                null));
@@ -202,8 +201,7 @@ public class TransportBindingHandler extends AbstractBindingBuilder {
                     if (endSuppTokens != null) {
                         for (Token token : endSuppTokens.getTokens()) {
                             if (token instanceof IssuedToken
-                                || token instanceof SecureConversationToken
-                                || token instanceof KerberosToken) {
+                                || token instanceof SecureConversationToken) {
                                 addSig(signatureValues, doIssuedTokenSignature(token, 
                                                                                endSuppTokens
                                                                                    .getSignedParts(), 
