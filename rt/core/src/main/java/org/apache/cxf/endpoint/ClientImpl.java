@@ -198,6 +198,9 @@ public class ClientImpl
     }
 
     public void destroy() {
+        if (bus == null) {
+            return;
+        }
         ClientLifeCycleManager mgr = bus.getExtension(ClientLifeCycleManager.class);
         if (null != mgr) {
             mgr.clientDestroyed(this);
@@ -214,6 +217,19 @@ public class ClientImpl
                 getConduit().close();
             }
         }
+        
+        bus = null;
+        conduitSelector = null;
+        outFaultObserver = null;
+        outboundChainCache = null;
+        inboundChainCache = null;
+
+        currentRequestContext = null;
+        requestContext.clear();
+        requestContext = null;
+        responseContext.clear();
+        responseContext = null;
+        executor = null;            
     }
 
     private void notifyLifecycleManager() {
@@ -343,7 +359,6 @@ public class ClientImpl
                            Exchange exchange) throws Exception {
         Map<String, Object> context = new HashMap<String, Object>();
         Map<String, Object> resp = new HashMap<String, Object>();
-        resp.clear();
         Map<String, Object> req = new HashMap<String, Object>(getRequestContext());
         context.put(RESPONSE_CONTEXT, resp);
         context.put(REQUEST_CONTEXT, req);
