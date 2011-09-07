@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements. See the NOTICE file
@@ -17,20 +16,11 @@
   specific language governing permissions and limitations
   under the License.
 -->
-<project name="handler demo" default="build" basedir=".">
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+	<soap:Body>
+		<ns2:sayHi xmlns:ns2="http://apache.org/hello_world_soap_http/types">
+			<arg0>hola</arg0>
+		</ns2:sayHi>
+	</soap:Body>
 
-    <import file="../common_build.xml"/>
-
-    <target name="client" description="run demo client" depends="build">
-        <cxfrun classname="demo.handlers.client.Client" param1="${basedir}/wsdl/addNumbers.wsdl"/>
-    </target>
-
-    <target name="server" description="run demo server" depends="build">
-        <cxfrun classname="demo.handlers.server.Server" param1="${basedir}/wsdl/addNumbers.wsdl"/>
-    </target>
-
-    <target name="generate.code">
-        <echo level="info" message="Generating code using wsdl2java..."/>
-        <wsdl2java file="addNumbers.wsdl"/>
-    </target>
-</project>
+</soap:Envelope>
