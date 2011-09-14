@@ -16,32 +16,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.tools.fortest.cxf1450;
 
-package org.apache.cxf.common.commands;
+public class Name {
 
-import java.io.File;
+    private String firstName = "";
+    private String lastName = "";
 
-import org.apache.cxf.common.util.SystemPropertyAction;
 
-public final class JavaHelper {
-
-    private JavaHelper() {
-        //complete
+    Name() {
     }
 
-    /** Get the command to launch a JVM.  Find the java command
-     * relative to the java.home property rather than what is on the
-     * path.  It is possible that the java version being used it not
-     * on the path
-     *
-     */
-    public static String getJavaCommand() { 
-        String javaHome = SystemPropertyAction.getProperty("java.home");
-        if (null != javaHome) { 
-            return javaHome + File.separator + "bin"  
-                + File.separator  + "java" + ForkedCommand.EXE_SUFFIX; 
-        } else { 
-            return "java" + ForkedCommand.EXE_SUFFIX;
-        } 
-    } 
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
 }

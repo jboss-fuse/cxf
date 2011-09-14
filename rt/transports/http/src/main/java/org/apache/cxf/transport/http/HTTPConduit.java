@@ -45,11 +45,14 @@ import javax.xml.namespace.QName;
 import org.apache.cxf.Bus;
 import org.apache.cxf.common.injection.NoJSR250Annotations;
 import org.apache.cxf.common.logging.LogUtils;
+import org.apache.cxf.common.util.SystemPropertyAction;
 import org.apache.cxf.configuration.Configurable;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.configuration.security.AuthorizationPolicy;
 import org.apache.cxf.configuration.security.CertificateConstraintsType;
 import org.apache.cxf.configuration.security.ProxyAuthorizationPolicy;
+import org.apache.cxf.endpoint.ClientCallback;
+import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.helpers.HttpHeaderHelper;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.helpers.LoadingByteArrayOutputStream;
@@ -1529,6 +1532,13 @@ public class HTTPConduit
         protected void handleResponseInternal() throws IOException {
             Exchange exchange = outMessage.getExchange();
             int responseCode = connection.getResponseCode();
+            // handling the particalResponse by default
+            boolean handlingParticalResponse = true;
+            // this option will be set to false when we leverage the CXF transport to send stream message
+            if (Boolean.FALSE.equals(outMessage.get(Message.HANDLING_PARTIAL_RESPONSE_MESSAGE))) {
+                handlingParticalResponse = false;
+            }
+            
             if (outMessage != null && exchange != null) {
                 exchange.put(Message.RESPONSE_CODE, responseCode);
             }
@@ -1546,12 +1556,22 @@ public class HTTPConduit
 
             InputStream in = null;
             // oneway or decoupled twoway calls may expect HTTP 202 with no content
-            if (isOneway(exchange) || HttpURLConnection.HTTP_ACCEPTED == responseCode) {
+            if (isOneway(exchange) 
+                || (HttpURLConnection.HTTP_ACCEPTED == responseCode && handlingParticalResponse)) {
                 in = ChunkedUtil.getPartialResponse(connection, responseCode);
                 if (in == null) {
                     // oneway operation or decoupled MEP without 
                     // partial response
                     connection.getInputStream().close();
+                    ClientCallback cc = exchange.get(ClientCallback.class);
+                    if (null != cc) {
+                        //REVISIT move the decoupled destination property name into api
+                        Endpoint ep = exchange.getEndpoint();
+                        if (null != ep && null != ep.getEndpointInfo() && null == ep.getEndpointInfo().
+                            getProperty("org.apache.cxf.ws.addressing.MAPAggregator.decoupledDestination")) {
+                            cc.handleResponse(null, null);
+                        }
+                    }
                     return;
                 }
             } else {
@@ -1613,7 +1633,7 @@ public class HTTPConduit
                 LOG.fine("Content length: " + connection.getContentLength());
                 Map<String, List<String>> headerFields = connection.getHeaderFields();
                 if (null != headerFields) {
-                    String newLine = System.getProperty("line.separator");
+                    String newLine = SystemPropertyAction.getProperty("line.separator");
                     StringBuilder buf = new StringBuilder();
                     buf.append("Header fields: " + newLine);
                     for (String headerKey : headerFields.keySet()) {

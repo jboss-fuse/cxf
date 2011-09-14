@@ -45,6 +45,7 @@ public class BlueprintBus extends ExtensionManagerBus {
         super.setExtension(new BundleDelegatingClassLoader(c.getBundle(), 
                                                            this.getClass().getClassLoader()),
                            ClassLoader.class);
+        super.setExtension(c, BundleContext.class);
     }
     public void setBlueprintContainer(BlueprintContainer con) {
         container = con;
@@ -52,5 +53,12 @@ public class BlueprintBus extends ExtensionManagerBus {
         setExtension(new BlueprintBeanLocator(getExtension(ConfiguredBeanLocator.class), container, context),
                            ConfiguredBeanLocator.class);
     }
-    
+    public String getId() {
+        if (id == null) {
+            id = context.getBundle().getSymbolicName() + "-" 
+                + DEFAULT_BUS_ID + Integer.toString(this.hashCode());
+        }
+        return id;
+    }
+
 }

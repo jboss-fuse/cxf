@@ -16,32 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.tools.fortest.cxf1450;
 
-package org.apache.cxf.common.commands;
+import javax.jws.WebMethod;
+import javax.jws.WebParam;
+import javax.xml.ws.Holder;
 
-import java.io.File;
-
-import org.apache.cxf.common.util.SystemPropertyAction;
-
-public final class JavaHelper {
-
-    private JavaHelper() {
-        //complete
+public class WebParamService {
+    @WebMethod(operationName = "helloString", action = "urn:HelloString")
+    public String hello(
+                        @WebParam(name = "Name", targetNamespace = "helloString/Name", 
+                                  mode = WebParam.Mode.INOUT) Holder<Name> name,
+                        @WebParam(name = "Employee", mode = WebParam.Mode.OUT) Holder<Employee> employee) {
+        return "Hello " + name;
     }
 
-    /** Get the command to launch a JVM.  Find the java command
-     * relative to the java.home property rather than what is on the
-     * path.  It is possible that the java version being used it not
-     * on the path
-     *
-     */
-    public static String getJavaCommand() { 
-        String javaHome = SystemPropertyAction.getProperty("java.home");
-        if (null != javaHome) { 
-            return javaHome + File.separator + "bin"  
-                + File.separator  + "java" + ForkedCommand.EXE_SUFFIX; 
-        } else { 
-            return "java" + ForkedCommand.EXE_SUFFIX;
-        } 
-    } 
 }
