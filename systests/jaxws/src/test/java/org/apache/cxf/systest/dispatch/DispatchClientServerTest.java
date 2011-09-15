@@ -222,6 +222,43 @@ public class DispatchClientServerTest extends AbstractBusClientServerTestBase {
         }
         
     }
+    
+    @Test
+    public void testSOAPMessageInvokeToOneWay() throws Exception {
+        SOAPService service = new SOAPService(null, SERVICE_NAME);
+        service.addPort(PORT_NAME, SOAPBinding.SOAP11HTTP_BINDING,
+                        "http://localhost:" + greeterPort 
+                        + "/SOAPDispatchService/SoapDispatchPort");
+        assertNotNull(service);
+        
+        Dispatch<SOAPMessage> disp = service
+            .createDispatch(PORT_NAME, SOAPMessage.class, Service.Mode.MESSAGE);
+
+        //message is "one way", but there really isn't a way for us to know that
+        //as we don't have a wsdl or other source of operation information to
+        //compare the payload to.
+        InputStream is1 = getClass().getResourceAsStream("resources/GreetMe1WDocLiteralReq2.xml");
+        SOAPMessage soapReqMsg1 = MessageFactory.newInstance().createMessage(null, is1);
+        assertNotNull(soapReqMsg1);
+
+        //Version 1:
+        //we'll just call invoke
+        disp.invoke(soapReqMsg1);
+        
+        //Version 2:
+        //We want to handle things asynchronously
+        AsyncHandler<SOAPMessage> callback = new AsyncHandler<SOAPMessage>() {
+            public void handleResponse(Response<SOAPMessage> res) {
+                synchronized (this) {
+                    notifyAll();
+                }
+            }
+        };
+        synchronized (callback) {
+            disp.invokeAsync(soapReqMsg1, callback);
+            callback.wait();
+        }
+    }
     @Test
     public void testSOAPMessage() throws Exception {
 
@@ -250,7 +287,7 @@ public class DispatchClientServerTest extends AbstractBusClientServerTestBase {
             .getTextContent().trim());
 
         // Test oneway
-        InputStream is1 = getClass().getResourceAsStream("resources/GreetMeDocLiteralReq1.xml");
+        InputStream is1 = getClass().getResourceAsStream("resources/GreetMe1WDocLiteralReq2.xml");
         SOAPMessage soapReqMsg1 = MessageFactory.newInstance().createMessage(null, is1);
         assertNotNull(soapReqMsg1);
         disp.invokeOneWay(soapReqMsg1);

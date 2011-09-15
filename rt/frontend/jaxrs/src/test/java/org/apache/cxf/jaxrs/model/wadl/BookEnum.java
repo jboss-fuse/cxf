@@ -16,17 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.example.customerservice.server;
+package org.apache.cxf.jaxrs.model.wadl;
 
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
-public class CustomerServiceSpringServer {
-    
-    protected CustomerServiceSpringServer() {
-    }
-
-    public static void main(String args[]) throws Exception {
-        new ClassPathXmlApplicationContext("server-applicationContext.xml");
-        System.in.read();
-    }
+public enum BookEnum {
+    NEW,
+    USED,
+    OLD
 }

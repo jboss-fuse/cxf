@@ -17,20 +17,4 @@
   specific language governing permissions and limitations
   under the License.
 -->
-<project name="handler demo" default="build" basedir=".">
-
-    <import file="../common_build.xml"/>
-
-    <target name="client" description="run demo client" depends="build">
-        <cxfrun classname="demo.handlers.client.Client" param1="${basedir}/wsdl/addNumbers.wsdl"/>
-    </target>
-
-    <target name="server" description="run demo server" depends="build">
-        <cxfrun classname="demo.handlers.server.Server" param1="${basedir}/wsdl/addNumbers.wsdl"/>
-    </target>
-
-    <target name="generate.code">
-        <echo level="info" message="Generating code using wsdl2java..."/>
-        <wsdl2java file="addNumbers.wsdl"/>
-    </target>
-</project>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SOAP-ENV:Body><ns4:greetMeOneWay xmlns:ns4="http://apache.org/hello_world_soap_http/types"><ns4:requestType>TestSOAPInputMessage2</ns4:requestType></ns4:greetMeOneWay></SOAP-ENV:Body></SOAP-ENV:Envelope>

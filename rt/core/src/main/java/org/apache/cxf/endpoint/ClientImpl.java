@@ -171,12 +171,11 @@ public class ClientImpl
     /**
      * Create a Client that uses a specific EndpointImpl.
      * @param bus
-     * @param wsdlUrl
      * @param service
      * @param port
      * @param endpointImplFactory
      */
-    public ClientImpl(Bus bus, URL wsdlUrl, Service svc, QName port,
+    public ClientImpl(Bus bus, Service svc, QName port,
                       EndpointImplFactory endpointImplFactory) {
         this.bus = bus;
         outFaultObserver = new ClientOutFaultObserver(bus);
@@ -199,6 +198,9 @@ public class ClientImpl
     }
 
     public void destroy() {
+        if (bus == null) {
+            return;
+        }
         ClientLifeCycleManager mgr = bus.getExtension(ClientLifeCycleManager.class);
         if (null != mgr) {
             mgr.clientDestroyed(this);
@@ -215,6 +217,19 @@ public class ClientImpl
                 getConduit().close();
             }
         }
+        
+        bus = null;
+        conduitSelector = null;
+        outFaultObserver = null;
+        outboundChainCache = null;
+        inboundChainCache = null;
+
+        currentRequestContext = null;
+        requestContext.clear();
+        requestContext = null;
+        responseContext.clear();
+        responseContext = null;
+        executor = null;            
     }
 
     private void notifyLifecycleManager() {
@@ -344,7 +359,6 @@ public class ClientImpl
                            Exchange exchange) throws Exception {
         Map<String, Object> context = new HashMap<String, Object>();
         Map<String, Object> resp = new HashMap<String, Object>();
-        resp.clear();
         Map<String, Object> req = new HashMap<String, Object>(getRequestContext());
         context.put(RESPONSE_CONTEXT, resp);
         context.put(REQUEST_CONTEXT, req);
@@ -585,6 +599,18 @@ public class ClientImpl
                 getConduitSelector().complete(exchange);
             }
             throw ex;
+        }
+        
+        //REVISIT 
+        // - use a protocol neutral no-content marker instead of 202?
+        // - move the decoupled destination property name into api 
+        Integer responseCode = (Integer)exchange.get(Message.RESPONSE_CODE);
+        if (null != responseCode && 202 == responseCode) {
+            Endpoint ep = exchange.getEndpoint();
+            if (null != ep && null != ep.getEndpointInfo() && null == ep.getEndpointInfo().
+                getProperty("org.apache.cxf.ws.addressing.MAPAggregator.decoupledDestination")) {
+                return null;
+            }
         }
 
         // Wait for a response if we need to

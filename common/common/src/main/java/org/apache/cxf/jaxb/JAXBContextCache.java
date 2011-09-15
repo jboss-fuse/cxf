@@ -153,13 +153,15 @@ public final class JAXBContextCache {
                         }
                     }
                 }
-            }
-        }
-        if (cachedContextAndSchemas != null) {
-            context = cachedContextAndSchemas.getContext();
-            if (context ==  null) {
-                JAXBCONTEXT_CACHE.remove(cachedContextAndSchemas.getClasses());
-                cachedContextAndSchemas = null;
+                if (cachedContextAndSchemas != null) {
+                    context = cachedContextAndSchemas.getContext();
+                    if (context == null) {
+                        JAXBCONTEXT_CACHE.remove(cachedContextAndSchemas.getClasses());
+                        cachedContextAndSchemas = null;
+                    } else {
+                        return cachedContextAndSchemas;
+                    }
+                }
             }
         }
         if (context == null) {
