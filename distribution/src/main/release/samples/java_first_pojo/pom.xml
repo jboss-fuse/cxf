@@ -22,6 +22,7 @@
     <artifactId>java_first_pojo</artifactId>
     <name>Java First POJO Sample</name>
     <version>2.5.x-fuse-SNAPSHOT</version>
+    <description>Java First POJO Sample</description>
 
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
@@ -33,7 +34,6 @@
         <cxf.version>${project.version}</cxf.version>
     </properties>
     <build>
-        <sourceDirectory>src</sourceDirectory>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>

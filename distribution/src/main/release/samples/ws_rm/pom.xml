@@ -22,6 +22,7 @@
     <artifactId>ws_rm</artifactId>
     <name>WS-RM Demo</name>
     <version>2.5.x-fuse-SNAPSHOT</version>
+    <description>WS-RM Demo</description>
 
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
@@ -32,7 +33,6 @@
         <cxf.version>${project.version}</cxf.version>
     </properties>
     <build>
-        <sourceDirectory>src</sourceDirectory>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -73,8 +73,8 @@
                         </goals>
                         <configuration>
                             <tasks>
-                                <copy file="${basedir}/src/demo/ws_rm/client/ws_rm.xml" todir="${basedir}/target/classes/demo/ws_rm/client" />
-                                <copy file="${basedir}/src/demo/ws_rm/server/ws_rm.xml" todir="${basedir}/target/classes/demo/ws_rm/server" />
+                                <copy file="${basedir}/src/main/java/demo/ws_rm/client/ws_rm.xml" todir="${basedir}/target/classes/demo/ws_rm/client" />
+                                <copy file="${basedir}/src/main/java/demo/ws_rm/server/ws_rm.xml" todir="${basedir}/target/classes/demo/ws_rm/server" />
                             </tasks>
                         </configuration>
                     </execution>

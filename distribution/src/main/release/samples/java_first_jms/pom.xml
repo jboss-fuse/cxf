@@ -19,11 +19,12 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.apache.cxf.samples</groupId>
-	<artifactId>java_first_jaxws_jms</artifactId>
-	<name>Java First demo using JAX-WS and JMS</name>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.apache.cxf.samples</groupId>
+    <artifactId>java_first_jaxws_jms</artifactId>
+    <name>Java First demo using JAX-WS and JMS</name>
     <version>2.5.x-fuse-SNAPSHOT</version>
+    <description>Java First demo using JAX-WS and JMS</description>
 
     <parent>
 	  <groupId>org.apache.cxf.samples</groupId>

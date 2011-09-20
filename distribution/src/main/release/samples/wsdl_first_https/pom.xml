@@ -22,6 +22,7 @@
     <artifactId>wsdl_first_https</artifactId>
     <name>WSDL first demo using HTTPS</name>
     <version>2.5.x-fuse-SNAPSHOT</version>
+    <description>WSDL first demo using HTTPS</description>
 
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
@@ -33,7 +34,6 @@
         <cxf.version>${project.version}</cxf.version>
     </properties>
     <build>
-        <sourceDirectory>src</sourceDirectory>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -74,9 +74,9 @@
                         </goals>
                         <configuration>
                             <tasks>
-                                <copy file="${basedir}/src/demo/hw_https/server/CherryServer.xml" todir="${basedir}/target/classes/demo/hw_https/server" />
-                                <copy file="${basedir}/src/demo/hw_https/client/WibbleClient.xml" todir="${basedir}/target/classes/demo/hw_https/client" />
-                                <copy file="${basedir}/src/demo/hw_https/client/InsecureClient.xml" todir="${basedir}/target/classes/demo/hw_https/client" />
+                                <copy file="${basedir}/src/main/java/demo/hw_https/server/CherryServer.xml" todir="${basedir}/target/classes/demo/hw_https/server" />
+                                <copy file="${basedir}/src/main/java/demo/hw_https/client/WibbleClient.xml" todir="${basedir}/target/classes/demo/hw_https/client" />
+                                <copy file="${basedir}/src/main/java/demo/hw_https/client/InsecureClient.xml" todir="${basedir}/target/classes/demo/hw_https/client" />
                                 <copy todir="${basedir}/target/classes/certs">
                                     <fileset dir="${basedir}/certs" />
                                 </copy>

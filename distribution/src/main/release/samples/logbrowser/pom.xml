@@ -22,6 +22,7 @@
     <artifactId>logbrowser</artifactId>
     <name>LogBrowser</name>
     <version>2.5.x-fuse-SNAPSHOT</version>
+    <description>LogBrowser</description>
 
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
@@ -62,7 +63,6 @@
         </profile>
     </profiles>
     <build>
-        <sourceDirectory>src</sourceDirectory>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>

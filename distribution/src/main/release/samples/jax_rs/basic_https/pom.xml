@@ -22,6 +22,7 @@
     <artifactId>jax_rs_basic_https</artifactId>
     <name>JAX-RS Basic Demo With HTTPS communications</name>
     <version>2.5.x-fuse-SNAPSHOT</version>
+    <description>JAX-RS Basic Demo With HTTPS communications</description>
 
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
@@ -35,7 +36,6 @@
     </properties>
 
     <build>
-        <sourceDirectory>src</sourceDirectory>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>

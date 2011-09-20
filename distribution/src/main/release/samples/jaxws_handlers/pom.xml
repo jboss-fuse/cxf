@@ -22,6 +22,7 @@
     <artifactId>jaxws_handlers</artifactId>
     <name>JAX-WS Handler Demo</name>
     <version>2.5.x-fuse-SNAPSHOT</version>
+    <description>JAX-WS Handler Demo</description>
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
         <artifactId>cxf-samples</artifactId>
@@ -33,7 +34,6 @@
     </properties>
 
     <build>
-        <sourceDirectory>src</sourceDirectory>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -74,7 +74,7 @@
                         </goals>
                         <configuration>
                             <tasks>
-                                <copy file="${basedir}/src/demo/handlers/common/demo_handlers.xml" todir="${basedir}/target/classes/demo/handlers/common" />
+                                <copy file="${basedir}/src/main/java/demo/handlers/common/demo_handlers.xml" todir="${basedir}/target/classes/demo/handlers/common" />
                             </tasks>
                         </configuration>
                     </execution>

@@ -22,6 +22,7 @@
     <artifactId>jax_rs_content_negotiation</artifactId>
     <name>JAX-RS Content Negotiation Demo</name>
     <version>2.5.x-fuse-SNAPSHOT</version>
+    <description>JAX-RS Content Negotiation Demo</description>
 
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
@@ -34,7 +35,6 @@
         <httpclient.version>3.1</httpclient.version>
     </properties>
     <build>
-        <sourceDirectory>src</sourceDirectory>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
