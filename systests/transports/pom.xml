@@ -28,6 +28,7 @@
     <groupId>org.apache.cxf.systests</groupId>
     <artifactId>cxf-systests-transports</artifactId>
     <name>Apache CXF Transport System Tests</name>
+    <description>Apache CXF Transport System Tests</description>
     <version>2.3.x-fuse-SNAPSHOT</version>
     <url>http://cxf.apache.org</url>
     <build>

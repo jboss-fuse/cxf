@@ -23,6 +23,7 @@
     <packaging>bundle</packaging>
     <version>2.3.x-fuse-SNAPSHOT</version>
     <name>Apache CXF HTTP Transport for OSGi</name>
+    <description>Apache CXF HTTP Transport for OSGi</description>
     <url>http://cxf.apache.org</url>
 
     <parent>

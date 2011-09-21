@@ -28,6 +28,9 @@
     <artifactId>cxf</artifactId>
     <version>2.3.x-fuse-SNAPSHOT</version>
     <name>FUSE Services Framework</name>
+    <description>FUSE Services Framework is an open-source services framework that aids in
+    the development of services using front-end programming APIs, like JAX-WS
+    and JAX-RS.</description>
     <url>http://fusesource.com/forge/projects/FUSESF</url>
 
     <packaging>pom</packaging>

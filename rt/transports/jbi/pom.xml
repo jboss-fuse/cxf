@@ -23,6 +23,7 @@
     <packaging>jar</packaging>
     <version>2.3.x-fuse-SNAPSHOT</version>
     <name>Apache CXF Runtime JBI Transport</name>
+    <description>Apache CXF Runtime JBI Transport</description>
     <url>http://cxf.apache.org</url>
 
     <parent>

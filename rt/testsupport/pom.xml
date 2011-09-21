@@ -5,6 +5,7 @@
     <packaging>jar</packaging>
     <version>2.3.x-fuse-SNAPSHOT</version>
     <name>Apache CXF Test Case Support</name>
+    <description>Apache CXF Test Case Support</description>
     <url>http://cxf.apache.org</url>
 
     <parent>

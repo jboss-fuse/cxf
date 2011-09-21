@@ -22,6 +22,7 @@
     <artifactId>apache-cxf</artifactId>
     <packaging>pom</packaging>
     <name>Apache CXF Distribution</name>
+    <description>Apache CXF Distribution</description>
     <version>2.3.x-fuse-SNAPSHOT</version>
     <url>http://cxf.apache.org</url>
 
