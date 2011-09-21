@@ -28,6 +28,7 @@
     <artifactId>cxf</artifactId>
     <version>2.4.x-fuse-SNAPSHOT</version>
     <name>FUSE Services Framework</name>
+    <description>FUSE Services Framework</description>
     <url>http://fusesource.com/forge/projects/FUSESF</url>
 
     <packaging>pom</packaging>

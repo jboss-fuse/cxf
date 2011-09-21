@@ -10,6 +10,7 @@
     <groupId>org.apache.cxf.systests</groupId>
     <artifactId>cxf-systests-ci-webapp</artifactId>
     <name>Apache CXF Container Integration Test Webapp</name>
+    <description>Apache CXF Container Integration Test Webapp</description>
     <version>2.4.x-fuse-SNAPSHOT</version>
     <packaging>war</packaging>
     <dependencies>

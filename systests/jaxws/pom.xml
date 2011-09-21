@@ -28,6 +28,7 @@
     <groupId>org.apache.cxf.systests</groupId>
     <artifactId>cxf-systests-jaxws</artifactId>
     <name>Apache CXF JAX-WS System Tests</name>
+    <description>Apache CXF JAX-WS System Tests</description>
     <version>2.4.x-fuse-SNAPSHOT</version>
     <url>http://cxf.apache.org</url>
 

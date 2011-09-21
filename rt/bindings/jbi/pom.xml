@@ -21,6 +21,7 @@
     <artifactId>cxf-rt-bindings-jbi</artifactId>
     <packaging>jar</packaging>
     <name>Apache CXF Runtime JBI Binding</name>
+    <description>Apache CXF Runtime JBI Binding</description>
     <url>http://cxf.apache.org</url>
 
     <parent>

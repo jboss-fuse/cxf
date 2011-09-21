@@ -23,6 +23,7 @@
     <artifactId>cxf-distribution-manifest</artifactId>
     <packaging>jar</packaging>
     <name>Apache CXF Manifest Jar</name>
+    <description>Apache CXF Manifest Jar</description>
     <version>2.4.x-fuse-SNAPSHOT</version>
     <url>http://cxf.apache.org</url>
 

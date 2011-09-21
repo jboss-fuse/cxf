@@ -21,6 +21,7 @@
     <groupId>org.apache.cxf.samples</groupId>
     <artifactId>logbrowser</artifactId>
     <name>LogBrowser</name>
+    <description>LogBrowser</description>
     <version>2.4.x-fuse-SNAPSHOT</version>
 
     <parent>
