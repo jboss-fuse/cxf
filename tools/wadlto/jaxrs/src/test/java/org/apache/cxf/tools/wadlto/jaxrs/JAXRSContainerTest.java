@@ -56,6 +56,8 @@ public class JAXRSContainerTest extends ProcessorTestBase {
         }
     }
     
+        
+        
     @Test    
     public void testCodeGenInterfacesWithBinding() {
         try {
