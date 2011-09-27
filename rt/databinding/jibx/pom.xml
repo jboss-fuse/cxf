@@ -105,6 +105,19 @@
             <groupId>org.jibx</groupId>
             <artifactId>jibx-tools</artifactId>
         </dependency>
+        <!-- Need to add these dependency to make CI box happay -->
+        <dependency>
+            <groupId>org.eclipse.core</groupId>
+            <artifactId>resources</artifactId>
+            <version>3.3.0-v20070604</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+             <groupId>org.eclipse.core</groupId>
+             <artifactId>commands</artifactId>
+             <version>3.3.0-I20070605-0010</version>
+             <scope>provided</scope>
+        </dependency> 
     </dependencies>
     <profiles>
         <profile>
