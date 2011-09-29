@@ -28,8 +28,8 @@ import org.apache.cxf.jaxws.context.WrappedMessageContext;
 import org.apache.cxf.message.MessageImpl;
 import org.apache.cxf.sts.STSConstants;
 import org.apache.cxf.sts.StaticSTSProperties;
-import org.apache.cxf.sts.cache.DefaultInMemoryCache;
-import org.apache.cxf.sts.cache.STSCache;
+import org.apache.cxf.sts.cache.DefaultInMemoryTokenStore;
+import org.apache.cxf.sts.cache.STSTokenStore;
 import org.apache.cxf.sts.common.PasswordCallbackHandler;
 import org.apache.cxf.sts.request.KeyRequirements;
 import org.apache.cxf.sts.request.ReceivedToken;
@@ -51,7 +51,7 @@ import org.apache.ws.security.message.token.SecurityContextToken;
  */
 public class SCTCancellerTest extends org.junit.Assert {
     
-    private static STSCache cache = new DefaultInMemoryCache();
+    private static STSTokenStore tokenStore = new DefaultInMemoryTokenStore();
     
     /**
      * Get a (valid) SecurityContextToken and successfully cancel it.
@@ -59,6 +59,7 @@ public class SCTCancellerTest extends org.junit.Assert {
     @org.junit.Test
     public void testCancelToken() throws Exception {
         TokenCanceller sctCanceller = new SCTCanceller();
+        sctCanceller.setVerifyProofOfPossession(false);
         TokenCancellerParameters cancellerParameters = createCancellerParameters();
         TokenRequirements tokenRequirements = cancellerParameters.getTokenRequirements();
         
@@ -85,6 +86,7 @@ public class SCTCancellerTest extends org.junit.Assert {
     @org.junit.Test
     public void testCancelInvalidToken() throws Exception {
         TokenCanceller sctCanceller = new SCTCanceller();
+        sctCanceller.setVerifyProofOfPossession(false);
         TokenCancellerParameters cancellerParameters = createCancellerParameters();
         TokenRequirements tokenRequirements = cancellerParameters.getTokenRequirements();
         
@@ -119,7 +121,7 @@ public class SCTCancellerTest extends org.junit.Assert {
         
         KeyRequirements keyRequirements = new KeyRequirements();
         parameters.setKeyRequirements(keyRequirements);
-        parameters.setCache(cache);
+        parameters.setTokenStore(tokenStore);
         
         parameters.setPrincipal(new CustomTokenPrincipal("alice"));
         // Mock up message context
@@ -152,7 +154,7 @@ public class SCTCancellerTest extends org.junit.Assert {
         KeyRequirements keyRequirements = new KeyRequirements();
         parameters.setKeyRequirements(keyRequirements);
 
-        parameters.setCache(cache);
+        parameters.setTokenStore(tokenStore);
         
         parameters.setPrincipal(new CustomTokenPrincipal("alice"));
         // Mock up message context

@@ -26,8 +26,6 @@ import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
 
 import net.oauth.OAuth;
-import net.oauth.OAuthAccessor;
-import net.oauth.OAuthConsumer;
 import net.oauth.OAuthMessage;
 import net.oauth.OAuthProblemException;
 import net.oauth.server.OAuthServlet;
@@ -36,17 +34,25 @@ import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.security.SimplePrincipal;
 import org.apache.cxf.rs.security.oauth.data.AccessToken;
 import org.apache.cxf.rs.security.oauth.data.Client;
-import org.apache.cxf.rs.security.oauth.provider.DefaultOAuthValidator;
+import org.apache.cxf.rs.security.oauth.data.OAuthPermission;
 import org.apache.cxf.rs.security.oauth.provider.OAuthDataProvider;
+import org.apache.cxf.rs.security.oauth.utils.OAuthUtils;
 import org.apache.cxf.security.SecurityContext;
 
 
 public class AbstractAuthFilter {
 
-    public static final String OAUTH_AUTHORITIES = "oauth_authorities";
-
     private static final Logger LOG = LogUtils.getL7dLogger(AbstractAuthFilter.class);
-
+    private static final String[] REQUIRED_PARAMETERS = 
+        new String[] {
+            OAuth.OAUTH_CONSUMER_KEY,
+            OAuth.OAUTH_TOKEN,
+            OAuth.OAUTH_SIGNATURE_METHOD,
+            OAuth.OAUTH_SIGNATURE,
+            OAuth.OAUTH_TIMESTAMP,
+            OAuth.OAUTH_NONCE
+        };
+    
     private OAuthDataProvider dataProvider;
 
     protected AbstractAuthFilter() {
@@ -68,12 +74,7 @@ public class AbstractAuthFilter {
         
         OAuthMessage oAuthMessage = OAuthServlet.getMessage(req, req.getRequestURL().toString());
         if (oAuthMessage.getParameter(OAuth.OAUTH_TOKEN) != null) {
-            oAuthMessage.requireParameters(OAuth.OAUTH_CONSUMER_KEY,
-                OAuth.OAUTH_TOKEN,
-                OAuth.OAUTH_SIGNATURE_METHOD,
-                OAuth.OAUTH_SIGNATURE,
-                OAuth.OAUTH_TIMESTAMP,
-                OAuth.OAUTH_NONCE);
+            oAuthMessage.requireParameters(REQUIRED_PARAMETERS);
 
             accessToken = dataProvider.getAccessToken(oAuthMessage.getToken());
 
@@ -81,12 +82,8 @@ public class AbstractAuthFilter {
             if (accessToken == null) {
                 throw new OAuthProblemException();
             }
-            //check valid scope
-            if (!checkScopes(req, accessToken.getScopes())) {
-                throw new OAuthProblemException();
-            }
-            if (accessToken.getHttpVerbs() != null 
-                && !accessToken.getHttpVerbs().contains(req.getMethod())) {
+            //check valid URI
+            if (!checkRequestURI(req, accessToken.getUris())) {
                 throw new OAuthProblemException();
             }
             authInfo = accessToken.getClient(); 
@@ -94,40 +91,47 @@ public class AbstractAuthFilter {
         } else {
             String consumerKey = oAuthMessage.getParameter(OAuth.OAUTH_CONSUMER_KEY);
             authInfo = dataProvider.getClient(consumerKey);
-            if (!checkScopes(req, authInfo.getScopes())) {
+            if (authInfo == null) {
+                throw new OAuthProblemException();
+            }
+            if (!checkRequestURI(req, authInfo.getUris())) {
                 throw new OAuthProblemException();
             }
         }
-        
 
-        OAuthConsumer consumer = new OAuthConsumer(authInfo.getCallbackURL(),
-            authInfo.getConsumerKey(),
-            authInfo.getSecretKey(), null);
+        OAuthUtils.validateMessage(oAuthMessage, authInfo, accessToken);
 
-        OAuthAccessor accessor = new OAuthAccessor(consumer);
-        accessor.accessToken = accessToken.getTokenString();
-        accessor.tokenSecret = accessToken.getTokenSecret();
-        new DefaultOAuthValidator().validateMessage(oAuthMessage, accessor);
-
-        return new OAuthInfo(authInfo, accessToken, dataProvider);
+        List<OAuthPermission> permissions = dataProvider.getPermissionsInfo(
+                accessToken != null ? accessToken.getScopes() : authInfo.getScopes());
+        boolean matched = false;
+        for (OAuthPermission perm : permissions) {
+            if (perm.getHttpVerbs() == null 
+                    || perm.getHttpVerbs().contains(req.getMethod())) {
+                matched = true;
+            }
+        }
+        if (!matched) {
+            throw new OAuthProblemException();
+        }
+        return new OAuthInfo(authInfo, accessToken, permissions);
         
     }
 
-    protected boolean checkScopes(HttpServletRequest request, List<String> scopes) {
-        if (scopes == null) {
+    protected boolean checkRequestURI(HttpServletRequest request, List<String> uris) {
+        if (uris == null) {
             return true;
         }
         String servletPath = request.getPathInfo();
         boolean foundValidScope = false;
-        for (String scope : scopes) {
-            boolean wildcard = scope.endsWith("*");
+        for (String uri : uris) {
+            boolean wildcard = uri.endsWith("*");
             if (wildcard) {
-                if (servletPath.startsWith(scope.substring(0, scope.length() - 1))) {
+                if (servletPath.startsWith(uri.substring(0, uri.length() - 1))) {
                     foundValidScope = true;
                     break;
                 }
             } else {
-                if (scope.equals(servletPath)) {
+                if (uri.equals(servletPath)) {
                     foundValidScope = true;
                     break;
                 }

@@ -29,6 +29,7 @@ import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.sts.request.ReceivedToken;
 import org.apache.cxf.sts.request.TokenRequirements;
 
+import org.apache.cxf.ws.security.tokenstore.SecurityToken;
 import org.apache.cxf.ws.security.trust.STSUtils;
 
 import org.apache.ws.security.WSSecurityException;
@@ -50,9 +51,17 @@ public class SCTValidator implements TokenValidator {
 
     /**
      * Return true if this TokenValidator implementation is capable of validating the
-     * ReceivedToken argument.
+     * ReceivedToken argument. The realm is ignored in this token Validator.
      */
     public boolean canHandleToken(ReceivedToken validateTarget) {
+        return canHandleToken(validateTarget, null);
+    }
+    
+    /**
+     * Return true if this TokenValidator implementation is capable of validating the
+     * ReceivedToken argument. The realm is ignored in this token Validator.
+     */
+    public boolean canHandleToken(ReceivedToken validateTarget, String realm) {
         Object token = validateTarget.getToken();
         if (token instanceof Element) {
             Element tokenElement = (Element)token;
@@ -73,7 +82,7 @@ public class SCTValidator implements TokenValidator {
     public TokenValidatorResponse validateToken(TokenValidatorParameters tokenParameters) {
         LOG.fine("Validating SecurityContextToken");
         
-        if (tokenParameters.getCache() == null) {
+        if (tokenParameters.getTokenStore() == null) {
             LOG.log(Level.FINE, "A cache must be configured to use the SCTValidator");
             TokenValidatorResponse response = new TokenValidatorResponse();
             response.setValid(false);
@@ -91,11 +100,12 @@ public class SCTValidator implements TokenValidator {
                 Element validateTargetElement = (Element)validateTarget.getToken();
                 SecurityContextToken sct = new SecurityContextToken(validateTargetElement);
                 String identifier = sct.getIdentifier();
-                byte[] secret = (byte[])tokenParameters.getCache().get(identifier);
-                if (secret == null) {
+                SecurityToken token = tokenParameters.getTokenStore().getToken(identifier);
+                if (token == null) {
                     LOG.fine("Identifier: " + identifier + " is not found in the cache");
                     return response;
                 }
+                byte[] secret = (byte[])token.getSecret();
                 response.setValid(true);
                 Map<String, Object> properties = new HashMap<String, Object>();
                 properties.put(SCT_VALIDATOR_SECRET, secret);

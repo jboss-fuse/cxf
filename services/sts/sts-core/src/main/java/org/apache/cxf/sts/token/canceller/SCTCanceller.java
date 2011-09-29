@@ -19,16 +19,27 @@
 
 package org.apache.cxf.sts.token.canceller;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.xml.ws.handler.MessageContext;
 
 import org.w3c.dom.Element;
 
 import org.apache.cxf.common.logging.LogUtils;
+import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.sts.request.ReceivedToken;
 import org.apache.cxf.sts.request.TokenRequirements;
+import org.apache.cxf.ws.security.sts.provider.STSException;
+import org.apache.cxf.ws.security.tokenstore.SecurityToken;
 import org.apache.cxf.ws.security.trust.STSUtils;
+import org.apache.ws.security.WSConstants;
+import org.apache.ws.security.WSSecurityEngineResult;
 import org.apache.ws.security.WSSecurityException;
+import org.apache.ws.security.handler.WSHandlerConstants;
+import org.apache.ws.security.handler.WSHandlerResult;
 import org.apache.ws.security.message.token.SecurityContextToken;
 
 /**
@@ -37,6 +48,9 @@ import org.apache.ws.security.message.token.SecurityContextToken;
 public class SCTCanceller implements TokenCanceller {
 
     private static final Logger LOG = LogUtils.getL7dLogger(SCTCanceller.class);
+    
+    // boolean to enable/disable the check of proof of possession
+    private boolean verifyProofOfPossession = true;
     
     /**
      * Return true if this TokenValidator implementation is capable of validating the
@@ -68,7 +82,7 @@ public class SCTCanceller implements TokenCanceller {
         TokenCancellerResponse response = new TokenCancellerResponse();
         response.setTokenCancelled(false);
         
-        if (tokenParameters.getCache() == null) {
+        if (tokenParameters.getTokenStore() == null) {
             LOG.log(Level.FINE, "A cache must be configured to use the SCTCanceller");
             return response;
         }
@@ -78,12 +92,19 @@ public class SCTCanceller implements TokenCanceller {
                 Element cancelTargetElement = (Element)cancelTarget.getToken();
                 SecurityContextToken sct = new SecurityContextToken(cancelTargetElement);
                 String identifier = sct.getIdentifier();
-                byte[] secret = (byte[])tokenParameters.getCache().get(identifier);
-                if (secret == null) {
+                SecurityToken token = tokenParameters.getTokenStore().getToken(identifier);
+                if (token == null) {
                     LOG.fine("Identifier: " + identifier + " is not found in the cache");
                     return response;
                 }
-                tokenParameters.getCache().remove(identifier);
+                if (verifyProofOfPossession && !matchKey(tokenParameters, token.getSecret())) {
+                    throw new STSException(
+                        "Failed to verify the proof of possession of the key associated with the "
+                        + "security context. No matching key found in the request.",
+                        STSException.INVALID_REQUEST
+                    );
+                }
+                tokenParameters.getTokenStore().remove(token);
                 response.setTokenCancelled(true);
             } catch (WSSecurityException ex) {
                 LOG.log(Level.WARNING, "", ex);
@@ -91,5 +112,37 @@ public class SCTCanceller implements TokenCanceller {
         }
         return response;
     }
+    
+    private boolean matchKey(TokenCancellerParameters tokenParameters, byte[] secretKey) {
+        boolean result = false;
+        MessageContext messageContext = tokenParameters.getWebServiceContext().getMessageContext();
+        final List<WSHandlerResult> handlerResults = 
+            CastUtils.cast((List<?>) messageContext.get(WSHandlerConstants.RECV_RESULTS));
 
+        if (handlerResults != null && handlerResults.size() > 0) {
+            WSHandlerResult handlerResult = handlerResults.get(0);
+            List<WSSecurityEngineResult> engineResults = handlerResult.getResults();
+
+            for (WSSecurityEngineResult engineResult : engineResults) {
+                Integer action = (Integer)engineResult.get(WSSecurityEngineResult.TAG_ACTION);
+                if (action.equals(WSConstants.SIGN)) {
+                    byte[] receivedKey = (byte[])engineResult.get(WSSecurityEngineResult.TAG_SECRET);
+                    if (Arrays.equals(secretKey, receivedKey)) {
+                        LOG.log(
+                            Level.FINE, 
+                            "Verification of the proof of possession of the key associated with "
+                            + "the security context successful."
+                        );
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    public void setVerifyProofOfPossession(boolean verifyProofOfPossession) {
+        this.verifyProofOfPossession = verifyProofOfPossession;
+    }
 }

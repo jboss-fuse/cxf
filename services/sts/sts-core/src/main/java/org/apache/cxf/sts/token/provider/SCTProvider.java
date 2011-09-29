@@ -28,6 +28,7 @@ import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.sts.request.TokenRequirements;
 import org.apache.cxf.ws.security.sts.provider.STSException;
+import org.apache.cxf.ws.security.tokenstore.SecurityToken;
 import org.apache.cxf.ws.security.trust.STSUtils;
 
 import org.apache.ws.security.conversation.ConversationConstants;
@@ -64,6 +65,15 @@ public class SCTProvider implements TokenProvider {
      * that corresponds to the given TokenType.
      */
     public boolean canHandleToken(String tokenType) {
+        return canHandleToken(tokenType, null);
+    }
+
+    /**
+     * Return true if this TokenProvider implementation is capable of providing a token
+     * that corresponds to the given TokenType in a given realm. The realm is ignored in this 
+     * token provider.
+     */
+    public boolean canHandleToken(String tokenType, String realm) {
         if (STSUtils.TOKEN_TYPE_SCT_05_02.equals(tokenType) 
             || STSUtils.TOKEN_TYPE_SCT_05_12.equals(tokenType)) {
             return true;
@@ -94,7 +104,7 @@ public class SCTProvider implements TokenProvider {
         TokenRequirements tokenRequirements = tokenParameters.getTokenRequirements();
         LOG.fine("Handling token of type: " + tokenRequirements.getTokenType());
         
-        if (tokenParameters.getCache() == null) {
+        if (tokenParameters.getTokenStore() == null) {
             LOG.log(Level.FINE, "A cache must be configured to use the SCTProvider");
             throw new STSException("Can't serialize SCT", STSException.REQUEST_FAILED);
         }
@@ -118,13 +128,13 @@ public class SCTProvider implements TokenProvider {
             response.setComputedKey(keyHandler.isComputedKey());
             
             // putting the secret key into the cache
+            SecurityToken token = new SecurityToken(sct.getIdentifier());
+            token.setSecret(keyHandler.getSecret());
             if (lifetime > 0) {
                 Integer lifetimeInteger = new Integer(Long.valueOf(lifetime).intValue());
-                tokenParameters.getCache().put(
-                    sct.getIdentifier(), keyHandler.getSecret(), lifetimeInteger
-                );
+                tokenParameters.getTokenStore().add(token, lifetimeInteger);
             } else {
-                tokenParameters.getCache().put(sct.getIdentifier(), keyHandler.getSecret());
+                tokenParameters.getTokenStore().add(token);
             }
             
             // Create the references

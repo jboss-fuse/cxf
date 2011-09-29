@@ -24,7 +24,7 @@ import java.security.Principal;
 import javax.xml.ws.WebServiceContext;
 
 import org.apache.cxf.sts.STSPropertiesMBean;
-import org.apache.cxf.sts.cache.STSCache;
+import org.apache.cxf.sts.cache.STSTokenStore;
 import org.apache.cxf.sts.request.KeyRequirements;
 import org.apache.cxf.sts.request.TokenRequirements;
 
@@ -40,14 +40,15 @@ public class TokenValidatorParameters {
     private WebServiceContext webServiceContext;
     private KeyRequirements keyRequirements;
     private TokenRequirements tokenRequirements;
-    private STSCache cache;
+    private STSTokenStore tokenStore;
+    private String realm;
     
-    public STSCache getCache() {
-        return cache;
+    public STSTokenStore getTokenStore() {
+        return tokenStore;
     }
 
-    public void setCache(STSCache cache) {
-        this.cache = cache;
+    public void setTokenStore(STSTokenStore tokenStore) {
+        this.tokenStore = tokenStore;
     }
     
     public TokenRequirements getTokenRequirements() {
@@ -88,6 +89,14 @@ public class TokenValidatorParameters {
     
     public Principal getPrincipal() {
         return principal;
+    }
+    
+    public void setRealm(String realm) {
+        this.realm = realm;
+    }
+    
+    public String getRealm() {
+        return realm;
     }
     
 }

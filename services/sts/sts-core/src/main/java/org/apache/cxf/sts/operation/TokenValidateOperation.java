@@ -30,6 +30,7 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.ws.WebServiceContext;
 
 import org.apache.cxf.common.logging.LogUtils;
+import org.apache.cxf.sts.IdentityMapper;
 import org.apache.cxf.sts.QNameConstants;
 import org.apache.cxf.sts.STSConstants;
 import org.apache.cxf.sts.request.KeyRequirements;
@@ -95,7 +96,7 @@ public class TokenValidateOperation extends AbstractOperation implements Validat
         validatorParameters.setStsProperties(stsProperties);
         validatorParameters.setPrincipal(context.getUserPrincipal());
         validatorParameters.setWebServiceContext(context);
-        validatorParameters.setCache(getCache());
+        validatorParameters.setTokenStore(getTokenStore());
         
         validatorParameters.setKeyRequirements(keyRequirements);
         validatorParameters.setTokenRequirements(tokenRequirements);
@@ -130,16 +131,29 @@ public class TokenValidateOperation extends AbstractOperation implements Validat
         if (tokenResponse.isValid() && !STSConstants.STATUS.equals(tokenType)) {
             TokenProviderParameters providerParameters = 
                  createTokenProviderParameters(requestParser, context);
+            
+            // Map the principal (if it exists)
             Principal responsePrincipal = tokenResponse.getPrincipal();
             if (responsePrincipal != null) {
-                providerParameters.setPrincipal(responsePrincipal);
+                String realm = providerParameters.getRealm();
+                String targetRealm = tokenResponse.getTokenRealm();
+                IdentityMapper identityMapper = stsProperties.getIdentityMapper();
+                if (realm != null && !realm.equals(targetRealm) && identityMapper != null) {
+                    Principal targetPrincipal = 
+                        identityMapper.mapPrincipal(realm, responsePrincipal, targetRealm);
+                    providerParameters.setPrincipal(targetPrincipal);
+                } else {
+                    providerParameters.setPrincipal(responsePrincipal);
+                }
             }
+            
             Map<String, Object> additionalProperties = tokenResponse.getAdditionalProperties();
             if (additionalProperties != null) {
                 providerParameters.setAdditionalProperties(additionalProperties);
             }
+            String realm = providerParameters.getRealm();
             for (TokenProvider tokenProvider : tokenProviders) {
-                if (tokenProvider.canHandleToken(tokenType)) {
+                if (tokenProvider.canHandleToken(tokenType, realm)) {
                     try {
                         tokenProviderResponse = tokenProvider.createToken(providerParameters);
                     } catch (STSException ex) {
