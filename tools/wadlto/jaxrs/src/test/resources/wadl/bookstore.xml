@@ -97,13 +97,13 @@
        <param name="hid" style="header" type="xs:int">
         <doc>header param</doc>
        </param>
-       <param name="provider.bar" style="query" type="xs:int"/>
+       <param name="provider.bar" style="query" required="true" type="xs:int"/>
        <param name="a" style="query" repeating="true" type="xs:string"/>
-
+       <param name="b" style="query" repeating="true" type="xs:long"/> 
        <representation mediaType="application/xml" element="prefix1:theBook2">
         <doc>InputBook</doc>
        </representation>
-       <representation mediaType="application/json">
+       <representation mediaType="application/json" element="prefix1:theBook2">
         <doc>InputBook</doc>
        </representation>
       </request>
@@ -116,6 +116,15 @@
         <doc>Requested Book</doc>
        </representation>
       </response>
+     </method>
+
+     <method name="POST" id="addBookOrBook2">
+      <request>
+       <representation mediaType="application/xml" element="prefix1:thebook"/>
+       <representation mediaType="application/xml" element="prefix1:theBook2"/>
+       <representation mediaType="application/json"/>
+      </request>
+      <response status="201"/>
      </method>
 
      <method name="PUT" id="addBook">
@@ -219,6 +228,13 @@
     <resource path="/recursive" id="org.apache.cxf.jaxrs.model.wadl.FormInterface"/>
     <resource path="/c">
       <resource path="/formSub" id="org.apache.cxf.jaxrs.model.wadl.FormInterface2">
+        <param name="formid" style="template" type="xs:int"/>
+        <method name="POST" id="formSub">
+	        <request>
+	           <representation mediaType="application/x-www-form-urlencoded"/>
+	        </request>
+	        <response status="204"></response>
+	      </method>
         <resource path="/recursive" id="org.apache.cxf.jaxrs.model.wadl.FormInterface"/>
         <resource path="/subform1">
 	      <method name="POST" id="form1">
@@ -231,6 +247,7 @@
 	  </resource> 
    </resource>
   <resource path="/form1">
+   <param name="formid" style="template" type="xs:int"/>
    <method name="POST" id="form1">
     <request>
      <representation mediaType="application/x-www-form-urlencoded"/>

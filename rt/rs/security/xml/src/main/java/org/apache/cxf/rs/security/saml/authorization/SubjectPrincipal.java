@@ -23,8 +23,8 @@ import org.apache.cxf.rs.security.saml.assertion.Subject;
 
 public class SubjectPrincipal extends SimplePrincipal {
     private Subject subject;
-    public SubjectPrincipal(Subject subject) {
-        super(subject.getAlternateName() == null ? subject.getName() : subject.getAlternateName());
+    public SubjectPrincipal(String principalName, Subject subject) {
+        super(principalName);
         this.subject = subject;
     }
     

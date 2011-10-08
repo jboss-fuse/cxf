@@ -20,9 +20,11 @@
 package org.apache.cxf.sts.token.provider;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -37,6 +39,7 @@ import org.apache.cxf.sts.request.KeyRequirements;
 import org.apache.cxf.sts.request.TokenRequirements;
 import org.apache.cxf.sts.token.realm.SAMLRealm;
 import org.apache.cxf.ws.security.sts.provider.STSException;
+import org.apache.cxf.ws.security.tokenstore.SecurityToken;
 
 import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSPasswordCallback;
@@ -113,6 +116,29 @@ public class SAMLTokenProvider implements TokenProvider {
             Document doc = DOMUtils.createDocument();
             AssertionWrapper assertion = createSamlToken(tokenParameters, secret, doc);
             Element token = assertion.toDOM(doc);
+            
+            // set the token in cache
+            if (tokenParameters.getTokenStore() != null) {
+                SecurityToken securityToken = new SecurityToken(assertion.getId());
+                securityToken.setToken(token);
+                securityToken.setPrincipal(tokenParameters.getPrincipal());
+                int hash = 0;
+                byte[] signatureValue = assertion.getSignatureValue();
+                if (signatureValue != null && signatureValue.length > 0) {
+                    hash = Arrays.hashCode(signatureValue);
+                    securityToken.setAssociatedHash(hash);
+                }
+                if (tokenParameters.getRealm() != null) {
+                    Properties props = securityToken.getProperties();
+                    if (props == null) {
+                        props = new Properties();
+                    }
+                    props.setProperty(STSConstants.TOKEN_REALM, tokenParameters.getRealm());
+                    securityToken.setProperties(props);
+                }
+                Integer timeToLive = (int)(conditionsProvider.getLifetime() * 1000);
+                tokenParameters.getTokenStore().add(securityToken, timeToLive);
+            }
             
             TokenProviderResponse response = new TokenProviderResponse();
             response.setToken(token);

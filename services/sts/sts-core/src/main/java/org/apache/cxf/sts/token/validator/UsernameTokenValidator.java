@@ -19,6 +19,7 @@
 package org.apache.cxf.sts.token.validator;
 
 import java.security.Principal;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -34,11 +35,14 @@ import org.w3c.dom.Element;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.sts.QNameConstants;
+import org.apache.cxf.sts.STSConstants;
 import org.apache.cxf.sts.STSPropertiesMBean;
 import org.apache.cxf.sts.request.ReceivedToken;
 import org.apache.cxf.sts.request.TokenRequirements;
+import org.apache.cxf.sts.token.realm.UsernameTokenRealmCodec;
 
 import org.apache.cxf.ws.security.sts.provider.model.secext.UsernameTokenType;
+import org.apache.cxf.ws.security.tokenstore.SecurityToken;
 
 import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSSConfig;
@@ -59,12 +63,23 @@ public class UsernameTokenValidator implements TokenValidator {
     
     private Validator validator = new org.apache.ws.security.validate.UsernameTokenValidator();
     
+    private UsernameTokenRealmCodec usernameTokenRealmCodec;
+    
     /**
      * Set the WSS4J Validator instance to use to validate the token.
      * @param validator the WSS4J Validator instance to use to validate the token
      */
     public void setValidator(Validator validator) {
         this.validator = validator;
+    }
+    
+    /**
+     * Set the UsernameTokenRealmCodec instance to use to return a realm from a validated token
+     * @param usernameTokenRealmCodec the UsernameTokenRealmCodec instance to use to return a 
+     *                                realm from a validated token
+     */
+    public void setUsernameTokenRealmCodec(UsernameTokenRealmCodec usernameTokenRealmCodec) {
+        this.usernameTokenRealmCodec = usernameTokenRealmCodec;
     }
     
     /**
@@ -114,21 +129,33 @@ public class UsernameTokenValidator implements TokenValidator {
         // Turn the JAXB UsernameTokenType into a DOM Element for validation
         //
         UsernameTokenType usernameTokenType = (UsernameTokenType)validateTarget.getToken();
+        
+        SecurityToken secToken = null;
+        if (tokenParameters.getTokenStore() != null) {
+            secToken = tokenParameters.getTokenStore().getToken(usernameTokenType.getId());
+        }
+        
         Element rootElement = null;
-        try {
-            JAXBContext jaxbContext = 
-                JAXBContext.newInstance("org.apache.cxf.ws.security.sts.provider.model");
-            Marshaller marshaller = jaxbContext.createMarshaller();
-            Document doc = DOMUtils.createDocument();
-            rootElement = doc.createElement("root-element");
-            JAXBElement<UsernameTokenType> tokenType = 
-                new JAXBElement<UsernameTokenType>(
-                    QNameConstants.USERNAME_TOKEN, UsernameTokenType.class, usernameTokenType
-                );
-            marshaller.marshal(tokenType, rootElement);
-        } catch (JAXBException ex) {
-            LOG.log(Level.WARNING, "", ex);
-            return response;
+        Element usernameTokenElement = null;
+        if (secToken == null) {
+            try {
+                JAXBContext jaxbContext = 
+                    JAXBContext.newInstance("org.apache.cxf.ws.security.sts.provider.model");
+                Marshaller marshaller = jaxbContext.createMarshaller();
+                Document doc = DOMUtils.createDocument();
+                rootElement = doc.createElement("root-element");
+                JAXBElement<UsernameTokenType> tokenType = 
+                    new JAXBElement<UsernameTokenType>(
+                        QNameConstants.USERNAME_TOKEN, UsernameTokenType.class, usernameTokenType
+                    );
+                marshaller.marshal(tokenType, rootElement);
+            } catch (JAXBException ex) {
+                LOG.log(Level.WARNING, "", ex);
+                return response;
+            }
+            usernameTokenElement = (Element)rootElement.getFirstChild();
+        } else {
+            usernameTokenElement = secToken.getToken();
         }
         
         //
@@ -138,22 +165,39 @@ public class UsernameTokenValidator implements TokenValidator {
             boolean allowNamespaceQualifiedPasswordTypes = 
                 wssConfig.getAllowNamespaceQualifiedPasswordTypes();
             boolean bspCompliant = wssConfig.isWsiBSPCompliant();
-            Element usernameTokenElement = (Element)rootElement.getFirstChild();
-            
             UsernameToken ut = 
                 new UsernameToken(usernameTokenElement, allowNamespaceQualifiedPasswordTypes, bspCompliant);
             if (ut.getPassword() == null) {
                 return response;
             }
-            Credential credential = new Credential();
-            credential.setUsernametoken(ut);
-            validator.validate(credential, requestData);
-            
+            if (secToken == null || (secToken.getAssociatedHash() != ut.hashCode())) {
+                Credential credential = new Credential();
+                credential.setUsernametoken(ut);
+                validator.validate(credential, requestData);
+            }
             Principal principal = 
                 createPrincipal(
                     ut.getName(), ut.getPassword(), ut.getPasswordType(), ut.getNonce(), ut.getCreated()
                 );
+            
+            // Get the realm of the UsernameToken
+            String tokenRealm = null;
+            if (usernameTokenRealmCodec != null) {
+                tokenRealm = usernameTokenRealmCodec.getRealmFromToken(ut);
+                // verify the realm against the cached token
+                if (secToken != null) {
+                    Properties props = secToken.getProperties();
+                    if (props != null) {
+                        String cachedRealm = props.getProperty(STSConstants.TOKEN_REALM);
+                        if (!tokenRealm.equals(cachedRealm)) {
+                            return response;
+                        }
+                    }
+                }
+            }
+            
             response.setPrincipal(principal);
+            response.setTokenRealm(tokenRealm);
             response.setValid(true);
         } catch (WSSecurityException ex) {
             LOG.log(Level.WARNING, "", ex);

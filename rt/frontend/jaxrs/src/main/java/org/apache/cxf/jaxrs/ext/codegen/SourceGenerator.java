@@ -59,6 +59,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.xml.namespace.QName;
+import javax.xml.transform.Source;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -103,8 +104,13 @@ public class SourceGenerator {
     private static final String DEFAULT_RESOURCE_NAME = "Resource";
     private static final String TAB = "    "; 
     
+    private static final List<String> HTTP_OK_STATUSES =
+        Arrays.asList(new String[] {"200", "201", "202", "203", "204"});
+    
     private static final Map<String, Class<?>> HTTP_METHOD_ANNOTATIONS;
     private static final Map<String, Class<?>> PARAM_ANNOTATIONS;
+    private static final Set<String> RESOURCE_LEVEL_PARAMS;
+    private static final Map<String, String> AUTOBOXED_PRIMITIVES_MAP;
     
     static {
         HTTP_METHOD_ANNOTATIONS = new HashMap<String, Class<?>>();
@@ -120,6 +126,19 @@ public class SourceGenerator {
         PARAM_ANNOTATIONS.put("header", HeaderParam.class);
         PARAM_ANNOTATIONS.put("query", QueryParam.class);
         PARAM_ANNOTATIONS.put("matrix", MatrixParam.class);
+        
+        RESOURCE_LEVEL_PARAMS = new HashSet<String>();
+        RESOURCE_LEVEL_PARAMS.add("template");
+        RESOURCE_LEVEL_PARAMS.add("matrix");
+        
+        AUTOBOXED_PRIMITIVES_MAP = new HashMap<String, String>();
+        AUTOBOXED_PRIMITIVES_MAP.put(byte.class.getSimpleName(), Byte.class.getSimpleName());
+        AUTOBOXED_PRIMITIVES_MAP.put(short.class.getSimpleName(), Short.class.getSimpleName());
+        AUTOBOXED_PRIMITIVES_MAP.put(int.class.getSimpleName(), Integer.class.getSimpleName());
+        AUTOBOXED_PRIMITIVES_MAP.put(long.class.getSimpleName(), Long.class.getSimpleName());
+        AUTOBOXED_PRIMITIVES_MAP.put(float.class.getSimpleName(), Float.class.getSimpleName());
+        AUTOBOXED_PRIMITIVES_MAP.put(double.class.getSimpleName(), Double.class.getSimpleName());
+        AUTOBOXED_PRIMITIVES_MAP.put(boolean.class.getSimpleName(), Boolean.class.getSimpleName());
     }
 
     private Comparator<String> importsComparator;
@@ -139,6 +158,7 @@ public class SourceGenerator {
     private Map<String, String> schemaPackageMap = Collections.emptyMap();
     private Map<String, String> schemaTypesMap = Collections.emptyMap();
     private Bus bus;
+    private boolean supportMultipleXmlReps;
     
     public SourceGenerator() {
         this(Collections.<String, String>emptyMap());
@@ -146,6 +166,10 @@ public class SourceGenerator {
     
     public SourceGenerator(Map<String, String> properties) {
         this.properties = properties;
+    }
+    
+    public void setSupportMultipleXmlReps(boolean support) {
+        supportMultipleXmlReps = support;
     }
     
     private String getClassPackageName(String wadlPackageName) {
@@ -194,14 +218,12 @@ public class SourceGenerator {
     private void generateResourceClasses(Application app, GrammarInfo gInfo, 
                                          Set<String> typeClassNames, File src) {
         Element appElement = app.getAppElement();
-        List<Element> resourcesEls = DOMUtils.getChildrenWithName(appElement, 
-            WadlGenerator.WADL_NS, "resources");
+        List<Element> resourcesEls = getWadlElements(appElement, "resources");
         if (resourcesEls.size() != 1) {
             throw new IllegalStateException("WADL resources element is missing");
         }
         
-        List<Element> resourceEls = DOMUtils.getChildrenWithName(resourcesEls.get(0), 
-            WadlGenerator.WADL_NS, "resource");
+        List<Element> resourceEls = getWadlElements(resourcesEls.get(0), "resource");
         if (resourceEls.size() == 0) {
             throw new IllegalStateException("WADL has no resource elements");
         }
@@ -235,9 +257,7 @@ public class SourceGenerator {
         if (type.length() > 0) {
             if (type.startsWith("#")) {
                 String refId = type.substring(1);
-                List<Element> resourceTypes = 
-                    DOMUtils.getChildrenWithName(app.getAppElement(), WadlGenerator.WADL_NS, 
-                                                 "resource_type");
+                List<Element> resourceTypes = getWadlElements(app.getAppElement(), "resource_type");
                 for (Element resourceType : resourceTypes) {
                     if (refId.equals(resourceType.getAttribute("id"))) {
                         Element realElement = (Element)resourceType.cloneNode(true);
@@ -255,7 +275,7 @@ public class SourceGenerator {
                 GrammarInfo gInfoBase = generateSchemaCodeAndInfo(refApp, typeClassNames, srcDir);
                 if (gInfoBase != null) {
                     gInfo.getElementTypeMap().putAll(gInfoBase.getElementTypeMap());
-                    gInfo.getNsMap().putAll(gInfo.getNsMap());
+                    gInfo.getNsMap().putAll(gInfoBase.getNsMap());
                 }
                 return getResourceElement(refApp, resElement, gInfo, typeClassNames, 
                                           "#" + wadlRef.getFragment(), srcDir);
@@ -371,8 +391,7 @@ public class SourceGenerator {
     private void writeSubresourceClasses(Application app, Element rElement, ContextInfo info, 
             File src, boolean isRoot, String resourceId) {
 
-        List<Element> childEls = DOMUtils.getChildrenWithName(rElement, 
-            WadlGenerator.WADL_NS, "resource");
+        List<Element> childEls = getWadlElements(rElement, "resource");
         for (Element subEl : childEls) {
             String id = subEl.getAttribute("id");
             if (id.length() > 0 && !resourceId.equals(id) && !id.startsWith("{java")
@@ -449,15 +468,13 @@ public class SourceGenerator {
                               String resourceId,
                               boolean isRoot,
                               String currentPath) {
-        List<Element> methodEls = DOMUtils.getChildrenWithName(rElement, 
-            WadlGenerator.WADL_NS, "method");
+        List<Element> methodEls = getWadlElements(rElement, "method");
        
         for (Element methodEl : methodEls) {
             writeResourceMethod(methodEl, imports, sbCode, info, isRoot, currentPath);    
         }
         
-        List<Element> childEls = DOMUtils.getChildrenWithName(rElement, 
-                WadlGenerator.WADL_NS, "resource");
+        List<Element> childEls = getWadlElements(rElement, "resource");
         for (Element childEl : childEls) {
             String path = childEl.getAttribute("path");
             String newPath = (currentPath + path).replace("//", "/");
@@ -513,83 +530,127 @@ public class SourceGenerator {
                                      ContextInfo info,
                                      boolean isRoot,
                                      String currentPath) {
-        Element resourceEl = "resource".equals(methodEl.getLocalName()) 
-            ? methodEl : (Element)methodEl.getParentNode();
+        boolean isResourceElement = "resource".equals(methodEl.getLocalName());
+        Element resourceEl = isResourceElement ? methodEl : (Element)methodEl.getParentNode();
         
-        String methodName = methodEl.getAttribute("name");
-        String methodNameLowerCase = methodName.toLowerCase();
-        String id = methodEl.getAttribute("id");
-        if (id.length() == 0) {
-            id = methodNameLowerCase;
-        }
-        
-        List<Element> responseEls = DOMUtils.getChildrenWithName(methodEl, 
-                                                                 WadlGenerator.WADL_NS, "response");
-        List<Element> requestEls = DOMUtils.getChildrenWithName(methodEl, 
-                                                                WadlGenerator.WADL_NS, "request");
+        List<Element> responseEls = getWadlElements(methodEl, "response");
+        List<Element> requestEls = getWadlElements(methodEl, "request");
         Element firstRequestEl = requestEls.size() >= 1 ? requestEls.get(0) : null;
+        List<Element> allRequestReps = getWadlElements(firstRequestEl, "representation");
+        List<Element> xmlRequestReps = getXmlReps(allRequestReps);
         
-        if (writeAnnotations(info.isInterfaceGenerated())) {
-            sbCode.append(TAB);
+        boolean jaxpSourceRequired = xmlRequestReps.size() > 1 && !supportMultipleXmlReps;
+        int numOfMethods = jaxpSourceRequired ? 1 : xmlRequestReps.size(); 
+        for (int i = 0; i < numOfMethods; i++) {
             
-            if (methodNameLowerCase.length() > 0) {
-                if (HTTP_METHOD_ANNOTATIONS.containsKey(methodNameLowerCase)) {
-                    writeAnnotation(sbCode, imports, 
-                                    HTTP_METHOD_ANNOTATIONS.get(methodNameLowerCase), null, true, true);
-                } else {
-                    // TODO : write a custom annotation class name based on HttpMethod    
+            Element inXmlRep = xmlRequestReps.get(i);
+                        
+            String methodNameLowerCase = methodEl.getAttribute("name").toLowerCase();
+            String id = methodEl.getAttribute("id");
+            if (id.length() == 0) {
+                id = methodNameLowerCase;
+            }
+            String suffixName = "";
+            if (!jaxpSourceRequired && inXmlRep != null && xmlRequestReps.size() > 1) {
+                String value = inXmlRep.getAttribute("element");
+                int index = value.indexOf(":");
+                suffixName = value.substring(index + 1);
+            }
+            if (writeAnnotations(info.isInterfaceGenerated())) {
+                sbCode.append(TAB);
+                
+                if (methodNameLowerCase.length() > 0) {
+                    if (HTTP_METHOD_ANNOTATIONS.containsKey(methodNameLowerCase)) {
+                        writeAnnotation(sbCode, imports, 
+                                        HTTP_METHOD_ANNOTATIONS.get(methodNameLowerCase), null, true, true);
+                    } else {
+                        // TODO : write a custom annotation class name based on HttpMethod    
+                    }
+                    writeFormatAnnotations(allRequestReps, sbCode, imports, true);
+                    writeFormatAnnotations(getWadlElements(getOKResponse(responseEls), "representation"),
+                            sbCode, imports, false);
                 }
-                writeFormatAnnotations(firstRequestEl, 
-                        sbCode, imports, true);
-                writeFormatAnnotations(getOKResponse(responseEls), sbCode, imports, false);
+                if (!isRoot && !"/".equals(currentPath)) {
+                    writeAnnotation(sbCode, imports, Path.class, currentPath, true, true);
+                }
+            } else {
+                sbCode.append(getLineSep()).append(TAB);
             }
-            if (!isRoot && !"/".equals(currentPath)) {
-                writeAnnotation(sbCode, imports, Path.class, currentPath, true, true);
+            
+            if (!info.isInterfaceGenerated()) {
+                sbCode.append("public ");
             }
-        } else {
-            sbCode.append(getLineSep()).append(TAB);
-        }
-        
-        if (!info.isInterfaceGenerated()) {
-            sbCode.append("public ");
-        }
-        boolean responseTypeAvailable = true;
-        if (methodNameLowerCase.length() > 0) {
-            responseTypeAvailable = writeResponseType(responseEls, sbCode, imports,
-                    info.getTypeClassNames(), info.getGrammarInfo());
-            sbCode.append(id);
-        } else {
-            boolean expandedQName = id.startsWith("{");
-            QName qname = convertToQName(id, expandedQName);
-            String packageName = possiblyConvertNamespaceURI(qname.getNamespaceURI(), expandedQName);
+            boolean responseTypeAvailable = true;
+            if (methodNameLowerCase.length() > 0) {
+                responseTypeAvailable = writeResponseType(responseEls, sbCode, imports,
+                        info.getTypeClassNames(), info.getGrammarInfo());
+                sbCode.append(id + suffixName);
+            } else {
+                boolean expandedQName = id.startsWith("{");
+                QName qname = convertToQName(id, expandedQName);
+                String packageName = possiblyConvertNamespaceURI(qname.getNamespaceURI(), expandedQName);
+                
+                String clsSimpleName = getSchemaClassName(packageName, info.getGrammarInfo(), 
+                        qname.getLocalPart(), info.getTypeClassNames());
+                String localName = clsSimpleName == null 
+                    ? getClassName(qname.getLocalPart(), true, info.getTypeClassNames()) 
+                    : clsSimpleName.substring(packageName.length() + 1);
+                String subResponseNs = clsSimpleName == null ? getClassPackageName(packageName) 
+                    : clsSimpleName.substring(0, packageName.length());
+                String parentId = ((Element)resourceEl.getParentNode()).getAttribute("id");
+                writeSubResponseType(id.equals(parentId), subResponseNs, localName, 
+                        sbCode, imports);
+                
+                sbCode.append("get" + localName + suffixName);
+            }
             
-            String clsSimpleName = getSchemaClassName(packageName, info.getGrammarInfo(), 
-                    qname.getLocalPart(), info.getTypeClassNames());
-            String localName = clsSimpleName == null 
-                ? getClassName(qname.getLocalPart(), true, info.getTypeClassNames()) 
-                : clsSimpleName.substring(packageName.length() + 1);
-            String subResponseNs = clsSimpleName == null ? getClassPackageName(packageName) 
-                : clsSimpleName.substring(0, packageName.length());
-            String parentId = ((Element)resourceEl.getParentNode()).getAttribute("id");
-            writeSubResponseType(id.equals(parentId), subResponseNs, localName, sbCode, imports);
+            sbCode.append("(");
             
-            sbCode.append("get" + localName);
+            List<Element> inParamElements = getParameters(resourceEl, 
+                        !isRoot && !isResourceElement && resourceEl.getAttribute("id").length() > 0);
+            
+            Element repElement = getActualRepElement(allRequestReps, inXmlRep); 
+            writeRequestTypes(firstRequestEl, repElement, inParamElements, 
+                    jaxpSourceRequired, sbCode, imports, info);
+            sbCode.append(")");
+            if (info.isInterfaceGenerated()) {
+                sbCode.append(";");
+            } else {
+                generateEmptyMethodBody(sbCode, responseTypeAvailable);
+            }
+            sbCode.append(getLineSep()).append(getLineSep());
         }
-        
-        sbCode.append("(");
-        List<Element> inParamElements = new LinkedList<Element>();
-        inParamElements.addAll(DOMUtils.getChildrenWithName(resourceEl, 
-                                                            WadlGenerator.WADL_NS, "param"));
-        writeRequestTypes(firstRequestEl, inParamElements, sbCode, imports, info);
-        sbCode.append(")");
-        if (info.isInterfaceGenerated()) {
-            sbCode.append(";");
-        } else {
-            generateEmptyMethodBody(sbCode, responseTypeAvailable);
-        }
-        sbCode.append(getLineSep()).append(getLineSep());
     }
 
+    private List<Element> getXmlReps(List<Element> repElements) {
+        Set<String> values = new HashSet<String>(repElements.size());
+        List<Element> xmlReps = new ArrayList<Element>();
+        for (Element el : repElements) {
+            String value = el.getAttribute("element");
+            if (value.length() > 0 && value.contains(":") && !values.contains(value)) {
+                xmlReps.add(el);
+                values.add(value);
+            }
+        }
+        if (xmlReps.isEmpty()) {
+            xmlReps.add(null);
+        }
+        return xmlReps;
+    }
+    
+    private List<Element> getParameters(Element resourceEl, boolean isSubresourceMethod) {
+        List<Element> inParamElements = new LinkedList<Element>();
+        List<Element> allParamElements = getWadlElements(resourceEl, "param");
+        for (Element el : allParamElements) {
+            if (isSubresourceMethod && RESOURCE_LEVEL_PARAMS.contains(el.getAttribute("style"))) {
+                continue;
+            }
+            inParamElements.add(el);
+        }
+        return inParamElements;
+    }
+
+    
     private String possiblyConvertNamespaceURI(String nsURI, boolean expandedQName) {
         return expandedQName ? getPackageFromNamespace(nsURI) : nsURI;
     }
@@ -610,30 +671,41 @@ public class SourceGenerator {
     }
     
     private boolean addFormParameters(List<Element> inParamElements, Element requestEl) {
-        List<Element> repElements = 
-            DOMUtils.getChildrenWithName(requestEl, WadlGenerator.WADL_NS, "representation");
+        List<Element> repElements = getWadlElements(requestEl, "representation");
  
         if (repElements.size() == 1) {
             String mediaType = repElements.get(0).getAttribute("mediaType");
             if (MediaType.APPLICATION_FORM_URLENCODED.equals(mediaType)) { 
-                inParamElements.addAll(DOMUtils.getChildrenWithName(repElements.get(0), 
-                                                                WadlGenerator.WADL_NS, "param"));
+                inParamElements.addAll(getWadlElements(repElements.get(0), "param"));
                 return true;
             }
         }
         return false;
     }
     
-    private boolean writeResponseType(List<Element> responseEls, StringBuilder sbCode,
-                                   Set<String> imports, Set<String> typeClassNames, 
-                                   GrammarInfo gInfo) {
+    private Element getActualRepElement(List<Element> repElements, Element xmlElement) {
+        if (xmlElement != null) {
+            return xmlElement;
+        }
+        for (Element el : repElements) {
+            Element param = DOMUtils.getFirstChildWithName(el, WadlGenerator.WADL_NS, "param");
+            if (param != null) {
+                return el;
+            }
+        }
+        return null;
+    }
+    
+    private boolean writeResponseType(List<Element> responseEls,
+                                      StringBuilder sbCode,
+                                      Set<String> imports, Set<String> typeClassNames, 
+                                      GrammarInfo gInfo) {
         
         Element okResponse = getOKResponse(responseEls);
         
         List<Element> repElements = null;
         if (okResponse != null) {
-            repElements = 
-                DOMUtils.getChildrenWithName(okResponse, WadlGenerator.WADL_NS, "representation");    
+            repElements = getWadlElements(okResponse, "representation");    
         } else {
             repElements = CastUtils.cast(Collections.emptyList(), Element.class);
         }
@@ -642,7 +714,9 @@ public class SourceGenerator {
             sbCode.append("void ");
             return false;
         }
-        String elementName = getElementRefName(repElements, typeClassNames, gInfo, imports);
+        String elementName = getElementRefName(
+                getActualRepElement(repElements, getXmlReps(repElements).get(0)),
+                typeClassNames, gInfo, imports);
         if (elementName != null) {
             sbCode.append(elementName + " ");
         } else {
@@ -655,9 +729,14 @@ public class SourceGenerator {
     private Element getOKResponse(List<Element> responseEls) {
         for (int i = 0; i < responseEls.size(); i++) {
             String statusValue = responseEls.get(i).getAttribute("status");
-            if (statusValue.length() == 0 
-                || Arrays.asList(statusValue.split("\\s")).contains("200")) {
+            if (statusValue.length() == 0) {
                 return responseEls.get(i);
+            }
+            String[] statuses = statusValue.split("\\s");
+            for (String status : statuses) {
+                if (HTTP_OK_STATUSES.contains(status)) {
+                    return responseEls.get(i);
+                }
             }
         }
         return null;
@@ -670,9 +749,11 @@ public class SourceGenerator {
         }
         sbCode.append(localName).append(" ");
     }
-    
+        
     private void writeRequestTypes(Element requestEl,
+                                   Element repElement,
                                    List<Element> inParamEls, 
+                                   boolean jaxpRequired,
                                    StringBuilder sbCode, 
                                    Set<String> imports, 
                                    ContextInfo info) {
@@ -680,30 +761,32 @@ public class SourceGenerator {
         boolean form = false;
         boolean formParamsAvailable = false;
         if (requestEl != null) {
-            inParamEls.addAll(DOMUtils.getChildrenWithName(requestEl, 
-                 WadlGenerator.WADL_NS, "param"));
+            inParamEls.addAll(getWadlElements(requestEl, "param"));
             int currentSize = inParamEls.size();
             form = addFormParameters(inParamEls, requestEl);
             formParamsAvailable = currentSize < inParamEls.size(); 
         }
                   
-        if (form && !formParamsAvailable) {
-            addImport(imports, MultivaluedMap.class.getName());
-            sbCode.append("MultivaluedMap map");
-        } 
         for (int i = 0; i < inParamEls.size(); i++) {
     
             Element paramEl = inParamEls.get(i);
-
+            Class<?> paramAnn = PARAM_ANNOTATIONS.get(paramEl.getAttribute("style"));
+            if (paramAnn == QueryParam.class && form) {
+                paramAnn = FormParam.class; 
+            } 
             String name = paramEl.getAttribute("name");
             if (writeAnnotations(info.isInterfaceGenerated())) {
-                Class<?> paramAnnotation = form ? FormParam.class 
-                    : PARAM_ANNOTATIONS.get(paramEl.getAttribute("style"));
-                writeAnnotation(sbCode, imports, paramAnnotation, name, false, false);
+                writeAnnotation(sbCode, imports, paramAnn, name, false, false);
                 sbCode.append(" ");
             }
+            boolean isRepeating = Boolean.valueOf(paramEl.getAttribute("repeating"));
             String type = getPrimitiveType(paramEl);
-            if (Boolean.valueOf(paramEl.getAttribute("repeating"))) {
+            if (paramAnn == QueryParam.class
+                && (isRepeating || !Boolean.valueOf(paramEl.getAttribute("required")))    
+                && AUTOBOXED_PRIMITIVES_MAP.containsKey(type)) {
+                type = AUTOBOXED_PRIMITIVES_MAP.get(type);
+            }
+            if (isRepeating) {
                 addImport(imports, List.class.getName());
                 type = "List<" + type + ">";
             }
@@ -715,24 +798,37 @@ public class SourceGenerator {
                 }
             }
         }
+        String elementParamType = null;
+        String elementParamName = null;
         if (!form) {
-            String elementName = null;
-            
-            List<Element> repElements = requestEl != null 
-                ? DOMUtils.getChildrenWithName(requestEl, WadlGenerator.WADL_NS, "representation")
-                : CastUtils.cast(Collections.emptyList(), Element.class);
-            if (repElements.size() > 0) {    
-                elementName = getElementRefName(repElements, info.getTypeClassNames(), 
-                        info.getGrammarInfo(), imports);
-            }
-            if (elementName != null) {
-                if (inParamEls.size() > 0) {
-                    sbCode.append(", ");
+            if (!jaxpRequired) {    
+                elementParamType = getElementRefName(repElement, 
+                        info.getTypeClassNames(), info.getGrammarInfo(), imports);
+                if (elementParamType != null) {
+                    elementParamName = elementParamType.toLowerCase();
                 }
-                sbCode.append(elementName).append(" ").append(elementName.toLowerCase());
+            } else {
+                addImport(imports, Source.class.getName());
+                elementParamType = Source.class.getSimpleName();
+                elementParamName = "source";
             }
+        } else if (!formParamsAvailable) {
+            addImport(imports, MultivaluedMap.class.getName());
+            elementParamType = MultivaluedMap.class.getSimpleName();
+            elementParamName = "map";
         }
-        
+        if (elementParamType != null) {
+            if (inParamEls.size() > 0) {
+                sbCode.append(", ");
+            }
+            sbCode.append(elementParamType).append(" ").append(elementParamName);
+        }
+    }
+    
+    private List<Element> getWadlElements(Element parent, String name) {
+        return parent != null 
+            ? DOMUtils.getChildrenWithName(parent, WadlGenerator.WADL_NS, name)
+            : CastUtils.cast(Collections.emptyList(), Element.class);
     }
     
     private String getPrimitiveType(Element paramEl) {
@@ -745,17 +841,16 @@ public class SourceGenerator {
         return "string".equals(value) ? "String" : value;
     }
     
-    private String getElementRefName(List<Element> repElements, Set<String> typeClassNames,
-                                     GrammarInfo gInfo, Set<String> imports) {
-        String elementRef = null;
-        for (Element el : repElements) {
-            String value = el.getAttribute("element");
-            if (value.length() > 0) {
-                elementRef = value;
-                break;
-            }
+    private String getElementRefName(Element repElement,
+                                     Set<String> typeClassNames,
+                                     GrammarInfo gInfo, 
+                                     Set<String> imports) {
+        if (repElement == null) {
+            return null;
         }
-        if (elementRef != null) {
+        String elementRef = repElement.getAttribute("element");
+        
+        if (elementRef.length() > 0) {
             String[] pair = elementRef.split(":");
             if (pair.length == 2) {
                 String namespace = gInfo != null ? gInfo.getNsMap().get(pair[0]) : null;
@@ -775,12 +870,10 @@ public class SourceGenerator {
                 }
             }
         } else {
-            for (Element el : repElements) {
-                Element param = DOMUtils.getFirstChildWithName(el, WadlGenerator.WADL_NS, "param");
-                if (param != null) {
-                    return getPrimitiveType(param);
-                }
-            }    
+            Element param = DOMUtils.getFirstChildWithName(repElement, WadlGenerator.WADL_NS, "param");
+            if (param != null) {
+                return getPrimitiveType(param);
+            }
         }
         return null;
     }
@@ -813,11 +906,8 @@ public class SourceGenerator {
     
     
     
-    private void writeFormatAnnotations(Element parentEl, StringBuilder sbCode, 
+    private void writeFormatAnnotations(List<Element> repElements, StringBuilder sbCode, 
                                         Set<String> imports, boolean inRep) {
-        List<Element> repElements = parentEl != null 
-            ? DOMUtils.getChildrenWithName(parentEl, WadlGenerator.WADL_NS, "representation")
-            : CastUtils.cast(Collections.emptyList(), Element.class);
         if (repElements.size() == 0) {    
             return;
         }
@@ -827,15 +917,19 @@ public class SourceGenerator {
         if (repElements.size() > 1) {
             sbCode.append("{");
         }
+        String mediaTypes = "";
+        boolean first = true;
         for (int i = 0; i < repElements.size(); i++) {
             String mediaType = repElements.get(i).getAttribute("mediaType");
-            if (mediaType != null) {
-                sbCode.append("\"" + mediaType + "\"");
-                if (i + 1 < repElements.size()) { 
-                    sbCode.append(", ");
+            if (mediaType != null && !mediaTypes.contains(mediaType)) {
+                if (!first) { 
+                    mediaTypes += ", ";
                 }
+                first = false;
+                mediaTypes += "\"" + mediaType + "\"";
             }
         }
+        sbCode.append(mediaTypes);
         if (repElements.size() > 1) {
             sbCode.append(" }");
         }
@@ -891,8 +985,7 @@ public class SourceGenerator {
     }
 
     private List<SchemaInfo> getSchemaElements(Application app) {
-        List<Element> grammarEls = DOMUtils.getChildrenWithName(app.getAppElement(), 
-                                                                WadlGenerator.WADL_NS, "grammars");
+        List<Element> grammarEls = getWadlElements(app.getAppElement(), "grammars");
         if (grammarEls.size() != 1) {
             return null;
         }
@@ -907,8 +1000,7 @@ public class SourceGenerator {
             }
             schemas.add(createSchemaInfo(schemasEls.get(i), systemId));
         }
-        List<Element> includeEls = DOMUtils.getChildrenWithName(grammarEls.get(0), 
-             WadlGenerator.WADL_NS, "include");
+        List<Element> includeEls = getWadlElements(grammarEls.get(0), "include");
         for (Element includeEl : includeEls) {
             String href = includeEl.getAttribute("href");
             

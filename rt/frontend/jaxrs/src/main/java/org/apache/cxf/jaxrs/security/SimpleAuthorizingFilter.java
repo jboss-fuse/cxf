@@ -18,14 +18,10 @@
  */
 package org.apache.cxf.jaxrs.security;
 
-import java.util.Map;
-
 import javax.ws.rs.core.Response;
 
 import org.apache.cxf.interceptor.security.AbstractAuthorizingInInterceptor;
 import org.apache.cxf.interceptor.security.AccessDeniedException;
-import org.apache.cxf.interceptor.security.SecureAnnotationsInterceptor;
-import org.apache.cxf.interceptor.security.SimpleAuthorizingInterceptor;
 import org.apache.cxf.jaxrs.ext.RequestHandler;
 import org.apache.cxf.jaxrs.model.ClassResourceInfo;
 import org.apache.cxf.message.Message;
@@ -43,23 +39,7 @@ public class SimpleAuthorizingFilter implements RequestHandler {
         }
     }
 
-    public void setMethodRolesMap(Map<String, String> rolesMap) {
-        checkInterceptor();
-        SimpleAuthorizingInterceptor simple = new SimpleAuthorizingInterceptor();
-        simple.setMethodRolesMap(rolesMap);
-        interceptor = simple; 
-    }
-    
-    public void setSecuredObject(Object securedObject) {
-        checkInterceptor();
-        SecureAnnotationsInterceptor simple = new SecureAnnotationsInterceptor();
-        simple.setSecuredObject(securedObject);
-        interceptor = simple; 
-    }
-    
-    private void checkInterceptor() {
-        if (interceptor != null) {
-            throw new IllegalStateException("Filter has already been initialized");
-        }
+    public void setInterceptor(AbstractAuthorizingInInterceptor in) {
+        interceptor = in;
     }
 }
