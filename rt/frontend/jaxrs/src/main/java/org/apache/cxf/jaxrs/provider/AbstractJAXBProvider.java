@@ -80,7 +80,7 @@ public abstract class AbstractJAXBProvider extends AbstractConfigurableProvider
     
     protected static final ResourceBundle BUNDLE = BundleUtils.getBundle(AbstractJAXBProvider.class);
 
-    private static final Logger LOG = LogUtils.getL7dLogger(AbstractJAXBProvider.class);
+    protected static final Logger LOG = LogUtils.getL7dLogger(AbstractJAXBProvider.class);
     private static final String JAXB_DEFAULT_NAMESPACE = "##default";
     private static final String JAXB_DEFAULT_NAME = "##default";
     
@@ -522,10 +522,14 @@ public abstract class AbstractJAXBProvider extends AbstractConfigurableProvider
         packageContexts.clear();
     }
     
-    protected static void handleJAXBException(JAXBException e) {
+    protected static String getStackTrace(Exception ex) { 
         StringWriter sw = new StringWriter();
-        e.printStackTrace(new PrintWriter(sw));
-        LOG.warning(sw.toString());
+        ex.printStackTrace(new PrintWriter(sw));
+        return sw.toString();
+    }
+    
+    protected static void handleJAXBException(JAXBException e) {
+        LOG.warning(getStackTrace(e));
         StringBuilder sb = new StringBuilder();
         if (e.getMessage() != null) {
             sb.append(e.getMessage()).append(". ");

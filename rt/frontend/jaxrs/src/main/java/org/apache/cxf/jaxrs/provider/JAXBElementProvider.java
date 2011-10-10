@@ -168,7 +168,7 @@ public class JAXBElementProvider extends AbstractJAXBProvider  {
         } catch (WebApplicationException e) {
             throw e;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.warning(getStackTrace(e));
             throw new WebApplicationException(e);        
         }
         // unreachable
