@@ -104,20 +104,34 @@
         <dependency>
             <groupId>org.jibx</groupId>
             <artifactId>jibx-tools</artifactId>
+            <!-- excludes the below eclipse dependency to make CI happy -->
+            <exclusions>
+              <exclusion>
+                  <groupId>org.eclipse.equinox</groupId>
+                  <artifactId>common</artifactId>
+              </exclusion>
+              <exclusion>
+                  <groupId>org.eclipse.equinox</groupId>
+                  <artifactId>app</artifactId>
+              </exclusion>
+              <exclusion>
+                  <groupId>org.eclipse.core</groupId>
+                  <artifactId>resources</artifactId>
+              </exclusion>
+              <exclusion>
+                  <groupId>org.eclipse.core</groupId>
+                  <artifactId>jobs</artifactId>
+              </exclusion>
+              <exclusion>
+                  <groupId>org.eclipse.core</groupId>
+                  <artifactId>commands</artifactId>
+              </exclusion>
+              <exclusion>
+                  <groupId>org.eclipse.equinox</groupId>
+                  <artifactId>registry</artifactId>
+              </exclusion>
+          </exclusions>
         </dependency>
-        <!-- Need to add these dependency to make CI box happay -->
-        <dependency>
-            <groupId>org.eclipse.core</groupId>
-            <artifactId>resources</artifactId>
-            <version>3.3.0-v20070604</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-             <groupId>org.eclipse.core</groupId>
-             <artifactId>commands</artifactId>
-             <version>3.3.0-I20070605-0010</version>
-             <scope>provided</scope>
-        </dependency> 
     </dependencies>
     <profiles>
         <profile>
