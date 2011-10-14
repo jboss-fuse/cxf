@@ -18,6 +18,7 @@
  */
 package org.apache.cxf.rs.security.oauth.services;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 
 import net.oauth.OAuth;
 import net.oauth.OAuthMessage;
@@ -65,38 +67,27 @@ public class AuthorizationRequestHandler {
             }
             
             OAuthAuthorizationData secData = new OAuthAuthorizationData();
-            if (!compareRequestSessionTokens(request)) {
-                secData.setPermissions(
-                        dataProvider.getPermissionsInfo(token.getScopes()));
-                secData.setUris(token.getUris());
+            if (!compareRequestSessionTokens(request, oAuthMessage)) {
                 addAuthenticityTokenToSession(secData, request);
-                return Response.ok(addAdditionalParams(secData, token)).build();
+                return Response.ok(
+                        addAdditionalParams(secData, dataProvider, token)).build();
             }
             
-            String decision = request.getParameter(OAuthConstants.AUTHORIZATION_DECISION_KEY);
-            if (!OAuthConstants.AUTHORIZATION_DECISION_ALLOW.equals(decision)) {
-                //user not authorized client
-                secData.setCallback(token.getCallback());
-                return Response.ok(addAdditionalParams(secData, token)).build();
-            }
-
-            String verifier = dataProvider.createRequestTokenVerifier(token);
-            
-
-            String callbackURL = getCallbackURI(token);
-            
+            String decision = oAuthMessage.getParameter(OAuthConstants.AUTHORIZATION_DECISION_KEY);
+            boolean allow = OAuthConstants.AUTHORIZATION_DECISION_ALLOW.equals(decision);
 
             Map<String, String> queryParams = new HashMap<String, String>();
-            queryParams.put(OAuth.OAUTH_VERIFIER, verifier);
+            if (allow) {
+                String verifier = dataProvider.createRequestTokenVerifier(token);
+                queryParams.put(OAuth.OAUTH_VERIFIER, verifier);
+            }
             queryParams.put(OAuth.OAUTH_TOKEN, token.getTokenString());
             if (token.getState() != null) {
                 queryParams.put("state", token.getState());
             }
-            callbackURL = buildCallbackUrl(callbackURL, queryParams);
-
-
-            return Response.seeOther(URI.create(callbackURL))
-                    .build();
+            URI callback = buildCallbackURI(getCallbackURI(token), queryParams);
+            return Response.seeOther(callback).build();
+            
         } catch (OAuthProblemException e) {
             if (LOG.isLoggable(Level.WARNING)) {
                 LOG.log(Level.WARNING, "An OAuth related problem: {0}", new Object[]{e.fillInStackTrace()});
@@ -122,31 +113,27 @@ public class AuthorizationRequestHandler {
         return callback;
     }
     
-    protected String buildCallbackUrl(String callbackURL, final Map<String, String> queryParams) {
+    private URI buildCallbackURI(String callback, final Map<String, String> queryParams) {
 
-        boolean containsQuestionMark = callbackURL.contains("?");
-
-
-        StringBuffer query = new StringBuffer(OAuthUtils.format(queryParams.entrySet(), "UTF-8"));
-        StringBuffer url = new StringBuffer(callbackURL);
-
-        if (!StringUtils.isEmpty(url.toString())) {
-            if (containsQuestionMark) {
-                url.append("&").append(query);
-            } else {
-                url.append("?").append(query);
-            }
+        UriBuilder builder = UriBuilder.fromUri(callback);
+        for (Map.Entry<String, String> entry : queryParams.entrySet()) {
+            builder.queryParam(entry.getKey(), entry.getValue());
         }
 
-        return url.toString();
+        return builder.build(); 
     }
     
     protected OAuthAuthorizationData addAdditionalParams(OAuthAuthorizationData secData,
+                                                         OAuthDataProvider dataProvider,
                                                          RequestToken token) {
         secData.setOauthToken(token.getTokenString());
         secData.setApplicationName(token.getClient().getApplicationName()); 
-        secData.setUserName(token.getClient().getLoginName());
-      
+        secData.setApplicationURI(token.getClient().getApplicationURI());
+        
+        secData.setPermissions(
+                dataProvider.getPermissionsInfo(token.getScopes()));
+        secData.setUris(token.getUris());
+        
         return secData;
     }
     
@@ -159,9 +146,15 @@ public class AuthorizationRequestHandler {
         session.setAttribute(OAuthConstants.AUTHENTICITY_TOKEN, value);
     }
     
-    private boolean compareRequestSessionTokens(HttpServletRequest request) {
+    private boolean compareRequestSessionTokens(HttpServletRequest request,
+            OAuthMessage oAuthMessage) {
         HttpSession session = request.getSession();
-        String requestToken = request.getParameter(OAuthConstants.AUTHENTICITY_TOKEN);
+        String requestToken = null; 
+        try {
+            requestToken = oAuthMessage.getParameter(OAuthConstants.AUTHENTICITY_TOKEN);
+        } catch (IOException ex) {
+            return false;
+        }
         String sessionToken = (String) session.getAttribute(OAuthConstants.AUTHENTICITY_TOKEN);
         
         if (StringUtils.isEmpty(requestToken) || StringUtils.isEmpty(sessionToken)) {

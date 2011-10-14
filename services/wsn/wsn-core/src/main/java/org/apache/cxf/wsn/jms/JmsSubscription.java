@@ -1,23 +1,28 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.cxf.wsn.jms;
 
 import java.io.StringReader;
 import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import javax.jms.Connection;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -36,6 +41,10 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.wsn.AbstractSubscription;
 import org.oasis_open.docs.wsn.b_2.InvalidTopicExpressionFaultType;
 import org.oasis_open.docs.wsn.b_2.NotificationMessageHolderType;
@@ -60,14 +69,10 @@ import org.oasis_open.docs.wsn.bw_2.UnacceptableInitialTerminationTimeFault;
 import org.oasis_open.docs.wsn.bw_2.UnacceptableTerminationTimeFault;
 import org.oasis_open.docs.wsn.bw_2.UnrecognizedPolicyRequestFault;
 import org.oasis_open.docs.wsn.bw_2.UnsupportedPolicyRequestFault;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 public abstract class JmsSubscription extends AbstractSubscription implements MessageListener {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JmsSubscription.class);
+    private static final Logger LOGGER = LogUtils.getL7dLogger(JmsSubscription.class);
 
     private Connection connection;
 
@@ -101,11 +106,14 @@ public abstract class JmsSubscription extends AbstractSubscription implements Me
     }
 
     @Override
-    protected void validateSubscription(Subscribe subscribeRequest) throws InvalidFilterFault,
+    protected void validateSubscription(Subscribe subscribeRequest)
+        //CHECKSTYLE:OFF - WS-Notification spec throws a lot of faults
+        throws InvalidFilterFault,
             InvalidMessageContentExpressionFault, InvalidProducerPropertiesExpressionFault,
             InvalidTopicExpressionFault, SubscribeCreationFailedFault, TopicExpressionDialectUnknownFault,
             TopicNotSupportedFault, UnacceptableInitialTerminationTimeFault,
             UnsupportedPolicyRequestFault, UnrecognizedPolicyRequestFault {
+        //CHECKSTYLE:ON
         super.validateSubscription(subscribeRequest);
         try {
             jmsTopic = topicConverter.toActiveMQTopic(topic);
@@ -181,8 +189,10 @@ public abstract class JmsSubscription extends AbstractSubscription implements Me
     public void onMessage(Message jmsMessage) {
         try {
             TextMessage text = (TextMessage) jmsMessage;
-            Notify notify = (Notify) jaxbContext.createUnmarshaller().unmarshal(new StringReader(text.getText()));
-            for (Iterator<NotificationMessageHolderType> ith = notify.getNotificationMessage().iterator(); ith.hasNext();) {
+            Notify notify = (Notify) jaxbContext.createUnmarshaller()
+                    .unmarshal(new StringReader(text.getText()));
+            for (Iterator<NotificationMessageHolderType> ith = notify.getNotificationMessage().iterator();
+                ith.hasNext();) {
                 NotificationMessageHolderType h = ith.next();
                 Object content = h.getMessage().getAny();
                 if (!(content instanceof Element)) {
@@ -203,7 +213,7 @@ public abstract class JmsSubscription extends AbstractSubscription implements Me
                 doNotify(notify);
             }
         } catch (Exception e) {
-            LOGGER.warn("Error notifying consumer", e);
+            LOGGER.log(Level.WARNING, "Error notifying consumer", e);
         }
     }
 
@@ -219,7 +229,7 @@ public abstract class JmsSubscription extends AbstractSubscription implements Me
                 Boolean ret = (Boolean) exp.evaluate(content, XPathConstants.BOOLEAN);
                 return ret.booleanValue();
             } catch (XPathExpressionException e) {
-                LOGGER.warn("Could not filter notification", e);
+                LOGGER.log(Level.WARNING, "Could not filter notification", e);
             }
             return false;
         }

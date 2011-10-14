@@ -1,24 +1,29 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.cxf.wsn;
 
 import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import javax.jws.Oneway;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
@@ -27,8 +32,9 @@ import javax.jws.WebService;
 import javax.xml.namespace.QName;
 import javax.xml.ws.wsaddressing.W3CEndpointReference;
 
-import org.apache.cxf.wsn.util.WSNHelper;
+import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.wsn.util.IdGenerator;
+import org.apache.cxf.wsn.util.WSNHelper;
 import org.oasis_open.docs.wsn.b_2.GetCurrentMessage;
 import org.oasis_open.docs.wsn.b_2.GetCurrentMessageResponse;
 import org.oasis_open.docs.wsn.b_2.NoCurrentMessageOnTopicFaultType;
@@ -63,20 +69,20 @@ import org.oasis_open.docs.wsrf.rpw_2.GetResourceProperty;
 import org.oasis_open.docs.wsrf.rpw_2.InvalidResourcePropertyQNameFault;
 import org.oasis_open.docs.wsrf.rw_2.ResourceUnavailableFault;
 import org.oasis_open.docs.wsrf.rw_2.ResourceUnknownFault;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @WebService(endpointInterface = "org.oasis_open.docs.wsn.brw_2.NotificationBroker")
-public abstract class AbstractNotificationBroker extends AbstractEndpoint implements NotificationBroker, GetResourceProperty {
+public abstract class AbstractNotificationBroker extends AbstractEndpoint 
+    implements NotificationBroker, GetResourceProperty {
 
     public static final String NAMESPACE_URI = "http://docs.oasis-open.org/wsn/b-2";
     public static final String PREFIX = "wsnt";
     public static final QName TOPIC_EXPRESSION_QNAME = new QName(NAMESPACE_URI, "TopicExpression", PREFIX);
     public static final QName FIXED_TOPIC_SET_QNAME = new QName(NAMESPACE_URI, "FixedTopicSet", PREFIX);
-    public static final QName TOPIC_EXPRESSION_DIALECT_QNAME = new QName(NAMESPACE_URI, "TopicExpressionDialect", PREFIX);
+    public static final QName TOPIC_EXPRESSION_DIALECT_QNAME 
+        = new QName(NAMESPACE_URI, "TopicExpressionDialect", PREFIX);
     public static final QName TOPIC_SET_QNAME = new QName(NAMESPACE_URI, "TopicSet", PREFIX);
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractNotificationBroker.class);
+    private static final Logger LOGGER = LogUtils.getL7dLogger(AbstractNotificationBroker.class);
 
     private IdGenerator idGenerator;
 
@@ -117,7 +123,7 @@ public abstract class AbstractNotificationBroker extends AbstractEndpoint implem
                       partName = "Notify")
             Notify notify) {
 
-        LOGGER.debug("Notify");
+        LOGGER.finest("Notify");
         handleNotify(notify);
     }
 
@@ -165,22 +171,29 @@ public abstract class AbstractNotificationBroker extends AbstractEndpoint implem
             @WebParam(name = "Subscribe", 
                       targetNamespace = "http://docs.oasis-open.org/wsn/b-1", 
                       partName = "SubscribeRequest")
-            Subscribe subscribeRequest) throws InvalidFilterFault, InvalidMessageContentExpressionFault,
+            Subscribe subscribeRequest)
+        //CHECKSTYLE:OFF - WS-Notification spec throws a lot of faults
+        throws InvalidFilterFault, InvalidMessageContentExpressionFault,
             InvalidProducerPropertiesExpressionFault, InvalidTopicExpressionFault, ResourceUnknownFault,
             SubscribeCreationFailedFault, TopicExpressionDialectUnknownFault, TopicNotSupportedFault,
-            UnacceptableInitialTerminationTimeFault, UnsupportedPolicyRequestFault, UnrecognizedPolicyRequestFault {
+            UnacceptableInitialTerminationTimeFault, UnsupportedPolicyRequestFault,
+            UnrecognizedPolicyRequestFault {
+        //CHECKSTYLE:ON
 
-        LOGGER.debug("Subscribe");
+        LOGGER.finest("Subscribe");
         return handleSubscribe(subscribeRequest, null);
     }
 
     public SubscribeResponse handleSubscribe(
                 Subscribe subscribeRequest, 
-                EndpointManager manager) throws InvalidFilterFault, InvalidMessageContentExpressionFault,
+                EndpointManager manager)
+        //CHECKSTYLE:OFF - WS-Notification spec throws a lot of faults
+        throws InvalidFilterFault, InvalidMessageContentExpressionFault,
             InvalidProducerPropertiesExpressionFault, InvalidTopicExpressionFault,
             SubscribeCreationFailedFault, TopicExpressionDialectUnknownFault,
             TopicNotSupportedFault, UnacceptableInitialTerminationTimeFault,
             UnsupportedPolicyRequestFault, UnrecognizedPolicyRequestFault {
+        //CHECKSTYLE:ON
         AbstractSubscription subscription = null;
         boolean success = false;
         try {
@@ -197,7 +210,7 @@ public abstract class AbstractNotificationBroker extends AbstractEndpoint implem
             success = true;
             return response;
         } catch (EndpointRegistrationException e) {
-            LOGGER.warn("Unable to register new endpoint", e);
+            LOGGER.log(Level.WARNING, "Unable to register new endpoint", e);
             SubscribeCreationFailedFaultType fault = new SubscribeCreationFailedFaultType();
             throw new SubscribeCreationFailedFault("Unable to register new endpoint", fault, e);
         } finally {
@@ -206,7 +219,7 @@ public abstract class AbstractNotificationBroker extends AbstractEndpoint implem
                 try {
                     subscription.unsubscribe();
                 } catch (UnableToDestroySubscriptionFault e) {
-                    LOGGER.info("Error destroying subscription", e);
+                    LOGGER.log(Level.INFO, "Error destroying subscription", e);
                 }
             }
         }
@@ -238,11 +251,13 @@ public abstract class AbstractNotificationBroker extends AbstractEndpoint implem
             @WebParam(name = "GetCurrentMessage", 
                       targetNamespace = "http://docs.oasis-open.org/wsn/b-1", 
                       partName = "GetCurrentMessageRequest")
-            GetCurrentMessage getCurrentMessageRequest) throws InvalidTopicExpressionFault,
+            GetCurrentMessage getCurrentMessageRequest)
+        //CHECKSTYLE:OFF - WS-Notification spec throws a lot of faults
+        throws InvalidTopicExpressionFault,
             MultipleTopicsSpecifiedFault, NoCurrentMessageOnTopicFault, ResourceUnknownFault,
             TopicExpressionDialectUnknownFault, TopicNotSupportedFault {
-
-        LOGGER.debug("GetCurrentMessage");
+        //CHECKSTYLE:ON
+        LOGGER.finest("GetCurrentMessage");
         NoCurrentMessageOnTopicFaultType fault = new NoCurrentMessageOnTopicFaultType();
         throw new NoCurrentMessageOnTopicFault("There is no current message on this topic.", fault);
     }
@@ -269,12 +284,14 @@ public abstract class AbstractNotificationBroker extends AbstractEndpoint implem
             PublisherRegistrationFailedFault, PublisherRegistrationRejectedFault, ResourceUnknownFault,
             TopicNotSupportedFault {
 
-        LOGGER.debug("RegisterPublisher");
+        LOGGER.finest("RegisterPublisher");
         return handleRegisterPublisher(registerPublisherRequest);
     }
 
-    public RegisterPublisherResponse handleRegisterPublisher(RegisterPublisher registerPublisherRequest) throws InvalidTopicExpressionFault, PublisherRegistrationFailedFault,
-            PublisherRegistrationRejectedFault, ResourceUnknownFault, TopicNotSupportedFault {
+    public RegisterPublisherResponse handleRegisterPublisher(RegisterPublisher registerPublisherRequest) 
+        throws InvalidTopicExpressionFault, PublisherRegistrationFailedFault,
+        PublisherRegistrationRejectedFault, ResourceUnknownFault, TopicNotSupportedFault {
+        
         AbstractPublisher publisher = null;
         boolean success = false;
         try {
@@ -287,7 +304,7 @@ public abstract class AbstractNotificationBroker extends AbstractEndpoint implem
             success = true;
             return response;
         } catch (EndpointRegistrationException e) {
-            LOGGER.warn("Unable to register new endpoint", e);
+            LOGGER.log(Level.WARNING, "Unable to register new endpoint", e);
             PublisherRegistrationFailedFaultType fault = new PublisherRegistrationFailedFaultType();
             throw new PublisherRegistrationFailedFault("Unable to register new endpoint", fault, e);
         } finally {
@@ -295,7 +312,7 @@ public abstract class AbstractNotificationBroker extends AbstractEndpoint implem
                 try {
                     publisher.destroy();
                 } catch (ResourceNotDestroyedFault e) {
-                    LOGGER.info("Error destroying publisher", e);
+                    LOGGER.log(Level.INFO, "Error destroying publisher", e);
                 }
             }
         }
@@ -305,19 +322,23 @@ public abstract class AbstractNotificationBroker extends AbstractEndpoint implem
 
     protected abstract AbstractSubscription createSubscription(String name);
 
-    @WebResult(name = "GetResourcePropertyResponse", targetNamespace = "http://docs.oasis-open.org/wsrf/rp-2", partName = "GetResourcePropertyResponse")
+    @WebResult(name = "GetResourcePropertyResponse", 
+               targetNamespace = "http://docs.oasis-open.org/wsrf/rp-2",
+               partName = "GetResourcePropertyResponse")
     @WebMethod(operationName = "GetResourceProperty")
     public GetResourcePropertyResponse getResourceProperty(
-        @WebParam(partName = "GetResourcePropertyRequest", name = "GetResourceProperty", targetNamespace = "http://docs.oasis-open.org/wsrf/rp-2")
+        @WebParam(partName = "GetResourcePropertyRequest", 
+                  name = "GetResourceProperty",
+                  targetNamespace = "http://docs.oasis-open.org/wsrf/rp-2")
         javax.xml.namespace.QName getResourcePropertyRequest
     ) throws ResourceUnavailableFault, ResourceUnknownFault, InvalidResourcePropertyQNameFault {
 
-        LOGGER.debug("GetResourceProperty");
+        LOGGER.finest("GetResourceProperty");
         return handleGetResourceProperty(getResourcePropertyRequest);
     }
 
     protected GetResourcePropertyResponse handleGetResourceProperty(QName property)
-            throws ResourceUnavailableFault, ResourceUnknownFault, InvalidResourcePropertyQNameFault {
+        throws ResourceUnavailableFault, ResourceUnknownFault, InvalidResourcePropertyQNameFault {
         InvalidResourcePropertyQNameFaultType fault = new InvalidResourcePropertyQNameFaultType();
         throw new InvalidResourcePropertyQNameFault("Invalid resource property QName: " + property, fault);
     }

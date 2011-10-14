@@ -26,6 +26,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
+import org.apache.cxf.rs.security.oauth.data.OAuthAuthorizationData;
+
 
 /**
  * This resource handles the End User authorising
@@ -34,6 +36,7 @@ import javax.ws.rs.core.Response;
  * redirect End User back to the Client, supplying 
  * a request token verifier (aka authorization code)
  */
+@Path("/authorize")
 public class AuthorizationRequestService extends AbstractOAuthService {
 
     private AuthorizationRequestHandler handler = new AuthorizationRequestHandler();
@@ -43,20 +46,24 @@ public class AuthorizationRequestService extends AbstractOAuthService {
     }
     
     @GET
-    @Path("/authorize")
     @Produces({"application/xhtml+xml", "text/html", "application/xml", "application/json" })
     public Response authorize() {
-        return handler.handle(getHttpRequest(), getDataProvider());
+        Response response = handler.handle(getHttpRequest(), getDataProvider());
+        if (response.getEntity() instanceof OAuthAuthorizationData) {
+            String replyTo = getUriInfo().getAbsolutePathBuilder().path("decision").build().toString();
+            ((OAuthAuthorizationData)response.getEntity()).setReplyTo(replyTo);
+        }
+        return response;
     }
 
     @GET
-    @Path("/authorizeDecision")
+    @Path("/decision")
     public Response authorizeDecision() {
         return authorize();
     }
     
     @POST
-    @Path("/authorizeDecision")
+    @Path("/decision")
     @Consumes("application/x-www-form-urlencoded")
     public Response authorizeDecisionForm() {
         return authorizeDecision();

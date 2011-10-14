@@ -1,23 +1,26 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.cxf.wsn;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.jws.Oneway;
 import javax.jws.WebMethod;
@@ -25,6 +28,7 @@ import javax.jws.WebParam;
 import javax.jws.WebResult;
 import javax.jws.WebService;
 
+import org.apache.cxf.common.logging.LogUtils;
 import org.oasis_open.docs.wsn.b_2.CreatePullPoint;
 import org.oasis_open.docs.wsn.b_2.DestroyPullPoint;
 import org.oasis_open.docs.wsn.b_2.DestroyPullPointResponse;
@@ -39,13 +43,11 @@ import org.oasis_open.docs.wsn.bw_2.UnableToCreatePullPointFault;
 import org.oasis_open.docs.wsn.bw_2.UnableToDestroyPullPointFault;
 import org.oasis_open.docs.wsn.bw_2.UnableToGetMessagesFault;
 import org.oasis_open.docs.wsrf.rw_2.ResourceUnknownFault;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @WebService(endpointInterface = "org.oasis_open.docs.wsn.bw_2.PullPoint")
 public abstract class AbstractPullPoint extends AbstractEndpoint implements PullPoint, NotificationConsumer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractPullPoint.class);
+    private static final Logger LOGGER = LogUtils.getL7dLogger(AbstractPullPoint.class);
 
     protected AbstractCreatePullPoint createPullPoint;
 
@@ -65,7 +67,7 @@ public abstract class AbstractPullPoint extends AbstractEndpoint implements Pull
                       partName = "Notify")
             Notify notify) {
 
-        LOGGER.debug("Notify");
+        LOGGER.finest("Notify");
         for (NotificationMessageHolderType messageHolder : notify.getNotificationMessage()) {
             store(messageHolder);
         }
@@ -88,7 +90,7 @@ public abstract class AbstractPullPoint extends AbstractEndpoint implements Pull
                       partName = "GetMessagesRequest")
             GetMessages getMessagesRequest) throws ResourceUnknownFault, UnableToGetMessagesFault {
 
-        LOGGER.debug("GetMessages");
+        LOGGER.finest("GetMessages");
         BigInteger max = getMessagesRequest.getMaximumNumber();
         List<NotificationMessageHolderType> messages = getMessages(max != null ? max.intValue() : 0);
         GetMessagesResponse response = new GetMessagesResponse();
@@ -111,9 +113,10 @@ public abstract class AbstractPullPoint extends AbstractEndpoint implements Pull
             @WebParam(name = "DestroyPullPoint", 
                       targetNamespace = "http://docs.oasis-open.org/wsn/b-2", 
                       partName = "DestroyPullPointRequest")
-            DestroyPullPoint destroyPullPointRequest) throws ResourceUnknownFault, UnableToDestroyPullPointFault {
+            DestroyPullPoint destroyPullPointRequest) 
+        throws ResourceUnknownFault, UnableToDestroyPullPointFault {
 
-        LOGGER.debug("Destroy");
+        LOGGER.finest("Destroy");
         createPullPoint.destroyPullPoint(getAddress());
         return new DestroyPullPointResponse();
     }

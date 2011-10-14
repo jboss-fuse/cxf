@@ -69,6 +69,13 @@ public class OAuthDefaultServices {
     public Response getRequestToken() {
         return requestTokenService.getRequestToken();
     }
+    
+    @GET
+    @Path("/initiate")
+    @Produces("application/x-www-form-urlencoded")
+    public Response getRequestTokenWithGET() {
+        return requestTokenService.getRequestToken();
+    }
 
     @GET
     @Path("/authorize")
@@ -78,19 +85,26 @@ public class OAuthDefaultServices {
     }
     
     @GET
-    @Path("/authorizeDecision")
+    @Path("/authorize/decision")
     public Response authorizeDecision() {
         return authorizeService.authorizeDecision();
     }
     
     @POST
-    @Path("/authorizeDecision")
+    @Path("/authorize/decision")
     @Consumes("application/x-www-form-urlencoded")
     public Response authorizeDecisionForm() {
         return authorizeService.authorizeDecision();
     }
 
     @GET
+    @Path("/token")
+    @Produces("application/x-www-form-urlencoded")
+    public Response getAccessTokenWithGET() {
+        return accessTokenService.getAccessToken();
+    }
+    
+    @POST
     @Path("/token")
     @Produces("application/x-www-form-urlencoded")
     public Response getAccessToken() {

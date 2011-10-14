@@ -1,44 +1,45 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.cxf.wsn;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebResult;
 import javax.jws.WebService;
 
-import org.apache.cxf.wsn.util.DOMUtil;
+import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.wsn.util.IdGenerator;
 import org.oasis_open.docs.wsn.b_2.CreatePullPointResponse;
 import org.oasis_open.docs.wsn.b_2.UnableToCreatePullPointFaultType;
 import org.oasis_open.docs.wsn.bw_2.CreatePullPoint;
 import org.oasis_open.docs.wsn.bw_2.UnableToCreatePullPointFault;
 import org.oasis_open.docs.wsn.bw_2.UnableToDestroyPullPointFault;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Element;
 
 @WebService(endpointInterface = "org.oasis_open.docs.wsn.bw_2.CreatePullPoint")
 public abstract class AbstractCreatePullPoint extends AbstractEndpoint implements CreatePullPoint {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractCreatePullPoint.class);
+    private static final Logger LOGGER = LogUtils.getL7dLogger(AbstractCreatePullPoint.class);
 
     private IdGenerator idGenerator;
 
@@ -66,9 +67,10 @@ public abstract class AbstractCreatePullPoint extends AbstractEndpoint implement
             @WebParam(name = "CreatePullPoint", 
                       targetNamespace = "http://docs.oasis-open.org/wsn/b-2", 
                       partName = "CreatePullPointRequest")
-            org.oasis_open.docs.wsn.b_2.CreatePullPoint createPullPointRequest) throws UnableToCreatePullPointFault {
+            org.oasis_open.docs.wsn.b_2.CreatePullPoint createPullPointRequest)
+        throws UnableToCreatePullPointFault {
 
-        LOGGER.debug("CreatePullEndpoint");
+        LOGGER.finest("CreatePullEndpoint");
         return handleCreatePullPoint(createPullPointRequest, null);
     }
 
@@ -91,7 +93,7 @@ public abstract class AbstractCreatePullPoint extends AbstractEndpoint implement
             success = true;
             return response;
         } catch (EndpointRegistrationException e) {
-            LOGGER.warn("Unable to register new endpoint", e);
+            LOGGER.log(Level.WARNING, "Unable to register new endpoint", e);
             UnableToCreatePullPointFaultType fault = new UnableToCreatePullPointFaultType();
             throw new UnableToCreatePullPointFault("Unable to register new endpoint", fault, e);
         } finally {
@@ -100,27 +102,14 @@ public abstract class AbstractCreatePullPoint extends AbstractEndpoint implement
                 try {
                     pullPoint.destroy();
                 } catch (UnableToDestroyPullPointFault e) {
-                    LOGGER.info("Error destroying pullPoint", e);
+                    LOGGER.log(Level.INFO, "Error destroying pullPoint", e);
                 }
             }
         }
     }
 
     protected String createPullPointName(org.oasis_open.docs.wsn.b_2.CreatePullPoint createPullPointRequest) {
-        // Let the creator decide which pull point name to use
-        String name = null;
-        for (Iterator it = createPullPointRequest.getAny().iterator(); it.hasNext();) {
-            Element el = (Element) it.next();
-            if ("name".equals(el.getLocalName())
-                    && "http://cxf.apache.org/wsn2005/1.0".equals(el.getNamespaceURI())) {
-                name = DOMUtil.getElementText(el).trim();
-            }
-        }
-        if (name == null) {
-            // If no name is given, just generate one
-            name = idGenerator.generateSanitizedId();
-        }
-        return name;
+        return idGenerator.generateSanitizedId();
     }
 
     public void destroyPullPoint(String address) throws UnableToDestroyPullPointFault {
