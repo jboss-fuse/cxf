@@ -136,18 +136,6 @@
             <archive>http://mail-archives.apache.org/mod_mbox/cxf-notifications</archive>
         </mailingList>
     </mailingLists>
-    <!--ciManagement>
-        <system>Hudson</system>
-        <url>http://hudson.zones.apache.org/hudson/view/CXF/</url>
-        <notifiers>
-            <notifier>
-                <type>mail</type>
-                <configuration>
-                    <address>notifications@cxf.apache.org</address>
-                </configuration>
-            </notifier>
-        </notifiers>
-    </ciManagement-->
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
@@ -169,7 +157,6 @@
         <module>rt</module>
         <module>integration</module>
         <module>maven-plugins</module>
-	<!--module>test-samples</module-->
         <module>systests</module>
     </modules>
 
