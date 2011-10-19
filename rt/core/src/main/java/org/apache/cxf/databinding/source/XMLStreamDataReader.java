@@ -230,11 +230,7 @@ public class XMLStreamDataReader implements DataReader<XMLStreamReader> {
                 return new DOMSource(document);
             }
         } catch (XMLStreamException e) {
-<<<<<<< HEAD
-            throw new Fault("COULD_NOT_REDA_XML_STREAM_CAUSED_BY", LOG, e,
-=======
             throw new Fault("COULD_NOT_READ_XML_STREAM_CAUSED_BY", LOG, e,
->>>>>>> 2.3.x-fixes
                             e.getClass().getCanonicalName(), e.getMessage());
         }
     }
