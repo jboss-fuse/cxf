@@ -16,24 +16,31 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.systest.sts.custom_onbehalfof;
 
-package org.apache.cxf.management.web.browser.client;
+import java.net.URL;
 
-import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.GwtEvent.Type;
-import com.google.gwt.event.shared.HandlerRegistration;
+import org.apache.cxf.Bus;
+import org.apache.cxf.BusFactory;
+import org.apache.cxf.bus.spring.SpringBusFactory;
+import org.apache.cxf.testutil.common.AbstractBusTestServerBase;
 
-public interface EventBus {
+public class Server extends AbstractBusTestServerBase {
 
-    <H extends EventHandler> HandlerRegistration addHandler(Type<H> type, H handler);
+    public Server() {
 
-    void fireEvent(GwtEvent<?> event);
+    }
 
-    <H extends EventHandler> H getHandler(Type<H> type, int index);
+    protected void run()  {
+        URL busFile = Server.class.getResource("cxf-service.xml");
+        Bus busLocal = new SpringBusFactory().createBus(busFile);
+        BusFactory.setDefaultBus(busLocal);
+        setBus(busLocal);
 
-    int getHandlerCount(Type<?> type);
-
-    boolean isEventHandled(Type<?> e);
-
+        try {
+            new Server();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
