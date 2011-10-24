@@ -20,9 +20,10 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.cxf.services.wsn</groupId>
     <artifactId>cxf-services-wsn-core</artifactId>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
     <version>2.5.x-fuse-SNAPSHOT</version>
     <name>Apache CXF WSN Core</name>
+    <description>Apache CXF WSN Core Service</description>
     <url>http://cxf.apache.org</url>
 
     <parent>
@@ -46,6 +47,11 @@
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-common-utilities</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf.services.wsn</groupId>
+            <artifactId>cxf-services-wsn-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -117,28 +123,31 @@
 	<build>
 		<plugins>
             <plugin>
-                <groupId>org.apache.cxf</groupId>
-                <artifactId>cxf-codegen-plugin</artifactId>
-	            <version>${project.version}</version>
-                <executions>
-                    <execution>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <sourceRoot>${basedir}/target/jaxws</sourceRoot>
-                            <wsdlOptions>
-                                <wsdlOption>
-                                    <wsdl>${basedir}/src/main/resources/org/apache/cxf/wsn/wsn.wsdl</wsdl>
-                                    <extraargs>
-                                        <extraarg>-verbose</extraarg>
-                                    </extraargs>
-                                </wsdlOption>
-                            </wsdlOptions>
-                        </configuration>
-                        <goals>
-                            <goal>wsdl2java</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Require-Bundle>
+                            org.apache.activemq.activemq-core
+                        </Require-Bundle>
+                        <Import-Package>
+                            org.apache.cxf.wsn.util.*;version=${project.version},
+                            !org.apache.cxf.wsn*,
+                            !org.apache.activemq*,
+                            javax.xml.bind*;version="[0.0,3)",
+                            javax.jws*;version="[0.0,3)",
+                            javax.xml.ws*;version="[0.0,3)",
+                            org.apache.cxf*;version=${project.version},
+                            *
+                        </Import-Package>
+                        <Export-Package>
+                            org.apache.cxf.wsn.services;version=${project.version}
+                        </Export-Package>
+                        <_nouses>true</_nouses>
+                        <_versionpolicy>[$(version;==;$(@)),$(version;+;$(@)))</_versionpolicy>
+                    </instructions>
+                </configuration>
             </plugin>
 		</plugins>
 	</build>

@@ -28,6 +28,7 @@ import org.apache.cxf.tools.common.ProcessorTestBase;
 import org.apache.cxf.tools.common.ToolContext;
 import org.apache.cxf.tools.wadlto.WadlToolConstants;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class JAXRSContainerTest extends ProcessorTestBase {
@@ -186,7 +187,7 @@ public class JAXRSContainerTest extends ProcessorTestBase {
             
             List<File> files = FileUtils.getFilesRecurse(output, ".+\\." + "class" + "$");
             assertEquals(4, files.size());
-            assertTrue(checkContains(files, "application" + ".Resource.class"));
+            assertTrue(checkContains(files, "application" + ".Bookstore.class"));
             assertTrue(checkContains(files, "superbooks" + ".Book.class"));
             assertTrue(checkContains(files, "superbooks" + ".ObjectFactory.class"));
             assertTrue(checkContains(files, "superbooks" + ".package-info.class"));
@@ -293,6 +294,36 @@ public class JAXRSContainerTest extends ProcessorTestBase {
             List<File> classFiles = FileUtils.getFilesRecurse(output, ".+\\." + "class" + "$");
             assertEquals(1, classFiles.size());
             assertTrue(checkContains(classFiles, "application.CustomResource.class"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+    
+    @Test    
+    @Ignore("missing a file")
+    public void testCodeGenNoIds2() {
+        try {
+            JAXRSContainer container = new JAXRSContainer(null);
+
+            ToolContext context = new ToolContext();
+            context.put(WadlToolConstants.CFG_OUTPUTDIR, output.getCanonicalPath());
+            context.put(WadlToolConstants.CFG_WADLURL, getLocation("/wadl/multipleResources.xml"));
+            context.put(WadlToolConstants.CFG_COMPILE, "true");
+            
+            container.setContext(context);
+            container.execute();
+
+            assertNotNull(output.list());
+            
+            List<File> javaFiles = FileUtils.getFilesRecurse(output, ".+\\." + "java" + "$");
+            assertEquals(2, javaFiles.size());
+            assertTrue(checkContains(javaFiles, "application.Bookstore.java"));
+            assertTrue(checkContains(javaFiles, "application.Books.java"));
+            List<File> classFiles = FileUtils.getFilesRecurse(output, ".+\\." + "class" + "$");
+            assertEquals(2, classFiles.size());
+            assertTrue(checkContains(classFiles, "application.Bookstore.class"));
+            assertTrue(checkContains(classFiles, "application.Books.class"));
         } catch (Exception e) {
             e.printStackTrace();
             fail();
