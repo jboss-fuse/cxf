@@ -25,6 +25,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.ws.addressing.v200408.EndpointReferenceType;
@@ -517,6 +518,52 @@ public class RMTxStoreTest extends Assert {
         control.reset();
         
         return sid;
+    }
+
+    private void verifyDestinationSequence(String s, DestinationSequence seq) {
+        Identifier sid = seq.getIdentifier();
+        assertNotNull(sid);
+        assertEquals(s, sid.getValue());
+        if ("sequence1".equals(s)) {
+            assertEquals(0, seq.getLastMessageNumber());
+            SequenceAcknowledgement sa = seq.getAcknowledgment();
+            assertNotNull(sa);
+            verifyAcknowledgementRanges(sa.getAcknowledgementRange(), new long[]{1, 1});
+        } else if ("sequence2".equals(s)) {
+            assertEquals(10, seq.getLastMessageNumber());
+            SequenceAcknowledgement sa = seq.getAcknowledgment();
+            assertNotNull(sa);
+            verifyAcknowledgementRanges(sa.getAcknowledgementRange(), new long[]{1, 1, 3, 10});
+        }
+    }
+    
+    private void verifySourceSequence(String s, SourceSequence seq) {
+        Identifier sid = seq.getIdentifier();
+        assertNotNull(sid);
+        assertEquals(s, sid.getValue());
+        if ("sequence1".equals(s)) {
+            assertNull(seq.getExpires());
+            assertEquals(1, seq.getCurrentMessageNr());
+            assertFalse(seq.isLastMessage());
+        } else if ("sequence2".equals(s)) {
+            Date expires = seq.getExpires();
+            assertNotNull(expires);
+            expires.after(new Date());
+            assertEquals(10, seq.getCurrentMessageNr());
+            assertTrue(seq.isLastMessage());
+        }
+    }
+    
+    private void verifyAcknowledgementRanges(List<SequenceAcknowledgement.AcknowledgementRange> ranges, 
+                                             long[] values) {
+        assertNotNull(ranges);
+        assertEquals(values.length / 2, ranges.size());
+        
+        int v = 0;
+        for (SequenceAcknowledgement.AcknowledgementRange range : ranges) {
+            assertEquals(values[v++], (long)range.getLower().longValue());   
+            assertEquals(values[v++], (long)range.getUpper().longValue());   
+        }
     }
     
     private void setupMessage(Identifier sid, BigInteger mn, String to, boolean outbound) 
