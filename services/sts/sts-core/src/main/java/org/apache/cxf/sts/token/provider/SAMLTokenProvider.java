@@ -61,7 +61,7 @@ public class SAMLTokenProvider implements TokenProvider {
     
     private List<AttributeStatementProvider> attributeStatementProviders;
     private List<AuthenticationStatementProvider> authenticationStatementProviders;
-    private List<AuthDecisionStatementProvider> authenticationDecisionStatementProviders;
+    private List<AuthDecisionStatementProvider> authDecisionStatementProviders;
     private SubjectProvider subjectProvider = new DefaultSubjectProvider();
     private ConditionsProvider conditionsProvider = new DefaultConditionsProvider();
     private boolean signToken = true;
@@ -201,14 +201,14 @@ public class SAMLTokenProvider implements TokenProvider {
     public void setAuthDecisionStatementProviders(
         List<AuthDecisionStatementProvider> authDecisionStatementProviders
     ) {
-        this.authenticationDecisionStatementProviders = authDecisionStatementProviders;
+        this.authDecisionStatementProviders = authDecisionStatementProviders;
     }
     
     /**
      * Get the List of AuthDecisionStatementProviders.
      */
     public List<AuthDecisionStatementProvider> getAuthDecisionStatementProviders() {
-        return authenticationDecisionStatementProviders;
+        return authDecisionStatementProviders;
     }
 
     /**
@@ -355,11 +355,11 @@ public class SAMLTokenProvider implements TokenProvider {
         
         // Parse the AuthDecisionStatements
         List<AuthDecisionStatementBean> authDecisionBeanList = null;
-        if (authenticationDecisionStatementProviders != null 
-            && authenticationDecisionStatementProviders.size() > 0) {
+        if (authDecisionStatementProviders != null 
+            && authDecisionStatementProviders.size() > 0) {
             authDecisionBeanList = new ArrayList<AuthDecisionStatementBean>();
             for (AuthDecisionStatementProvider statementProvider 
-                : authenticationDecisionStatementProviders) {
+                : authDecisionStatementProviders) {
                 AuthDecisionStatementBean statementBean = 
                     statementProvider.getStatement(tokenParameters);
                 if (statementBean != null) {
