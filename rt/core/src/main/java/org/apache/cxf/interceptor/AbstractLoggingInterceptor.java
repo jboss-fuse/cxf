@@ -24,6 +24,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import javax.xml.transform.OutputKeys;
@@ -31,11 +32,14 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
+import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.helpers.XMLUtils;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
+import org.apache.cxf.service.model.EndpointInfo;
+import org.apache.cxf.service.model.InterfaceInfo;
 
 /**
  * A simple logging handler which outputs the bytes of the message to the
@@ -55,6 +59,25 @@ public abstract class AbstractLoggingInterceptor extends AbstractPhaseIntercepto
     }
     
     protected abstract Logger getLogger();
+    
+    Logger getMessageLogger(Message message) {
+        EndpointInfo endpoint = message.getExchange().getEndpoint().getEndpointInfo();
+        if (endpoint.getService() == null) {
+            return getLogger();
+        }
+        Logger logger = endpoint.getProperty("MessageLogger", Logger.class);
+        if (logger == null) {
+            String serviceName = endpoint.getService().getName().getLocalPart();
+            InterfaceInfo iface = endpoint.getService().getInterface();
+            String portName = endpoint.getName().getLocalPart();
+            String portTypeName = iface.getName().getLocalPart();
+            String logName = "org.apache.cxf.services." + serviceName + "." 
+                + portName + "." + portTypeName;
+            logger = LogUtils.getL7dLogger(this.getClass(), null, logName);
+            endpoint.setProperty("MessageLogger", logger);
+        }
+        return logger;
+    }
 
     public void setOutputLocation(String s) {
         if (s == null || "<logger>".equals(s)) {
@@ -141,14 +164,18 @@ public abstract class AbstractLoggingInterceptor extends AbstractPhaseIntercepto
         return originalLogString;
     } 
 
-    protected void log(String message) {
+    protected void log(Logger logger, String message) {
         message = transform(message);
         if (writer != null) {
             writer.println(message);
             // Flushing the writer to make sure the message is written
             writer.flush();
-        } else if (getLogger().isLoggable(Level.INFO)) {
-            getLogger().info(message);
+        } else if (logger.isLoggable(Level.INFO)) {
+            LogRecord lr = new LogRecord(Level.INFO, message);
+            lr.setSourceClassName(logger.getName());
+            lr.setSourceMethodName(null);
+            lr.setLoggerName(logger.getName());
+            logger.log(lr);
         }
     }
     
