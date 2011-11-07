@@ -27,7 +27,6 @@ http://cxf.apache.org/core http://cxf.apache.org/schemas/core.xsd
 http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd">
 
     <!-- comment this bean to disable schema validation in the client -->
-
     <jaxws:client name="{http://apache.org/hello_world_soap_http}SoapPort"
         createdFromAPI="true">
         <jaxws:properties>
