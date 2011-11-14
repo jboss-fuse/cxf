@@ -29,6 +29,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.jaxrs.ext.RequestHandler;
 import org.apache.cxf.jaxrs.ext.codegen.CodeGeneratorProvider;
 import org.apache.cxf.jaxrs.model.ProviderInfo;
@@ -53,6 +54,8 @@ public class RequestPreprocessor {
         SHORTCUTS.put("text", "text/*");
         SHORTCUTS.put("xml", "application/xml");
         SHORTCUTS.put("atom", "application/atom+xml");
+        SHORTCUTS.put("html", "text/html");
+        SHORTCUTS.put("wadl", "application/vnd.sun.wadl+xml");
         // more to come
     }
     
@@ -79,7 +82,7 @@ public class RequestPreprocessor {
         handleTypeQuery(m, queries);
         handleCType(m, queries);
         handleMethod(m, queries, new HttpHeadersImpl(m));
-        Response r = checkMetadataRequest(m);
+        Response r = checkMetadataRequest(m, u);
         if (r == null) {
             r = checkCodeRequest(m);
         }
@@ -103,9 +106,21 @@ public class RequestPreprocessor {
     private void handleExtensionMappings(Message m, UriInfo uriInfo) {
         String path = uriInfo.getPath(false);
         for (Map.Entry<?, ?> entry : extensionMappings.entrySet()) {
-            if (path.endsWith("." + entry.getKey().toString())) {
+            String key = entry.getKey().toString();
+            if (path.endsWith("." + key)) {
                 updateAcceptTypeHeader(m, entry.getValue().toString());
-                updatePath(m, path, entry.getKey().toString());
+                updatePath(m, path, key);
+                if ("wadl".equals(key)) {
+                    // the path has been updated and Accept was not necessarily set to 
+                    // WADL type (xml or json or html - other options)
+                    String query = (String)m.get(Message.QUERY_STRING);
+                    if (StringUtils.isEmpty(query)) {
+                        query = WadlGenerator.WADL_QUERY;
+                    } else if (!query.contains(WadlGenerator.WADL_QUERY)) {
+                        query += "&" + WadlGenerator.WADL_QUERY;
+                    }
+                    m.put(Message.QUERY_STRING, query);
+                }
                 break;
             }
         }
@@ -158,6 +173,9 @@ public class RequestPreprocessor {
     private void handleCType(Message m, MultivaluedMap<String, String> queries) {
         String type = queries.getFirst(CTYPE_QUERY);
         if (type != null) {
+            if (SHORTCUTS.containsKey(type)) {
+                type = SHORTCUTS.get(type);
+            }
             m.put(Message.CONTENT_TYPE, type);
         }
     }
@@ -176,7 +194,7 @@ public class RequestPreprocessor {
      * has been selected are handy. Consider implementing this method as part of the QueryHandler,
      * we will need to save the list of ClassResourceInfos on the EndpointInfo though
      */
-    public Response checkMetadataRequest(Message m) {
+    public Response checkMetadataRequest(Message m, UriInfo ui) {
         String originalRequestURI = (String)m.get(Message.REQUEST_URI);
         String query = (String)m.get(Message.QUERY_STRING);
         if (query != null && query.contains(WadlGenerator.WADL_QUERY)) {
