@@ -328,7 +328,6 @@ public class SamlTokenTest extends AbstractBusClientServerTestBase {
         BigInteger result = saml2Port.doubleIt(BigInteger.valueOf(25));
         assertTrue(result.equals(BigInteger.valueOf(50)));
     }
-    
 
     @org.junit.Test
     public void testSaml2OverAsymmetricSignedEncrypted() throws Exception {
@@ -356,6 +355,59 @@ public class SamlTokenTest extends AbstractBusClientServerTestBase {
         assertTrue(result.equals(BigInteger.valueOf(50)));
     }
     
+    @org.junit.Test
+    public void testSaml2OverAsymmetricEncrypted() throws Exception {
+
+        if (!unrestrictedPoliciesInstalled) {
+            return;
+        }
+        
+        SpringBusFactory bf = new SpringBusFactory();
+        URL busFile = SamlTokenTest.class.getResource("client/client.xml");
+
+        Bus bus = bf.createBus(busFile.toString());
+        SpringBusFactory.setDefaultBus(bus);
+        SpringBusFactory.setThreadDefaultBus(bus);
+
+        DoubleItService service = new DoubleItService();
+        
+        DoubleItPortType saml2Port = service.getDoubleItSaml2AsymmetricEncryptedPort();
+        updateAddressPort(saml2Port, PORT);
+        
+        SamlCallbackHandler callbackHandler = new SamlCallbackHandler();
+        callbackHandler.setConfirmationMethod(SAML2Constants.CONF_BEARER);
+        ((BindingProvider)saml2Port).getRequestContext().put(
+            "ws-security.saml-callback-handler", callbackHandler
+        );
+        BigInteger result = saml2Port.doubleIt(BigInteger.valueOf(25));
+        assertTrue(result.equals(BigInteger.valueOf(50)));
+    }
+    
+    
+    @org.junit.Test
+    public void testSaml2EndorsingEncryptedOverTransport() throws Exception {
+
+        SpringBusFactory bf = new SpringBusFactory();
+        URL busFile = SamlTokenTest.class.getResource("client/client.xml");
+
+        Bus bus = bf.createBus(busFile.toString());
+        SpringBusFactory.setDefaultBus(bus);
+        SpringBusFactory.setThreadDefaultBus(bus);
+
+        DoubleItService service = new DoubleItService();
+        
+        DoubleItPortType saml2Port = service.getDoubleItSaml2EndorsingEncryptedTransportPort();
+        updateAddressPort(saml2Port, PORT2);
+        
+        SamlCallbackHandler callbackHandler = new SamlCallbackHandler();
+        callbackHandler.setConfirmationMethod(SAML2Constants.CONF_HOLDER_KEY);
+        ((BindingProvider)saml2Port).getRequestContext().put(
+            "ws-security.saml-callback-handler", callbackHandler
+        );
+
+        BigInteger result = saml2Port.doubleIt(BigInteger.valueOf(25));
+        assertTrue(result.equals(BigInteger.valueOf(50)));
+    }
     
     private boolean checkUnrestrictedPoliciesInstalled() {
         try {
