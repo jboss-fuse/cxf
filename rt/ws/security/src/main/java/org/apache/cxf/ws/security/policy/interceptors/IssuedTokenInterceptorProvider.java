@@ -89,8 +89,7 @@ public class IssuedTokenInterceptorProvider extends AbstractPolicyInterceptorPro
         this.getInFaultInterceptors().add(new IssuedTokenInInterceptor());
     }
     
-    
-    static final TokenStore getTokenStore(Message message) {
+    static final TokenStore createTokenStore(Message message) {
         EndpointInfo info = message.getExchange().get(Endpoint.class).getEndpointInfo();
         synchronized (info) {
             TokenStore tokenStore = (TokenStore)message.getContextualProperty(TokenStore.class.getName());
@@ -101,8 +100,15 @@ public class IssuedTokenInterceptorProvider extends AbstractPolicyInterceptorPro
                 tokenStore = new MemoryTokenStore();
                 info.setProperty(TokenStore.class.getName(), tokenStore);
             }
-            return tokenStore;
+            return tokenStore; 
         }
+    }
+    static final TokenStore getTokenStore(Message message) {
+        TokenStore tokenStore = (TokenStore)message.getContextualProperty(TokenStore.class.getName());
+        if (tokenStore == null) {
+            tokenStore = createTokenStore(message);
+        }
+        return tokenStore;
     }
 
     static class IssuedTokenOutInterceptor extends AbstractPhaseInterceptor<Message> {
@@ -243,6 +249,14 @@ public class IssuedTokenInterceptorProvider extends AbstractPolicyInterceptorPro
                 tok = (SecurityToken)message.getContextualProperty(SecurityConstants.TOKEN);
                 if (tok == null) {
                     String tokId = (String)message.getContextualProperty(SecurityConstants.TOKEN_ID);
+                    if (tokId != null) {
+                        tok = getTokenStore(message).getToken(tokId);
+                    }
+                }
+            } else {
+                tok = (SecurityToken)message.get(SecurityConstants.TOKEN);
+                if (tok == null) {
+                    String tokId = (String)message.get(SecurityConstants.TOKEN_ID);
                     if (tokId != null) {
                         tok = getTokenStore(message).getToken(tokId);
                     }
@@ -403,8 +417,8 @@ public class IssuedTokenInterceptorProvider extends AbstractPolicyInterceptorPro
                 if (!isRequestor(message)) {
                     List<WSHandlerResult> results = 
                         CastUtils.cast((List<?>)message.get(WSHandlerConstants.RECV_RESULTS));
-                    if (results != null) {
-                        parseHandlerResults(results, message, aim);
+                    if (results != null && results.size() > 0) {
+                        parseHandlerResults(results.get(0), message, aim);
                     }
                 } else {
                     //client side should be checked on the way out
@@ -416,39 +430,33 @@ public class IssuedTokenInterceptorProvider extends AbstractPolicyInterceptorPro
         }
         
         private void parseHandlerResults(
-            List<WSHandlerResult> results,
+            WSHandlerResult rResult,
             Message message,
             AssertionInfoMap aim
         ) {
-            if (results != null) {
-                for (WSHandlerResult rResult : results) {
-                    List<WSSecurityEngineResult> signedResults = 
-                        new ArrayList<WSSecurityEngineResult>();
-                    WSSecurityUtil.fetchAllActionResults(
-                        rResult.getResults(), WSConstants.SIGN, signedResults
-                    );
-                    IssuedTokenPolicyValidator issuedValidator = 
-                        new IssuedTokenPolicyValidator(signedResults, message);
-                    Collection<AssertionInfo> issuedAis = aim.get(SP12Constants.ISSUED_TOKEN);
-                    
-                    for (AssertionWrapper assertionWrapper 
-                        : findSamlTokenResults(rResult.getResults())) {
-                        boolean valid = issuedValidator.validatePolicy(issuedAis, assertionWrapper);
-                        if (valid) {
-                            SecurityToken token = createSecurityToken(assertionWrapper);
-                            message.getExchange().put(SecurityConstants.TOKEN, token);
-                            return;
-                        }
-                    }
-                    for (BinarySecurity binarySecurityToken 
-                        : findBinarySecurityTokenResults(rResult.getResults())) {
-                        boolean valid = issuedValidator.validatePolicy(issuedAis, binarySecurityToken);
-                        if (valid) {
-                            SecurityToken token = createSecurityToken(binarySecurityToken);
-                            message.getExchange().put(SecurityConstants.TOKEN, token);
-                            return;
-                        }
-                    }
+            List<WSSecurityEngineResult> signedResults = new ArrayList<WSSecurityEngineResult>();
+            WSSecurityUtil.fetchAllActionResults(
+                rResult.getResults(), WSConstants.SIGN, signedResults
+            );
+            
+            IssuedTokenPolicyValidator issuedValidator = 
+                new IssuedTokenPolicyValidator(signedResults, message);
+            Collection<AssertionInfo> issuedAis = aim.get(SP12Constants.ISSUED_TOKEN);
+
+            for (AssertionWrapper assertionWrapper : findSamlTokenResults(rResult.getResults())) {
+                boolean valid = issuedValidator.validatePolicy(issuedAis, assertionWrapper);
+                if (valid) {
+                    SecurityToken token = createSecurityToken(assertionWrapper);
+                    message.getExchange().put(SecurityConstants.TOKEN, token);
+                    return;
+                }
+            }
+            for (BinarySecurity binarySecurityToken : findBinarySecurityTokenResults(rResult.getResults())) {
+                boolean valid = issuedValidator.validatePolicy(issuedAis, binarySecurityToken);
+                if (valid) {
+                    SecurityToken token = createSecurityToken(binarySecurityToken);
+                    message.getExchange().put(SecurityConstants.TOKEN, token);
+                    return;
                 }
             }
         }
