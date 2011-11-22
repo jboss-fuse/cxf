@@ -26,19 +26,19 @@ import java.util.List;
 import org.w3c.dom.Element;
 
 import org.apache.cxf.message.Message;
+import org.apache.cxf.message.MessageUtils;
 import org.apache.cxf.ws.policy.AssertionInfo;
 import org.apache.cxf.ws.policy.AssertionInfoMap;
 import org.apache.cxf.ws.security.policy.SP12Constants;
-import org.apache.cxf.ws.security.policy.model.SecurityContextToken;
+import org.apache.cxf.ws.security.policy.model.Wss11;
 import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSSecurityEngineResult;
 import org.apache.ws.security.util.WSSecurityUtil;
 
 /**
- * Validate a SecurityContextToken policy.
+ * Validate a WSS11 policy.
  */
-public class SecurityContextTokenPolicyValidator 
-    extends AbstractTokenPolicyValidator implements TokenPolicyValidator {
+public class WSS11PolicyValidator implements TokenPolicyValidator {
     
     public boolean validatePolicy(
         AssertionInfoMap aim,
@@ -47,25 +47,25 @@ public class SecurityContextTokenPolicyValidator
         List<WSSecurityEngineResult> results,
         List<WSSecurityEngineResult> signedResults
     ) {
-        Collection<AssertionInfo> ais = aim.get(SP12Constants.SECURITY_CONTEXT_TOKEN);
+        Collection<AssertionInfo> ais = aim.get(SP12Constants.WSS11);
         if (ais == null || ais.isEmpty()) {
             return true;
         }
-
-        List<WSSecurityEngineResult> sctResults = new ArrayList<WSSecurityEngineResult>();
-        WSSecurityUtil.fetchAllActionResults(results, WSConstants.SCT, sctResults);
-
+        
+        List<WSSecurityEngineResult> scResults = new ArrayList<WSSecurityEngineResult>();
+        WSSecurityUtil.fetchAllActionResults(results, WSConstants.SC, scResults);
+        
         for (AssertionInfo ai : ais) {
-            SecurityContextToken sctPolicy = (SecurityContextToken)ai.getAssertion();
+            Wss11 wss11 = (Wss11)ai.getAssertion();
             ai.setAsserted(true);
 
-            if (!isTokenRequired(sctPolicy, message)) {
+            if (!MessageUtils.isRequestor(message)) {
                 continue;
             }
-
-            if (sctResults.isEmpty()) {
+            
+            if (wss11.isRequireSignatureConfirmation() && scResults.isEmpty()) {
                 ai.setNotAsserted(
-                    "The received token does not match the token inclusion requirement"
+                    "Signature Confirmation policy validation failed"
                 );
                 return false;
             }

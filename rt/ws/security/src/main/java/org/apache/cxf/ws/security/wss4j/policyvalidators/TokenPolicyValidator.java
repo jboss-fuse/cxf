@@ -16,29 +16,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package demo.spring.client;
 
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+package org.apache.cxf.ws.security.wss4j.policyvalidators;
 
+import java.util.List;
 
-import demo.spring.HelloWorld;
+import org.w3c.dom.Element;
 
+import org.apache.cxf.message.Message;
+import org.apache.cxf.ws.policy.AssertionInfoMap;
+import org.apache.ws.security.WSSecurityEngineResult;
 
-public final class Client {
-
-    private Client() {
-    }
-
-    public static void main(String args[]) throws Exception {
-        // START SNIPPET: client
-        ClassPathXmlApplicationContext context 
-            = new ClassPathXmlApplicationContext(new String[] {"client-beans.xml"});
-
-        HelloWorld client = (HelloWorld)context.getBean("client");
-
-        String response = client.sayHi("Joe");
-        System.out.println("Response: " + response);
-        System.exit(0);
-        // END SNIPPET: client
-    }
+/**
+ * Validate a WS-SecurityPolicy corresponding to a received token.
+ */
+public interface TokenPolicyValidator {
+    
+    /**
+     * Validate a particular policy from the AssertionInfoMap argument. Return true if the policy is valid.
+     */
+    boolean validatePolicy(
+        AssertionInfoMap aim, 
+        Message message,
+        Element soapBody,
+        List<WSSecurityEngineResult> results,
+        List<WSSecurityEngineResult> signedResults
+    );
 }

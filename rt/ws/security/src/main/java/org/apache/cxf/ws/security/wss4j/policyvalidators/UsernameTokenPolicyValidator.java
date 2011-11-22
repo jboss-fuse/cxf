@@ -19,72 +19,101 @@
 
 package org.apache.cxf.ws.security.wss4j.policyvalidators;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+
+import org.w3c.dom.Element;
 
 import org.apache.cxf.message.Message;
 import org.apache.cxf.ws.policy.AssertionInfo;
 import org.apache.cxf.ws.policy.AssertionInfoMap;
 import org.apache.cxf.ws.security.policy.SP12Constants;
+import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSSecurityEngineResult;
 import org.apache.ws.security.message.token.UsernameToken;
+import org.apache.ws.security.util.WSSecurityUtil;
 
 /**
- * Validate a WSSecurityEngineResult corresponding to the processing of a UsernameToken
- * against the appropriate policy.
+ * Validate a UsernameToken policy.
  */
-public class UsernameTokenPolicyValidator extends AbstractTokenPolicyValidator {
+public class UsernameTokenPolicyValidator 
+    extends AbstractTokenPolicyValidator implements TokenPolicyValidator {
     
-    private Message message;
-
-    public UsernameTokenPolicyValidator(
-        Message message
-    ) {
-        this.message = message;
+    private boolean utWithCallbacks;
+    
+    public UsernameTokenPolicyValidator(boolean utWithCallbacks) {
+        this.utWithCallbacks = utWithCallbacks;
     }
     
     public boolean validatePolicy(
         AssertionInfoMap aim,
-        WSSecurityEngineResult wser
+        Message message,
+        Element soapBody,
+        List<WSSecurityEngineResult> results,
+        List<WSSecurityEngineResult> signedResults
     ) {
-        Collection<AssertionInfo> utAis = aim.get(SP12Constants.USERNAME_TOKEN);
-        if (utAis != null && !utAis.isEmpty()) {
-            for (AssertionInfo ai : utAis) {
-                UsernameToken usernameToken = 
-                    (UsernameToken)wser.get(WSSecurityEngineResult.TAG_USERNAME_TOKEN);
-                org.apache.cxf.ws.security.policy.model.UsernameToken usernameTokenPolicy = 
-                    (org.apache.cxf.ws.security.policy.model.UsernameToken)ai.getAssertion();
-                ai.setAsserted(true);
-                
-                boolean tokenRequired = isTokenRequired(usernameTokenPolicy, message);
-                if (tokenRequired && usernameToken == null) {
-                    ai.setNotAsserted(
-                        "The received token does not match the token inclusion requirement"
-                    );
-                    return false;
-                }
-                if (!tokenRequired) {
-                    continue;
-                }
-                
-                if (usernameTokenPolicy.isHashPassword() != usernameToken.isHashed()) {
-                    ai.setNotAsserted("Password hashing policy not enforced");
-                    return false;
-                }
-                if (usernameTokenPolicy.isNoPassword() && usernameToken.getPassword() != null) {
-                    ai.setNotAsserted("Username Token NoPassword policy not enforced");
-                    return false;
-                }
-                if (usernameTokenPolicy.isRequireCreated() 
-                    && (usernameToken.getCreated() == null || usernameToken.isHashed())) {
-                    ai.setNotAsserted("Username Token Created policy not enforced");
-                    return false;
-                }
-                if (usernameTokenPolicy.isRequireNonce() 
-                    && (usernameToken.getNonce() == null || usernameToken.isHashed())) {
-                    ai.setNotAsserted("Username Token Nonce policy not enforced");
-                    return false;
-                }
+        Collection<AssertionInfo> ais = aim.get(SP12Constants.USERNAME_TOKEN);
+        if (ais == null || ais.isEmpty()) {
+            return true;
+        }
+        
+        List<WSSecurityEngineResult> utResults = new ArrayList<WSSecurityEngineResult>();
+        WSSecurityUtil.fetchAllActionResults(results, WSConstants.UT, utResults);
+        WSSecurityUtil.fetchAllActionResults(results, WSConstants.UT_NOPASSWORD, utResults);
+        
+        for (AssertionInfo ai : ais) {
+            org.apache.cxf.ws.security.policy.model.UsernameToken usernameTokenPolicy = 
+                (org.apache.cxf.ws.security.policy.model.UsernameToken)ai.getAssertion();
+            ai.setAsserted(true);
 
+            if (utWithCallbacks || !isTokenRequired(usernameTokenPolicy, message)) {
+                continue;
+            }
+
+            if (utResults.isEmpty()) {
+                ai.setNotAsserted(
+                    "The received token does not match the token inclusion requirement"
+                );
+                return false;
+            }
+
+            if (!checkTokens(usernameTokenPolicy, ai, utResults)) {
+                return false;
+            }
+
+        }
+        return true;
+    }
+    
+    /**
+     * All UsernameTokens must conform to the policy
+     */
+    public boolean checkTokens(
+        org.apache.cxf.ws.security.policy.model.UsernameToken usernameTokenPolicy,
+        AssertionInfo ai,
+        List<WSSecurityEngineResult> utResults
+    ) {
+        for (WSSecurityEngineResult result : utResults) {
+            UsernameToken usernameToken = 
+                (UsernameToken)result.get(WSSecurityEngineResult.TAG_USERNAME_TOKEN);
+            if (usernameTokenPolicy.isHashPassword() != usernameToken.isHashed()) {
+                ai.setNotAsserted("Password hashing policy not enforced");
+                return false;
+            }
+            if (usernameTokenPolicy.isNoPassword() && usernameToken.getPassword() != null) {
+                ai.setNotAsserted("Username Token NoPassword policy not enforced");
+                return false;
+            }
+            if (usernameTokenPolicy.isRequireCreated() 
+                && (usernameToken.getCreated() == null || usernameToken.isHashed())) {
+                ai.setNotAsserted("Username Token Created policy not enforced");
+                return false;
+            }
+            if (usernameTokenPolicy.isRequireNonce() 
+                && (usernameToken.getNonce() == null || usernameToken.isHashed())) {
+                ai.setNotAsserted("Username Token Nonce policy not enforced");
+                return false;
             }
         }
         return true;

@@ -20,6 +20,7 @@
 package org.apache.cxf.ws.security.wss4j.policyvalidators;
 
 import java.security.cert.Certificate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -32,56 +33,62 @@ import org.apache.cxf.ws.policy.AssertionInfo;
 import org.apache.cxf.ws.policy.AssertionInfoMap;
 import org.apache.cxf.ws.security.policy.SP12Constants;
 import org.apache.cxf.ws.security.policy.model.SamlToken;
+import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSDataRef;
 import org.apache.ws.security.WSSecurityEngineResult;
 import org.apache.ws.security.saml.ext.AssertionWrapper;
 import org.apache.ws.security.saml.ext.OpenSAMLUtil;
+import org.apache.ws.security.util.WSSecurityUtil;
 
 import org.opensaml.common.SAMLVersion;
 
 /**
- * Validate a WSSecurityEngineResult corresponding to the processing of a SAML Assertion
- * against the appropriate policy.
+ * Validate a SamlToken policy.
  */
-public class SamlTokenPolicyValidator extends AbstractSamlPolicyValidator {
+public class SamlTokenPolicyValidator extends AbstractSamlPolicyValidator implements TokenPolicyValidator {
     
-    private List<WSSecurityEngineResult> signedResults;
-    private Element soapBody;
-    private Message message;
-
-    public SamlTokenPolicyValidator(
-        Element soapBody,
-        List<WSSecurityEngineResult> signedResults,
-        Message message
-    ) {
-        this.soapBody = soapBody;
-        this.signedResults = signedResults;
-        this.message = message;
-    }
+    private Element body;
+    private List<WSSecurityEngineResult> signed;
     
     public boolean validatePolicy(
         AssertionInfoMap aim,
-        WSSecurityEngineResult wser
+        Message message,
+        Element soapBody,
+        List<WSSecurityEngineResult> results,
+        List<WSSecurityEngineResult> signedResults
     ) {
-        Collection<AssertionInfo> samlAis = aim.get(SP12Constants.SAML_TOKEN);
-        if (samlAis != null && !samlAis.isEmpty()) {
-            for (AssertionInfo ai : samlAis) {
-                AssertionWrapper assertionWrapper = 
-                    (AssertionWrapper)wser.get(WSSecurityEngineResult.TAG_SAML_ASSERTION);
-                SamlToken samlToken = (SamlToken)ai.getAssertion();
-                ai.setAsserted(true);
-                
-                boolean tokenRequired = isTokenRequired(samlToken, message);
-                if (tokenRequired && assertionWrapper == null) {
-                    ai.setNotAsserted(
-                        "The received token does not match the token inclusion requirement"
-                    );
-                    return false;
-                }
-                if (!tokenRequired) {
-                    continue;
-                }
+        Collection<AssertionInfo> ais = aim.get(SP12Constants.SAML_TOKEN);
+        if (ais == null || ais.isEmpty()) {
+            return true;
+        }
+        
+        body = soapBody;
+        signed = signedResults;
+        
+        List<WSSecurityEngineResult> samlResults = new ArrayList<WSSecurityEngineResult>();
+        WSSecurityUtil.fetchAllActionResults(results, WSConstants.ST_SIGNED, samlResults);
+        WSSecurityUtil.fetchAllActionResults(results, WSConstants.ST_UNSIGNED, samlResults);
+        
+        for (AssertionInfo ai : ais) {
+            SamlToken samlToken = (SamlToken)ai.getAssertion();
+            ai.setAsserted(true);
 
+            if (!isTokenRequired(samlToken, message)) {
+                continue;
+            }
+
+            if (samlResults.isEmpty()) {
+                ai.setNotAsserted(
+                    "The received token does not match the token inclusion requirement"
+                );
+                return false;
+            }
+            
+            // All of the received SAML Assertions must conform to the policy
+            for (WSSecurityEngineResult result : samlResults) {
+                AssertionWrapper assertionWrapper = 
+                    (AssertionWrapper)result.get(WSSecurityEngineResult.TAG_SAML_ASSERTION);
+                
                 if (!checkVersion(samlToken, assertionWrapper)) {
                     ai.setNotAsserted("Wrong SAML Version");
                     return false;
@@ -100,12 +107,13 @@ public class SamlTokenPolicyValidator extends AbstractSamlPolicyValidator {
                     return false;
                 }
                 /*
-                if (!checkIssuerName(samlToken, assertionWrapper)) {
-                    ai.setNotAsserted("Wrong IssuerName");
-                }
-                */
+                    if (!checkIssuerName(samlToken, assertionWrapper)) {
+                        ai.setNotAsserted("Wrong IssuerName");
+                    }
+                 */
             }
         }
+        
         return true;
     }
     
@@ -156,7 +164,7 @@ public class SamlTokenPolicyValidator extends AbstractSamlPolicyValidator {
         List<String> confirmationMethods = assertionWrapper.getConfirmationMethods();
         for (String confirmationMethod : confirmationMethods) {
             if (OpenSAMLUtil.isMethodSenderVouches(confirmationMethod)) {
-                if (signedResults == null || signedResults.isEmpty()) {
+                if (signed == null || signed.isEmpty()) {
                     return false;
                 }
                 if (!checkAssertionAndBodyAreSigned(assertionWrapper)) {
@@ -173,7 +181,7 @@ public class SamlTokenPolicyValidator extends AbstractSamlPolicyValidator {
      * @return true if there is a signature which references the Assertion and the SOAP Body.
      */
     private boolean checkAssertionAndBodyAreSigned(AssertionWrapper assertionWrapper) {
-        for (WSSecurityEngineResult signedResult : signedResults) {
+        for (WSSecurityEngineResult signedResult : signed) {
             List<WSDataRef> sl =
                 CastUtils.cast((List<?>)signedResult.get(
                     WSSecurityEngineResult.TAG_DATA_REF_URIS
@@ -186,7 +194,7 @@ public class SamlTokenPolicyValidator extends AbstractSamlPolicyValidator {
                     if (se == assertionWrapper.getElement()) {
                         assertionIsSigned = true;
                     }
-                    if (se == soapBody) {
+                    if (se == body) {
                         bodyIsSigned = true;
                     }
                     if (assertionIsSigned && bodyIsSigned) {
