@@ -24,13 +24,13 @@
     <packaging>jar</packaging>
     <name>Apache CXF Manifest Jar</name>
     <description>Apache CXF Manifest Jar</description>
-    <version>2.4.x-fuse-SNAPSHOT</version>
+    <version>2.4.3-fuse-00-09</version>
     <url>http://cxf.apache.org</url>
 
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>2.4.x-fuse-SNAPSHOT</version>
+        <version>2.4.3-fuse-00-09</version>
         <relativePath>../../parent</relativePath>
     </parent>
 
