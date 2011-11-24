@@ -16,13 +16,31 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-// START SNIPPET: service
-package demo.spring;
 
-import javax.jws.WebService;
+package org.apache.cxf.ws.security.wss4j.policyvalidators;
 
-@WebService
-public interface HelloWorld {
-    String sayHi(String text);
+import java.util.List;
+
+import org.w3c.dom.Element;
+
+import org.apache.cxf.message.Message;
+import org.apache.cxf.ws.policy.AssertionInfoMap;
+import org.apache.ws.security.WSSecurityEngineResult;
+
+/**
+ * Validate a WS-SecurityPolicy corresponding to a binding.
+ */
+public interface BindingPolicyValidator {
+    
+    /**
+     * Validate a particular policy from the AssertionInfoMap argument. Return true if the policy is valid.
+     */
+    boolean validatePolicy(
+        AssertionInfoMap aim, 
+        Message message,
+        Element soapBody,
+        List<WSSecurityEngineResult> results,
+        List<WSSecurityEngineResult> signedResults,
+        List<WSSecurityEngineResult> encryptedResults
+    );
 }
-// END SNIPPET: service
