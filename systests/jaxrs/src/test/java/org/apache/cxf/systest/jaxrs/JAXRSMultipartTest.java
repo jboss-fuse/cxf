@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +37,7 @@ import javax.imageio.ImageIO;
 import javax.mail.util.ByteArrayDataSource;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
@@ -334,11 +336,24 @@ public class JAXRSMultipartTest extends AbstractBusClientServerTestBase {
     }
     
     @Test
+    public void testNullableParams() throws Exception {
+        String address = "http://localhost:" + PORT + "/bookstore/books/testnullpart";
+        WebClient client = WebClient.create(address);
+        WebClient.getConfig(client).getHttpConduit().getClient().setReceiveTimeout(10000000);
+        client.type("multipart/form-data").accept("text/plain");
+        List<Attachment> atts = new LinkedList<Attachment>();
+        atts.add(new Attachment("somepart", "text/plain", "hello there"));
+        Response r = client.postCollection(atts, Attachment.class);
+        assertEquals(Response.Status.OK.getStatusCode(), r.getStatus());
+        assertEquals("nobody home", IOUtils.readStringFromStream((InputStream)r.getEntity()));
+    }
+    
+    @Test
     public void testAddBookJaxbJsonImageWebClient() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/books/jaxbjsonimage";
         WebClient client = WebClient.create(address);
         client.type("multipart/mixed").accept("multipart/mixed");
-        
+       
         Book jaxb = new Book("jaxb", 1L);
         Book json = new Book("json", 2L);
         InputStream is1 = 
