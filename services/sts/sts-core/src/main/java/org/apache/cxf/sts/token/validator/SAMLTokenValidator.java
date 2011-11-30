@@ -49,6 +49,8 @@ import org.apache.ws.security.saml.ext.AssertionWrapper;
 import org.apache.ws.security.validate.Credential;
 import org.apache.ws.security.validate.SignatureTrustValidator;
 import org.apache.ws.security.validate.Validator;
+import org.joda.time.DateTime;
+import org.opensaml.common.SAMLVersion;
 
 /**
  * Validate a SAML Assertion. It is valid if it was issued and signed by this STS.
@@ -135,6 +137,9 @@ public class SAMLTokenValidator implements TokenValidator {
             Element validateTargetElement = (Element)validateTarget.getToken();
             AssertionWrapper assertion = new AssertionWrapper(validateTargetElement);
             
+            SAMLTokenPrincipal samlPrincipal = new SAMLTokenPrincipal(assertion);
+            response.setPrincipal(samlPrincipal);
+            
             SecurityToken secToken = null;
             if (tokenParameters.getTokenStore() != null) {
                 int hash = 0;
@@ -179,6 +184,20 @@ public class SAMLTokenValidator implements TokenValidator {
                     return response;
                 }
             }
+           
+            DateTime validFrom = null;
+            DateTime validTill = null;
+            if (assertion.getSamlVersion().equals(SAMLVersion.VERSION_20)) {
+                validFrom = assertion.getSaml2().getConditions().getNotBefore();
+                validTill = assertion.getSaml2().getConditions().getNotOnOrAfter();
+            } else {
+                validFrom = assertion.getSaml1().getConditions().getNotBefore();
+                validTill = assertion.getSaml1().getConditions().getNotOnOrAfter();
+            }
+            if (!(validFrom.isBeforeNow() && validTill.isAfterNow())) {
+                LOG.log(Level.WARNING, "SAML Token condition not met");
+                return response;
+            }
             
             // Get the realm of the SAML token
             String tokenRealm = null;
@@ -196,8 +215,6 @@ public class SAMLTokenValidator implements TokenValidator {
                 }
             }
             
-            SAMLTokenPrincipal samlPrincipal = new SAMLTokenPrincipal(assertion);
-            response.setPrincipal(samlPrincipal);
             response.setTokenRealm(tokenRealm);
             response.setValid(true);
         } catch (WSSecurityException ex) {
