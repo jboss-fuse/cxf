@@ -19,22 +19,41 @@
 
 package org.apache.cxf.systest.jaxrs.cors;
 
-import javax.ws.rs.GET;
+import java.util.Arrays;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+
+import org.apache.cxf.jaxrs.cors.CrossOriginResourceSharingFilter;
 
 /**
  * 
  */
-public class CorsServer {
+public class ConfigServer {
+    private CrossOriginResourceSharingFilter inputFilter;
 
-    @GET
+    @POST
+    @Consumes("application/json")
+    @Path("/setOriginList")
     @Produces("text/plain")
-    @Path("/simpleGet/{echo}")
-    public String simpleGet(@PathParam("echo") String echo) {
-        return echo;
+    public String setOriginList(String[] origins) {
+        if (origins == null || origins.length == 0) {
+            inputFilter.setAllowAllOrigins(true);
+        } else {
+            inputFilter.setAllowAllOrigins(false);
+            inputFilter.setAllowedOrigins(Arrays.asList(origins));
+        }
+        return "ok";
     }
-    
+
+    public CrossOriginResourceSharingFilter getInputFilter() {
+        return inputFilter;
+    }
+
+    public void setInputFilter(CrossOriginResourceSharingFilter inputFilter) {
+        this.inputFilter = inputFilter;
+    }
 
 }
