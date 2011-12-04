@@ -16,25 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.jaxrs.ext.xml;
 
-package org.apache.cxf.systest.ws.spnego.server;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import java.math.BigInteger;
-
-import javax.jws.WebService;
-
-import org.apache.cxf.feature.Features;
-
-import wssec.spnego.DoubleItPortType;
-
-@WebService(targetNamespace = "http://WSSec/spnego", 
-            serviceName = "DoubleItService", 
-            endpointInterface = "wssec.spnego.DoubleItPortType")
-@Features(features = "org.apache.cxf.feature.LoggingFeature")              
-public class DoubleItImpl implements DoubleItPortType {
-    
-    public java.math.BigInteger doubleIt(java.math.BigInteger numberToDouble) {
-        return numberToDouble.multiply(BigInteger.valueOf(2));
-    }
-    
+/**
+ * Can be used to add custom XML processing 
+ * instructions to out-bound XML messages 
+ */
+@Target({ElementType.METHOD })
+@Retention(RetentionPolicy.RUNTIME)
+public @interface XMLInstruction {
+    String value();
 }
