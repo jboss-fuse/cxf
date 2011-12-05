@@ -57,6 +57,7 @@ import javax.xml.transform.Source;
 import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.jaxb.NamespaceMapper;
 import org.apache.cxf.jaxrs.ext.MessageContext;
+import org.apache.cxf.jaxrs.ext.xml.SchemaLocation;
 import org.apache.cxf.jaxrs.ext.xml.XMLInstruction;
 import org.apache.cxf.jaxrs.ext.xml.XMLSource;
 import org.apache.cxf.jaxrs.utils.AnnotationUtils;
@@ -74,13 +75,21 @@ import org.apache.cxf.staxutils.transform.TransformUtils;
 @Provider
 public class JAXBElementProvider extends AbstractJAXBProvider  {
     private static final String XML_PI_START = "<?xml version=\"1.0\" encoding=\"";
+    private static final String NS_MAPPER_PROPERTY = "com.sun.xml.bind.namespacePrefixMapper";
+    private static final String NS_MAPPER_PROPERTY_INT = "com.sun.xml.internal.bind.namespacePrefixMapper";
+    private static final String XML_PI_PROPERTY = "com.sun.xml.bind.xmlHeaders";
+    private static final String XML_PI_PROPERTY_INT = "com.sun.xml.internal.bind.xmlHeaders";
     
     private static final List<String> MARSHALLER_PROPERTIES =
         Arrays.asList(new String[] {Marshaller.JAXB_ENCODING,
                                     Marshaller.JAXB_FORMATTED_OUTPUT,
                                     Marshaller.JAXB_FRAGMENT,
                                     Marshaller.JAXB_NO_NAMESPACE_SCHEMA_LOCATION,
-                                    Marshaller.JAXB_SCHEMA_LOCATION});
+                                    Marshaller.JAXB_SCHEMA_LOCATION,
+                                    NS_MAPPER_PROPERTY,
+                                    NS_MAPPER_PROPERTY_INT,
+                                    XML_PI_PROPERTY,
+                                    XML_PI_PROPERTY_INT});
     
     private Map<String, Object> mProperties = Collections.emptyMap();
     private Map<String, String> nsPrefixes = Collections.emptyMap();
@@ -348,11 +357,7 @@ public class JAXBElementProvider extends AbstractJAXBProvider  {
     
     protected static void setNamespaceMapper(Marshaller ms, Map<String, String> map) throws Exception {
         NamespaceMapper nsMapper = new NamespaceMapper(map);
-        try {
-            ms.setProperty("com.sun.xml.bind.namespacePrefixMapper", nsMapper);
-        } catch (PropertyException ex) {
-            ms.setProperty("com.sun.xml.internal.bind.namespacePrefixMapper", nsMapper);
-        }
+        setMarshallerProp(ms, nsMapper, NS_MAPPER_PROPERTY, NS_MAPPER_PROPERTY_INT);
     }
     
     protected void marshal(Object obj, Class<?> cls, Type genericType, 
@@ -374,6 +379,7 @@ public class JAXBElementProvider extends AbstractJAXBProvider  {
         }
         addAttachmentMarshaller(ms);
         addProcessingInstructions(ms, anns);
+        addSchemaLocation(ms, anns);
         marshal(obj, cls, genericType, enc, os, mt, ms);
     }
     
@@ -381,14 +387,39 @@ public class JAXBElementProvider extends AbstractJAXBProvider  {
         XMLInstruction pi = AnnotationUtils.getAnnotation(anns, XMLInstruction.class);
         if (pi != null) {
             String value = pi.value();
-            // Should we even consider adding a base URI here ?
-            // Relative references may be resolved OK, to be verified
-            try {
-                ms.setProperty("com.sun.xml.bind.xmlHeaders", value);
-            } catch (PropertyException ex) {
-                ms.setProperty("com.sun.xml.internal.bind.xmlHeaders", value);
+            int ind = value.indexOf("href='");
+            if (ind > 0 && getContext() != null) {
+                String relRef = value.substring(ind + 6, value.length() - 3);
+                String absRef = 
+                    getContext().getUriInfo().getBaseUriBuilder().path(relRef).build().toString();
+                value = value.substring(0, ind + 6) + absRef + "'?>";
             }
+            setMarshallerProp(ms, value, XML_PI_PROPERTY, XML_PI_PROPERTY_INT);
         }
+    }
+    
+    private void addSchemaLocation(Marshaller ms, Annotation[] anns) throws Exception {
+        SchemaLocation sl = AnnotationUtils.getAnnotation(anns, SchemaLocation.class);
+        if (sl != null) {
+            String value = sl.value();
+            if (getContext() != null) {
+                value = 
+                    getContext().getUriInfo().getBaseUriBuilder().path(value).build().toString();
+            }
+            String propName = !sl.noNamespace() 
+                ? Marshaller.JAXB_SCHEMA_LOCATION : Marshaller.JAXB_NO_NAMESPACE_SCHEMA_LOCATION;
+            ms.setProperty(propName, value);
+        }
+    }
+    
+    private static void setMarshallerProp(Marshaller ms, Object value, 
+                                          String name1, String name2) throws Exception {
+        try {
+            ms.setProperty(name1, value);
+        } catch (PropertyException ex) {
+            ms.setProperty(name2, value);
+        }
+        
     }
     
     protected void addAttachmentMarshaller(Marshaller ms) {

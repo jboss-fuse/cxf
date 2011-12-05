@@ -135,15 +135,17 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
     
     @Test
     public void testProcessingInstruction() throws Exception {
-        
-        String endpointAddress =
-            "http://localhost:" + PORT + "/bookstore/name-in-query"; 
+        String base = "http://localhost:" + PORT;
+        String endpointAddress = base + "/bookstore/name-in-query"; 
         WebClient wc = WebClient.create(endpointAddress);
         String name = "Many        spaces";
         wc.query("name", name);
         String content = wc.get(String.class);
+        System.out.println(content);
         assertTrue(content.contains("<!DOCTYPE Something SYSTEM 'my.dtd'>"));
-        assertTrue(content.contains("<?xmlstylesheet href='common.css'?>"));
+        assertTrue(content.contains("<?xmlstylesheet href='" + base + "/common.css'?>"));
+        assertTrue(content.contains("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""));
+        assertTrue(content.contains("xsi:schemaLocation=\"" + base + "/book.xsd\""));
     }
     
     @Test
