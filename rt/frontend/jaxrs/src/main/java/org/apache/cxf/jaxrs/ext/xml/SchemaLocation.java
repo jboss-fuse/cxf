@@ -16,8 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-package org.apache.cxf.jaxrs.cors;
+package org.apache.cxf.jaxrs.ext.xml;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -25,18 +24,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotate a JAX-RS class to provide pre-flight access control options 
- * based on the CORS standard's definition of a resource for access 
- * control purposes: a URL + method. Each @CrossScriptOrignResourceSharing
- * annotation in here should contain a <tt>path</tt> attribute to define the 
- * path that it applies to. The <tt>allowedMethods</tt> attribute defines 
- * the method or methods that the policy options apply to.
+ * This annotation can be used to simplify adding 
+ * xsi:schemaLocation attributes
  */
-@Target({ElementType.TYPE })
+@Target({ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface CrossOriginResourceSharingPaths {
+public @interface SchemaLocation {
     /**
-     * The individual annotations. 
+     * schema location relative to a base URI of the web application
      */
-    CrossOriginResourceSharing[] value();
+    String value();
+    /**
+     * Can be used to get xsi:noNamespaceSchemaLocation produced.
+     * By default, xsi:schemaLocation will be set.
+     */
+    boolean noNamespace() default false;
 }
