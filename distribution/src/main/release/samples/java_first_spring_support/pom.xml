@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.cxf.samples</groupId>
     <artifactId>java_first_spring_support</artifactId>
-    <version>2.5.1-SNAPSHOT</version>
+    <version>2.5.x-fuse-SNAPSHOT</version>
     <name>Spring HTTP Sample</name>
     <version>2.5.x-fuse-SNAPSHOT</version>
     <description>Spring HTTP Sample</description>
