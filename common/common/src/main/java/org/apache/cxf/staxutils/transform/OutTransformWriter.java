@@ -38,7 +38,7 @@ public class OutTransformWriter extends DelegatingXMLStreamWriter {
     private QNamesMap elementsMap;
     private Map<QName, QName> appendMap = new HashMap<QName, QName>(5);
     private Map<String, String> nsMap = new HashMap<String, String>(5);
-    private Set<String> writtenUris = new HashSet<String>(2);
+    private List<Set<String>> writtenUris = new LinkedList<Set<String>>();
     
     private Set<QName> dropElements;
     private List<Integer> droppingIndexes = new LinkedList<Integer>();
@@ -77,7 +77,7 @@ public class OutTransformWriter extends DelegatingXMLStreamWriter {
         
         uri = value != null ? value : uri;
         
-        if (writtenUris.contains(uri)) {
+        if (writtenUris.get(0).contains(uri)) {
             return;
         }
         
@@ -89,13 +89,19 @@ public class OutTransformWriter extends DelegatingXMLStreamWriter {
             }
             super.writeNamespace(prefix, uri);
         }
-        writtenUris.add(uri);
-        
+        writtenUris.get(0).add(uri);
     }
     
     @Override
     public void writeStartElement(String prefix, String local, String uri) throws XMLStreamException {
         currentDepth++;
+        Set<String> s;
+        if (writtenUris.isEmpty()) {
+            s = new HashSet<String>();
+        } else {
+            s = new HashSet<String>(writtenUris.get(0));
+        }
+        writtenUris.add(0, s);
         QName currentQName = new QName(uri, local);
         
         QName appendQName = appendMap.get(currentQName);
@@ -119,6 +125,9 @@ public class OutTransformWriter extends DelegatingXMLStreamWriter {
     
     @Override
     public void writeEndElement() throws XMLStreamException {
+        if (!writtenUris.isEmpty()) {
+            writtenUris.remove(0);
+        }
         --currentDepth;
         if (indexRemoved(droppingIndexes)) {
             return;
