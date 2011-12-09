@@ -78,8 +78,8 @@ import org.apache.cxf.helpers.XMLUtils;
 import org.apache.cxf.jaxrs.ext.Oneway;
 import org.apache.cxf.jaxrs.ext.search.SearchCondition;
 import org.apache.cxf.jaxrs.ext.search.SearchContext;
-import org.apache.cxf.jaxrs.ext.xml.SchemaLocation;
 import org.apache.cxf.jaxrs.ext.xml.XMLInstruction;
+import org.apache.cxf.jaxrs.ext.xml.XSISchemaLocation;
 import org.apache.cxf.phase.PhaseInterceptorChain;
 
 @Path("/bookstore")
@@ -211,7 +211,7 @@ public class BookStore {
     @Path("name-in-query")
     @Produces("application/xml")
     @XMLInstruction("<!DOCTYPE Something SYSTEM 'my.dtd'><?xmlstylesheet href='common.css'?>")
-    @SchemaLocation("book.xsd")
+    @XSISchemaLocation("book.xsd")
     public Book getBookFromQuery(@QueryParam("name") String name) {
         return new Book(name, 321L);
     }
@@ -976,7 +976,14 @@ public class BookStore {
         return new BookSubresourceImpl();
     }
     
-    final void init() {
+    @GET
+    @Path("/reset")
+    public final String init() {
+        books.clear();
+        cds.clear();
+        bookId = 123;
+        cdId = 123;        
+        
         Book book = new Book();
         book.setId(bookId);
         book.setName("CXF in Action");
@@ -990,6 +997,7 @@ public class BookStore {
         cd1.setId(++cdId);
         cd1.setName("BICYCLE RACE");
         cds.put(cd1.getId(), cd1);
+        return "OK";
     }
     
     @XmlJavaTypeAdapter(BookInfoAdapter2.class)

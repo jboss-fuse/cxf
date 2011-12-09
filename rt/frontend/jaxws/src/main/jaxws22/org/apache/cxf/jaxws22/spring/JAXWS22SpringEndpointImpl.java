@@ -21,6 +21,7 @@ package org.apache.cxf.jaxws22.spring;
 import org.apache.cxf.Bus;
 import org.apache.cxf.bus.spring.BusWiringBeanFactoryPostProcessor;
 import org.apache.cxf.common.injection.NoJSR250Annotations;
+import org.apache.cxf.jaxws.spring.EndpointDefinitionParser;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -28,6 +29,8 @@ import org.springframework.context.ApplicationContextAware;
 @NoJSR250Annotations
 public class JAXWS22SpringEndpointImpl extends org.apache.cxf.jaxws22.EndpointImpl
     implements ApplicationContextAware {
+
+    boolean checkBlockConstruct;
 
     public JAXWS22SpringEndpointImpl(Object o) {
         super(o instanceof Bus ? (Bus)o : null,
@@ -38,7 +41,14 @@ public class JAXWS22SpringEndpointImpl extends org.apache.cxf.jaxws22.EndpointIm
         super(bus, implementor);
     }
     
+    public void setCheckBlockConstruct(Boolean b) {
+        checkBlockConstruct = b;
+    }
+    
     public void setApplicationContext(ApplicationContext ctx) throws BeansException {
+        if (checkBlockConstruct) {
+            EndpointDefinitionParser.setBlocking(ctx, this);
+        }
         if (getBus() == null) {
             setBus(BusWiringBeanFactoryPostProcessor.addDefaultBus(ctx));
         }

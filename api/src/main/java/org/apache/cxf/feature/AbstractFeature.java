@@ -34,7 +34,7 @@ import org.apache.cxf.interceptor.InterceptorProvider;
  * If you're simply adding interceptors to a Server, Client, or Bus, this allows you to add
  * them easily.
  */
-public abstract class AbstractFeature {
+public abstract class AbstractFeature implements Feature {
     public void initialize(Server server, Bus bus) {
         initializeProvider(server.getEndpoint(), bus);
     }
