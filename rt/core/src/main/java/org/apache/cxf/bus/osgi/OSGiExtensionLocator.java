@@ -40,6 +40,7 @@ import org.apache.cxf.bus.extension.ExtensionFragmentParser;
 import org.apache.cxf.bus.extension.ExtensionManagerImpl;
 import org.apache.cxf.bus.extension.ExtensionRegistry;
 import org.apache.cxf.bus.osgi.OSGiAutomaticWorkQueue.WorkQueueList;
+import org.apache.cxf.buslifecycle.BusCreationListener;
 import org.apache.cxf.buslifecycle.BusLifeCycleListener;
 import org.apache.cxf.buslifecycle.BusLifeCycleManager;
 import org.apache.cxf.common.logging.LogUtils;
@@ -215,26 +216,15 @@ public class OSGiExtensionLocator implements BundleActivator, SynchronousBundleL
             
             try {
                 ServiceReference refs[] = defaultContext
-                    .getServiceReferences(BusLifeCycleListener.class.getName(), null);
-                if (refs != null) {
-                    for (ServiceReference ref : refs) {
-                        BusLifeCycleListener listener 
-                            = (BusLifeCycleListener)defaultContext.getService(ref);
-                        manager.registerLifeCycleListener(listener);
-                    }
-                }
-            } catch (InvalidSyntaxException e) {
-                //ignore
-            }
-            try {
-                ServiceReference refs[] = defaultContext
                     .getServiceReferences(ClientLifeCycleListener.class.getName(), null);
                 if (refs != null) {
                     ClientLifeCycleManager clcm = bus.getExtension(ClientLifeCycleManager.class);
                     for (ServiceReference ref : refs) {
-                        ClientLifeCycleListener listener 
-                            = (ClientLifeCycleListener)defaultContext.getService(ref);
-                        clcm.registerListener(listener);
+                        if (allowService(ref)) {
+                            ClientLifeCycleListener listener 
+                                = (ClientLifeCycleListener)defaultContext.getService(ref);
+                            clcm.registerListener(listener);
+                        }
                     }
                 }
             } catch (InvalidSyntaxException e) {
@@ -246,14 +236,46 @@ public class OSGiExtensionLocator implements BundleActivator, SynchronousBundleL
                 if (refs != null) {
                     ServerLifeCycleManager clcm = bus.getExtension(ServerLifeCycleManager.class);
                     for (ServiceReference ref : refs) {
-                        ServerLifeCycleListener listener 
-                            = (ServerLifeCycleListener)defaultContext.getService(ref);
-                        clcm.registerListener(listener);
+                        if (allowService(ref)) {
+                            ServerLifeCycleListener listener 
+                                = (ServerLifeCycleListener)defaultContext.getService(ref);
+                            clcm.registerListener(listener);
+                        }
+                    }
+                }
+                
+            } catch (InvalidSyntaxException e) {
+                //ignore
+            }
+            try {
+                ServiceReference refs[] = defaultContext
+                    .getServiceReferences(BusCreationListener.class.getName(), null);
+                if (refs != null) {
+                    for (ServiceReference ref : refs) {
+                        if (allowService(ref)) {
+                            BusCreationListener listener 
+                                = (BusCreationListener)defaultContext.getService(ref);
+                            listener.busCreated(bus);
+                        }
                     }
                 }
             } catch (InvalidSyntaxException e) {
                 //ignore
             }
+
+        }
+        
+        private boolean allowService(ServiceReference ref) {
+            Object o = ref.getProperty("org.apache.cxf.bus.private.extension");
+            Boolean pvt = Boolean.FALSE;
+            if (o == null) {
+                pvt = Boolean.FALSE;
+            } else if (o instanceof String) {
+                pvt = Boolean.parseBoolean((String)o);
+            } else if (o instanceof Boolean) {
+                pvt = (Boolean)o;
+            }
+            return !pvt.booleanValue();
         }
         private Version getBundleVersion(Bundle bundle) {
             Dictionary headers = bundle.getHeaders();
