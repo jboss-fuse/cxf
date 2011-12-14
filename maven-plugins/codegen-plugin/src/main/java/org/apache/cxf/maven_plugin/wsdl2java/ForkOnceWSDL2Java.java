@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.apache.cxf.maven_plugin;
+package org.apache.cxf.maven_plugin.wsdl2java;
 
 import java.io.BufferedReader;
 import java.io.File;
