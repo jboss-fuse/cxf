@@ -138,7 +138,7 @@ public abstract class AbstractCodegenMoho extends AbstractMojo {
     /**
      * Sets the JVM arguments (i.e. <code>-Xms128m -Xmx128m</code>) if fork is set to <code>true</code>.
      * 
-     * @parameter
+     * @parameter expression="${cxf.codegen.jvmArgs}"
      * @since 2.4
      */
     private String additionalJvmArgs;
@@ -316,6 +316,8 @@ public abstract class AbstractCodegenMoho extends AbstractMojo {
         return true;
     }
     
+    protected abstract String getMarkerSuffix();
+    
     protected void forkOnce(Set<URI> classPath, List<GenericWsdlOption> effectiveWsdlOptions)
         throws MojoExecutionException {
         List<GenericWsdlOption> toDo = new LinkedList<GenericWsdlOption>();
@@ -325,7 +327,7 @@ public abstract class AbstractCodegenMoho extends AbstractMojo {
             outputDirFile.mkdirs();
             URI basedir = project.getBasedir().toURI();
             URI wsdlURI = getWsdlURI(wsdlOption, basedir);
-            File doneFile = getDoneFile(basedir, wsdlURI, "java");
+            File doneFile = getDoneFile(basedir, wsdlURI, getMarkerSuffix());
 
             if (!shouldRun(wsdlOption, doneFile, wsdlURI)) {
                 continue;
@@ -365,7 +367,7 @@ public abstract class AbstractCodegenMoho extends AbstractMojo {
             }
             URI basedir = project.getBasedir().toURI();
             URI wsdlURI = getWsdlURI(wsdlOption, basedir);
-            File doneFile = getDoneFile(basedir, wsdlURI, "java");
+            File doneFile = getDoneFile(basedir, wsdlURI, getMarkerSuffix());
             try {
                 doneFile.createNewFile();
             } catch (Throwable e) {
@@ -396,12 +398,12 @@ public abstract class AbstractCodegenMoho extends AbstractMojo {
     protected abstract File getGeneratedSourceRoot();
 
     protected abstract File getGeneratedTestRoot();
-
+    
     protected void runForked(Set<URI> classPath, 
                              String mainClassName, 
                              String[] args) throws MojoExecutionException {
-        getLog().info("Running wsdl2java in fork mode...");
-        getLog().debug("Running wsdl2java in fork mode with args " + Arrays.asList(args));
+        getLog().info("Running code generation in fork mode...");
+        getLog().debug("Running code generation in fork mode with args " + Arrays.asList(args));
 
         Commandline cmd = new Commandline();
         cmd.getShell().setQuotedArgumentsEnabled(false); // for JVM args
@@ -459,7 +461,7 @@ public abstract class AbstractCodegenMoho extends AbstractMojo {
             getLog().debug(e);
             throw new MojoExecutionException(e.getMessage(), e);
         }
-
+        
         String output = StringUtils.isEmpty(out.getOutput()) ? null : '\n' + out.getOutput().trim();
 
         String cmdLine = CommandLineUtils.toString(cmd.getCommandline());
