@@ -128,7 +128,7 @@ public class JAXRSClientServerSpringBookTest extends AbstractBusClientServerTest
             "http://localhost:" + PORT + "/the/bookstore/books/123"; 
         getBook(endpointAddress, "resources/expected_get_book123json.txt");
         getBook(endpointAddress, "resources/expected_get_book123json.txt",
-                "application/jettison");
+                "application/vnd.example-com.foo+json");
     }
     
     
@@ -430,7 +430,7 @@ public class JAXRSClientServerSpringBookTest extends AbstractBusClientServerTest
         
         doPost("http://localhost:" + PORT + "/the/thebooks/bookstore/books/convert",
                200,
-               "application/jettison",
+               "application/vnd.example-com.foo+json",
                "resources/add_book2json.txt",
                "resources/expected_get_book123.txt");
     }
