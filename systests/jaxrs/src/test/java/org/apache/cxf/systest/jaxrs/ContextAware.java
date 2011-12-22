@@ -16,30 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.systest.jaxrs;
 
-package org.apache.cxf.ws.policy;
+import javax.ws.rs.core.Context;
 
-import org.apache.neethi.Policy;
-import org.easymock.EasyMock;
-import org.easymock.IMocksControl;
-import org.junit.Assert;
-import org.junit.Test;
+import org.apache.cxf.jaxrs.ext.MessageContext;
 
-/**
- * 
- */
-public class PolicyRegistryImplTest extends Assert {
-
-    @Test
-    public void testAll() {
-        PolicyRegistryImpl reg = new PolicyRegistryImpl();
-        IMocksControl control = EasyMock.createNiceControl();
-        Policy policy = control.createMock(Policy.class);
-        String key = "key";
-        assertNull(reg.lookup(key));
-        reg.register(key, policy);
-        assertSame(policy, reg.lookup(key));
-        reg.remove(key);
-        assertNull(reg.lookup(key));        
-    }
+public interface ContextAware {
+    @Context
+    void setMessageContext(MessageContext context);
 }
