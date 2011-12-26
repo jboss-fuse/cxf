@@ -20,7 +20,6 @@
 package org.apache.cxf.jaxrs.utils.multipart;
 
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,6 +117,8 @@ public final class AttachmentUtils {
                 LOG.warning(errorMsg.toString());
                 throw new WebApplicationException(
                           new MultipartReadException(id.value(), id.type(), errorMsg.toString()));
+            } else {
+                return null;
             }
         }
         
@@ -141,7 +142,6 @@ public final class AttachmentUtils {
                                                                 boolean errorIfMissing) {
         MultivaluedMap<String, T> data = new MetadataMap<String, T>();
         FormUtils.populateMapFromMultipart((MultivaluedMap)data,
-                                           new Annotation[]{},
                                            AttachmentUtils.getMultipartBody(mc), 
                                            true);
         return data;

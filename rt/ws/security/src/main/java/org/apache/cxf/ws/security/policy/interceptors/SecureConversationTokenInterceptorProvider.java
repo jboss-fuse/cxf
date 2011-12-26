@@ -19,55 +19,28 @@
 
 package org.apache.cxf.ws.security.policy.interceptors;
 
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Map;
 import java.util.logging.Logger;
-
-import javax.xml.stream.XMLStreamException;
-
-import org.w3c.dom.Element;
-
 
 import org.apache.cxf.binding.soap.Soap11;
 import org.apache.cxf.binding.soap.SoapMessage;
 import org.apache.cxf.common.logging.LogUtils;
-import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.message.Message;
-import org.apache.cxf.service.model.EndpointInfo;
-import org.apache.cxf.staxutils.W3CDOMStreamWriter;
-import org.apache.cxf.ws.addressing.policy.MetadataConstants;
 import org.apache.cxf.ws.policy.AbstractPolicyInterceptorProvider;
-import org.apache.cxf.ws.policy.AssertionInfo;
 import org.apache.cxf.ws.policy.AssertionInfoMap;
 import org.apache.cxf.ws.policy.PolicyBuilder;
-import org.apache.cxf.ws.policy.builder.primitive.PrimitiveAssertion;
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.cxf.ws.security.policy.SP11Constants;
 import org.apache.cxf.ws.security.policy.SP12Constants;
 import org.apache.cxf.ws.security.policy.SPConstants.SupportTokenType;
 import org.apache.cxf.ws.security.policy.model.AlgorithmSuite;
-import org.apache.cxf.ws.security.policy.model.Binding;
 import org.apache.cxf.ws.security.policy.model.SecureConversationToken;
 import org.apache.cxf.ws.security.policy.model.SupportingToken;
-import org.apache.cxf.ws.security.policy.model.Trust10;
-import org.apache.cxf.ws.security.policy.model.Trust13;
-import org.apache.cxf.ws.security.tokenstore.MemoryTokenStore;
-import org.apache.cxf.ws.security.tokenstore.TokenStore;
 import org.apache.cxf.ws.security.trust.STSClient;
 import org.apache.neethi.All;
-import org.apache.neethi.Assertion;
 import org.apache.neethi.ExactlyOne;
 import org.apache.neethi.Policy;
-import org.apache.ws.security.WSSecurityException;
-import org.apache.ws.security.conversation.ConversationConstants;
-import org.apache.ws.security.conversation.ConversationException;
-import org.apache.ws.security.conversation.dkalgo.P_SHA1;
-import org.apache.ws.security.message.token.Reference;
-import org.apache.ws.security.message.token.SecurityTokenReference;
-import org.apache.ws.security.util.Base64;
-import org.apache.ws.security.util.WSSecurityUtil;
 
 /**
  * 
@@ -85,81 +58,19 @@ public class SecureConversationTokenInterceptorProvider extends AbstractPolicyIn
         this.getInFaultInterceptors().add(new SecureConversationInInterceptor());
     }
     
-    static final Trust10 getTrust10(AssertionInfoMap aim) {
-        Collection<AssertionInfo> ais = aim.get(SP12Constants.TRUST_10);
-        if (ais == null || ais.isEmpty()) {
-            ais = aim.get(SP11Constants.TRUST_10);
-        }
-        if (ais == null || ais.isEmpty()) {
-            return null;
-        }
-        return (Trust10)ais.iterator().next().getAssertion();
-    }
-    
-    static final Trust13 getTrust13(AssertionInfoMap aim) {
-        Collection<AssertionInfo> ais = aim.get(SP12Constants.TRUST_13);
-        if (ais == null || ais.isEmpty()) {
-            return null;
-        }
-        return (Trust13)ais.iterator().next().getAssertion();
-    }
-    
-    static final TokenStore getTokenStore(Message message) {
-        EndpointInfo info = message.getExchange().get(Endpoint.class).getEndpointInfo();
-        synchronized (info) {
-            TokenStore tokenStore = (TokenStore)message.getContextualProperty(TokenStore.class.getName());
-            if (tokenStore == null) {
-                tokenStore = (TokenStore)info.getProperty(TokenStore.class.getName());
-            }
-            if (tokenStore == null) {
-                tokenStore = new MemoryTokenStore();
-                info.setProperty(TokenStore.class.getName(), tokenStore);
-            }
-            return tokenStore;
-        }
-    }
-    
-    static Assertion getAddressingPolicy(AssertionInfoMap aim, boolean optional) {
-        Collection<AssertionInfo> lst = aim.get(MetadataConstants.USING_ADDRESSING_2004_QNAME);
-        Assertion assertion = null;
-        if (null != lst && !lst.isEmpty()) {
-            assertion = lst.iterator().next().getAssertion();
-        }
-        if (assertion == null) {
-            lst = aim.get(MetadataConstants.USING_ADDRESSING_2005_QNAME);
-            if (null != lst && !lst.isEmpty()) {
-                assertion = lst.iterator().next().getAssertion();
-            }
-        }
-        if (assertion == null) {
-            lst = aim.get(MetadataConstants.USING_ADDRESSING_2006_QNAME);
-            if (null != lst && !lst.isEmpty()) {
-                assertion = lst.iterator().next().getAssertion();
-            }
-        }
-        if (assertion == null) {
-            return new PrimitiveAssertion(MetadataConstants.USING_ADDRESSING_2006_QNAME,
-                                          optional);
-        } else if (optional) {
-            return new PrimitiveAssertion(assertion.getName(),
-                                          optional);            
-        }
-        return assertion;
-    }
-
     static String setupClient(STSClient client,
                             SoapMessage message,
                             AssertionInfoMap aim,
                             SecureConversationToken itok,
                             boolean endorse) {
-        client.setTrust(getTrust10(aim));
-        client.setTrust(getTrust13(aim));
+        client.setTrust(NegotiationUtils.getTrust10(aim));
+        client.setTrust(NegotiationUtils.getTrust13(aim));
         Policy pol = itok.getBootstrapPolicy();
         Policy p = new Policy();
         ExactlyOne ea = new ExactlyOne();
         p.addPolicyComponent(ea);
         All all = new All();
-        all.addPolicyComponent(getAddressingPolicy(aim, false));
+        all.addPolicyComponent(NegotiationUtils.getAddressingPolicy(aim, false));
         ea.addPolicyComponent(all);
         
         if (endorse) {
@@ -178,7 +89,7 @@ public class SecureConversationTokenInterceptorProvider extends AbstractPolicyIn
         String s = message
             .getContextualProperty(Message.ENDPOINT_ADDRESS).toString();
         client.setLocation(s);
-        AlgorithmSuite suite = getAlgorithmSuite(aim);
+        AlgorithmSuite suite = NegotiationUtils.getAlgorithmSuite(aim);
         if (suite != null) {
             client.setAlgorithmSuite(suite);
             int x = suite.getMaximumSymmetricKeyLength();
@@ -191,34 +102,6 @@ public class SecureConversationTokenInterceptorProvider extends AbstractPolicyIn
         return s;
     }
     
-    private static AlgorithmSuite getAlgorithmSuite(AssertionInfoMap aim) {
-        Binding transport = null;
-        Collection<AssertionInfo> ais = aim.get(SP12Constants.TRANSPORT_BINDING);
-        if (ais != null) {
-            for (AssertionInfo ai : ais) {
-                transport = (Binding)ai.getAssertion();
-            }                    
-        } else {
-            ais = aim.get(SP12Constants.ASYMMETRIC_BINDING);
-            if (ais != null) {
-                for (AssertionInfo ai : ais) {
-                    transport = (Binding)ai.getAssertion();
-                }                    
-            } else {
-                ais = aim.get(SP12Constants.SYMMETRIC_BINDING);
-                if (ais != null) {
-                    for (AssertionInfo ai : ais) {
-                        transport = (Binding)ai.getAssertion();
-                    }                    
-                }
-            }
-        }
-        if (transport != null) {
-            return transport.getAlgorithmSuite();
-        }
-        return null;
-    }
-    
     private static void mapSecurityProps(Message message, Map<String, Object> ctx) {
         for (String s : SecurityConstants.ALL_PROPERTIES) {
             Object v = message.getContextualProperty(s + ".sct");
@@ -228,75 +111,4 @@ public class SecureConversationTokenInterceptorProvider extends AbstractPolicyIn
         }
     }
     
-    static byte[] writeProofToken(String prefix, 
-                                          String namespace,
-                                          W3CDOMStreamWriter writer,
-                                          byte[] clientEntropy,
-                                          int keySize) 
-        throws NoSuchAlgorithmException, WSSecurityException, ConversationException, XMLStreamException {
-        byte secret[] = null; 
-        writer.writeStartElement(prefix, "RequestedProofToken", namespace);
-        if (clientEntropy == null) {
-            secret = WSSecurityUtil.generateNonce(keySize / 8);
-            
-            writer.writeStartElement(prefix, "BinarySecret", namespace);
-            writer.writeAttribute("Type", namespace + "/Nonce");
-            writer.writeCharacters(Base64.encode(secret));
-            writer.writeEndElement();
-        } else {
-            byte entropy[] = WSSecurityUtil.generateNonce(keySize / 8);
-            P_SHA1 psha1 = new P_SHA1();
-            secret = psha1.createKey(clientEntropy,
-                                     entropy,
-                                     0,
-                                     keySize / 8);
-
-            writer.writeStartElement(prefix, "ComputedKey", namespace);
-            writer.writeCharacters(namespace + "/CK/PSHA1");            
-            writer.writeEndElement();
-            writer.writeEndElement();
-
-            writer.writeStartElement(prefix, "Entropy", namespace);
-            writer.writeStartElement(prefix, "BinarySecret", namespace);
-            writer.writeAttribute("Type", namespace + "/Nonce");
-            writer.writeCharacters(Base64.encode(entropy));
-            writer.writeEndElement();
-            
-        }
-        writer.writeEndElement();
-        return secret;
-    }
-    
-    static Element writeSecurityTokenReference(W3CDOMStreamWriter writer,
-                                                    String id,
-                                                    String refValueType) {
-
-        Reference ref = new Reference(writer.getDocument());
-        ref.setURI(id);
-        if (refValueType != null) {
-            ref.setValueType(refValueType);
-        }
-        SecurityTokenReference str = new SecurityTokenReference(writer.getDocument());
-        str.setReference(ref);
-
-        writer.getCurrentNode().appendChild(str.getElement());
-        return str.getElement();
-    }
-
-    
-    static int getWSCVersion(String tokenTypeValue) throws ConversationException {
-
-        if (tokenTypeValue == null) {
-            return ConversationConstants.DEFAULT_VERSION;
-        }
-
-        if (tokenTypeValue.startsWith(ConversationConstants.WSC_NS_05_02)) {
-            return ConversationConstants.getWSTVersion(ConversationConstants.WSC_NS_05_02);
-        } else if (tokenTypeValue.startsWith(ConversationConstants.WSC_NS_05_12)) {
-            return ConversationConstants.getWSTVersion(ConversationConstants.WSC_NS_05_12);
-        } else {
-            throw new ConversationException("unsupportedSecConvVersion");
-        }
-    }
-
 }
