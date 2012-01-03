@@ -187,6 +187,9 @@ public abstract class AbstractHTTPServlet extends HttpServlet {
     
     private boolean matchPath(List<String> values, HttpServletRequest request) {
         String path = request.getPathInfo();
+        if (path == null) {
+            path = "/";
+        }
         if (redirectQueryCheck) {
             String queryString = request.getQueryString();
             if (queryString != null && queryString.length() > 0) {
@@ -237,7 +240,11 @@ public abstract class AbstractHTTPServlet extends HttpServlet {
             ? sc.getNamedDispatcher(dispatcherServletName) 
             : sc.getRequestDispatcher(theServletPath + pathInfo);
         if (rd == null) {
-            throw new ServletException("No RequestDispatcher can be created for path " + pathInfo);
+            String errorMessage = "No RequestDispatcher can be created for path " + pathInfo;
+            if (dispatcherServletName != null) {
+                errorMessage += ", dispatcher name: " + dispatcherServletName;
+            }
+            throw new ServletException(errorMessage);
         }
         try {
             HttpServletRequestFilter servletRequest = 
