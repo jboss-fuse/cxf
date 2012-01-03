@@ -17,37 +17,20 @@
  * under the License.
  */
 
-package org.apache.cxf.rs.security.oauth.services;
+package minimalosgi;
 
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.core.MediaType;
 
+public class SampleResource {
 
-/**
- * This resource issues a temporarily request token to the Client
- * which will be later authorised and exchanged for the access token 
- */
-@Path("/initiate")
-public class RequestTokenService extends AbstractOAuthService {
-
-    private RequestTokenHandler handler = new RequestTokenHandler();
-    
-    public void setRequestTokenHandler(RequestTokenHandler h) {
-        this.handler = h;
-    }
-    
     @GET
-    @Produces("application/x-www-form-urlencoded")
-    public Response getRequestTokenWithGET() {
-        return getRequestToken();
+    @Path("/")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getSampleText() {
+        return "My Sample Text";
     }
-    
-    @POST
-    @Produces("application/x-www-form-urlencoded")
-    public Response getRequestToken() {
-        return handler.handle(getMessageContext(), getDataProvider());
-    }
+
 }

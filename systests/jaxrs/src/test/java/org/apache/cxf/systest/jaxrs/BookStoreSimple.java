@@ -16,38 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-package org.apache.cxf.rs.security.oauth.services;
+package org.apache.cxf.systest.jaxrs;
 
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.PathParam;
 
-
-/**
- * This resource issues a temporarily request token to the Client
- * which will be later authorised and exchanged for the access token 
- */
-@Path("/initiate")
-public class RequestTokenService extends AbstractOAuthService {
-
-    private RequestTokenHandler handler = new RequestTokenHandler();
-    
-    public void setRequestTokenHandler(RequestTokenHandler h) {
-        this.handler = h;
+@Path("/simplebooks/{id}")
+public class BookStoreSimple {
+    @GET
+    public Book getBook(@PathParam("id") long id) {
+        return new Book("Simple", id);    
     }
     
     @GET
-    @Produces("application/x-www-form-urlencoded")
-    public Response getRequestTokenWithGET() {
-        return getRequestToken();
-    }
-    
-    @POST
-    @Produces("application/x-www-form-urlencoded")
-    public Response getRequestToken() {
-        return handler.handle(getMessageContext(), getDataProvider());
+    @Path("/book")
+    public Book getBook2(@PathParam("id") long id) {
+        return getBook(id);    
     }
 }

@@ -16,38 +16,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.rs.security.oauth.services;
+package org.apache.cxf.systest.jaxrs;
 
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.xml.bind.Marshaller;
 
 import org.apache.cxf.jaxrs.ext.MessageContext;
-import org.apache.cxf.rs.security.oauth.provider.OAuthDataProvider;
-import org.apache.cxf.rs.security.oauth.utils.OAuthUtils;
+import org.apache.cxf.jaxrs.ext.ResponseHandler;
+import org.apache.cxf.jaxrs.model.OperationResourceInfo;
+import org.apache.cxf.message.Message;
 
-/**
- * Abstract utility class which OAuth services extend
- */
-public abstract class AbstractOAuthService {
+public class FormatResponseHandler implements ResponseHandler {
+    @Context
     private MessageContext mc;
     
-    private OAuthDataProvider dataProvider;
-
-    @Context 
-    public void setMessageContext(MessageContext context) {
-        this.mc = context;    
-    }
-    
-    public MessageContext getMessageContext() {
-        return mc;
-    }
-    
-    public void setDataProvider(OAuthDataProvider dataProvider) {
-        this.dataProvider = dataProvider;
+    public Response handleResponse(Message m, OperationResourceInfo ori, Response response) {
+        if (mc.getUriInfo().getQueryParameters().containsKey("_format")) {
+            mc.put(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+        }
+        return null;
     }
 
-    protected OAuthDataProvider getDataProvider() {
-        return OAuthUtils.getOAuthDataProvider(dataProvider, mc.getServletContext());
-    }
-    
-    
 }
