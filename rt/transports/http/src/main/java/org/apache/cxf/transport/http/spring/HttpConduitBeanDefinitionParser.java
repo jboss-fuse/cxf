@@ -135,7 +135,7 @@ public class HttpConduitBeanDefinitionParser
     protected void mapBeanOrClassElement(
         Element               element, 
         BeanDefinitionBuilder bean,
-        Class                 elementClass
+        Class<?>              elementClass
     ) {
         String elementName = element.getLocalName();
     
@@ -186,7 +186,7 @@ public class HttpConduitBeanDefinitionParser
     }
 
     @Override
-    protected Class getBeanClass(Element arg0) {
+    protected Class<?> getBeanClass(Element arg0) {
         return HTTPConduit.class;
     }
 

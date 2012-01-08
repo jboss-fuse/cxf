@@ -39,11 +39,11 @@ public final class WSDLGeneratorFactory {
         return pkgName + "." + wsdlVersion.toString().toLowerCase() + "." + wsdlVersion + "Generator";
     }
 
-    public AbstractGenerator newGenerator() {
-        AbstractGenerator generator = null;
+    public AbstractGenerator<?> newGenerator() {
+        AbstractGenerator<?> generator = null;
         String clzName = getGeneratorClassName();
         try {
-            generator = (AbstractGenerator) Class.forName(clzName).newInstance();
+            generator = (AbstractGenerator<?>) Class.forName(clzName).newInstance();
         } catch (Exception e) {
             throw new ToolException("Can not find the Generator for: " + clzName, e);
         }

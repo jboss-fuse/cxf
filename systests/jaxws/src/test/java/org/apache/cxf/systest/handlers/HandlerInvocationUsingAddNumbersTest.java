@@ -105,7 +105,7 @@ public class HandlerInvocationUsingAddNumbersTest extends AbstractBusClientServe
         setAddress(disp, addNumbersAddress);
 
         SmallNumberHandler sh = new SmallNumberHandler();
-        TestSOAPHandler soapHandler = new TestSOAPHandler<SOAPMessageContext>(false) {
+        TestSOAPHandler soapHandler = new TestSOAPHandler(false) {
             public boolean handleMessage(SOAPMessageContext ctx) {
                 super.handleMessage(ctx);
                 Boolean outbound = (Boolean)ctx.get(MessageContext.MESSAGE_OUTBOUND_PROPERTY);
@@ -129,9 +129,9 @@ public class HandlerInvocationUsingAddNumbersTest extends AbstractBusClientServe
         req.setArg0(10);
         req.setArg1(20);        
         ObjectFactory factory = new ObjectFactory();        
-        JAXBElement e = factory.createAddNumbers(req);        
+        JAXBElement<org.apache.handlers.types.AddNumbers> e = factory.createAddNumbers(req);        
 
-        JAXBElement response = (JAXBElement)disp.invoke(e);
+        JAXBElement<?> response = (JAXBElement<?>)disp.invoke(e);
         assertNotNull(response);
         AddNumbersResponse value = (AddNumbersResponse)response.getValue();
         assertEquals(200, value.getReturn());
@@ -145,6 +145,7 @@ public class HandlerInvocationUsingAddNumbersTest extends AbstractBusClientServe
         AddNumbers port = (AddNumbers)service.getPort(portName, AddNumbers.class);
         setAddress(port, addNumbersAddress);
 
+        @SuppressWarnings("rawtypes")
         List<Handler> handlerChain = ((BindingProvider)port).getBinding().getHandlerChain();
         SmallNumberHandler h = (SmallNumberHandler)handlerChain.get(0);
         
@@ -166,16 +167,18 @@ public class HandlerInvocationUsingAddNumbersTest extends AbstractBusClientServe
         AddNumbers port = (AddNumbers)service.getPort(portName, AddNumbers.class);
         setAddress(port, addNumbersAddress);
 
+        @SuppressWarnings("rawtypes")
         List<Handler> handlerChain = ((BindingProvider)port).getBinding().getHandlerChain();
         SmallNumberHandler h = (SmallNumberHandler)handlerChain.get(0);
         
         assertEquals("injectedValue", h.getInjectedString());      
     } 
     
-    private void addHandlersProgrammatically(BindingProvider bp, Handler...handlers) {
+    private void addHandlersProgrammatically(BindingProvider bp, Handler<?>...handlers) {
+        @SuppressWarnings("rawtypes")
         List<Handler> handlerChain = bp.getBinding().getHandlerChain();
         assertNotNull(handlerChain);
-        for (Handler h : handlers) {
+        for (Handler<?> h : handlers) {
             handlerChain.add(h);
         }
         bp.getBinding().setHandlerChain(handlerChain);

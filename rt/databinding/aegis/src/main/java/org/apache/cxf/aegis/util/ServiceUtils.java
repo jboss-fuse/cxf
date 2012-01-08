@@ -39,7 +39,7 @@ public final class ServiceUtils {
      * @param clazz the class.
      * @return the name.
      */
-    public static String makeServiceNameFromClassName(Class clazz) {
+    public static String makeServiceNameFromClassName(Class<?> clazz) {
         String name = clazz.getName();
         int last = name.lastIndexOf(".");
         if (last != -1) {
@@ -54,7 +54,7 @@ public final class ServiceUtils {
         return name;
     }
 
-    public static QName makeQualifiedNameFromClass(Class clazz) {
+    public static QName makeQualifiedNameFromClass(Class<?> clazz) {
         String namespace = NamespaceHelper.makeNamespaceFromClassName(clazz.getName(), "http");
         String localPart = makeServiceNameFromClassName(clazz);
         return new QName(namespace, localPart);
@@ -66,9 +66,9 @@ public final class ServiceUtils {
         sb.append('.');
         sb.append(m.getName());
         sb.append('(');
-        Class[] params = m.getParameterTypes();
+        Class<?>[] params = m.getParameterTypes();
         for (int i = 0; i < params.length; i++) {
-            Class param = params[i];
+            Class<?> param = params[i];
             sb.append(param.getName());
             if (i < params.length - 1) {
                 sb.append(", ");

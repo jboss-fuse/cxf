@@ -58,7 +58,6 @@ public class CollectionTest extends AbstractAegisTest {
         tm.setTypeCreator(creator);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testType() throws Exception {
         Method m = CollectionService.class.getMethod("getStrings", new Class[0]);
@@ -78,7 +77,6 @@ public class CollectionTest extends AbstractAegisTest {
         assertTrue(type.getTypeClass().isAssignableFrom(String.class));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testRecursiveCollections() throws Exception {
         Method m = CollectionService.class.getMethod("getStringCollections", new Class[0]);
@@ -105,7 +103,6 @@ public class CollectionTest extends AbstractAegisTest {
         assertTrue(type.getTypeClass().isAssignableFrom(String.class));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testPDType() throws Exception {
         PropertyDescriptor pd = Introspector.getBeanInfo(CollectionDTO.class, Object.class)
@@ -129,9 +126,9 @@ public class CollectionTest extends AbstractAegisTest {
         tm.setTypeCreator(creator);
 
         AegisType dto = creator.createType(CollectionDTO.class);
-        Set deps = dto.getDependencies();
+        Set<AegisType> deps = dto.getDependencies();
 
-        AegisType type = (AegisType)deps.iterator().next();
+        AegisType type = deps.iterator().next();
 
         assertTrue(type instanceof CollectionType);
 
@@ -152,11 +149,11 @@ public class CollectionTest extends AbstractAegisTest {
         tm.setTypeCreator(creator);
 
         AegisType dto = creator.createType(ObjectDTO.class);
-        Set deps = dto.getDependencies();
+        Set<AegisType> deps = dto.getDependencies();
 
         assertFalse(deps.isEmpty());
 
-        AegisType type = (AegisType)deps.iterator().next();
+        AegisType type = deps.iterator().next();
 
         assertTrue(type instanceof CollectionType);
 

@@ -128,7 +128,7 @@ public class HTTPTransportFactory
         List<?>     ees
     ) {
         if (ees != null) {
-            for (Iterator itr = ees.iterator(); itr.hasNext();) {
+            for (Iterator<?> itr = ees.iterator(); itr.hasNext();) {
                 Object extensor = itr.next();
     
                 if (extensor instanceof HTTPAddress) {
@@ -210,6 +210,8 @@ public class HTTPTransportFactory
     
     private static class HttpAddressType extends AddressType 
         implements HTTPAddress, SOAPAddress {
+        private static final long serialVersionUID = 7048265985129995746L;
+
         public HttpAddressType() {
             super();
             setElementType(new QName("http://schemas.xmlsoap.org/wsdl/soap/", "address"));

@@ -493,8 +493,8 @@ public class ClientImpl
             if (context == null) {
                 context = new HashMap<String, Object>();
             }
-            reqContext = CastUtils.cast((Map)context.get(REQUEST_CONTEXT));
-            resContext = CastUtils.cast((Map)context.get(RESPONSE_CONTEXT));
+            reqContext = CastUtils.cast((Map<?, ?>)context.get(REQUEST_CONTEXT));
+            resContext = CastUtils.cast((Map<?, ?>)context.get(RESPONSE_CONTEXT));
             if (reqContext == null) { 
                 reqContext = new HashMap<String, Object>(getRequestContext());
                 context.put(REQUEST_CONTEXT, reqContext);
@@ -629,7 +629,7 @@ public class ClientImpl
         }
 
         // Grab the response objects if there are any
-        List resList = null;
+        List<Object> resList = null;
         Message inMsg = exchange.getInMessage();
         if (inMsg != null) {
             if (null != resContext) {
@@ -639,7 +639,7 @@ public class ClientImpl
                 }
                 responseContext.put(Thread.currentThread(), resContext);
             }
-            resList = inMsg.getContent(List.class);
+            resList = CastUtils.cast(inMsg.getContent(List.class));
         }
 
         // check for an incoming fault
@@ -1019,6 +1019,7 @@ public class ClientImpl
      * modification are echoed back to the shared map
      */
     public static class EchoContext extends HashMap<String, Object> {
+        private static final long serialVersionUID = 5199023273052841289L;
         final Map<String, Object> shared;
         public EchoContext(Map<String, Object> sharedMap) {
             super(sharedMap);

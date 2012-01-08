@@ -59,7 +59,7 @@ public class PolicyExtensionsTest extends Assert {
 
             AssertionBuilderRegistry abr = bus.getExtension(AssertionBuilderRegistry.class);
             assertNotNull(abr);
-            AssertionBuilder ab = abr.getBuilder(KNOWN);
+            AssertionBuilder<?> ab = abr.getBuilder(KNOWN);
             assertNotNull(ab);
             ab = abr.getBuilder(UNKNOWN);
             assertNull(ab);
@@ -132,6 +132,8 @@ public class PolicyExtensionsTest extends Assert {
     
     public static class TestPolicyInterceptorProvider extends AbstractPolicyInterceptorProvider {
         
+        private static final long serialVersionUID = -4588883556748035959L;
+
         public TestPolicyInterceptorProvider() {
             super(KNOWN);
         }

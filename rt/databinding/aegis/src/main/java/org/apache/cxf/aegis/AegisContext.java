@@ -179,7 +179,7 @@ public class AegisContext {
      * @param clazz
      * @return
      */
-    public AegisType getRootType(Class clazz) {
+    public AegisType getRootType(Class<?> clazz) {
         if (rootClasses.contains(clazz)) {
             return typeMapping.getType(clazz);
         } else {
@@ -222,7 +222,7 @@ public class AegisContext {
             }
         } else if (jtype instanceof GenericArrayType) {
             GenericArrayType gt = (GenericArrayType)jtype;
-            Class ct = (Class) gt.getGenericComponentType();
+            Class<?> ct = (Class<?>) gt.getGenericComponentType();
             // this looks nutty, but there's no other way. Make an array and take it's class.
             ct = Array.newInstance(ct, 0).getClass();
             rootClasses.add(ct);
@@ -244,7 +244,7 @@ public class AegisContext {
         rootTypeQNames = new HashSet<QName>();
         if (this.rootClassNames != null) {
             for (String typeName : rootClassNames) {
-                Class c = null;
+                Class<?> c = null;
                 try {
                     c = ClassLoaderUtils.loadClass(typeName, TypeUtil.class);
                 } catch (ClassNotFoundException e) {

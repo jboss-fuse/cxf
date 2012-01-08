@@ -168,7 +168,7 @@ public class ClientProxyFactoryBean extends AbstractBasicInterceptorProvider {
     
             ClientProxy handler = clientClientProxy(c);
     
-            Class classes[] = getImplementingClasses();
+            Class<?> classes[] = getImplementingClasses();
             
             Object obj = Proxy.newProxyInstance(clientFactoryBean.getServiceClass().getClassLoader(),
                                                 classes,
@@ -184,7 +184,7 @@ public class ClientProxyFactoryBean extends AbstractBasicInterceptorProvider {
         }
     }
 
-    protected Class[] getImplementingClasses() {
+    protected Class<?>[] getImplementingClasses() {
         Class<?> cls = clientFactoryBean.getServiceClass();
         try {
             if (cls.getMethod("close") != null) {
@@ -217,7 +217,7 @@ public class ClientProxyFactoryBean extends AbstractBasicInterceptorProvider {
         this.password = password;
     }
 
-    public Class getServiceClass() {
+    public Class<?> getServiceClass() {
         return clientFactoryBean.getServiceClass();
     }
 
@@ -226,7 +226,7 @@ public class ClientProxyFactoryBean extends AbstractBasicInterceptorProvider {
      *
      * @param serviceClass the SEI's class
      */
-    public void setServiceClass(Class serviceClass) {
+    public void setServiceClass(Class<?> serviceClass) {
         clientFactoryBean.setServiceClass(serviceClass);
     }
 

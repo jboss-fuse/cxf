@@ -973,7 +973,7 @@ public class JAXBDataBinding implements DataBindingProfile {
                     try {
                         Field f = jdc.getClass().getDeclaredField("enumConstantsByName");
                         f.setAccessible(true);
-                        Map map = (Map)f.get(jdc);
+                        Map<?, ?> map = (Map<?, ?>)f.get(jdc);
                         Set<String> values = CastUtils.cast(map.keySet());
                         String first = defaultValues.chooseEnumValue(path, values);
                         writer.write(tp.fullName());
@@ -999,7 +999,7 @@ public class JAXBDataBinding implements DataBindingProfile {
                 try {
                     Field f = tp2.getClass().getDeclaredField("_class");
                     f.setAccessible(true);
-                    Class<?> cls = (Class)f.get(tp2);
+                    Class<?> cls = (Class<?>)f.get(tp2);
                     if (List.class.isAssignableFrom(cls)) {
                         found = true;
 
@@ -1009,7 +1009,7 @@ public class JAXBDataBinding implements DataBindingProfile {
 
                         f = tp.getClass().getDeclaredField("args");
                         f.setAccessible(true);
-                        List<JClass> lcl = CastUtils.cast((List)f.get(tp));
+                        List<JClass> lcl = CastUtils.cast((List<?>)f.get(tp));
                         JClass cl = lcl.get(0);
 
                         int cnt = defaultValues.getListLength(path + "/" + varName);

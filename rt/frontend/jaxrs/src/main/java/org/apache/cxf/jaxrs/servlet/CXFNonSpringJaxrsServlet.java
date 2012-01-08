@@ -50,6 +50,8 @@ import org.apache.cxf.transport.servlet.CXFNonSpringServlet;
 
 public class CXFNonSpringJaxrsServlet extends CXFNonSpringServlet {
 
+    private static final long serialVersionUID = -8916352798780577499L;
+
     private static final Logger LOG = LogUtils.getL7dLogger(CXFNonSpringJaxrsServlet.class);
     
     private static final String USER_MODEL_PARAM = "user.model";
@@ -276,7 +278,7 @@ public class CXFNonSpringJaxrsServlet extends CXFNonSpringServlet {
     
     protected Object createSingletonInstance(Class<?> cls, Map<String, String> props, ServletConfig sc) 
         throws ServletException {
-        Constructor c = ResourceUtils.findResourceConstructor(cls, false);
+        Constructor<?> c = ResourceUtils.findResourceConstructor(cls, false);
         if (c == null) {
             throw new ServletException("No valid constructor found for " + cls.getName());
         }

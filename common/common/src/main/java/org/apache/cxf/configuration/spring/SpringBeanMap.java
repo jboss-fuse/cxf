@@ -39,6 +39,8 @@ public class SpringBeanMap<V>
     extends AbstractSpringBeanMap<String, V> {
 
     
+    private static final long serialVersionUID = 283807699147781432L;
+
     protected void processBeans(ApplicationContext beanFactory) {
         if (beanFactory == null) {
             return;
@@ -84,7 +86,7 @@ public class SpringBeanMap<V>
                 
                 if (ids instanceof ManagedSet || ids instanceof ManagedList) {
                     List<String> newIds = new ArrayList<String>();
-                    for (Iterator itr = ids.iterator(); itr.hasNext();) {
+                    for (Iterator<?> itr = ids.iterator(); itr.hasNext();) {
                         Object o = itr.next();
                         if (o instanceof TypedStringValue) {
                             newIds.add(((TypedStringValue) o).getValue());

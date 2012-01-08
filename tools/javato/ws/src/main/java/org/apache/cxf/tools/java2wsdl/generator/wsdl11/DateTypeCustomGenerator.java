@@ -68,7 +68,7 @@ public final class DateTypeCustomGenerator extends AbstractGenerator<File> {
     }
 
     public File generate(File outputdir) {
-        Class dateType = getDateType();
+        Class<?> dateType = getDateType();
         File xjb = getJAXBCustFile(outputdir);
 
         if (dateType != null) {
@@ -108,21 +108,21 @@ public final class DateTypeCustomGenerator extends AbstractGenerator<File> {
         return new File(outputdir, wsdlName + ".xjb");
     }
 
-    protected String getAdapterMethod(final Class clz, final String methodName) {
+    protected String getAdapterMethod(final Class<?> clz, final String methodName) {
         if (clz == Date.class) {
             return DATE_ADAPTER + methodName;
         }
         return CALENDAR_ADAPTER + methodName;
     }
 
-    protected Class getDateType() {
+    protected Class<?> getDateType() {
         if (getServiceModel() == null) {
             return null;
         }
 
         for (OperationInfo op : getServiceModel().getInterface().getOperations()) {
             Method m = (Method) op.getProperty("operation.method");
-            for (Class clz : m.getParameterTypes()) {
+            for (Class<?> clz : m.getParameterTypes()) {
                 if (clz == Date.class || clz == Calendar.class) {
                     return clz;
                 }

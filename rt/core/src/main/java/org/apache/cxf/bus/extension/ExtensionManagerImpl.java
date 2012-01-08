@@ -56,10 +56,10 @@ public class ExtensionManagerImpl implements ExtensionManager, ConfiguredBeanLoc
     private final ClassLoader loader;
     private ResourceManager resourceManager;
     private Map<String, Extension> all = new LinkedHashMap<String, Extension>();
-    private final Map<Class, Object> activated;
+    private final Map<Class<?>, Object> activated;
     private final Bus bus;
 
-    public ExtensionManagerImpl(ClassLoader cl, Map<Class, Object> initialExtensions, 
+    public ExtensionManagerImpl(ClassLoader cl, Map<Class<?>, Object> initialExtensions, 
                                 ResourceManager rm, Bus b) {
         this(new String[] {BUS_EXTENSION_RESOURCE, BUS_EXTENSION_RESOURCE_XML,
                            BUS_EXTENSION_RESOURCE_OLD_XML},
@@ -67,14 +67,14 @@ public class ExtensionManagerImpl implements ExtensionManager, ConfiguredBeanLoc
     }
     public ExtensionManagerImpl(String resource, 
                                 ClassLoader cl, 
-                                Map<Class, Object> initialExtensions, 
+                                Map<Class<?>, Object> initialExtensions, 
                                 ResourceManager rm,
                                 Bus b) {
         this(new String[] {resource}, cl, initialExtensions, rm, b);
     }    
     public ExtensionManagerImpl(String resources[], 
                                 ClassLoader cl, 
-                                Map<Class, Object> initialExtensions, 
+                                Map<Class<?>, Object> initialExtensions, 
                                 ResourceManager rm,
                                 Bus b) {
 
@@ -146,6 +146,7 @@ public class ExtensionManagerImpl implements ExtensionManager, ConfiguredBeanLoc
         }
         load(resource, loader);
     }
+    @SuppressWarnings("deprecation")
     final void load(String resource, ClassLoader l) throws IOException {
         
         Enumeration<URL> urls = l.getResources(resource);
@@ -158,9 +159,9 @@ public class ExtensionManagerImpl implements ExtensionManager, ConfiguredBeanLoc
                 if (resource.endsWith("xml")) {
                     LOG.log(Level.WARNING, "DEPRECATED_EXTENSIONS", 
                             new Object[] {resource, url, BUS_EXTENSION_RESOURCE});
-                    exts = new ExtensionFragmentParser().getExtensionsFromXML(is);
+                    exts = new XmlExtensionFragmentParser().getExtensions(is);
                 } else {
-                    exts = new ExtensionFragmentParser().getExtensionsFromText(is);
+                    exts = new TextExtensionFragmentParser().getExtensions(is);
                 }
                 for (Extension e : exts) {
                     if (loader != l) {
@@ -241,15 +242,15 @@ public class ExtensionManagerImpl implements ExtensionManager, ConfiguredBeanLoc
     }
     
     private void invokeSetterActivationNSMethod(Object target, Object value) {
-        Class clazz = target.getClass();
+        Class<?> clazz = target.getClass();
         String methodName = ACTIVATION_NAMESPACES_SETTER_METHOD_NAME;
         while (clazz != Object.class) {
             Method[] methods = clazz.getMethods();
             for (int i = 0; i < methods.length; i++) {
                 Method method = methods[i];
-                Class params[] = method.getParameterTypes();
+                Class<?> params[] = method.getParameterTypes();
                 if (method.getName().equals(methodName) && params.length == 1) {
-                    Class paramType = params[0];
+                    Class<?> paramType = params[0];
                     if (paramType.isInstance(value)) {
                         try {
                             method.invoke(target, new Object[] {value});

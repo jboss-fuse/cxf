@@ -137,7 +137,7 @@ public class ServiceImplTest extends AbstractJaxWsTest {
         assertNotNull(wsdl1);
         
         ServiceImpl service = new ServiceImpl(getBus(), wsdl1, SERVICE_1, ServiceImpl.class);
-        Iterator iter = service.getPorts();
+        Iterator<QName> iter = service.getPorts();
         assertNotNull(iter);
         assertTrue(iter.hasNext());
         assertEquals(PORT_1, iter.next());
@@ -227,7 +227,7 @@ public class ServiceImplTest extends AbstractJaxWsTest {
         
         ServiceImpl service = new ServiceImpl(getBus(), wsdl1, SERVICE_1, ServiceImpl.class);
 
-        Dispatch dispatch = service.createDispatch(PORT_1, Source.class, Service.Mode.PAYLOAD);
+        Dispatch<Source> dispatch = service.createDispatch(PORT_1, Source.class, Service.Mode.PAYLOAD);
         assertNotNull(dispatch);
     }
 
@@ -276,6 +276,7 @@ public class ServiceImplTest extends AbstractJaxWsTest {
             return info;
         }
 
+        @SuppressWarnings("rawtypes")
         public List<Handler> getHandlerChain(PortInfo portInfo) {
             List<Handler> handlerList = new ArrayList<Handler>();
             this.info = portInfo;

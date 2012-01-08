@@ -151,7 +151,7 @@ public final class JibxSimpleTypes {
             String serializeMethod = format.getSerializeMethod();
             if (serializeMethod != null) {
                 String jtype = format.getTypeName();
-                Class[] paraTypes = (JibxSimpleTypes.isPrimitiveType(jtype)) ? new Class[] {
+                Class<?>[] paraTypes = (JibxSimpleTypes.isPrimitiveType(jtype)) ? new Class[] {
                     JibxSimpleTypes.primitiveType(jtype)
                 } : new Class[] {
                     value.getClass()
@@ -169,13 +169,13 @@ public final class JibxSimpleTypes {
         return value.toString();
     }
 
-    public static boolean isSimpleType(final Class type) {
+    public static boolean isSimpleType(final Class<?> type) {
         String jtype = type.getName();
         return simplePrimitiveTypeMap.containsKey(jtype) || simpleObjectTypeMap.containsKey(jtype)
                || "void".equals(jtype);
     }
 
-    public static QName schemaType(final Class type) {
+    public static QName schemaType(final Class<?> type) {
         String jtype = type.getName();
         QName stype = (QName)simplePrimitiveTypeMap.get(jtype);
         if (stype == null) {

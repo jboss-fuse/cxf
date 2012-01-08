@@ -24,6 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class ModCountCopyOnWriteArrayList<T> extends CopyOnWriteArrayList<T> {
+    private static final long serialVersionUID = 1783937035760941219L;
     AtomicInteger modCount = new AtomicInteger();
     
     public ModCountCopyOnWriteArrayList() {
@@ -32,7 +33,7 @@ public final class ModCountCopyOnWriteArrayList<T> extends CopyOnWriteArrayList<
     public ModCountCopyOnWriteArrayList(Collection<? extends T> c) {
         super(c);
         if (c instanceof ModCountCopyOnWriteArrayList) {
-            modCount.set(((ModCountCopyOnWriteArrayList)c).getModCount());
+            modCount.set(((ModCountCopyOnWriteArrayList<?>)c).getModCount());
         }
     }
     
@@ -120,7 +121,7 @@ public final class ModCountCopyOnWriteArrayList<T> extends CopyOnWriteArrayList<
     }
 
     @Override
-    public boolean removeAll(Collection c) {
+    public boolean removeAll(Collection<?> c) {
         if (super.removeAll(c)) {
             modCount.incrementAndGet();
             return true;
@@ -129,7 +130,7 @@ public final class ModCountCopyOnWriteArrayList<T> extends CopyOnWriteArrayList<
     }
 
     @Override
-    public boolean retainAll(Collection c) {
+    public boolean retainAll(Collection<?> c) {
         if (super.retainAll(c)) {
             modCount.incrementAndGet();
             return true;
@@ -143,7 +144,8 @@ public final class ModCountCopyOnWriteArrayList<T> extends CopyOnWriteArrayList<
     
     public boolean equals(Object o) {
         if (o instanceof ModCountCopyOnWriteArrayList) {
-            return super.equals(o) && modCount.get() == ((ModCountCopyOnWriteArrayList)o).getModCount();
+            return super.equals(o) && modCount.get() 
+                == ((ModCountCopyOnWriteArrayList<?>)o).getModCount();
         }
         return false;
     }

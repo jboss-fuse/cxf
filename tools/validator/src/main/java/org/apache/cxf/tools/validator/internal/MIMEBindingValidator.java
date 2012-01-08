@@ -20,7 +20,7 @@
 package org.apache.cxf.tools.validator.internal;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collection;
 import java.util.List;
 
 import javax.wsdl.Binding;
@@ -31,6 +31,7 @@ import javax.wsdl.extensions.mime.MIMEContent;
 import javax.wsdl.extensions.mime.MIMEMultipartRelated;
 import javax.wsdl.extensions.mime.MIMEPart;
 
+import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.tools.util.SOAPBindingUtil;
 
 public class MIMEBindingValidator
@@ -41,25 +42,21 @@ public class MIMEBindingValidator
     }
 
     public boolean isValid() {
-        Iterator itBinding = def.getBindings().keySet().iterator();
-        while (itBinding.hasNext()) {
-            Binding binding = (Binding)def.getBindings().get(itBinding.next());
-            Iterator itOperation = binding.getBindingOperations().iterator();
-            while (itOperation.hasNext()) {
-                BindingOperation bindingOperation = (BindingOperation)itOperation.next();
+        Collection<Binding> bindings = CastUtils.cast(def.getBindings().values());
+        for (Binding binding: bindings) {
+            Collection<BindingOperation> bindingOps = CastUtils.cast(binding.getBindingOperations());
+            for (BindingOperation bindingOperation : bindingOps) {
                 if (bindingOperation.getBindingInput() == null) {
                     continue;
                 }
-                Iterator itInputExt = bindingOperation.getBindingInput().getExtensibilityElements()
-                    .iterator();
-                while (itInputExt.hasNext()) {
-                    ExtensibilityElement extElement = (ExtensibilityElement)itInputExt.next();
-                    if (extElement instanceof MIMEMultipartRelated) {
-                        Iterator itMimeParts = ((MIMEMultipartRelated)extElement).getMIMEParts()
-                            .iterator();
-                        if (!doValidate(itMimeParts, bindingOperation.getName())) {
-                            return false;
-                        }
+                Collection<ExtensibilityElement> exts = CastUtils.cast(bindingOperation
+                                                                           .getBindingInput()
+                                                                           .getExtensibilityElements());
+                for (ExtensibilityElement extElement : exts) {
+                    if (extElement instanceof MIMEMultipartRelated
+                        && !doValidate((MIMEMultipartRelated)extElement,
+                                       bindingOperation.getName())) {
+                        return false;
                     }
                 }
             }
@@ -67,14 +64,13 @@ public class MIMEBindingValidator
         return true;
     }
 
-    private boolean doValidate(Iterator mimeParts, String operationName) {
-        boolean gotRootPart = false;        
-        while (mimeParts.hasNext()) {
-            MIMEPart mPart = (MIMEPart)mimeParts.next();
+    private boolean doValidate(MIMEMultipartRelated mimeExt, String operationName) {
+        boolean gotRootPart = false;
+        List<MIMEPart> parts = CastUtils.cast(mimeExt.getMIMEParts());
+        for (MIMEPart mPart : parts) {
             List<MIMEContent> mimeContents = new ArrayList<MIMEContent>();
-            Iterator extns = mPart.getExtensibilityElements().iterator();
-            while (extns.hasNext()) {
-                ExtensibilityElement extElement = (ExtensibilityElement)extns.next();
+            List<ExtensibilityElement> extns = CastUtils.cast(mPart.getExtensibilityElements());
+            for (ExtensibilityElement extElement : extns) {
                 if (SOAPBindingUtil.isSOAPBody(extElement)) {
                     if (gotRootPart) {
                         addErrorMessage("Operation("
@@ -88,7 +84,7 @@ public class MIMEBindingValidator
                     mimeContents.add((MIMEContent)extElement);
                 }
             }
-            if (!doValidateMimeContentPartNames(mimeContents.iterator(), operationName)) {
+            if (!doValidateMimeContentPartNames(mimeContents, operationName)) {
                 return false;
             }
         }
@@ -102,11 +98,11 @@ public class MIMEBindingValidator
         return true;
     }
 
-    private boolean doValidateMimeContentPartNames(Iterator mimeContents, String operationName) {
+    private boolean doValidateMimeContentPartNames(List<MIMEContent> mimeContents,
+                                                   String operationName) {
         // validate mime:content(s) in the mime:part as per R2909
         String partName = null;
-        while (mimeContents.hasNext()) {
-            MIMEContent mimeContent = (MIMEContent)mimeContents.next();
+        for (MIMEContent mimeContent: mimeContents) {
             String mimeContnetPart = mimeContent.getPart();
             if (mimeContnetPart == null) {
                 addErrorMessage("Operation("

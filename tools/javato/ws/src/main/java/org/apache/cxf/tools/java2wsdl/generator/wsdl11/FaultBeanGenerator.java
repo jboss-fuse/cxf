@@ -46,7 +46,7 @@ public final class FaultBeanGenerator extends BeanGenerator {
     }
     
     protected Collection<JavaClass> generateBeanClasses(final ServiceInfo serviceInfo) {
-        Set<Class> exceptionClasses = new HashSet<Class>();
+        Set<Class<?>> exceptionClasses = new HashSet<Class<?>>();
         String seiPackageName = null;
         for (OperationInfo op : serviceInfo.getInterface().getOperations()) {
             Method method = (Method) op.getProperty("operation.method");
@@ -57,7 +57,7 @@ public final class FaultBeanGenerator extends BeanGenerator {
         Collection<JavaClass> faultBeanClasses = new HashSet<JavaClass>();
         String defaultPackage = seiPackageName + ".jaxws";
         FaultBean bean = new FaultBean();
-        for (Class clz : exceptionClasses) {
+        for (Class<?> clz : exceptionClasses) {
             if (!bean.faultBeanExists(clz)) {
                 faultBeanClasses.add(bean.transform(clz, defaultPackage));
             }
@@ -66,12 +66,12 @@ public final class FaultBeanGenerator extends BeanGenerator {
         return faultBeanClasses;
     }
 
-    protected Set<Class> getExceptionClasses(final Method method) {
-        Set<Class> exps = new HashSet<Class>();
-        final Class[] exceptionClasses = method.getExceptionTypes();
+    protected Set<Class<?>> getExceptionClasses(final Method method) {
+        Set<Class<?>> exps = new HashSet<Class<?>>();
+        final Class<?>[] exceptionClasses = method.getExceptionTypes();
         for (int i = 0; i < exceptionClasses.length; i++) {
             boolean exclude = false;
-            Class exClazz = exceptionClasses[i];
+            Class<?> exClazz = exceptionClasses[i];
             
             if (exClazz.equals(Exception.class) 
                 || Fault.class.isAssignableFrom(exClazz)

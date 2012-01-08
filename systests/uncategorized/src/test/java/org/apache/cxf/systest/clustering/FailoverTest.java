@@ -407,7 +407,7 @@ public class FailoverTest extends AbstractBusClientServerTestBase {
         updateWsdlExtensors("9053", PORT_C);
     }
         
-    protected void verifyStrategy(Object proxy, Class clz) {
+    protected void verifyStrategy(Object proxy, Class<?> clz) {
         ConduitSelector conduitSelector =
             ClientProxy.getClient(proxy).getConduitSelector();
         if (conduitSelector instanceof FailoverTargetSelector) {
@@ -456,10 +456,10 @@ public class FailoverTest extends AbstractBusClientServerTestBase {
         try {
             Definition def = bus.getExtension(WSDLManager.class)
                 .getDefinition(wsdlLocation);
-            Map map = def.getAllServices();
+            Map<?, ?> map = def.getAllServices();
             for (Object o : map.values()) {
                 Service service = (Service)o;
-                Map ports = service.getPorts();
+                Map<?, ?> ports = service.getPorts();
                 for (Object p : ports.values()) {
                     Port port = (Port)p;
                     List<?> l = port.getExtensibilityElements();

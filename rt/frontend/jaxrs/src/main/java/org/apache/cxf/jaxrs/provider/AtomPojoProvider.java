@@ -87,13 +87,13 @@ public class AtomPojoProvider extends AbstractConfigurableProvider
     @Context
     public void setMessageContext(MessageContext context) {
         mc = context;
-        for (AbstractAtomElementBuilder builder : atomBuilders.values()) {
+        for (AbstractAtomElementBuilder<?> builder : atomBuilders.values()) {
             builder.setMessageContext(context);
         }
-        for (AtomElementWriter writer : atomWriters.values()) {
+        for (AtomElementWriter<?, ?> writer : atomWriters.values()) {
             tryInjectMessageContext(writer);
         }
-        for (AtomElementReader reader : atomReaders.values()) {
+        for (AtomElementReader<?, ?> reader : atomReaders.values()) {
             tryInjectMessageContext(reader);
         }
     }
@@ -201,7 +201,7 @@ public class AtomPojoProvider extends AbstractConfigurableProvider
         if (methodName == null) {
             try {
                 methodName = (getter ? "get" : "set") + cls.getSimpleName();
-                Class[] params = getter ? new Class[]{} : new Class[]{List.class};
+                Class<?>[] params = getter ? new Class[]{} : new Class[]{List.class};
                 cls.getMethod(methodName, params);
             } catch (Exception ex) {
                 String type = getter ? "getter" : "setter";
@@ -225,7 +225,7 @@ public class AtomPojoProvider extends AbstractConfigurableProvider
     protected void setFeedFromCollection(Factory factory, Feed feed, Object wrapper, Object collection,
         Class<?> collectionCls, Type collectionType, boolean writerUsed) throws Exception {
         
-        Object[] arr = collectionCls.isArray() ? (Object[])collection : ((Collection)collection).toArray();
+        Object[] arr = collectionCls.isArray() ? (Object[])collection : ((Collection<?>)collection).toArray();
         Class<?> memberClass = InjectionUtils.getActualType(collectionType);
         
         for (Object o : arr) {
@@ -330,7 +330,7 @@ public class AtomPojoProvider extends AbstractConfigurableProvider
     protected boolean buildEntry(Entry entry, Object o) {
         AtomElementWriter<?, ?> builder = atomWriters.get(o.getClass().getName());
         if (builder != null) {
-            ((AtomElementWriter)builder).writeTo(entry, o);
+            ((AtomElementWriter<Entry, Object>)builder).writeTo(entry, o);
             return true;
         }
         return false;

@@ -113,11 +113,11 @@ public class JettyHTTPServerEngineBeanDefinitionParser extends AbstractBeanDefin
                                                     );
                 } else if ("connector".equals(name)) { 
                     // only deal with the one connector here
-                    List list = 
+                    List<?> list = 
                         ctx.getDelegate().parseListElement(elem, bean.getBeanDefinition());
                     bean.addPropertyValue("connector", list.get(0));
                 } else if ("handlers".equals(name)) {
-                    List handlers = 
+                    List<?> handlers = 
                         ctx.getDelegate().parseListElement(elem, bean.getBeanDefinition());
                     bean.addPropertyValue("handlers", handlers);
                 } else if ("sessionSupport".equals(name) || "reuseAddress".equals(name)) {
@@ -159,7 +159,7 @@ public class JettyHTTPServerEngineBeanDefinitionParser extends AbstractBeanDefin
     }
 
     @Override
-    protected Class getBeanClass(Element arg0) {
+    protected Class<?> getBeanClass(Element arg0) {
         return SpringJettyHTTPServerEngine.class;
     }
     
