@@ -613,7 +613,7 @@ public final class StaxUtils {
         // We need this check because namespace writing works
         // different on Woodstox and the RI.
         if (writeElementNS) {
-            if (prefix == null || prefix.length() == 0) {
+            if (prefix.length() == 0) {
                 writer.writeDefaultNamespace(uri);
                 writer.setDefaultNamespace(uri);
             } else {
@@ -770,7 +770,7 @@ public final class StaxUtils {
                     String value = attr.getNodeValue();
                     if (attns == null || attns.length() == 0) {
                         writer.writeAttribute(name, value);
-                    } else if (attrPrefix == null || attrPrefix.length() == 0) {
+                    } else if (attrPrefix.length() == 0) {
                         writer.writeAttribute(attns, name, value);
                     } else {
                         writer.writeAttribute(attrPrefix, attns, name, value);
@@ -1400,12 +1400,12 @@ public final class StaxUtils {
         }
         Iterator<XMLEvent> it = CastUtils.cast(start.getNamespaces());
         while (it != null && it.hasNext()) {
-            writeEvent((XMLEvent)it.next(), writer);
+            writeEvent(it.next(), writer);
         }
         
         it = CastUtils.cast(start.getAttributes());
         while (it != null && it.hasNext()) {
-            writeAttributeEvent((Attribute)it.next(), writer);            
+            writeAttributeEvent(it.next(), writer);            
         }
     }
     private static void writeAttributeEvent(XMLEvent event, XMLStreamWriter writer) 

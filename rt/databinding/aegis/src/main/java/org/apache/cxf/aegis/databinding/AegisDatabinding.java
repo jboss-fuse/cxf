@@ -377,7 +377,7 @@ public class AegisDatabinding extends AbstractDataBinding {
             return;
         }
         SchemaCollection col = s.getXmlSchemaCollection();
-        for (MessagePartInfo part: container.getMessageParts()) {
+        for (MessagePartInfo part : container.getMessageParts()) {
             if (part.getXmlSchema() == null) {
                 if (part.isElement()) {
                     XmlSchemaAnnotated tp = col.getElementByQName(part.getElementQName());
@@ -647,7 +647,7 @@ public class AegisDatabinding extends AbstractDataBinding {
             return null;
         }
         SimpleMethodDispatcher smd = (SimpleMethodDispatcher)md;
-        return smd != null ? smd.getPrimaryMethod(op) : null;
+        return smd.getPrimaryMethod(op);
     }
 
     public AegisType getType(MessagePartInfo part) {

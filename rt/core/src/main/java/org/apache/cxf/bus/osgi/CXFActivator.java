@@ -25,12 +25,12 @@ import java.util.Properties;
 
 import org.apache.cxf.bus.extension.Extension;
 import org.apache.cxf.bus.extension.ExtensionRegistry;
-import org.apache.cxf.workqueue.AutomaticWorkQueueImpl;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.ConfigurationAdmin;
+import org.osgi.service.cm.ManagedService;
 import org.osgi.service.cm.ManagedServiceFactory;
 import org.osgi.util.tracker.ServiceTracker;
 
@@ -47,8 +47,10 @@ public class CXFActivator implements BundleActivator {
     private ServiceTracker configAdminTracker;
     private CXFExtensionBundleListener cxfBundleListener;
     private ServiceRegistration workQueueServiceRegistration;
+    private ServiceRegistration wqSingleConfigRegistratin;
 
     /** {@inheritDoc}*/
+    @SuppressWarnings("deprecation")
     public void start(BundleContext context) throws Exception {
         cxfBundleListener = new CXFExtensionBundleListener(context.getBundle().getBundleId());
         context.addBundleListener(cxfBundleListener);
@@ -57,20 +59,28 @@ public class CXFActivator implements BundleActivator {
         configAdminTracker = new ServiceTracker(context, ConfigurationAdmin.class.getName(), null);
         configAdminTracker.open();
         workQueues.setConfigAdminTracker(configAdminTracker);
-        workQueueServiceRegistration = registerManagedServiceFactory(context, workQueues, 
+        workQueueServiceRegistration = registerManagedServiceFactory(context, ManagedServiceFactory.class, 
+                                                                     workQueues,
                                                                      ManagedWorkQueueList.FACTORY_PID);
+        
+        WorkQueueSingleConfig wqSingleConfig = new WorkQueueSingleConfig(workQueues);
+        wqSingleConfigRegistratin = registerManagedServiceFactory(context, ManagedService.class, 
+                                                                  wqSingleConfig,
+                                                                  WorkQueueSingleConfig.SERVICE_PID);
+        
         extensions = new ArrayList<Extension>();
         extensions.add(createOsgiBusListenerExtension(context));
         extensions.add(createManagedWorkQueueListExtension(workQueues));
         ExtensionRegistry.addExtensions(extensions);
     }
 
-    private ServiceRegistration registerManagedServiceFactory(BundleContext context, 
+    private ServiceRegistration registerManagedServiceFactory(BundleContext context,
+                                                              Class<?> serviceClass,
                                                               Object service, 
                                                               String servicePid) {
         Properties props = new Properties();
         props.put(Constants.SERVICE_PID, servicePid);  
-        return context.registerService(ManagedServiceFactory.class.getName(), workQueues, props);
+        return context.registerService(serviceClass.getName(), service, props);
     }
 
     private Extension createOsgiBusListenerExtension(BundleContext context) {
@@ -95,12 +105,9 @@ public class CXFActivator implements BundleActivator {
     public void stop(BundleContext context) throws Exception {
         context.removeBundleListener(cxfBundleListener);
         cxfBundleListener.shutdown();
-        for (AutomaticWorkQueueImpl wq : workQueues.queues.values()) {
-            wq.setShared(false);
-            wq.shutdown(true);
-        }
-        workQueues.queues.clear();
+        workQueues.shutDown();
         workQueueServiceRegistration.unregister();
+        wqSingleConfigRegistratin.unregister();
         configAdminTracker.close();
         ExtensionRegistry.removeExtensions(extensions);
     }

@@ -70,7 +70,7 @@ public class ClientGenerator extends AbstractJAXWSGenerator {
         for (JavaModel javaModel : map.values()) {
         
             if (javaModel.getServiceClasses().size() == 0) {
-                ServiceInfo serviceInfo = (ServiceInfo)env.get(ServiceInfo.class);
+                ServiceInfo serviceInfo = env.get(ServiceInfo.class);
                 String wsdl = serviceInfo.getDescription().getBaseURI();
                 Message msg = new Message("CAN_NOT_GEN_CLIENT", LOG, wsdl);
                 if (penv.isVerbose()) {
@@ -80,7 +80,7 @@ public class ClientGenerator extends AbstractJAXWSGenerator {
             }
     
             Map<String, JavaInterface> interfaces = javaModel.getInterfaces();
-            for (JavaServiceClass js: javaModel.getServiceClasses().values()) {
+            for (JavaServiceClass js : javaModel.getServiceClasses().values()) {
                 for (JavaPort jp : js.getPorts()) {
                     String interfaceName = jp.getInterfaceClass();
                     JavaInterface intf = interfaces.get(interfaceName);

@@ -57,9 +57,9 @@ public final class CorbaObjectReferenceHelper {
     public static QName getServiceName(Binding binding, Definition wsdlDef) {
         LOG.log(Level.FINE, "Getting service name for an object reference");
         Collection<Service> services = CastUtils.cast(wsdlDef.getServices().values());
-        for (Service serv: services) {
+        for (Service serv : services) {
             Collection<Port> ports = CastUtils.cast(serv.getPorts().values());
-            for (Port pt: ports) {
+            for (Port pt : ports) {
                 if (pt.getBinding().equals(binding)) {
                     return serv.getQName();
                 }
@@ -71,9 +71,9 @@ public final class CorbaObjectReferenceHelper {
     public static String getEndpointName(Binding binding, Definition wsdlDef) {
         LOG.log(Level.FINE, "Getting endpoint name for an object reference");
         Collection<Service> services = CastUtils.cast(wsdlDef.getServices().values());
-        for (Service serv: services) {
+        for (Service serv : services) {
             Collection<Port> ports = CastUtils.cast(serv.getPorts().values());
-            for (Port pt: ports) {
+            for (Port pt : ports) {
                 if (pt.getBinding().equals(binding)) {
                     return pt.getName();
                 }
@@ -85,7 +85,7 @@ public final class CorbaObjectReferenceHelper {
     public static Binding getDefaultBinding(Object obj, Definition wsdlDef) {
         LOG.log(Level.FINEST, "Getting binding for a default object reference");
         Collection<Binding> bindings = CastUtils.cast(wsdlDef.getBindings().values());
-        for (Binding b: bindings) {
+        for (Binding b : bindings) {
             List<?> extElements = b.getExtensibilityElements();
             // Get the list of all extensibility elements
             for (Iterator<?> extIter = extElements.iterator(); extIter.hasNext();) {
@@ -171,15 +171,15 @@ public final class CorbaObjectReferenceHelper {
 
     public static int readIntFromAlignedCDREncaps(byte[] data, int index, boolean bigEndian) {
         if (bigEndian) {
-            int partial = ((((int)data[index]) << 24) & 0xff000000)
-                | ((((int)data[index + 1]) << 16) & 0x00ff0000);
-            return partial | ((((int)data[index + 2]) << 8) & 0x0000ff00) 
-                | ((((int)data[index + 3])) & 0x000000ff);
+            int partial = ((data[index] << 24) & 0xff000000)
+                | ((data[index + 1] << 16) & 0x00ff0000);
+            return partial | ((data[index + 2] << 8) & 0x0000ff00) 
+                | ((data[index + 3]) & 0x000000ff);
         } else {
-            int partial = ((((int)data[index])) & 0x000000ff)
-                | ((((int)data[index + 1]) << 8) & 0x0000ff00);
-            return partial | ((((int)data[index + 2]) << 16) & 0x00ff0000) 
-                | ((((int)data[index + 3]) << 24) & 0xff000000);
+            int partial = ((data[index]) & 0x000000ff)
+                | ((data[index + 1] << 8) & 0x0000ff00);
+            return partial | ((data[index + 2] << 16) & 0x00ff0000) 
+                | ((data[index + 3] << 24) & 0xff000000);
         }
     }
 

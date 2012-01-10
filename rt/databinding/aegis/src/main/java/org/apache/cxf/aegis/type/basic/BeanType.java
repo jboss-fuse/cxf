@@ -548,7 +548,7 @@ public class BeanType extends AegisType {
         // search the BeanType superType tree for the first BeanType with a property named 'name'
         BeanType beanType = this;
         AegisType type = null;
-        while (type == null && beanType != null) {
+        while (type == null) {
             type = beanType.getTypeInfo().getType(name);
 
             if (type == null) {
@@ -587,7 +587,7 @@ public class BeanType extends AegisType {
             AegisType superType = tm.getType(c);
             if (superType == null) {
                 // if we call createType, we know that we'll get a BeanType. */
-                superType = (BeanType)getTypeMapping().getTypeCreator().createType(c);
+                superType = getTypeMapping().getTypeCreator().createType(c);
                 if (superType != null) {
                     tm.register(superType);
                     this.info.setExtension(true);

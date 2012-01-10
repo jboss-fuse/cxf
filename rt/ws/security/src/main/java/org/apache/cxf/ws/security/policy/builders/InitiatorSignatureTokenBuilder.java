@@ -59,7 +59,7 @@ public class InitiatorSignatureTokenBuilder implements AssertionBuilder<Element>
         initiatorToken.setIgnorable(PolicyConstants.isIgnorable(element));
 
         Policy policy = builder.getPolicy(DOMUtils.getFirstElement(element));
-        policy = (Policy)policy.normalize(builder.getPolicyRegistry(), false);
+        policy = policy.normalize(builder.getPolicyRegistry(), false);
 
         for (Iterator<List<Assertion>> iterator = policy.getAlternatives(); iterator.hasNext();) {
             processAlternative(iterator.next(), initiatorToken);
@@ -70,7 +70,7 @@ public class InitiatorSignatureTokenBuilder implements AssertionBuilder<Element>
     }
 
     private void processAlternative(List<Assertion> assertions, InitiatorSignatureToken parent) {
-        for (Assertion token: assertions) {
+        for (Assertion token : assertions) {
             if (token instanceof Token) {
                 parent.setInitiatorSignatureToken((Token)token);
             }
