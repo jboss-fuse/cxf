@@ -33,6 +33,18 @@
         <relativePath>../parent/pom.xml</relativePath>
     </parent>
 
+    <properties>
+        <cxf.fragment.host>org.apache.cxf.bundle</cxf.fragment.host>
+        <cxf.osgi.import>
+            javax.activation;version="${cxf.osgi.javax.activation.version}",
+            javax.annotation;version="${cxf.osgi.javax.annotation.version}",
+            javax.xml.bind*;version="${cxf.osgi.javax.bind.version}",
+            javax.xml.stream*;version="${cxf.osgi.javax.stream.version}",
+            org.apache.commons.lang*;resolution:=optional;version="${cxf.osgi.commons.lang.version}",
+            javax.resource*;resolution:=optional
+        </cxf.osgi.import>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
@@ -52,8 +64,19 @@
         </dependency>
 
         <dependency>
-	  <groupId>org.apache.ws.xmlschema</groupId>
-	  <artifactId>xmlschema-core</artifactId>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-beans</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.ws.xmlschema</groupId>
+            <artifactId>xmlschema-core</artifactId>
         </dependency>
 
         <dependency>
@@ -72,10 +95,6 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.neethi</groupId>
-            <artifactId>neethi</artifactId>
-        </dependency>
-        <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
             <optional>true</optional>
@@ -88,6 +107,16 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Fragment-Host></Fragment-Host>
+                    </instructions>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-xjc-plugin</artifactId>
@@ -154,9 +183,6 @@
                                     <deleteDirs>
                                         <deleteDir>${basedir}/target/generated/src/test/java/org/apache/cxf/wsdl</deleteDir>
                                     </deleteDirs>
-                                </xsdOption>
-                                <xsdOption>
-                                    <xsd>${basedir}/src/test/resources/schemas/foo.xsd</xsd>
                                 </xsdOption>
                             </xsdOptions>
                         </configuration>

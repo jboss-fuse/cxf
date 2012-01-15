@@ -84,11 +84,8 @@ import org.apache.cxf.staxutils.W3CDOMStreamWriter;
 import org.apache.cxf.ws.addressing.EndpointReferenceType;
 import org.apache.cxf.ws.addressing.JAXWSAConstants;
 import org.apache.cxf.ws.addressing.Names;
-import org.apache.cxf.ws.addressing.VersionTransformer;
 import org.apache.cxf.ws.addressing.WSAddressingFeature;
-import org.apache.cxf.ws.policy.PolicyConstants;
 import org.apache.cxf.wsdl.WSDLManager;
-import org.apache.neethi.Constants;
 
 /**
  * A JAX-WS specific implementation of the CXF {@link org.apache.cxf.endpoint.Endpoint} interface.
@@ -101,7 +98,9 @@ import org.apache.neethi.Constants;
 public class JaxWsEndpointImpl extends EndpointImpl {
     
     private static final long serialVersionUID = 4718088821386100282L;
-
+    private static final String URI_POLICY_NS = "http://www.w3.org/ns/ws-policy";
+    private static final String URI_WSU_NS 
+        = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd";
     private static final Logger LOG = LogUtils.getL7dLogger(JaxWsEndpointImpl.class);
 
     private Binding jaxwsBinding;
@@ -250,7 +249,7 @@ public class JaxWsEndpointImpl extends EndpointImpl {
                 if (ext instanceof UnknownExtensibilityElement && wsaEpr.equals(ext.getElementType())) {
                     DOMSource domSource = new DOMSource(((UnknownExtensibilityElement)ext).getElement());
                     W3CEndpointReference w3cEPR = new W3CEndpointReference(domSource);
-                    EndpointReferenceType ref = VersionTransformer.convertToInternal(w3cEPR);
+                    EndpointReferenceType ref = ProviderImpl.convertToInternal(w3cEPR);
                     endpoint.getTarget().setMetadata(ref.getMetadata());
                     endpoint.getTarget().setReferenceParameters(ref.getReferenceParameters());
                     endpoint.getTarget().getOtherAttributes().putAll(ref.getOtherAttributes());
@@ -305,7 +304,7 @@ public class JaxWsEndpointImpl extends EndpointImpl {
                 UnknownExtensibilityElement uel = new UnknownExtensibilityElement();
                 
                 W3CDOMStreamWriter writer = new W3CDOMStreamWriter();
-                writer.writeStartElement("wsp", "PolicyReference", Constants.URI_POLICY_NS);
+                writer.writeStartElement("wsp", "PolicyReference", URI_POLICY_NS);
                 writer.writeAttribute("URI", "#" + polRefId.toString());
                 writer.writeEndElement();
                 Element pr = writer.getDocument().getDocumentElement();
@@ -314,15 +313,15 @@ public class JaxWsEndpointImpl extends EndpointImpl {
                 bindingInfo.addExtensor(uel);
                 
                 writer = new W3CDOMStreamWriter();
-                writer.writeStartElement("wsp", "Policy", Constants.URI_POLICY_NS);
-                writer.writeAttribute("wsu", PolicyConstants.WSU_NAMESPACE_URI,
-                                      PolicyConstants.WSU_ID_ATTR_NAME, polRefId.toString());
+                writer.writeStartElement("wsp", "Policy", URI_POLICY_NS);
+                writer.writeAttribute("wsu", URI_WSU_NS,
+                                      "Id", polRefId.toString());
                 writer.writeStartElement("wsam", "Addressing", JAXWSAConstants.NS_WSAM);
                 if (!addressing.required()) {
-                    writer.writeAttribute("wsp", Constants.URI_POLICY_NS,
+                    writer.writeAttribute("wsp", URI_POLICY_NS,
                                           "Optional", "true");
                 }
-                writer.writeStartElement("wsp", "Policy", Constants.URI_POLICY_NS);
+                writer.writeStartElement("wsp", "Policy", URI_POLICY_NS);
                 
                 String s = getAddressingRequirement(addressing);
                 if (s != null) {

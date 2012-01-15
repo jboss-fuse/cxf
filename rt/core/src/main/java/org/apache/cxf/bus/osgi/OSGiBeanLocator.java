@@ -77,4 +77,7 @@ public class OSGiBeanLocator implements ConfiguredBeanLocator {
     public List<String> getBeanNamesOfType(Class<?> type) {
         return cbl.getBeanNamesOfType(type);
     }
+    public boolean hasBeanOfName(String name) {
+        return cbl.hasBeanOfName(name);
+    }
 }

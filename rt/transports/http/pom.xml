@@ -32,6 +32,11 @@
         <version>2.6.x-fuse-SNAPSHOT</version>
         <relativePath>../../../parent/pom.xml</relativePath>
     </parent>
+    <properties>
+        <cxf.osgi.import>
+            javax.servlet*;version="${cxf.osgi.javax.servlet.version}",
+        </cxf.osgi.import>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -58,6 +63,12 @@
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-core</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-ws-policy</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>

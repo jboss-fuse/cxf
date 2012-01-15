@@ -31,11 +31,11 @@ import org.w3c.dom.Node;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.databinding.DataBinding;
 import org.apache.cxf.databinding.DataWriter;
-import org.apache.cxf.frontend.FaultInfoException;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
 import org.apache.cxf.service.Service;
+import org.apache.cxf.service.factory.FaultInfoException;
 import org.apache.cxf.service.model.BindingFaultInfo;
 import org.apache.cxf.service.model.BindingOperationInfo;
 import org.apache.cxf.service.model.FaultInfo;
@@ -133,7 +133,7 @@ public class FaultOutInterceptor extends AbstractPhaseInterceptor<Message> {
     }
 
     protected Object getFaultBean(Throwable cause, FaultInfo faultPart, Message message) {
-        if (FaultInfoException.class.isAssignableFrom(cause.getClass())) {
+        if (cause instanceof FaultInfoException) {
             try {
                 Method method = cause.getClass().getMethod("getFaultInfo", new Class[0]);
                 return method.invoke(cause, new Object[0]);
