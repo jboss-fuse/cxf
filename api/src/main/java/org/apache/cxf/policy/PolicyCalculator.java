@@ -16,18 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.policy;
 
-package minimalosgi;
+import javax.xml.namespace.QName;
 
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.core.Application;
+import org.apache.cxf.message.Message;
 
-public class SampleApplication extends Application {
-    @Override
-    public Set<Class<?>> getClasses() {
-        Set<Class<?>> s = new HashSet<Class<?>>();
-        s.add(SampleResource.class);
-        return s;
-    }
+public interface PolicyCalculator<T> {
+    Class<T> getDataClass();
+    
+    QName getDataClassName();
+    
+    T intersect(T policy1, T policy2);
+
+    boolean isAsserted(Message message, T policy, T refPolicy);
 }

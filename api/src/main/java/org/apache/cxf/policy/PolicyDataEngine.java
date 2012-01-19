@@ -16,18 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.policy;
 
-package minimalosgi;
+import org.apache.cxf.message.Message;
+import org.apache.cxf.service.model.EndpointInfo;
+import org.apache.cxf.transport.Conduit;
+import org.apache.cxf.transport.Destination;
 
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.core.Application;
+public interface PolicyDataEngine {
+    <T> T getPolicy(Message message, T confPolicy, PolicyCalculator<T> intersector);
 
-public class SampleApplication extends Application {
-    @Override
-    public Set<Class<?>> getClasses() {
-        Set<Class<?>> s = new HashSet<Class<?>>();
-        s.add(SampleResource.class);
-        return s;
-    }
+    <T> T getClientEndpointPolicy(EndpointInfo ei, Conduit c, PolicyCalculator<T> policyCalculator);
+
+    <T> T getServerEndpointPolicy(EndpointInfo ei, Destination d, PolicyCalculator<T> policyCalculator);
+
+    <T> void assertMessage(Message message, T confPol, PolicyCalculator<T> policyCalculator);
 }
