@@ -345,11 +345,18 @@ public class JSONProvider extends AbstractJAXBProvider  {
             } else {
                 qname = getCollectionWrapperQName(actualClass, genericType, firstObj, false);
             }
-            if (qname.getNamespaceURI().length() > 0) {
-                startTag = "{\"ns1." + qname.getLocalPart() + "\":[";
-            } else {
-                startTag = "{\"" + qname.getLocalPart() + "\":[";
+            String prefix = "";
+            if (!ignoreNamespaces) {
+                if (namespaceMap.containsKey(qname.getNamespaceURI())) {
+                    prefix = namespaceMap.get(qname.getNamespaceURI());
+                    if (prefix.length() > 0) {
+                        prefix += ".";
+                    }
+                } else if (qname.getNamespaceURI().length() > 0) {
+                    prefix = "ns1.";
+                }
             }
+            startTag = "{\"" + prefix + qname.getLocalPart() + "\":[";
             endTag = "]}";
         } else if (serializeAsArray) {
             startTag = "[";
@@ -402,11 +409,13 @@ public class JSONProvider extends AbstractJAXBProvider  {
     protected XMLStreamWriter createWriter(Object actualObject, Class<?> actualClass, 
         Type genericType, String enc, OutputStream os, boolean isCollection) throws Exception {
         
+        QName qname = getQName(actualClass, genericType, actualObject, true);
+        if (ignoreNamespaces && (isCollection  || dropRootElement)) {        
+            qname = new QName(qname.getLocalPart());
+        }
         if (BADGER_FISH_CONVENTION.equals(convention)) {
             return JSONUtils.createBadgerFishWriter(os);
         }
-        
-        QName qname = getQName(actualClass, genericType, actualObject, true);
         
         Configuration config = 
             JSONUtils.createConfiguration(namespaceMap, 

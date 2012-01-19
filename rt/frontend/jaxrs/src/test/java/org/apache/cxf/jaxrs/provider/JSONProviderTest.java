@@ -267,6 +267,22 @@ public class JSONProviderTest extends Assert {
     }
     
     @Test
+    public void testWriteToSingleTag2NoNs() throws Exception {
+        JSONProvider p = new JSONProvider();
+        p.setIgnoreNamespaces(true);
+        TagVO2 tag = createTag2("a", "b");
+        
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        
+        p.writeTo(tag, TagVO2.class, TagVO2.class, TagVO2.class.getAnnotations(), 
+                  MediaType.APPLICATION_JSON_TYPE, new MetadataMap<String, Object>(), os);
+        
+        String s = os.toString();
+        assertEquals("{\"thetag\":{\"group\":\"b\",\"name\":\"a\"}}", s);
+        
+    }
+    
+    @Test
     public void testWriteBookWithStringConverter() throws Exception {
         JSONProvider p = new JSONProvider();
         p.setConvertTypesToStrings(true);
@@ -335,6 +351,7 @@ public class JSONProviderTest extends Assert {
     public void testDropRootElement() throws Exception {
         JSONProvider p = new JSONProvider();
         p.setDropRootElement(true);
+        p.setIgnoreNamespaces(true);
         Map<String, String> namespaceMap = new HashMap<String, String>();
         namespaceMap.put("http://tags", "ns1");
         p.setNamespaceMap(namespaceMap);
@@ -354,24 +371,32 @@ public class JSONProviderTest extends Assert {
     public void testWriteQualifiedCollection() throws Exception {
         String data = "{\"ns1.tag\":[{\"group\":\"b\",\"name\":\"a\"}"
             + ",{\"group\":\"d\",\"name\":\"c\"}]}";
-        doWriteQualifiedCollection(false, false, data);
+        doWriteQualifiedCollection(false, false, false, data);
+    }
+    
+    @Test
+    public void testWriteQualifiedCollectionDropNs() throws Exception {
+        String data = "{\"tag\":[{\"group\":\"b\",\"name\":\"a\"}"
+            + ",{\"group\":\"d\",\"name\":\"c\"}]}";
+        doWriteQualifiedCollection(false, false, true, data);
     }
     
     @Test
     public void testWriteQualifiedCollection2() throws Exception {
         String data = "{{\"group\":\"b\",\"name\":\"a\"}"
             + ",{\"group\":\"d\",\"name\":\"c\"}}";
-        doWriteQualifiedCollection(true, false, data);
+        doWriteQualifiedCollection(true, false, false, data);
     }
     
     @Test
     public void testWriteQualifiedCollection3() throws Exception {
         String data = "[{\"group\":\"b\",\"name\":\"a\"}"
             + ",{\"group\":\"d\",\"name\":\"c\"}]";
-        doWriteQualifiedCollection(true, true, data);
+        doWriteQualifiedCollection(true, true, false, data);
     }
     
-    public void doWriteQualifiedCollection(boolean drop, boolean serializeAsArray, String data) 
+    public void doWriteQualifiedCollection(boolean drop, boolean serializeAsArray, 
+                                           boolean ignoreNamespaces, String data) 
         throws Exception {
         JSONProvider p = new JSONProvider();
         p.setCollectionWrapperName("{http://tags}tag");
@@ -380,6 +405,8 @@ public class JSONProviderTest extends Assert {
         Map<String, String> namespaceMap = new HashMap<String, String>();
         namespaceMap.put("http://tags", "ns1");
         p.setNamespaceMap(namespaceMap);
+        p.setIgnoreNamespaces(ignoreNamespaces);
+        
         List<TagVO2> tags = new ArrayList<TagVO2>();
         tags.add(createTag2("a", "b"));
         tags.add(createTag2("c", "d"));
@@ -512,6 +539,7 @@ public class JSONProviderTest extends Assert {
                   MediaType.APPLICATION_JSON_TYPE, new MetadataMap<String, Object>(), os);
         
         String s = os.toString();
+        System.out.println(s);
         assertEquals("{\"ns1.thetag\":{\"group\":\"b\",\"name\":\"a\"}}", s);
         
     }
