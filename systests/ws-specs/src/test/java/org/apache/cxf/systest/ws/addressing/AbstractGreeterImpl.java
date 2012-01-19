@@ -51,22 +51,30 @@ public abstract class AbstractGreeterImpl implements Greeter {
      */
     @Resource
     private WebServiceContext context;
-
+    private boolean quiet = false;
     
     public AbstractGreeterImpl() {
+    }
+    
+    public AbstractGreeterImpl(boolean q) {
+        quiet = q;
     }
 
 
     public String greetMe(String me) {
-        System.out.println("\n\n*** GreetMe called with: " + me + "***\n\n");
+        if (!quiet) {
+            System.out.println("\n\n*** GreetMe called with: " + me + "***\n\n");
+        }
         verifyMAPs();
         return "Hello " + me;
     }
 
     public String greetMeLater(long delay) {
-        System.out.println("\n\n*** GreetMeLater called with: " + delay
+        if (!quiet) {
+            System.out.println("\n\n*** GreetMeLater called with: " + delay
                            + " at: " + new Date().toString()
                            + "***\n\n");
+        }
         if (delay > 0) {
             try {
                 Thread.sleep(delay);
@@ -79,7 +87,9 @@ public abstract class AbstractGreeterImpl implements Greeter {
     }
 
     public void greetMeOneWay(String requestType) {   
-        System.out.println("\n\n*** GreetMeOneWay called with: " + requestType + "***\n\n");
+        if (!quiet) {
+            System.out.println("\n\n*** GreetMeOneWay called with: " + requestType + "***\n\n");
+        }
         verifyMAPs();
     }
 
@@ -139,15 +149,6 @@ public abstract class AbstractGreeterImpl implements Greeter {
         /*not called */
     }
     
-    public Future<?> testDocLitFaultAsync(String faultType, AsyncHandler ah) {  
-        return null; 
-        /*not called */
-    }
-    
-    public Future<?> testDocLitBareAsync(String bare, AsyncHandler ah) {
-        return null;
-        /* not called */
-    }
     
     public Response<BareDocumentResponse> testDocLitBareAsync(String bare) {
         return null;
@@ -185,7 +186,6 @@ public abstract class AbstractGreeterImpl implements Greeter {
     }
 
     public String testNillable(String nillElem, int intElem) {
-        // TODO Auto-generated method stub
         return null;
     }
 
@@ -199,5 +199,9 @@ public abstract class AbstractGreeterImpl implements Greeter {
                                        AsyncHandler<TestNillableResponse> asyncHandler) {
         return null;
     }
-    
+    public Future<?> testDocLitFaultAsync(String faultType,
+                                          AsyncHandler<TestDocLitFaultResponse> asyncHandler) {
+        return null;
+    }
+
 }
