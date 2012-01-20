@@ -16,32 +16,32 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.rs.security.oauth.data;
 
-import java.util.Collections;
-import java.util.List;
+package org.apache.cxf.systest.ws.policy.server;
 
-/**
- * Represents a user alias or login name which AuthorizationService
- * may capture after the end user approved a given third party request
- */
-public class UserSubject {
-    
-    private String login;
-    private List<String> roles;
-    
-    public UserSubject(String login, List<String> roles) {
-        this.login = login;
-        this.roles = roles;
-    }
-    
-    public String getLogin() {
-        return login;
+import java.net.URL;
+
+import org.apache.cxf.Bus;
+import org.apache.cxf.BusFactory;
+import org.apache.cxf.bus.spring.SpringBusFactory;
+import org.apache.cxf.testutil.common.AbstractBusTestServerBase;
+
+public class Server extends AbstractBusTestServerBase {
+
+    public Server() {
+
     }
 
-    public List<String> getRoles() {
-        return Collections.unmodifiableList(roles);
-    }
-    
+    protected void run()  {
+        URL busFile = Server.class.getResource("server.xml");
+        Bus busLocal = new SpringBusFactory().createBus(busFile);
+        BusFactory.setDefaultBus(busLocal);
+        setBus(busLocal);
 
+        try {
+            new Server();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
