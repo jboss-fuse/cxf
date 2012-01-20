@@ -78,6 +78,7 @@
                     </execution>
                 </executions>
             </plugin>
+<!--
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-invoker-plugin</artifactId>
@@ -104,6 +105,7 @@
               </execution>
             </executions>
           </plugin>
+-->
         </plugins>
     </build>
     
@@ -119,6 +121,12 @@
             <artifactId>cxf-rt-frontend-jaxws</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-tools-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        
         <dependency>
             <groupId>org.apache.cxf.systests.wsdl_maven</groupId>
             <artifactId>cxf-systests-java2ws</artifactId>
