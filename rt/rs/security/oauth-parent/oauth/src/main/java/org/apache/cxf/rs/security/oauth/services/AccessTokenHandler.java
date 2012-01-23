@@ -33,6 +33,7 @@ import net.oauth.OAuthProblemException;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.apache.cxf.rs.security.oauth.data.AccessToken;
+import org.apache.cxf.rs.security.oauth.data.AccessTokenRegistration;
 import org.apache.cxf.rs.security.oauth.data.RequestToken;
 import org.apache.cxf.rs.security.oauth.provider.OAuthDataProvider;
 import org.apache.cxf.rs.security.oauth.utils.OAuthConstants;
@@ -70,7 +71,9 @@ public class AccessTokenHandler {
             OAuthUtils.validateMessage(oAuthMessage, requestToken.getClient(), requestToken,
                                        dataProvider);
 
-            AccessToken accessToken = dataProvider.createAccessToken(requestToken);
+            AccessTokenRegistration reg = new AccessTokenRegistration();
+            reg.setRequestToken(requestToken);
+            AccessToken accessToken = dataProvider.createAccessToken(reg);
 
             //create response
             Map<String, Object> responseParams = new HashMap<String, Object>();
@@ -84,8 +87,11 @@ public class AccessTokenHandler {
             if (LOG.isLoggable(Level.WARNING)) {
                 LOG.log(Level.WARNING, "An OAuth-related problem: {0}", new Object[] {e.fillInStackTrace()});
             }
-            return OAuthUtils.handleException(e, e.getHttpStatusCode(),
-                String.valueOf(e.getParameters().get("realm")));
+            int code = e.getHttpStatusCode();
+            if (code == 200) {
+                code = HttpServletResponse.SC_UNAUTHORIZED; 
+            }
+            return OAuthUtils.handleException(e, code, String.valueOf(e.getParameters().get("realm")));
         } catch (Exception e) {
             if (LOG.isLoggable(Level.WARNING)) {
                 LOG.log(Level.WARNING, "Server Exception: {0}", new Object[] {e.fillInStackTrace()});

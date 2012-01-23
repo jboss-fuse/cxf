@@ -115,8 +115,11 @@ public class AuthorizationRequestHandler {
             if (LOG.isLoggable(Level.WARNING)) {
                 LOG.log(Level.WARNING, "An OAuth related problem: {0}", new Object[]{e.fillInStackTrace()});
             }
-            return OAuthUtils.handleException(e, e.getHttpStatusCode(),
-                    String.valueOf(e.getParameters().get("realm")));
+            int code = e.getHttpStatusCode();
+            if (code == 200) {
+                code = HttpServletResponse.SC_UNAUTHORIZED; 
+            }
+            return OAuthUtils.handleException(e, code, String.valueOf(e.getParameters().get("realm")));
         } catch (Exception e) {
             if (LOG.isLoggable(Level.SEVERE)) {
                 LOG.log(Level.SEVERE, "Server exception: {0}", new Object[]{e.fillInStackTrace()});
@@ -153,8 +156,7 @@ public class AuthorizationRequestHandler {
         secData.setApplicationName(token.getClient().getApplicationName()); 
         secData.setApplicationURI(token.getClient().getApplicationURI());
         
-        secData.setPermissions(
-                dataProvider.getPermissionsInfo(OAuthUtils.getAllScopes(token.getClient(), token)));
+        secData.setPermissions(OAuthUtils.getAllScopes(token.getClient(), token));
         secData.setUris(OAuthUtils.getAllUris(token.getClient(), token));
         
         return secData;
