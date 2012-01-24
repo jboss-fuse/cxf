@@ -42,7 +42,6 @@ import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.PhaseChainCache;
 import org.apache.cxf.phase.PhaseManager;
 import org.apache.cxf.service.Service;
-import org.apache.cxf.service.ServiceImpl;
 import org.apache.cxf.service.model.EndpointInfo;
 
 public class ChainInitiationObserver implements MessageObserver {
@@ -159,29 +158,32 @@ public class ChainInitiationObserver implements MessageObserver {
         if (exchange.getDestination() == null) {
             exchange.setDestination(m.getDestination());
         }
-        if (endpoint != null && (endpoint.getService() instanceof ServiceImpl)) {
+        if (endpoint != null && endpoint.getService() != null) {
 
             EndpointInfo endpointInfo = endpoint.getEndpointInfo();
 
-            QName serviceQName = endpointInfo.getService().getName();
-            exchange.put(Message.WSDL_SERVICE, serviceQName);
+            if (endpointInfo.getService() != null)  {
+                QName serviceQName = endpointInfo.getService().getName();
+                exchange.put(Message.WSDL_SERVICE, serviceQName);
 
-            QName interfaceQName = endpointInfo.getService().getInterface().getName();
-            exchange.put(Message.WSDL_INTERFACE, interfaceQName);
+                QName interfaceQName = endpointInfo.getService().getInterface().getName();
+                exchange.put(Message.WSDL_INTERFACE, interfaceQName);
 
-            QName portQName = endpointInfo.getName();
-            exchange.put(Message.WSDL_PORT, portQName);
-            URI wsdlDescription = endpointInfo.getProperty("URI", URI.class);
-            if (wsdlDescription == null) {
-                String address = endpointInfo.getAddress();
-                try {
-                    wsdlDescription = new URI(address + "?wsdl");
-                } catch (URISyntaxException e) {
-                    // do nothing
+
+                QName portQName = endpointInfo.getName();
+                exchange.put(Message.WSDL_PORT, portQName);
+                URI wsdlDescription = endpointInfo.getProperty("URI", URI.class);
+                if (wsdlDescription == null && !endpointInfo.hasProperty("URI")) {
+                    String address = endpointInfo.getAddress();
+                    try {
+                        wsdlDescription = new URI(address + "?wsdl");
+                    } catch (URISyntaxException e) {
+                        // do nothing
+                    }
+                    endpointInfo.setProperty("URI", wsdlDescription);
                 }
-                endpointInfo.setProperty("URI", wsdlDescription);
+                exchange.put(Message.WSDL_DESCRIPTION, wsdlDescription);
             }
-            exchange.put(Message.WSDL_DESCRIPTION, wsdlDescription);
         }  
     }
 
