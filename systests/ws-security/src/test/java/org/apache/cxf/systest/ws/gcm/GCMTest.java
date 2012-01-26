@@ -17,16 +17,19 @@
  * under the License.
  */
 
-package org.apache.cxf.systest.ws.policy;
+package org.apache.cxf.systest.ws.gcm;
 
 import java.net.URL;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.bus.spring.SpringBusFactory;
-import org.apache.cxf.systest.ws.policy.server.Server;
+import org.apache.cxf.systest.ws.gcm.server.Server;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 
 import org.example.contract.doubleit.DoubleItPortType;
@@ -34,16 +37,16 @@ import org.example.contract.doubleit.DoubleItPortType;
 import org.junit.BeforeClass;
 
 /**
- * This is a test for policy alternatives. The endpoint requires either a UsernameToken (insecured) OR
- * a message signature using the Asymmetric binding.
+ * A set of tests for GCM algorithms using custom WS-SecurityPolicy expressions.
  */
-public class PolicyAlternativeTest extends AbstractBusClientServerTestBase {
+public class GCMTest extends AbstractBusClientServerTestBase {
     static final String PORT = allocatePort(Server.class);
-    static final String PORT2 = allocatePort(Server.class, 2);
-    
+
     private static final String NAMESPACE = "http://www.example.org/contract/DoubleIt";
     private static final QName SERVICE_QNAME = new QName(NAMESPACE, "DoubleItService");
 
+    private boolean unrestrictedPoliciesInstalled = checkUnrestrictedPoliciesInstalled();
+    
     @BeforeClass
     public static void startServers() throws Exception {
         assertTrue(
@@ -53,79 +56,70 @@ public class PolicyAlternativeTest extends AbstractBusClientServerTestBase {
             launchServer(Server.class, true)
         );
     }
-    
-    /**
-     * The client uses the Asymmetric policy - this should succeed.
-     */
+
     @org.junit.Test
-    public void testAsymmetric() throws Exception {
-
-        SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = PolicyAlternativeTest.class.getResource("client/client.xml");
-
-        Bus bus = bf.createBus(busFile.toString());
-        SpringBusFactory.setDefaultBus(bus);
-        SpringBusFactory.setThreadDefaultBus(bus);
-
-        URL wsdl = PolicyAlternativeTest.class.getResource("DoubleItPolicy.wsdl");
-        Service service = Service.create(wsdl, SERVICE_QNAME);
-        QName portQName = new QName(NAMESPACE, "DoubleItAsymmetricPort");
-        DoubleItPortType utPort = 
-                service.getPort(portQName, DoubleItPortType.class);
-        updateAddressPort(utPort, PORT2);
-        
-        utPort.doubleIt(25);
-    }
-    
-    /**
-     * The client uses no security - this should fail.
-     */
-    @org.junit.Test
-    public void testNoSecurity() throws Exception {
-
-        SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = PolicyAlternativeTest.class.getResource("client/client.xml");
-
-        Bus bus = bf.createBus(busFile.toString());
-        SpringBusFactory.setDefaultBus(bus);
-        SpringBusFactory.setThreadDefaultBus(bus);
-
-        URL wsdl = PolicyAlternativeTest.class.getResource("DoubleItPolicy.wsdl");
-        Service service = Service.create(wsdl, SERVICE_QNAME);
-        QName portQName = new QName(NAMESPACE, "DoubleItNoSecurityPort");
-        DoubleItPortType utPort = 
-                service.getPort(portQName, DoubleItPortType.class);
-        updateAddressPort(utPort, PORT2);
-        
-        try {
-            utPort.doubleIt(25);
-            fail("Failure expected on no Security");
-        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
-            // expected
+    @org.junit.Ignore
+    public void testAESGCM128() throws Exception {
+        if (!unrestrictedPoliciesInstalled) {
+            return;
         }
-    }
-    
-    /**
-     * The client uses the UsernameToken policy - this should succeed.
-     */
-    @org.junit.Test
-    public void testUsernameToken() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = PolicyAlternativeTest.class.getResource("client/client.xml");
+        URL busFile = GCMTest.class.getResource("client/client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
         SpringBusFactory.setThreadDefaultBus(bus);
-
-        URL wsdl = PolicyAlternativeTest.class.getResource("DoubleItPolicy.wsdl");
-        Service service = Service.create(wsdl, SERVICE_QNAME);
-        QName portQName = new QName(NAMESPACE, "DoubleItUsernameTokenPort");
-        DoubleItPortType utPort = 
-                service.getPort(portQName, DoubleItPortType.class);
-        updateAddressPort(utPort, PORT2);
         
-        utPort.doubleIt(25);
+        URL wsdl = GCMTest.class.getResource("DoubleItGCM.wsdl");
+        Service service = Service.create(wsdl, SERVICE_QNAME);
+        QName portQName = new QName(NAMESPACE, "DoubleItGCM128Port");
+        DoubleItPortType gcmPort = 
+                service.getPort(portQName, DoubleItPortType.class);
+        updateAddressPort(gcmPort, PORT);
+        gcmPort.doubleIt(25);
+    }
+    
+    @org.junit.Test
+    @org.junit.Ignore
+    public void testAESGCM256() throws Exception {
+        if (!unrestrictedPoliciesInstalled) {
+            return;
+        }
+
+        SpringBusFactory bf = new SpringBusFactory();
+        URL busFile = GCMTest.class.getResource("client/client.xml");
+
+        Bus bus = bf.createBus(busFile.toString());
+        SpringBusFactory.setDefaultBus(bus);
+        SpringBusFactory.setThreadDefaultBus(bus);
+        
+        URL wsdl = GCMTest.class.getResource("DoubleItGCM.wsdl");
+        Service service = Service.create(wsdl, SERVICE_QNAME);
+        QName portQName = new QName(NAMESPACE, "DoubleItGCM256Port");
+        DoubleItPortType gcmPort = 
+                service.getPort(portQName, DoubleItPortType.class);
+        updateAddressPort(gcmPort, PORT);
+        gcmPort.doubleIt(25);
+    }
+    
+    private boolean checkUnrestrictedPoliciesInstalled() {
+        try {
+            byte[] data = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+
+            SecretKey key192 = new SecretKeySpec(
+                new byte[] {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                            0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+                            0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17},
+                            "AES");
+            Cipher c = Cipher.getInstance("AES");
+            c.init(Cipher.ENCRYPT_MODE, key192);
+            c.doFinal(data);
+            return true;
+        } catch (Exception e) {
+            //
+        }
+        return false;
     }
     
 }
