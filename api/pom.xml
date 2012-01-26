@@ -34,7 +34,6 @@
     </parent>
 
     <properties>
-        <cxf.fragment.host>org.apache.cxf.bundle</cxf.fragment.host>
         <cxf.osgi.import>
             javax.activation;version="${cxf.osgi.javax.activation.version}",
             javax.annotation;version="${cxf.osgi.javax.annotation.version}",
@@ -43,6 +42,7 @@
             org.apache.commons.lang*;resolution:=optional;version="${cxf.osgi.commons.lang.version}",
             javax.resource*;resolution:=optional
         </cxf.osgi.import>
+        <cxf.osgi.dynamic.import>org.apache.cxf.bus</cxf.osgi.dynamic.import>
     </properties>
 
     <dependencies>
@@ -78,6 +78,15 @@
             <groupId>org.apache.ws.xmlschema</groupId>
             <artifactId>xmlschema-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.geronimo.specs</groupId>
+            <artifactId>geronimo-javamail_1.4_spec</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.xml.fastinfoset</groupId>
+            <artifactId>FastInfoset</artifactId>
+            <optional>true</optional>
+        </dependency>
 
         <dependency>
             <groupId>com.sun.xml.bind</groupId>
@@ -107,16 +116,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <extensions>true</extensions>
-                <configuration>
-                    <instructions>
-                        <Fragment-Host></Fragment-Host>
-                    </instructions>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-xjc-plugin</artifactId>
