@@ -19,11 +19,9 @@
 
 package org.apache.cxf.rs.security.oauth.provider;
 
-import java.util.List;
-
 import org.apache.cxf.rs.security.oauth.data.AccessToken;
+import org.apache.cxf.rs.security.oauth.data.AccessTokenRegistration;
 import org.apache.cxf.rs.security.oauth.data.Client;
-import org.apache.cxf.rs.security.oauth.data.OAuthPermission;
 import org.apache.cxf.rs.security.oauth.data.RequestToken;
 import org.apache.cxf.rs.security.oauth.data.RequestTokenRegistration;
 import org.apache.cxf.rs.security.oauth.data.Token;
@@ -76,11 +74,12 @@ public interface OAuthDataProvider {
     
     /**
      * Creates a new {@link AccessToken}
-     * @param requestToken the request token approved by the resource owner
+     * @param reg {@link AccessTokenRegistration} instance which captures 
+     *        a request token approved by the resource owner
      * @return new AccessToken
      * @throws OAuthServiceException
      */
-    AccessToken createAccessToken(RequestToken requestToken) throws OAuthServiceException;
+    AccessToken createAccessToken(AccessTokenRegistration reg) throws OAuthServiceException;
 
     /**
      * Returns the {@link AccessToken}
@@ -97,12 +96,4 @@ public interface OAuthDataProvider {
      */
     void removeToken(Token token) throws OAuthServiceException;
     
-    /**
-     * Returns the list of {@link OAuthPermission} beans describing opaque
-     * permissions (aka scopes) such as "read_data", etc
-     * @param requestPermissions the list of opaque scopes/permissions 
-     * @see OAuthPermission 
-     * @return permissions
-     */
-    List<OAuthPermission> getPermissionsInfo(List<String> requestPermissions);
 }

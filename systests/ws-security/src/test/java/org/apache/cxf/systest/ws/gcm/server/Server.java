@@ -17,36 +17,31 @@
  * under the License.
  */
 
-package org.apache.cxf.systest.ws.addr_fromjava.server;
+package org.apache.cxf.systest.ws.gcm.server;
 
-import org.apache.cxf.jaxws.EndpointImpl;
+import java.net.URL;
+
+import org.apache.cxf.Bus;
+import org.apache.cxf.BusFactory;
+import org.apache.cxf.bus.spring.SpringBusFactory;
 import org.apache.cxf.testutil.common.AbstractBusTestServerBase;
-import org.apache.cxf.ws.addressing.WSAddressingFeature;
 
 public class Server extends AbstractBusTestServerBase {
-    static final String PORT = allocatePort(Server.class);
-    
-    protected void run() {
-        Object implementor = new AddNumberImpl();
-        String address = "http://localhost:" + PORT + "/AddNumberImplPort";
-        EndpointImpl ep = new EndpointImpl(implementor);
-        ep.getFeatures().add(new WSAddressingFeature());
-        ep.publish(address);
-        
-        ep = new EndpointImpl(new AddNumberImplNoAddr());
-        ep.publish(address + "-noaddr");
-        
+
+    public Server() {
+
     }
 
-    public static void main(String[] args) {
+    protected void run()  {
+        URL busFile = Server.class.getResource("server.xml");
+        Bus busLocal = new SpringBusFactory().createBus(busFile);
+        BusFactory.setDefaultBus(busLocal);
+        setBus(busLocal);
+
         try {
-            Server s = new Server();
-            s.start();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            System.exit(-1);
-        } finally {
-            System.out.println("done!");
+            new Server();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

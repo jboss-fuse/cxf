@@ -51,6 +51,7 @@ import org.apache.cxf.jaxrs.impl.MetadataMap;
 import org.apache.cxf.jaxrs.model.URITemplate;
 import org.apache.cxf.jaxrs.utils.FormUtils;
 import org.apache.cxf.rs.security.oauth.data.Client;
+import org.apache.cxf.rs.security.oauth.data.OAuthPermission;
 import org.apache.cxf.rs.security.oauth.data.RequestToken;
 import org.apache.cxf.rs.security.oauth.data.Token;
 import org.apache.cxf.rs.security.oauth.provider.DefaultOAuthValidator;
@@ -82,22 +83,13 @@ public final class OAuthUtils {
         return false;
     }
     
-    public static List<String> getAllScopes(Client client, Token token) {
-        List<String> scopes = new LinkedList<String>();
+    public static List<OAuthPermission> getAllScopes(Client client, Token token) {
+        List<OAuthPermission> scopes = new LinkedList<OAuthPermission>();
         if (token != null) {
             scopes.addAll(token.getScopes());
         }
         scopes.addAll(client.getScopes());
         return scopes;
-    }
-    
-    public static List<String> getAllUris(Client client, Token token) {
-        List<String> uris = new LinkedList<String>();
-        if (token != null) {
-            uris.addAll(token.getUris());
-        }
-        uris.addAll(client.getUris());
-        return uris;
     }
     
     public static void validateMessage(OAuthMessage oAuthMessage, 
@@ -201,7 +193,7 @@ public final class OAuthUtils {
                 scopeList.add(token);
             }
         }
-        if (defaultValue != null) {
+        if (defaultValue != null && !scopeList.contains(defaultValue)) {
             scopeList.add(defaultValue);
         }
         return scopeList;

@@ -20,6 +20,7 @@
 package demo.oauth.server.controllers;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -30,6 +31,7 @@ import net.oauth.OAuthProblemException;
 
 import org.apache.cxf.jaxrs.impl.MetadataMap;
 import org.apache.cxf.rs.security.oauth.data.AccessToken;
+import org.apache.cxf.rs.security.oauth.data.AccessTokenRegistration;
 import org.apache.cxf.rs.security.oauth.data.Client;
 import org.apache.cxf.rs.security.oauth.data.OAuthPermission;
 import org.apache.cxf.rs.security.oauth.data.RequestToken;
@@ -52,9 +54,10 @@ public class MemoryOAuthDataProvider implements OAuthDataProvider {
     static {
         AVAILABLE_PERMISSIONS
                 .put("read_info", new OAuthPermission("read_info", "Read your personal information",
-                        "ROLE_USER"));
+                                                      Collections.singletonList("ROLE_USER")));
         AVAILABLE_PERMISSIONS.put("modify_info",
-                new OAuthPermission("modify_info", "Modify your personal information", "ROLE_ADMIN"));
+                new OAuthPermission("modify_info", "Modify your personal information", 
+                                    Collections.singletonList("ROLE_ADMIN")));
     }
 
     protected ConcurrentHashMap<String, Client> clientAuthInfo = new ConcurrentHashMap<String, Client>();
@@ -72,7 +75,7 @@ public class MemoryOAuthDataProvider implements OAuthDataProvider {
         clientAuthInfo.put(CLIENT_ID, client);
     }
     
-    public List<OAuthPermission> getPermissionsInfo(List<String> requestPermissions) {
+    private List<OAuthPermission> getPermissionsInfo(List<String> requestPermissions) {
         List<OAuthPermission> permissions = new ArrayList<OAuthPermission>();
         for (String requestScope : requestPermissions) {
             OAuthPermission oAuthPermission = AVAILABLE_PERMISSIONS.get(requestScope);
@@ -92,8 +95,7 @@ public class MemoryOAuthDataProvider implements OAuthDataProvider {
 
         RequestToken reqToken = new RequestToken(reg.getClient(), token, tokenSecret, 
                                                  reg.getLifetime(), reg.getIssuedAt());
-        reqToken.setScopes(reg.getScopes());
-        reqToken.setUris(reg.getUris());
+        reqToken.setScopes(getPermissionsInfo(reg.getScopes()));
         reqToken.setCallback(reg.getCallback());
         oauthTokens.put(token, reqToken);
         return reqToken;
@@ -114,8 +116,10 @@ public class MemoryOAuthDataProvider implements OAuthDataProvider {
         return requestToken.getVerifier();
     }
 
-    public AccessToken createAccessToken(RequestToken requestToken) throws
-            OAuthServiceException {
+    public AccessToken createAccessToken(AccessTokenRegistration reg) throws
+        OAuthServiceException {
+
+        RequestToken requestToken = reg.getRequestToken();
 
         Client client = requestToken.getClient();
         requestToken = getRequestToken(requestToken.getTokenKey());
@@ -127,8 +131,7 @@ public class MemoryOAuthDataProvider implements OAuthDataProvider {
             tokenSecretString, 3600, System.currentTimeMillis() / 1000);
 
         accessToken.setScopes(requestToken.getScopes());
-        accessToken.setUris(requestToken.getUris());
-
+ 
         synchronized (oauthTokens) {
             oauthTokens.remove(requestToken.getTokenKey());
             oauthTokens.put(accessTokenString, accessToken);

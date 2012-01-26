@@ -31,8 +31,7 @@ public class Client {
     
     private String loginName;
         
-    private List<String> uris = Collections.emptyList();
-    private List<String> scopes = Collections.emptyList();
+    private List<OAuthPermission> scopes = Collections.emptyList();
 
     public Client(String consumerId, 
                   String secretKey,
@@ -120,7 +119,7 @@ public class Client {
      * Returns a list of opaque permissions/scopes
      * @return the scopes
      */
-    public List<String> getScopes() {
+    public List<OAuthPermission> getScopes() {
         return scopes;
     }
 
@@ -128,24 +127,8 @@ public class Client {
      * Sets a list of opaque permissions/scopes
      * @param scopes the scopes
      */
-    public void setScopes(List<String> scopes) {
+    public void setScopes(List<OAuthPermission> scopes) {
         this.scopes = scopes;
-    }
-    
-    /**
-     * Returns a list of relative URIs the consumer wishes to access
-     * @return the uris
-     */
-    public List<String> getUris() {
-        return uris;
-    }
-
-    /**
-     * Sets a list of relative URIs the consumer wishes to access
-     * @param uris the uris
-     */
-    public void setUris(List<String> uris) {
-        this.uris = uris;
     }
     
     @Override
