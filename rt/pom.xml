@@ -36,7 +36,6 @@
         <module>core</module>
         <module>transports/local</module>
         <module>databinding/jaxb</module>
-        <module>databinding/jaxb-adapter</module>
         <module>databinding/xmlbeans</module>
         <module>databinding/aegis</module>
         <module>databinding/sdo</module>
@@ -55,6 +54,7 @@
         <module>ws/rm</module>
         <module>ws/security</module>
         <module>ws/mex</module>
+        <module>rs/extensions/providers</module>
         <module>rs/security/xml</module>
         <module>rs/security/oauth-parent</module>
         <module>rs/security/cors</module>
