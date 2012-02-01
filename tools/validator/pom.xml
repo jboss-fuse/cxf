@@ -45,7 +45,7 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>asm</groupId>
+            <groupId>org.ow2.asm</groupId>
             <artifactId>asm</artifactId>
             <scope>test</scope>
         </dependency>
@@ -67,14 +67,8 @@
         </dependency>
 
         <dependency>
-	  <groupId>org.apache.ws.xmlschema</groupId>
-	  <artifactId>xmlschema-core</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-common-utilities</artifactId>
-            <version>${project.version}</version>
+           <groupId>org.apache.ws.xmlschema</groupId>
+           <artifactId>xmlschema-core</artifactId>
         </dependency>
 
         <dependency>

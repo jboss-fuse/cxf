@@ -90,7 +90,7 @@ public class HTTPTransportFactory
         this(b, null);
     }
     public HTTPTransportFactory(Bus b, DestinationRegistry registry) {
-        super(DEFAULT_NAMESPACES, b);
+        super(DEFAULT_NAMESPACES, null);
         if (registry == null && b != null) {
             registry = b.getExtension(DestinationRegistry.class);
         }
@@ -98,6 +98,8 @@ public class HTTPTransportFactory
             registry = new DestinationRegistryImpl();
         }
         this.registry = registry;
+        bus = b;
+        register();
     }
 
     public HTTPTransportFactory(DestinationRegistry registry) {
@@ -250,6 +252,10 @@ public class HTTPTransportFactory
         String address = conduit.getAddress();
         if (address != null && address.indexOf('?') != -1) {
             address = address.substring(0, address.indexOf('?'));
+        }
+        HTTPConduitConfigurer c1 = bus.getExtension(HTTPConduitConfigurer.class);
+        if (c1 != null) {
+            c1.configure(conduit.getBeanName(), address, conduit);
         }
         configure(conduit, conduit.getBeanName(), address);
         conduit.finalizeConfig();

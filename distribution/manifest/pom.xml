@@ -46,11 +46,6 @@
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-common-utilities</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>cxf-tools-common</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -194,12 +189,6 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-rt-bindings-http</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>cxf-rt-databinding-aegis</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -303,7 +292,7 @@
             <artifactId>jettison</artifactId>
         </dependency>
         <dependency>
-            <groupId>asm</groupId>
+            <groupId>org.ow2.asm</groupId>
             <artifactId>asm</artifactId>
         </dependency>
         <dependency>
