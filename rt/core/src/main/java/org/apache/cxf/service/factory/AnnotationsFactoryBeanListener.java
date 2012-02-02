@@ -35,11 +35,9 @@ import org.apache.cxf.annotations.SchemaValidation;
 import org.apache.cxf.annotations.WSDLDocumentation;
 import org.apache.cxf.annotations.WSDLDocumentation.Placement;
 import org.apache.cxf.annotations.WSDLDocumentationCollection;
-import org.apache.cxf.common.classloader.ClassLoaderUtils;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.endpoint.Server;
-import org.apache.cxf.feature.AbstractFeature;
 import org.apache.cxf.feature.LoggingFeature;
 import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.interceptor.FIStaxInInterceptor;
@@ -60,6 +58,7 @@ import org.apache.cxf.service.model.BindingOperationInfo;
 import org.apache.cxf.service.model.FaultInfo;
 import org.apache.cxf.service.model.InterfaceInfo;
 import org.apache.cxf.service.model.OperationInfo;
+import org.apache.cxf.transport.common.gzip.GZIPFeature;
 
 /**
  * 
@@ -247,13 +246,8 @@ public class AnnotationsFactoryBeanListener implements FactoryBeanListener {
     private void addGZipSupport(Endpoint ep, Bus bus, GZIP annotation) {
         if (annotation != null) {
             try {
-                Class<?> cls = ClassLoaderUtils
-                    .loadClass("org.apache.cxf.transport.common.gzip.GZIPFeature",
-                               this.getClass());
-                
-                AbstractFeature feature = (AbstractFeature)cls.newInstance();
-                cls.getMethod("setThreshold", new Class[] {Integer.TYPE})
-                    .invoke(feature, annotation.threshold());
+                GZIPFeature feature = new GZIPFeature();
+                feature.setThreshold(annotation.threshold());
                 feature.initialize(ep, bus);
             } catch (Exception e) {
                 //ignore - just assume it's an unsupported/unknown annotation
