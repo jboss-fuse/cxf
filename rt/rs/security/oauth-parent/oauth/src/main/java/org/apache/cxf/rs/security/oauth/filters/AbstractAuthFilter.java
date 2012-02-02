@@ -56,7 +56,6 @@ import org.apache.cxf.security.SecurityContext;
  * Base OAuth filter which can be used to protect end-user endpoints
  */
 public class AbstractAuthFilter {
-    protected static final String USE_USER_SUBJECT = "org.apache.cxf.rs.security.oauth.use_user_subject";
     private static final Logger LOG = LogUtils.getL7dLogger(AbstractAuthFilter.class);
     private static final String[] REQUIRED_PARAMETERS = 
         new String[] {
@@ -74,7 +73,6 @@ public class AbstractAuthFilter {
         ALLOWED_OAUTH_PARAMETERS.addAll(Arrays.asList(REQUIRED_PARAMETERS));
         ALLOWED_OAUTH_PARAMETERS.add(OAuth.OAUTH_VERSION);
         ALLOWED_OAUTH_PARAMETERS.add(OAuthConstants.X_OAUTH_SCOPE);
-        ALLOWED_OAUTH_PARAMETERS.add(OAuthConstants.X_OAUTH_URI);
         ALLOWED_OAUTH_PARAMETERS.add(OAuthConstants.OAUTH_CONSUMER_SECRET);
     }
     
@@ -166,17 +164,20 @@ public class AbstractAuthFilter {
             } else {
                 OAuthUtils.validateMessage(oAuthMessage, client, null, dataProvider);
             }
-            
+            accessToken = client.getPreAuthorizedToken();
+            if (accessToken == null || !accessToken.isPreAuthorized()) {
+                LOG.warning("Preauthorized access token is unavailable");
+                throw new OAuthProblemException(OAuth.Problems.TOKEN_REJECTED);
+            }
         }
 
-        List<OAuthPermission> permissions = OAuthUtils.getAllScopes(client, accessToken);
+        List<OAuthPermission> permissions = accessToken.getScopes();
         List<OAuthPermission> matchingPermissions = new ArrayList<OAuthPermission>();
         
         for (OAuthPermission perm : permissions) {
             boolean uriOK = checkRequestURI(req, perm.getUris());
             boolean verbOK = checkHttpVerb(req, perm.getHttpVerbs());
-            boolean accessOK = checkNoAccessTokenIsAllowed(client, accessToken, perm);
-            if (uriOK && verbOK && accessOK) {
+            if (uriOK && verbOK) {
                 matchingPermissions.add(perm);
             }
         }
@@ -186,37 +187,13 @@ public class AbstractAuthFilter {
             LOG.warning(message);
             throw new OAuthProblemException(message);
         }
-        
-        String subjectName = null;
-        for (OAuthPermission perm : matchingPermissions) {
-            String currentName = perm.getSubjectName();
-            if (subjectName != null 
-                && (currentName == null || !subjectName.equals(currentName))) {
-                String message = "Inconsistent subject name";
-                LOG.warning(message);
-                throw new OAuthProblemException(message);    
-            }
-            subjectName = currentName;
-        }
-        
-        
-        return new OAuthInfo(client, accessToken, matchingPermissions);
+        return new OAuthInfo(accessToken, matchingPermissions);
         
     }
     
     protected AuthorizationPolicy getAuthorizationPolicy(String authorizationHeader) {
         Message m = PhaseInterceptorChain.getCurrentMessage();
         return m != null ? (AuthorizationPolicy)m.get(AuthorizationPolicy.class) : null;
-    }
-    
-    protected boolean checkNoAccessTokenIsAllowed(Client client, AccessToken token,
-            OAuthPermission perm) {
-        if (token == null && perm.isAuthorizationKeyRequired()) {
-            String message = "Token is expected";
-            LOG.fine(message);
-            return false;
-        }
-        return true;
     }
     
     protected boolean checkHttpVerb(HttpServletRequest req, List<String> verbs) {
@@ -256,22 +233,15 @@ public class AbstractAuthFilter {
         // demo shipped in the distribution; needs to be removed.
         request.setAttribute("oauth_authorities", info.getRoles());
         
-        UserSubject subject = info.getToken() != null ? info.getToken().getSubject() : null;
-        if (subject == null) {
-            for (OAuthPermission perm : info.getPermissions()) {
-                if (perm.getSubjectName() != null) {
-                    subject = new UserSubject(perm.getSubjectName(), perm.getRoles());
-                }
-                break;
-            }
-        }
+        UserSubject subject = info.getToken().getSubject();
+
         final UserSubject theSubject = subject;
         return new SecurityContext() {
 
             public Principal getUserPrincipal() {
                 String login = AbstractAuthFilter.this.useUserSubject 
                     ? (theSubject != null ? theSubject.getLogin() : null)
-                    : info.getClient().getLoginName();  
+                    : info.getToken().getClient().getLoginName();  
                 return new SimplePrincipal(login);
             }
 
@@ -293,7 +263,7 @@ public class AbstractAuthFilter {
         if (info.getToken() != null) {
             subject = info.getToken().getSubject();
         }
-        return new OAuthContext(subject, info.getPermissions());
+        return new OAuthContext(subject, info.getMatchedPermissions());
     }
     
     private static class CustomHttpServletWrapper extends HttpServletRequestWrapper {
