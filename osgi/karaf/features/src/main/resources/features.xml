@@ -98,9 +98,9 @@
             org.ops4j.pax.url.war.importPaxLoggingPackages=true
         </config>
         <feature>http</feature>
-        <bundle>mvn:org.ops4j.pax.web/pax-web-extender-war/1.0.7</bundle>
-        <bundle>mvn:org.ops4j.pax.web/pax-web-extender-whiteboard/1.0.7</bundle>
-        <bundle>mvn:org.ops4j.pax.web/pax-web-deployer/1.0.7</bundle>
+        <bundle>mvn:org.ops4j.pax.web/pax-web-extender-war/1.0.8</bundle>
+        <bundle>mvn:org.ops4j.pax.web/pax-web-extender-whiteboard/1.0.8</bundle>
+        <bundle>mvn:org.ops4j.pax.web/pax-web-deployer/1.0.8</bundle>
         <bundle>mvn:org.ops4j.pax.url/pax-url-war/1.2.8</bundle>
     </feature>
 
