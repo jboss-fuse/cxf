@@ -458,6 +458,18 @@ public class JAXRSSoapBookTest extends AbstractBusClientServerTestBase {
     }
     
     @Test
+    public void testGetBookSubresourceClientWithContext() throws Exception {
+        
+        String baseAddress = "http://localhost:" + PORT + "/test/services/rest";
+        BookStoreJaxrsJaxws proxy = JAXRSClientFactory.create(baseAddress,
+                                                                  BookStoreJaxrsJaxws.class);
+        BookSubresource bs = proxy.getBookSubresource("125");
+        Book b = bs.getTheBookWithContext(null);
+        assertEquals(125, b.getId());
+        assertEquals("CXF in Action", b.getName());
+    }
+    
+    @Test
     public void testGetBookSubresourceClientNoProduces() throws Exception {
         
         String baseAddress = "http://localhost:" + PORT + "/test/services/rest";
