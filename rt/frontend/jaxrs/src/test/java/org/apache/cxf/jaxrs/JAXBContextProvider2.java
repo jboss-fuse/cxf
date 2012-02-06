@@ -16,35 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+ 
+package org.apache.cxf.jaxrs;
 
-package org.apache.cxf.clustering;
+import javax.ws.rs.Produces;
+import javax.ws.rs.ext.ContextResolver;
+import javax.xml.bind.JAXBContext;
 
-import java.util.List;
-import java.util.Random;
+@Produces("text/xml+b")
+public class JAXBContextProvider2 implements ContextResolver<JAXBContext> {
 
-/**
- * Failover strategy based on a randomized walk through the
- * static cluster represented by multiple endpoints associated 
- * with the same service instance.
- */
-public class RandomStrategy extends AbstractStaticFailoverStrategy {
-    
-    private Random random;
-    
-    /**
-     * Constructor.
-     */
-    public RandomStrategy() {
-        random = new Random();
+    public JAXBContext getContext(Class<?> type) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
-    /**
-     * Get next alternate endpoint.
-     * 
-     * @param alternates non-empty List of alternate endpoints 
-     * @return
-     */
-    protected <T> T getNextAlternate(List<T> alternates) {
-        return alternates.remove(random.nextInt(alternates.size()));
-    }
 }

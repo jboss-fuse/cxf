@@ -16,25 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.endpoint;
 
-package org.apache.cxf.clustering;
-
-import java.util.List;
-
-/**
- * Failover strategy based on a sequential walk through the
- * static cluster represented by multiple endpoints associated 
- * with the same service instance.
- */
-public class SequentialStrategy extends AbstractStaticFailoverStrategy {
-
-    /**
-     * Get next alternate endpoint.
-     * 
-     * @param alternates non-empty List of alternate endpoints 
-     * @return
-     */
-    protected <T> T getNextAlternate(List<T> alternates) {
-        return alternates.remove(0);
-    }
+public interface ConduitSelectorHolder {
+    ConduitSelector getConduitSelector();
+    
+    void setConduitSelector(ConduitSelector conduitSelector);
 }
