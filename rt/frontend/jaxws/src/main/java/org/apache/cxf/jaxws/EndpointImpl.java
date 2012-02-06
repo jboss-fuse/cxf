@@ -53,6 +53,7 @@ import org.apache.cxf.common.classloader.ClassLoaderUtils.ClassLoaderHolder;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.ClassHelper;
 import org.apache.cxf.common.util.ModCountCopyOnWriteArrayList;
+import org.apache.cxf.common.util.SystemPropertyAction;
 import org.apache.cxf.configuration.Configurable;
 import org.apache.cxf.configuration.Configurer;
 import org.apache.cxf.databinding.DataBinding;
@@ -79,6 +80,9 @@ public class EndpointImpl extends javax.xml.ws.Endpoint
     public static final String CHECK_PUBLISH_ENDPOINT_PERMISSON_PROPERTY =
         "org.apache.cxf.jaxws.checkPublishEndpointPermission";
 
+    public static final String CHECK_PUBLISH_ENDPOINT_PERMISSON_PROPERTY_WITH_SECURITY_MANAGER =
+        "org.apache.cxf.jaxws.checkPublishEndpointPermissionWithSecurityManager";
+    
     private static final WebServicePermission PUBLISH_PERMISSION =
         new WebServicePermission("publishEndpoint");
     private static final Logger LOG = LogUtils.getL7dLogger(EndpointImpl.class);
@@ -492,7 +496,12 @@ public class EndpointImpl extends javax.xml.ws.Endpoint
     
     protected void checkPublishPermission() {
         SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
+        boolean checkPublishEndpointPermissionWithSecurityManager
+            = Boolean.valueOf(
+                      SystemPropertyAction.getProperty(
+                                         CHECK_PUBLISH_ENDPOINT_PERMISSON_PROPERTY_WITH_SECURITY_MANAGER, 
+                                         "true"));
+        if (checkPublishEndpointPermissionWithSecurityManager && sm != null) {
             sm.checkPermission(PUBLISH_PERMISSION);
         } else if (Boolean.getBoolean(CHECK_PUBLISH_ENDPOINT_PERMISSON_PROPERTY)) {
             AccessController.checkPermission(PUBLISH_PERMISSION);
