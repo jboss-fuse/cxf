@@ -391,7 +391,6 @@ public class ProviderFactoryTest extends Assert {
     }
     
     @Test
-    @Ignore
     public void testExceptionMappersHierarchyWithGenerics() throws Exception {
         ProviderFactory pf = ProviderFactory.getInstance();
         RuntimeExceptionMapper1 exMapper1 = new RuntimeExceptionMapper1(); 
@@ -620,9 +619,9 @@ public class ProviderFactoryTest extends Assert {
         Message message = prepareMessage("text/xml+*", null);
         ContextResolver<JAXBContext> cr = pf.createContextResolver(JAXBContext.class, message);
         assertTrue(cr instanceof ProviderFactory.ContextResolverProxy);
-        assertTrue(((ProviderFactory.ContextResolverProxy)cr).getResolvers().get(0) 
+        assertTrue(((ProviderFactory.ContextResolverProxy<?>)cr).getResolvers().get(0) 
                    instanceof JAXBContextProvider);
-        assertTrue(((ProviderFactory.ContextResolverProxy)cr).getResolvers().get(1) 
+        assertTrue(((ProviderFactory.ContextResolverProxy<?>)cr).getResolvers().get(1) 
                    instanceof JAXBContextProvider2);
     }
     

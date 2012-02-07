@@ -220,7 +220,7 @@ public final class ProviderFactory {
             return candidates.get(0);
         } else {
             Collections.sort(candidates, new ClassComparator());
-            return new ContextResolverProxy(candidates);
+            return new ContextResolverProxy<T>(candidates);
         }
         
     }
@@ -881,6 +881,10 @@ public final class ProviderFactory {
     private static Type[] getGenericInterfaces(Class<?> cls) {
         if (Object.class == cls) {
             return new Type[]{};
+        }
+        Type genericSuperCls = cls.getGenericSuperclass();
+        if (genericSuperCls instanceof ParameterizedType) {
+            return new Type[]{genericSuperCls};
         }
         Type[] types = cls.getGenericInterfaces();
         if (types.length > 0) {
