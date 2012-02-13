@@ -24,6 +24,8 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,7 +47,9 @@ import net.oauth.OAuthProblemException;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.jaxrs.ext.MessageContext;
+import org.apache.cxf.rs.security.oauth.data.AuthorizationInput;
 import org.apache.cxf.rs.security.oauth.data.OAuthAuthorizationData;
+import org.apache.cxf.rs.security.oauth.data.OAuthPermission;
 import org.apache.cxf.rs.security.oauth.data.RequestToken;
 import org.apache.cxf.rs.security.oauth.data.UserSubject;
 import org.apache.cxf.rs.security.oauth.provider.DefaultOAuthValidator;
@@ -99,7 +103,32 @@ public class AuthorizationRequestHandler {
                 token.setSubject(new UserSubject(sc.getUserPrincipal() == null 
                     ? null : sc.getUserPrincipal().getName(), roleNames));
                 
-                String verifier = dataProvider.setRequestTokenVerifier(token);
+                AuthorizationInput input = new AuthorizationInput();
+                input.setToken(token);
+                 
+                Set<OAuthPermission> approvedScopesSet = new HashSet<OAuthPermission>();
+                
+                List<OAuthPermission> originalScopes = token.getScopes(); 
+                for (OAuthPermission perm : originalScopes) {
+                    String param = oAuthMessage.getParameter(perm.getPermission() + "_status");
+                    if (param != null && OAuthConstants.AUTHORIZATION_DECISION_ALLOW.equals(param)) {
+                        approvedScopesSet.add(perm);
+                    }
+                }
+                List<OAuthPermission> approvedScopes = new LinkedList<OAuthPermission>(approvedScopesSet);
+                if (approvedScopes.isEmpty()) {
+                    approvedScopes = originalScopes;
+                } else if (approvedScopes.size() < originalScopes.size()) {
+                    for (OAuthPermission perm : originalScopes) {
+                        if (perm.isDefault() && !approvedScopes.contains(perm)) {
+                            approvedScopes.add(perm);    
+                        }
+                    }
+                }
+                
+                input.setApprovedScopes(approvedScopes);
+                
+                String verifier = dataProvider.finalizeAuthorization(input);
                 queryParams.put(OAuth.OAUTH_VERIFIER, verifier);
             } else {
                 dataProvider.removeToken(token);
