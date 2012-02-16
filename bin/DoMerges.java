@@ -528,8 +528,8 @@ public class DoMerges {
         }
     }
 
-    public static List<String> getAvailableUpdates() throws Exception {
-        List<String> verList = new ArrayList<String>();
+    public static Set<String> getAvailableUpdates() throws Exception {
+        Set<String> verList = new LinkedHashSet<String>();
         Process p;
         BufferedReader reader;
         String line;
@@ -551,7 +551,7 @@ public class DoMerges {
         line = reader.readLine();
         while (line != null) {
             if (line.charAt(0) == 'r') {
-                line = line.substring(0, line.indexOf('|')).substring(1).trim();
+                line = line.substring(0, line.indexOf(' ')).substring(1).trim();
                 int ver = Integer.parseInt(line);
                 if (!merged.isInRange(ver) && !blocked.isInRange(ver)) {
                     verList.add(line);
@@ -599,7 +599,7 @@ public class DoMerges {
             String id = getGitVersion(ver);
             p = Runtime.getRuntime().exec(getCommandLine(new String[] {"git", "cherry-pick",
                                                                        "--no-commit", 
-                                                                       id, gitSource}));
+                                                                       id}));
         } else {
             p = Runtime.getRuntime().exec(getCommandLine(new String[] {"svn", "merge", "--non-interactive",
                                                                        "-c", ver, svnSource}));
@@ -653,7 +653,7 @@ public class DoMerges {
         doUpdate();
         initSvnInfo();
         
-        List<String> verList = getAvailableUpdates();
+        Set<String> verList = getAvailableUpdates();
 
         System.out.println("Merging versions (" + verList.size() + "): " + verList);
 
@@ -662,10 +662,11 @@ public class DoMerges {
         Set<Integer> ignores = new TreeSet<Integer>();
         Set<String> jiras = new TreeSet<String>();
 
-        for (int cur = 0; cur < verList.size(); cur++) {
+        int cur = 0;
+        for (String ver : verList) {
+            cur++;
             jiras.clear();
-            String ver = verList.get(cur);
-            System.out.println("Merging: " + ver + " (" + (cur + 1) + "/" + verList.size() + ")");
+            System.out.println("Merging: " + ver + " (" + cur + "/" + verList.size() + ")");
             System.out.println("http://svn.apache.org/viewvc?view=revision&revision=" + ver);
             
             String log = getLog(ver, jiras);
@@ -730,7 +731,17 @@ public class DoMerges {
         }
 
         argLine.addAll(Arrays.asList(args));
-        System.out.println("Running " + argLine + "...");
+        StringBuilder b = new StringBuilder(256);
+        for (String s : argLine) {
+            if (b.length() == 0) {
+                b.append("Running \"");
+            } else {
+                b.append(" ");
+            }
+            b.append(s);
+        }
+        b.append("\"...");
+        System.out.println(b.toString());
         return argLine.toArray(new String[argLine.size()]);
     }
 
