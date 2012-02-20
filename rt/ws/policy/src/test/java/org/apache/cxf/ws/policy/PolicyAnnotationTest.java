@@ -106,11 +106,17 @@ public class PolicyAnnotationTest extends Assert {
                   "echoIntBindingOpInputPolicy");
             check(xpu, wsdl, "/wsdl:definitions/wsdl:binding/wsdl:operation/wsdl:output",
                   "echoIntBindingOpOutputPolicy");
+            
+            
+            EndpointPolicy policy = bus.getExtension(PolicyEngine.class)
+                .getServerEndpointPolicy(s.getEndpoint().getEndpointInfo(), null);
+            assertNotNull(policy);
+            assertEquals(1, policy.getChosenAlternative().size());
         } finally {
             bus.shutdown(true);
         }
     }
-    
+
     private void check(XPathUtils xpu, Element wsdl, String path, String uri) {
         assertTrue(uri + " not found",
                    xpu.isExist("/wsdl:definitions/wsp:Policy[@wsu:Id='" + uri + "']",
