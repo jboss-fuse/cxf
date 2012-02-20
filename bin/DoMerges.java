@@ -141,6 +141,10 @@ public class DoMerges {
     static class Range implements Comparable<Range> {
         int min, max;
         
+        public Range(int s) {
+            min = s;
+            max = s;
+        }
         public Range(String s) {
             int idx = s.indexOf('-');
             if (idx == -1) {
@@ -168,7 +172,11 @@ public class DoMerges {
         }
     }
 
+
     static void waitFor(Process p) throws Exception  {
+        waitFor(p, true);
+    }
+    static void waitFor(Process p, boolean exit) throws Exception  {
         if (p.waitFor() != 0) {
             System.out.println("ERROR!");
             BufferedReader reader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
@@ -177,17 +185,22 @@ public class DoMerges {
                 System.out.println(line);
                 line = reader.readLine();
             }
-            System.exit(1);
+            if (exit) {
+                System.exit(1);
+            }
         }
     }
     static void runProcess(Process p) throws Exception {
+        runProcess(p, true);
+    }
+    static void runProcess(Process p, boolean exit) throws Exception {
         BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
         String line = reader.readLine();
         while (line != null) {
             System.out.println(line);
             line = reader.readLine();
         }
-        waitFor(p);
+        waitFor(p, exit);
     }
     
     static void initSvnInfo() throws Exception {
@@ -302,10 +315,8 @@ public class DoMerges {
             p.waitFor();
         }
     }
-    static void doCommit() throws Exception {
-        doCommit(null, null);
-    }
-    static boolean doCommit(String ver, String log) throws Exception {
+
+    static boolean doCommit(int ver, String log) throws Exception {
         while (System.in.available() > 0) {
             System.in.read();
         }
@@ -332,6 +343,8 @@ public class DoMerges {
             p = Runtime.getRuntime().exec(new String[] {"git", "commit", "-a", "-F", file.toString()});
         } else {
             p = Runtime.getRuntime().exec(new String[] {"svn", "commit", "-F", file.toString()});
+            runProcess(p);
+            p = Runtime.getRuntime().exec(new String[] {"svn", "up"});
         }
         runProcess(p);
         return true;
@@ -371,13 +384,13 @@ public class DoMerges {
         return file;
     }
     
-    private static File createLog(String ver, String log) throws Exception {
+    private static File createLog(int ver, String log) throws Exception {
         File file = File.createTempFile("domerge", ".log");
         file.deleteOnExit();
         BufferedWriter writer = new BufferedWriter(new FileWriter(file));
         BufferedReader reader = new BufferedReader(new StringReader(log));
         writer.write("Merged revisions ");
-        writer.write(ver);
+        writer.write(Integer.toString(ver));
         writer.write(" via ");
         if (isGit) {
             writer.write(" git cherry-pick from\n");
@@ -401,18 +414,18 @@ public class DoMerges {
         return file;
     }
 
-    public static void changes(String ver) throws Exception {
+    public static void changes(int ver) throws Exception {
         Process p;
         if (isGit) {
             String id = getGitVersion(ver);
             p = Runtime.getRuntime().exec(getCommandLine(new String[] {"git", "diff", id + "^", id, gitSource}));
         } else {
-            p = Runtime.getRuntime().exec(getCommandLine(new String[] {"svn", "diff", "-c", ver, svnRoot}));
+            p = Runtime.getRuntime().exec(getCommandLine(new String[] {"svn", "diff", "-c", Integer.toString(ver), svnRoot}));
         }
         runProcess(p);
     }
 
-    private static String getGitVersion(String ver) throws Exception {
+    private static String getGitVersion(int ver) throws Exception {
         Process p;
         BufferedReader reader;
         String line;
@@ -451,19 +464,21 @@ public class DoMerges {
             }
             waitFor(p);
             
-            checkout = File.createTempFile("gitsvn", ".co");
-            checkout.delete();
-            final File deleteDir = checkout;
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                public void run() {
-                    deleteDirectory(deleteDir);
-                }
+            if (!records.isEmpty() || !blocks.isEmpty()) {
+                checkout = File.createTempFile("gitsvn", ".co");
+                checkout.delete();
+                final File deleteDir = checkout;
+                Runtime.getRuntime().addShutdownHook(new Thread() {
+                    public void run() {
+                        deleteDirectory(deleteDir);
+                    }
+                    
+                });
                 
-            });
-            
-            p = Runtime.getRuntime().exec(getCommandLine(new String[] {"svn", "co", "--depth", "empty", 
-                                                                       svnDest, checkout.toString()}));
-            runProcess(p);
+                p = Runtime.getRuntime().exec(getCommandLine(new String[] {"svn", "co", "--depth", "empty", 
+                                                                           svnDest, checkout.toString()}));
+                runProcess(p);
+            } 
         }
         
         if (!records.isEmpty()) {
@@ -472,7 +487,7 @@ public class DoMerges {
                 if (ver.length() > 0) {
                     ver.append(',');
                 }
-                ver.append(s.ver);
+                ver.append(Integer.toString(s.ver));
                 merged.addRange(new Range(s.ver));
             }
             System.out.println("Recording " + ver);
@@ -496,7 +511,7 @@ public class DoMerges {
                 if (ver.length() > 0) {
                     ver.append(',');
                 }
-                ver.append(s.ver);
+                ver.append(Integer.toString(s.ver));
                 blocked.addRange(new Range(s.ver));
             }
             System.out.println("Blocking " + ver);
@@ -511,6 +526,8 @@ public class DoMerges {
                                                                        logF.toString(),
                                                                        checkout.toString()}));
             runProcess(p);
+            p = Runtime.getRuntime().exec(new String[] {"svn", "up"});
+            runProcess(p);
         }
         blocks.clear();
         records.clear();
@@ -523,13 +540,13 @@ public class DoMerges {
             p = Runtime.getRuntime().exec(new String[] {"git", "svn", "rebase"});
             runProcess(p);
         } else {
-            Process p = Runtime.getRuntime().exec(new String[] {"svn", "up", "-r", "head", "."});
+            Process p = Runtime.getRuntime().exec(new String[] {"svn", "up", "-r", "head"});
             runProcess(p);
         }
     }
 
-    public static Set<String> getAvailableUpdates() throws Exception {
-        Set<String> verList = new LinkedHashSet<String>();
+    public static Set<Integer> getAvailableUpdates() throws Exception {
+        Set<Integer> verList = new TreeSet<Integer>();
         Process p;
         BufferedReader reader;
         String line;
@@ -554,7 +571,7 @@ public class DoMerges {
                 line = line.substring(0, line.indexOf(' ')).substring(1).trim();
                 int ver = Integer.parseInt(line);
                 if (!merged.isInRange(ver) && !blocked.isInRange(ver)) {
-                    verList.add(line);
+                    verList.add(ver);
                 }
             }
             line = reader.readLine();
@@ -565,14 +582,14 @@ public class DoMerges {
 
 
 
-    public static String getLog(String ver, Set<String> jiras) throws Exception {
+    public static String getLog(Integer ver, Set<String> jiras) throws Exception {
         Process p;
         BufferedReader reader;
         String line;
         if (isGit) { 
-            p = Runtime.getRuntime().exec(new String[] {"git", "svn", "log", "-r" , ver, gitSource});
+            p = Runtime.getRuntime().exec(new String[] {"git", "svn", "log", "-r" , ver.toString(), gitSource});
         } else {
-            p = Runtime.getRuntime().exec(new String[] {"svn", "log", "-r" , ver, svnRoot});
+            p = Runtime.getRuntime().exec(new String[] {"svn", "log", "-r" , ver.toString(), svnRoot});
         }
         reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
         line = reader.readLine();
@@ -592,7 +609,7 @@ public class DoMerges {
         return swriter.toString();
     }
     
-    private static void doMerge(String ver, String log, List<VerLog> records) throws Exception {
+    private static void doMerge(int ver, String log, List<VerLog> records) throws Exception {
         Process p;
         
         if (isGit) {
@@ -602,9 +619,9 @@ public class DoMerges {
                                                                        id}));
         } else {
             p = Runtime.getRuntime().exec(getCommandLine(new String[] {"svn", "merge", "--non-interactive",
-                                                                       "-c", ver, svnSource}));
+                                                                       "-c", Integer.toString(ver), svnSource}));
         }
-        runProcess(p);
+        runProcess(p, false);
         
         if (!isGit) {
             removeSvnMergeInfo();
@@ -630,18 +647,23 @@ public class DoMerges {
     }
 
     static class VerLog {
-        String ver;
+        int ver;
         String log;
         
-        public VerLog(String v, String l) {
+        public VerLog(int v, String l) {
             ver = v;
             log = l;
         }
     }
     
     public static void main (String args[]) throws Exception {
-        if (args.length > 0 && "-auto".equals(args[0])) { 
-            auto = true;
+        int onlyVersion = -1;
+        if (args.length > 0) {
+            if ("-auto".equals(args[0])) { 
+                auto = true;
+            } else {
+                onlyVersion = Integer.valueOf(args[0]);
+            }
         }
         File file = new File(".git");
         if (file.exists() && file.isDirectory()) {
@@ -653,7 +675,15 @@ public class DoMerges {
         doUpdate();
         initSvnInfo();
         
-        Set<String> verList = getAvailableUpdates();
+        Set<Integer> verList = getAvailableUpdates();
+        if (onlyVersion != -1) {
+            if (!verList.contains(onlyVersion)) {
+                System.out.println("Version: " + onlyVersion + " does not need merging");
+                System.exit(0);
+            }
+            verList.clear();
+            verList.add(onlyVersion);
+        }
 
         System.out.println("Merging versions (" + verList.size() + "): " + verList);
 
@@ -662,11 +692,11 @@ public class DoMerges {
         Set<Integer> ignores = new TreeSet<Integer>();
         Set<String> jiras = new TreeSet<String>();
 
-        int cur = 0;
-        for (String ver : verList) {
-            cur++;
+        Integer verArray[] = verList.toArray(new Integer[verList.size()]);
+        for (int cur = 0; cur < verArray.length; cur++) {
             jiras.clear();
-            System.out.println("Merging: " + ver + " (" + cur + "/" + verList.size() + ")");
+            int ver = verArray[cur];
+            System.out.println("Merging: " + ver + " (" + (cur + 1) + "/" + verList.size() + ")");
             System.out.println("http://svn.apache.org/viewvc?view=revision&revision=" + ver);
             
             String log = getLog(ver, jiras);
