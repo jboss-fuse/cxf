@@ -41,6 +41,7 @@
 
     <modules>
         <module>oauth</module>
+        <module>oauth2</module> 
     </modules>
 
 </project>
