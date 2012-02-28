@@ -39,7 +39,6 @@ public class KeystorePasswordCallback implements CallbackHandler {
     public KeystorePasswordCallback() {
         passwords.put("alice", "password");
         passwords.put("bob", "password");
-        passwords.put("wss40rev", "security");
     }
 
     /**
