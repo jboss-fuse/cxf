@@ -119,38 +119,20 @@ public abstract class AbstractSupportingTokenPolicyValidator
     }
     
     /**
-     * Process UsernameTokens.
+     * Process UsernameTokens. Only SignedSupportingTokens are currently enforced.
      */
     protected boolean processUsernameTokens() {
         if (!validateUsernameToken) {
             return true;
         }
-        
-        List<WSSecurityEngineResult> tokenResults = new ArrayList<WSSecurityEngineResult>();
-        tokenResults.addAll(utResults);
-        List<WSSecurityEngineResult> dktResults = new ArrayList<WSSecurityEngineResult>();
-        for (WSSecurityEngineResult wser : utResults) {
-            if (endorsed && derived) {
-                byte[] secret = (byte[])wser.get(WSSecurityEngineResult.TAG_SECRET);
-                WSSecurityEngineResult dktResult = getMatchingDerivedKey(secret);
-                if (dktResult != null) {
-                    dktResults.add(dktResult);
-                }
-            }
-        }
-        
-        if (tokenResults.isEmpty()) {
+        if (utResults.isEmpty()) {
             return false;
         }
         
-        if (signed && !areTokensSigned(tokenResults)) {
+        if (signed && !areTokensSigned(utResults)) {
             return false;
         }
-        if (encrypted && !areTokensEncrypted(tokenResults)) {
-            return false;
-        }
-        tokenResults.addAll(dktResults);
-        if (endorsed && !checkEndorsed(tokenResults)) {
+        if (encrypted && !areTokensEncrypted(utResults)) {
             return false;
         }
         return true;
@@ -158,7 +140,7 @@ public abstract class AbstractSupportingTokenPolicyValidator
     
     
     /**
-     * Process SAML Tokens. Only signed results are supported.
+     * Process SAML Tokens. Only SignedSupportingTokens are currently enforced.
      */
     protected boolean processSAMLTokens() {
         if (samlResults.isEmpty()) {
@@ -532,9 +514,6 @@ public abstract class AbstractSupportingTokenPolicyValidator
         for (WSSecurityEngineResult signedResult : encryptedResults) {
             List<WSDataRef> dataRefs = 
                 CastUtils.cast((List<?>)signedResult.get(WSSecurityEngineResult.TAG_DATA_REF_URIS));
-            if (dataRefs == null) {
-                return false;
-            }
             for (WSDataRef dataRef : dataRefs) {
                 if (token == dataRef.getProtectedElement()) {
                     return true;

@@ -21,7 +21,6 @@ package org.apache.cxf.ws.security.wss4j.policyhandlers;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 import javax.xml.crypto.dsig.Reference;
@@ -296,25 +295,6 @@ public class TransportBindingHandler extends AbstractBindingBuilder {
                 signatureValues, 
                 doIssuedTokenSignature(token, signdParts, wrapper)
             );
-        } else if (token instanceof UsernameToken) {
-            // Create a UsernameToken object for derived keys and store the security token
-            WSSecUsernameToken usernameToken = addDKUsernameToken((UsernameToken)token, true);
-            String id = usernameToken.getId();
-            byte[] secret = usernameToken.getDerivedKey();
-
-            Date created = new Date();
-            Date expires = new Date();
-            expires.setTime(created.getTime() + 300000);
-            SecurityToken tempTok = 
-                new SecurityToken(id, usernameToken.getUsernameTokenElement(), created, expires);
-            tempTok.setSecret(secret);
-            getTokenStore().add(tempTok);
-            message.setContextualProperty(SecurityConstants.TOKEN, tempTok);
-            
-            addSig(
-                signatureValues, 
-                doIssuedTokenSignature(token, signdParts, wrapper)
-            );
         }
     }
     
@@ -468,10 +448,6 @@ public class TransportBindingHandler extends AbstractBindingBuilder {
         } else {
             dkSign.setExternalKey(secTok.getSecret(), secTok.getId());
         }
-        
-        if (token instanceof UsernameToken) {
-            dkSign.setCustomValueType(WSConstants.WSS_USERNAME_TOKEN_VALUE_TYPE);
-        } 
 
         // Set the algo info
         dkSign.setSignatureAlgorithm(algorithmSuite.getSymmetricSignature());
@@ -515,13 +491,8 @@ public class TransportBindingHandler extends AbstractBindingBuilder {
                 new SecurityTokenReference(cloneElement(ref), false);
             sig.setSecurityTokenReference(secRef);
             sig.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
-        } else if (token instanceof UsernameToken) {
-            sig.setCustomTokenId(secTok.getId());
-            sig.setCustomTokenValueType(WSConstants.WSS_USERNAME_TOKEN_VALUE_TYPE);
-            int type = tokenIncluded ? WSConstants.CUSTOM_SYMM_SIGNING 
-                    : WSConstants.CUSTOM_SYMM_SIGNING_DIRECT;
-            sig.setKeyIdentifierType(type);
         } else if (secTok.getTokenType() == null) {
+            sig.setCustomTokenId(secTok.getId());
             sig.setCustomTokenValueType(WSConstants.WSS_SAML_KI_VALUE_TYPE);
             sig.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
         } else {
