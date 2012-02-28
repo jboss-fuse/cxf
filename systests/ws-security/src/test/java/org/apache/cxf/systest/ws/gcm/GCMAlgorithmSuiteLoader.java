@@ -16,22 +16,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.ws.security.policy.custom;
+package org.apache.cxf.systest.ws.gcm;
 
 import org.w3c.dom.Element;
 
+import org.apache.cxf.Bus;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.ws.security.policy.SPConstants;
+import org.apache.cxf.ws.security.policy.custom.AlgorithmSuiteLoader;
 import org.apache.cxf.ws.security.policy.model.AlgorithmSuite;
 
 /**
- * This class retrieves the default AlgorithmSuites.
+ * This class retrieves a custom AlgorithmSuite for use with security policies that require GCM
+ * algorithms.
  */
-public class DefaultAlgorithmSuiteLoader implements AlgorithmSuiteLoader {
+public class GCMAlgorithmSuiteLoader implements AlgorithmSuiteLoader {
+    
+    public GCMAlgorithmSuiteLoader(Bus bus) {
+        bus.setExtension(this, AlgorithmSuiteLoader.class);
+    }
 
     public AlgorithmSuite getAlgorithmSuite(Element policyElement, SPConstants consts) {
         if (policyElement != null) {
-            AlgorithmSuite algorithmSuite = new AlgorithmSuite(consts);
+            GCMAlgorithmSuite algorithmSuite = new GCMAlgorithmSuite(consts);
             String algorithmSuiteName = DOMUtils.getFirstElement(policyElement).getLocalName();
             algorithmSuite.setAlgorithmSuite(algorithmSuiteName);
             return algorithmSuite;
