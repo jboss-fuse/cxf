@@ -30,6 +30,7 @@ import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.sts.STSConstants;
 import org.apache.cxf.sts.STSPropertiesMBean;
 import org.apache.cxf.sts.request.KeyRequirements;
+import org.apache.cxf.sts.request.ReceivedKey;
 import org.apache.cxf.sts.request.ReceivedToken;
 import org.apache.cxf.sts.request.ReceivedToken.STATE;
 import org.apache.cxf.sts.request.TokenRequirements;
@@ -90,13 +91,20 @@ public class DefaultSubjectProvider implements SubjectProvider {
         String confirmationMethod = getSubjectConfirmationMethod(tokenType, keyType);
         
         Principal principal = null;
-        ReceivedToken receivedToken = providerParameters.getTokenRequirements().getOnBehalfOf();
+        ReceivedToken receivedToken = null;
         //[TODO] ActAs support
         //TokenValidator in IssueOperation has validated the ReceivedToken
         //if validation was successful, the principal was set in ReceivedToken 
-        if (receivedToken != null && receivedToken.getPrincipal() != null 
-                && receivedToken.getValidationState().equals(STATE.VALID)) {
-            principal = receivedToken.getPrincipal();
+        if (providerParameters.getTokenRequirements().getOnBehalfOf() != null) {
+            receivedToken = providerParameters.getTokenRequirements().getOnBehalfOf();    
+            if (receivedToken.getValidationState().equals(STATE.VALID)) {
+                principal = receivedToken.getPrincipal();
+            }
+        } else if (providerParameters.getTokenRequirements().getValidateTarget() != null) {
+            receivedToken = providerParameters.getTokenRequirements().getValidateTarget();
+            if (receivedToken.getValidationState().equals(STATE.VALID)) {
+                principal = receivedToken.getPrincipal();
+            }
         } else {
             principal = providerParameters.getPrincipal();
         }
@@ -132,7 +140,8 @@ public class DefaultSubjectProvider implements SubjectProvider {
                 throw new STSException(ex.getMessage(), ex);
             }
         } else if (STSConstants.PUBLIC_KEY_KEYTYPE.equals(keyType)) {
-            KeyInfoBean keyInfo = createKeyInfo(keyRequirements.getCertificate());
+            ReceivedKey receivedKey = keyRequirements.getReceivedKey();
+            KeyInfoBean keyInfo = createKeyInfo(receivedKey.getX509Cert());
             subjectBean.setKeyInfo(keyInfo);
         }
         

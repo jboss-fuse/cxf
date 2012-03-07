@@ -16,14 +16,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.systest.ws.rm;
+package org.apache.cxf.rs.security.saml.sso.filter;
 
-/**
- * Tests the acknowledgement delivery back to the non-decoupled port when there is some
- * error at the provider side and how its behavior is affected by the robust in-only mode setting.
- */
-public class ServiceInvocationAckTest extends ServiceInvocationAckBase {
-    protected void setupGreeter() throws Exception {
-        setupGreeter("org/apache/cxf/systest/ws/rm/sync-ack-server.xml");
+public class SamlRequestInfo {
+    private String encodedSamlRequest;
+    private String relayState;
+    private String idpServiceAddress;
+    
+    public void setEncodedSamlRequest(String encodedSaml) {
+        this.encodedSamlRequest = encodedSaml;
+    }
+    public String getEncodedSamlRequest() {
+        return encodedSamlRequest;
+    }
+    public void setRelayState(String relayState) {
+        this.relayState = relayState;
+    }
+    public String getRelayState() {
+        return relayState;
+    }
+    public void setIdpServiceAddress(String idpServiceAddress) {
+        this.idpServiceAddress = idpServiceAddress;
+    }
+    public String getIdpServiceAddress() {
+        return idpServiceAddress;
     }
 }
