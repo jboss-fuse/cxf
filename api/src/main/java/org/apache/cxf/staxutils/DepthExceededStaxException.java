@@ -16,36 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.rs.security.oauth2.common;
+package org.apache.cxf.staxutils;
 
-import java.util.Collections;
-import java.util.List;
+public class DepthExceededStaxException extends RuntimeException {
 
-/**
- * Provides the complete information about a given opaque permission.
- */
-public class OAuthPermission extends Permission {
-    private List<String> httpVerbs = Collections.emptyList();
-    private List<String> uris = Collections.emptyList();
+    private static final long serialVersionUID = 4750070687283463619L;
     
-    public OAuthPermission(String permission, String description) {
-        super(permission, description);
+    public DepthExceededStaxException() {
+        
     }
     
-    public void setHttpVerbs(List<String> httpVerbs) {
-        this.httpVerbs = httpVerbs;
+    public DepthExceededStaxException(String message) {
+        super(message);
     }
 
-    public List<String> getHttpVerbs() {
-        return httpVerbs;
-    }
-
-    public void setUris(List<String> uri) {
-        this.uris = uri;
-    }
-
-    public List<String> getUris() {
-        return uris;
-    }
-    
 }
