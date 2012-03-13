@@ -43,6 +43,7 @@ import javax.xml.ws.WebServiceContext;
 import javax.xml.ws.handler.MessageContext;
 
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import org.apache.cxf.common.logging.LogUtils;
@@ -51,6 +52,7 @@ import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.sts.QNameConstants;
 import org.apache.cxf.sts.STSConstants;
+import org.apache.cxf.sts.STSPropertiesMBean;
 import org.apache.cxf.sts.claims.RequestClaim;
 import org.apache.cxf.sts.claims.RequestClaimCollection;
 import org.apache.cxf.ws.security.sts.provider.STSException;
@@ -69,10 +71,15 @@ import org.apache.cxf.ws.security.sts.provider.model.wstrust14.ActAsType;
 import org.apache.cxf.ws.security.sts.provider.model.xmldsig.KeyInfoType;
 import org.apache.cxf.ws.security.sts.provider.model.xmldsig.X509DataType;
 import org.apache.ws.security.WSConstants;
+import org.apache.ws.security.WSDocInfo;
+import org.apache.ws.security.WSSConfig;
 import org.apache.ws.security.WSSecurityEngineResult;
+import org.apache.ws.security.WSSecurityException;
+import org.apache.ws.security.handler.RequestData;
 import org.apache.ws.security.handler.WSHandlerConstants;
 import org.apache.ws.security.handler.WSHandlerResult;
 import org.apache.ws.security.message.token.SecurityContextToken;
+import org.apache.ws.security.processor.EncryptedKeyProcessor;
 import org.apache.xml.security.utils.Constants;
 
 /**
@@ -87,7 +94,7 @@ public class RequestParser {
     private TokenRequirements tokenRequirements = new TokenRequirements();
 
     public void parseRequest(
-        RequestSecurityTokenType request, WebServiceContext wsContext
+        RequestSecurityTokenType request, WebServiceContext wsContext, STSPropertiesMBean stsProperties
     ) throws STSException {
         LOG.fine("Parsing RequestSecurityToken");
         keyRequirements = new KeyRequirements();
@@ -99,7 +106,7 @@ public class RequestParser {
                 JAXBElement<?> jaxbElement = (JAXBElement<?>) requestObject;
                 boolean found = parseTokenRequirements(jaxbElement, tokenRequirements, wsContext);
                 if (!found) {
-                    found = parseKeyRequirements(jaxbElement, keyRequirements, wsContext);
+                    found = parseKeyRequirements(jaxbElement, keyRequirements, wsContext, stsProperties);
                 }
                 if (!found) {
                     LOG.log(Level.WARNING, "Found a JAXB object of unknown type: " + jaxbElement.getName());
@@ -151,7 +158,8 @@ public class RequestParser {
      * Parse the Key and Encryption requirements into the KeyRequirements argument.
      */
     private static boolean parseKeyRequirements(
-        JAXBElement<?> jaxbElement, KeyRequirements keyRequirements, WebServiceContext wsContext
+        JAXBElement<?> jaxbElement, KeyRequirements keyRequirements, 
+        WebServiceContext wsContext, STSPropertiesMBean stsProperties
     ) {
         if (QNameConstants.AUTHENTICATION_TYPE.equals(jaxbElement.getName())) {
             String authenticationType = (String)jaxbElement.getValue();
@@ -191,7 +199,7 @@ public class RequestParser {
             keyRequirements.setReceivedKey(receivedKey);
         } else if (QNameConstants.ENTROPY.equals(jaxbElement.getName())) {
             EntropyType entropyType = (EntropyType)jaxbElement.getValue();
-            Entropy entropy = parseEntropy(entropyType);
+            Entropy entropy = parseEntropy(entropyType, stsProperties);
             keyRequirements.setEntropy(entropy);
         } else if (QNameConstants.REQUEST_TYPE.equals(jaxbElement.getName())) { //NOPMD
             // Skip the request type.
@@ -421,22 +429,53 @@ public class RequestParser {
     /**
      * Parse an Entropy object
      * @param entropy an Entropy object
+     * @param stsProperties A STSPropertiesMBean object used to decrypt an EncryptedKey
      */
-    private static Entropy parseEntropy(EntropyType entropyType) {
+    private static Entropy parseEntropy(
+        EntropyType entropyType, STSPropertiesMBean stsProperties
+    ) throws STSException {
         for (Object entropyObject : entropyType.getAny()) {
-            JAXBElement<?> entropyObjectJaxb = (JAXBElement<?>) entropyObject;
-            if (QNameConstants.BINARY_SECRET.equals(entropyObjectJaxb.getName())) {
-                BinarySecretType binarySecret = 
-                    (BinarySecretType)entropyObjectJaxb.getValue();
-                LOG.fine("Found BinarySecret Entropy type");
-                Entropy entropy = new Entropy();
-                entropy.setBinarySecretType(binarySecret.getType());
-                entropy.setBinarySecretValue(binarySecret.getValue());
-                return entropy;
+            if (entropyObject instanceof JAXBElement<?>) {
+                JAXBElement<?> entropyObjectJaxb = (JAXBElement<?>) entropyObject;
+                if (QNameConstants.BINARY_SECRET.equals(entropyObjectJaxb.getName())) {
+                    BinarySecretType binarySecretType = 
+                        (BinarySecretType)entropyObjectJaxb.getValue();
+                    LOG.fine("Found BinarySecret Entropy type");
+                    Entropy entropy = new Entropy();
+                    BinarySecret binarySecret = new BinarySecret();
+                    binarySecret.setBinarySecretType(binarySecretType.getType());
+                    binarySecret.setBinarySecretValue(binarySecretType.getValue());
+                    entropy.setBinarySecret(binarySecret);
+                    return entropy;
+                } else {
+                    LOG.fine("Unsupported Entropy type: " + entropyObjectJaxb.getName());
+                }
+            } else if (entropyObject instanceof Element
+                && "EncryptedKey".equals(((Element)entropyObject).getLocalName())) {
+                EncryptedKeyProcessor processor = new EncryptedKeyProcessor();
+                Element entropyElement = (Element)entropyObject;
+                RequestData requestData = new RequestData();
+                requestData.setDecCrypto(stsProperties.getSignatureCrypto());
+                requestData.setCallbackHandler(stsProperties.getCallbackHandler());
+                requestData.setWssConfig(WSSConfig.getNewInstance());
+                try {
+                    List<WSSecurityEngineResult> results = 
+                        processor.handleToken(
+                            entropyElement, requestData, new WSDocInfo(entropyElement.getOwnerDocument())
+                        );
+                    Entropy entropy = new Entropy();
+                    entropy.setDecryptedKey((byte[])results.get(0).get(WSSecurityEngineResult.TAG_SECRET));
+                    return entropy;
+                } catch (WSSecurityException e) {
+                    LOG.log(Level.WARNING, "", e);
+                    throw new STSException(e.getMessage(), e, STSException.INVALID_REQUEST);
+                }
             } else {
-                LOG.fine("Unsupported Entropy type: " + entropyObjectJaxb.getName());
+                LOG.log(Level.WARNING, "An unknown element was received");
+                throw new STSException(
+                    "An unknown element was received", STSException.BAD_REQUEST
+                );
             }
-            // TODO support EncryptedKey
         }
         return null;
     }
@@ -561,6 +600,37 @@ public class RequestParser {
                 );
             }
             requestClaim.setOptional(Boolean.parseBoolean(claimTypeOptional));
+            return requestClaim;
+        } else if ("ClaimValue".equals(claimLocalName)) {
+            String claimTypeUri = childClaimType.getAttribute("Uri");
+            String claimTypeOptional = childClaimType.getAttribute("Optional");
+            RequestClaim requestClaim = new RequestClaim();
+            try {
+                requestClaim.setClaimType(new URI(claimTypeUri));
+            } catch (URISyntaxException e) {
+                LOG.log(
+                    Level.WARNING, 
+                    "Cannot create URI from the given ClaimTye attribute value " + claimTypeUri,
+                    e
+                );
+            }
+            
+            Node valueNode = childClaimType.getFirstChild();
+            if (valueNode != null) {
+                if ("Value".equals(valueNode.getLocalName())) {
+                    requestClaim.setClaimValue(valueNode.getTextContent());
+                } else {
+                    LOG.warning("Unsupported child element of ClaimValue element "
+                            + valueNode.getLocalName());
+                    return null;
+                }
+            } else {
+                LOG.warning("No child element of ClaimValue element available");
+                return null;
+            }
+             
+            requestClaim.setOptional(Boolean.parseBoolean(claimTypeOptional));
+            
             return requestClaim;
         }
         

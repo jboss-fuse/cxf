@@ -17,40 +17,19 @@
  * under the License.
  */
 
-package org.apache.cxf.sts.claims;
+package org.apache.cxf.ws.security.cache;
 
-import java.net.URI;
+import org.apache.cxf.message.Message;
+import org.apache.ws.security.cache.MemoryReplayCache;
+import org.apache.ws.security.cache.ReplayCache;
 
 /**
- * This represents a Claim that has been processed by the RequestParser.
+ * A factory to return a MemoryReplayCache instance.
  */
-public class RequestClaim {
-
-    private URI claimType;
-    private boolean optional;
-    private String claimValue;
-
-    public URI getClaimType() {
-        return claimType;
+public class MemoryReplayCacheFactory extends ReplayCacheFactory {
+    
+    public ReplayCache newReplayCache(String key, Message message) {
+        return new MemoryReplayCache();
     }
-
-    public void setClaimType(URI claimType) {
-        this.claimType = claimType;
-    }
-
-    public boolean isOptional() {
-        return optional;
-    }
-
-    public void setOptional(boolean optional) {
-        this.optional = optional;
-    }
-
-    public String getClaimValue() {
-        return claimValue;
-    }
-
-    public void setClaimValue(String claimValue) {
-        this.claimValue = claimValue;
-    }
+    
 }

@@ -16,41 +16,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-package org.apache.cxf.sts.claims;
-
-import java.net.URI;
+package org.apache.cxf.sts.request;
 
 /**
- * This represents a Claim that has been processed by the RequestParser.
+ * This class contains values that have been extracted from a BinarySecret structure.
  */
-public class RequestClaim {
+public class BinarySecret {
+    private byte[] binarySecretValue;
+    private String binarySecretType;
 
-    private URI claimType;
-    private boolean optional;
-    private String claimValue;
-
-    public URI getClaimType() {
-        return claimType;
+    public byte[] getBinarySecretValue() {
+        return binarySecretValue;
     }
-
-    public void setClaimType(URI claimType) {
-        this.claimType = claimType;
+    
+    public void setBinarySecretValue(byte[] binarySecretValue) {
+        this.binarySecretValue = binarySecretValue;
     }
-
-    public boolean isOptional() {
-        return optional;
+    
+    public String getBinarySecretType() {
+        return binarySecretType;
     }
-
-    public void setOptional(boolean optional) {
-        this.optional = optional;
+    
+    public void setBinarySecretType(String binarySecretType) {
+        this.binarySecretType = binarySecretType;
     }
-
-    public String getClaimValue() {
-        return claimValue;
-    }
-
-    public void setClaimValue(String claimValue) {
-        this.claimValue = claimValue;
-    }
+    
 }

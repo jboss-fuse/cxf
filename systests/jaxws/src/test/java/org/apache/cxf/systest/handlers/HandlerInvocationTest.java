@@ -59,7 +59,6 @@ import javax.xml.ws.soap.SOAPFaultException;
 import org.w3c.dom.Element;
 
 import org.apache.cxf.common.util.PackageUtils;
-import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 import org.apache.cxf.testutil.common.TestUtil;
@@ -84,6 +83,12 @@ public class HandlerInvocationTest extends AbstractBusClientServerTestBase {
 
     @BeforeClass
     public static void startServers() throws Exception {
+        
+        //System.setProperty(SAAJFactoryResolver.MESSAGE_FACTORY_KEY, 
+        //                     "com.ibm.ws.webservices.engine.soap.MessageFactoryImpl");
+        //System.setProperty(SAAJFactoryResolver.SOAP_FACTORY_KEY, 
+        //    "com.ibm.ws.webservices.engine.xmlsoap.SOAPFactory");
+            
         assertTrue("server did not launch correctly", launchServer(Server.class, true));
     }
 
@@ -793,12 +798,11 @@ public class HandlerInvocationTest extends AbstractBusClientServerTestBase {
             assertNotNull(detail);
             
             QName nn = new QName("http://gizmos.com/orders/", "order");
-            Iterator<Element> it = CastUtils.cast(detail.getChildElements(nn));
-            assertTrue(it.hasNext());
-            Element el = it.next();
+            Element el = DOMUtils.getFirstChildWithName(detail, nn);
+            assertNotNull(el);
             el.normalize();
             assertEquals("Quantity element does not have a value", el.getFirstChild().getNodeValue());
-            el = it.next();
+            el = DOMUtils.getNextElement(el);
             el.normalize();
             assertEquals("Incomplete address: no zip code", el.getFirstChild().getNodeValue());
         }        
@@ -1183,7 +1187,7 @@ public class HandlerInvocationTest extends AbstractBusClientServerTestBase {
         String[] handlerNames = {"soapHandler4", "soapHandler3", "handler2", "handler1", "servant",
                                  "handler1", "handler2", "soapHandler3", "soapHandler4"};
 
-        List<String> resp = getHandlerNames(inMsg.getSOAPBody());
+        List<String> resp = getHandlerNames(inMsg.getSOAPPart().getEnvelope().getBody());
         assertEquals(handlerNames.length, resp.size());
 
         Iterator<String> iter = resp.iterator();
