@@ -53,7 +53,7 @@ public class SCTCanceller implements TokenCanceller {
     private boolean verifyProofOfPossession = true;
     
     /**
-     * Return true if this TokenValidator implementation is capable of validating the
+     * Return true if this TokenCanceller implementation is capable of cancelling the
      * ReceivedToken argument.
      */
     public boolean canHandleToken(ReceivedToken targetToken) {

@@ -16,22 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.jaxrs.ext;
 
+import org.apache.cxf.message.Message;
 
-package org.apache.cxf.jaxrs.impl.tl;
-
-import org.apache.cxf.jaxrs.ext.search.SearchCondition;
-import org.apache.cxf.jaxrs.ext.search.SearchContext;
-
-public class ThreadLocalSearchContext extends AbstractThreadLocalProxy<SearchContext> 
-    implements SearchContext {
-
-    public <T> SearchCondition<T> getCondition(Class<T> cls) {
-        return get().getCondition(cls);
-    }
-
-
-    public String getSearchExpression() {
-        return get().getSearchExpression();
-    }
+public interface ContextProvider<T> {
+    T createContext(Message message);
 }

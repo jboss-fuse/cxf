@@ -17,17 +17,23 @@
  * under the License.
  */
 
-package org.apache.cxf.ws.security.sts.provider.operation;
+package org.apache.cxf.rs.security.cors;
 
-import javax.xml.ws.WebServiceContext;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import org.apache.cxf.ws.security.sts.provider.model.RequestSecurityTokenCollectionType;
-import org.apache.cxf.ws.security.sts.provider.model.RequestSecurityTokenResponseCollectionType;
-
-public interface RequestCollectionOperation {
-
-    RequestSecurityTokenResponseCollectionType requestCollection(
-            RequestSecurityTokenCollectionType requestCollection,
-            WebServiceContext context);
-
+/**
+ * Controls the implementation of preflight processing 
+ * on an OPTIONS method.
+ * If the current method is OPTIONS, and this method wants to 
+ * handle the preflight process for itself then have this annotation
+ * attached to it, otherwise the filter performs it.
+ */
+@Target({ElementType.TYPE, ElementType.METHOD })
+@Retention(RetentionPolicy.RUNTIME)
+@Inherited
+public @interface LocalPreflight {
 }

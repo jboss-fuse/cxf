@@ -20,7 +20,7 @@ package org.apache.cxf.sts.token.canceller;
 
 
 /**
- * This class encapsulates the response from a TokenValidator instance after validating a token.
+ * This class encapsulates the response from a TokenCanceller instance after cancelling a token.
  */
 public class TokenCancellerResponse {
 
