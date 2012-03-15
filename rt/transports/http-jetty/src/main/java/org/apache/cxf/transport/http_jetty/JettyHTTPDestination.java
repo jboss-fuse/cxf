@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.common.logging.LogUtils;
+import org.apache.cxf.common.util.ReflectionUtil;
 import org.apache.cxf.configuration.jsse.TLSServerParameters;
 import org.apache.cxf.configuration.security.CertificateConstraintsType;
 import org.apache.cxf.continuations.ContinuationProvider;
@@ -50,8 +51,10 @@ import org.apache.cxf.transport.https.CertConstraintsJaxBUtils;
 import org.apache.cxf.transports.http.QueryHandler;
 import org.apache.cxf.transports.http.QueryHandlerRegistry;
 import org.apache.cxf.transports.http.StemMatchingQueryHandler;
-import org.eclipse.jetty.server.HttpConnection;
+import org.eclipse.jetty.http.Generator;
+import org.eclipse.jetty.io.AbstractConnection;
 import org.eclipse.jetty.server.Request;
+import org.springframework.util.ClassUtils;
 
 public class JettyHTTPDestination extends AbstractHTTPDestination {
     
@@ -209,6 +212,24 @@ public class JettyHTTPDestination extends AbstractHTTPDestination {
                              HttpServletResponse resp) throws IOException {
         doService(servletContext, req, resp);
     }
+    
+    static AbstractConnection getConnectionForRequest(Request r) {
+        try {
+            return (AbstractConnection)r.getClass().getMethod("getConnection").invoke(r);
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+    
+    private void setHeadFalse(AbstractConnection con) {
+        try {
+            Generator gen = (Generator)con.getClass().getMethod("getGenerator").invoke(con);
+            gen.setHead(false);
+        } catch (Exception ex) {
+            //ignore - can continue
+        }
+    }
+    
     protected void doService(ServletContext context,
                              HttpServletRequest req,
                              HttpServletResponse resp) throws IOException {
@@ -216,14 +237,14 @@ public class JettyHTTPDestination extends AbstractHTTPDestination {
             context = servletContext;
         }
         Request baseRequest = (req instanceof Request) 
-            ? (Request)req : HttpConnection.getCurrentConnection().getRequest();
+            ? (Request)req : getCurrentRequest();
             
         if (!"HEAD".equals(req.getMethod())) {
             //bug in Jetty with persistent connections that if a HEAD is
             //sent, a _head flag is never reset
-            HttpConnection c = baseRequest.getConnection();
+            AbstractConnection c = getConnectionForRequest(baseRequest);
             if (c != null) {
-                c.getGenerator().setHead(false);
+                setHeadFalse(c);
             }
         }
         if (getServer().isSetRedirectURL()) {
@@ -296,7 +317,7 @@ public class JettyHTTPDestination extends AbstractHTTPDestination {
                                   final HttpServletResponse resp)
         throws IOException {
         Request baseRequest = (req instanceof Request) 
-            ? (Request)req : HttpConnection.getCurrentConnection().getRequest();
+            ? (Request)req : getCurrentRequest();
         
         if (LOG.isLoggable(Level.FINE)) {
             LOG.fine("Service http request on thread: " + Thread.currentThread());
@@ -358,5 +379,42 @@ public class JettyHTTPDestination extends AbstractHTTPDestination {
             inMessage.put(ContinuationProvider.class.getName(), 
                       new JettyContinuationProvider(req, resp, inMessage));
         }
+    }
+    
+    private AbstractConnection getCurrentConnection() {
+        // AbstractHttpConnection on Jetty 7.6, HttpConnection on Jetty <=7.5
+        Class<?> cls = null;
+        try {
+            cls = ClassUtils.forName("org.eclipse.jetty.server.AbstractHttpConnection",
+                                     AbstractConnection.class.getClassLoader());
+        } catch (Exception e) {
+            //ignore
+        }
+        if (cls == null) {
+            try {
+                cls = ClassUtils.forName("org.eclipse.jetty.server.HttpConnection",
+                                         AbstractConnection.class.getClassLoader());
+            } catch (Exception e) {
+                //ignore
+            }
+        }
+
+        try {
+            return (AbstractConnection)ReflectionUtil
+                .setAccessible(cls.getMethod("getCurrentConnection")).invoke(null);
+        } catch (Exception e) {
+            //ignore
+        }
+        return null;
+    }
+    private Request getCurrentRequest() {
+        AbstractConnection con = getCurrentConnection();
+        try {
+            return (Request)ReflectionUtil
+                .setAccessible(con.getClass().getMethod("getRequest")).invoke(con);
+        } catch (Exception e) {
+            //ignore
+        }
+        return null;
     }
 }
