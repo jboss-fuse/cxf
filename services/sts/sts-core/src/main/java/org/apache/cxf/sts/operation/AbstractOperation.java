@@ -44,7 +44,6 @@ import org.apache.cxf.sts.QNameConstants;
 import org.apache.cxf.sts.RealmParser;
 import org.apache.cxf.sts.STSConstants;
 import org.apache.cxf.sts.STSPropertiesMBean;
-import org.apache.cxf.sts.cache.STSTokenStore;
 import org.apache.cxf.sts.claims.ClaimsManager;
 import org.apache.cxf.sts.claims.RequestClaim;
 import org.apache.cxf.sts.claims.RequestClaimCollection;
@@ -72,6 +71,7 @@ import org.apache.cxf.ws.security.sts.provider.model.secext.KeyIdentifierType;
 import org.apache.cxf.ws.security.sts.provider.model.secext.ReferenceType;
 import org.apache.cxf.ws.security.sts.provider.model.secext.SecurityTokenReferenceType;
 import org.apache.cxf.ws.security.sts.provider.model.utility.AttributedDateTime;
+import org.apache.cxf.ws.security.tokenstore.TokenStore;
 
 import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSEncryptionPart;
@@ -101,8 +101,8 @@ public abstract class AbstractOperation {
     protected List<TokenProvider> tokenProviders = new ArrayList<TokenProvider>();
     protected List<TokenValidator> tokenValidators = new ArrayList<TokenValidator>();
     protected boolean returnReferences = true;
-    protected STSTokenStore tokenStore;
-    protected ClaimsManager claimsManager;
+    protected TokenStore tokenStore;
+    protected ClaimsManager claimsManager = new ClaimsManager();
     
     public boolean isReturnReferences() {
         return returnReferences;
@@ -112,11 +112,11 @@ public abstract class AbstractOperation {
         this.returnReferences = returnReferences;
     }
     
-    public STSTokenStore getTokenStore() {
+    public TokenStore getTokenStore() {
         return tokenStore;
     }
 
-    public void setTokenStore(STSTokenStore tokenStore) {
+    public void setTokenStore(TokenStore tokenStore) {
         this.tokenStore = tokenStore;
     }
 
@@ -173,7 +173,7 @@ public abstract class AbstractOperation {
         stsProperties.configureProperties();
         
         RequestParser requestParser = new RequestParser();
-        requestParser.parseRequest(request, context, stsProperties);
+        requestParser.parseRequest(request, context, stsProperties, claimsManager.getClaimParsers());
         
         return requestParser;
     }
