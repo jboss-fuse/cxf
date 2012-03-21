@@ -96,7 +96,8 @@ public class OutTransformWriter extends DelegatingXMLStreamWriter {
         
         uri = value != null ? value : uri;
         
-        if (writtenUris.get(0).contains(uri)) {
+        if (writtenUris.get(0).contains(uri) 
+            && (prefix.length() == 0 || prefix.equals(getPrefix(uri)))) {
             return;
         }
         

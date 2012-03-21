@@ -18,7 +18,6 @@
  */
 package org.apache.cxf.jaxrs.client;
 
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
@@ -299,8 +298,8 @@ public class WebClient extends AbstractClient {
      * @return JAXRS Response
      */
     public Response form(Map<String, List<Object>> values) {
-        type(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
-        return doInvoke("POST", values, null, InputStream.class, InputStream.class);
+        type(MediaType.APPLICATION_FORM_URLENCODED);
+        return doInvoke("POST", values, null, Response.class, Response.class);
     }
     
     /**
@@ -309,8 +308,8 @@ public class WebClient extends AbstractClient {
      * @return JAXRS Response
      */
     public Response form(Form form) {
-        type(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
-        return doInvoke("POST", form.getData(), null, InputStream.class, InputStream.class);
+        type(MediaType.APPLICATION_FORM_URLENCODED);
+        return doInvoke("POST", form.getData(), null, Response.class, Response.class);
     }
     
     /**
@@ -389,6 +388,20 @@ public class WebClient extends AbstractClient {
         Response r = doInvoke("POST", collection, new ParameterizedCollectionType<T1>(memberClass), 
                               Collection.class, new ParameterizedCollectionType<T2>(responseClass));
         return CastUtils.cast((Collection)r.getEntity(), responseClass);
+    }
+    
+    /**
+     * Posts the object and returns a collection of typed objects
+     * @param body request body
+     * @param memberClass type of collection member class
+     * @param responseClass expected type of response object
+     * @return JAX-RS Response
+     */
+    public <T> Collection<? extends T> postObjectGetCollection(Object body, 
+                                                                  Class<T> responseClass) {
+        Response r = doInvoke("POST", body, null, Collection.class, 
+                              new ParameterizedCollectionType<T>(responseClass));
+        return CastUtils.cast((Collection<?>)r.getEntity(), responseClass);
     }
         
     /**
@@ -668,10 +681,15 @@ public class WebClient extends AbstractClient {
         MultivaluedMap<String, String> headers = getHeaders();
         boolean contentTypeNotSet = headers.getFirst(HttpHeaders.CONTENT_TYPE) == null;
         if (contentTypeNotSet) {
-            String ct = body != null ? MediaType.APPLICATION_XML_TYPE.toString() : "*/*";
+            String ct = "*/*";
+            if (body != null) { 
+                ct = body instanceof Form ? MediaType.APPLICATION_FORM_URLENCODED 
+                                          : MediaType.APPLICATION_XML;
+            }
             headers.putSingle(HttpHeaders.CONTENT_TYPE, ct);
         }
-        if (responseClass != null && headers.getFirst(HttpHeaders.ACCEPT) == null) {
+        if (responseClass != null && responseClass != Response.class 
+            && headers.getFirst(HttpHeaders.ACCEPT) == null) {
             headers.putSingle(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML_TYPE.toString());
         }
         resetResponse();

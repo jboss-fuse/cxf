@@ -231,6 +231,27 @@ public class JAXRSMultipartTest extends AbstractBusClientServerTestBase {
     }
     
     @Test
+    public void testAddBookAsJAXBJSONProxy() throws Exception {
+        MultipartStore store = 
+            JAXRSClientFactory.create("http://localhost:" + PORT, MultipartStore.class);
+        
+        Book b = store.addBookJaxbJsonWithConsumes(new Book2("CXF in Action", 1L), 
+                                           new Book("CXF in Action - 2", 2L));
+        assertEquals(124L, b.getId());
+        assertEquals("CXF in Action - 2", b.getName());
+    }
+    
+    @Test
+    public void testAddBookAsJAXBOnlyProxy() throws Exception {
+        MultipartStore store = 
+            JAXRSClientFactory.create("http://localhost:" + PORT, MultipartStore.class);
+        
+        Book2 b = store.addBookJaxbOnlyWithConsumes(new Book2("CXF in Action", 1L));
+        assertEquals(1L, b.getId());
+        assertEquals("CXF in Action", b.getName());
+    }
+    
+    @Test
     public void testAddBookAsJAXBJSONMixed() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/books/jaxbjson";
         doAddBook("multipart/mixed", address, "attachmentData2", 200);               
@@ -562,7 +583,31 @@ public class JAXRSMultipartTest extends AbstractBusClientServerTestBase {
         post.setRequestHeader("Content-Type", ct);
         Part[] parts = new Part[1];
         parts[0] = new FilePart("image",
-                new ByteArrayPartSource("testfile.png", new byte[1024 * 1024 * 15]),
+                new ByteArrayPartSource("testfile.png", new byte[1024 * 11]),
+                "image/png", null);
+        post.setRequestEntity(new MultipartRequestEntity(parts, post.getParams()));
+
+        HttpClient httpclient = new HttpClient();
+
+        try {
+            int result = httpclient.executeMethod(post);
+            assertEquals(413, result);
+        } finally {
+            // Release current connection to the connection pool once you are done
+            post.releaseConnection();
+        }
+    }
+    @Test
+    public void testMultipartRequestTooLargeManyParts() throws Exception {
+        PostMethod post = new PostMethod("http://localhost:" + PORT + "/bookstore/books/image");
+        String ct = "multipart/mixed";
+        post.setRequestHeader("Content-Type", ct);
+        Part[] parts = new Part[2];
+        parts[0] = new FilePart("image",
+                new ByteArrayPartSource("testfile.png", new byte[1024 * 9]),
+                "image/png", null);
+        parts[1] = new FilePart("image",
+                new ByteArrayPartSource("testfile2.png", new byte[1024 * 11]),
                 "image/png", null);
         post.setRequestEntity(new MultipartRequestEntity(parts, post.getParams()));
 

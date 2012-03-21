@@ -21,6 +21,7 @@ package org.apache.cxf.sts.token.provider;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -125,7 +126,11 @@ public class SAMLTokenProvider implements TokenProvider {
             
             // set the token in cache
             if (tokenParameters.getTokenStore() != null) {
-                SecurityToken securityToken = new SecurityToken(assertion.getId());
+                Date expires = new Date();
+                long currentTime = expires.getTime();
+                expires.setTime(currentTime + (conditionsProvider.getLifetime() * 1000L));
+                
+                SecurityToken securityToken = new SecurityToken(assertion.getId(), null, expires);
                 securityToken.setToken(token);
                 securityToken.setPrincipal(tokenParameters.getPrincipal());
                 int hash = 0;
@@ -142,8 +147,8 @@ public class SAMLTokenProvider implements TokenProvider {
                     props.setProperty(STSConstants.TOKEN_REALM, tokenParameters.getRealm());
                     securityToken.setProperties(props);
                 }
-                Integer timeToLive = (int)(conditionsProvider.getLifetime() * 1000);
-                tokenParameters.getTokenStore().add(securityToken, timeToLive);
+                int ttl = (int)conditionsProvider.getLifetime();
+                tokenParameters.getTokenStore().add(securityToken, ttl);
             }
             
             TokenProviderResponse response = new TokenProviderResponse();
@@ -326,7 +331,35 @@ public class SAMLTokenProvider implements TokenProvider {
                 if (samlRealm.getSignatureProperties() != null) {
                     signatureProperties = samlRealm.getSignatureProperties();
                 }
-            } 
+            }
+            
+            // Get the signature algorithm to use
+            String signatureAlgorithm = tokenParameters.getKeyRequirements().getSignatureAlgorithm();
+            if (signatureAlgorithm == null) {
+                // If none then default to what is configured
+                signatureAlgorithm = signatureProperties.getSignatureAlgorithm();
+            } else {
+                List<String> supportedAlgorithms = 
+                    signatureProperties.getAcceptedSignatureAlgorithms();
+                if (!supportedAlgorithms.contains(signatureAlgorithm)) {
+                    signatureAlgorithm = signatureProperties.getSignatureAlgorithm();
+                    LOG.fine("SignatureAlgorithm not supported, defaulting to: " + signatureAlgorithm);
+                }
+            }
+            
+            // Get the c14n algorithm to use
+            String c14nAlgorithm = tokenParameters.getKeyRequirements().getC14nAlgorithm();
+            if (c14nAlgorithm == null) {
+                // If none then default to what is configured
+                c14nAlgorithm = signatureProperties.getC14nAlgorithm();
+            } else {
+                List<String> supportedAlgorithms = 
+                    signatureProperties.getAcceptedC14nAlgorithms();
+                if (!supportedAlgorithms.contains(c14nAlgorithm)) {
+                    c14nAlgorithm = signatureProperties.getC14nAlgorithm();
+                    LOG.fine("C14nAlgorithm not supported, defaulting to: " + c14nAlgorithm);
+                }
+            }
             
             // If alias not defined, get the default of the SignatureCrypto
             if ((alias == null || "".equals(alias)) && (signatureCrypto != null)) {
@@ -341,7 +374,9 @@ public class SAMLTokenProvider implements TokenProvider {
     
             LOG.fine("Signing SAML Token");
             boolean useKeyValue = signatureProperties.isUseKeyValue();
-            assertion.signAssertion(alias, password, signatureCrypto, useKeyValue);
+            assertion.signAssertion(
+                alias, password, signatureCrypto, useKeyValue, c14nAlgorithm, signatureAlgorithm
+            );
         }
         
         return assertion;
