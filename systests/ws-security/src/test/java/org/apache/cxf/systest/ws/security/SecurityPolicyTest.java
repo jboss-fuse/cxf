@@ -530,7 +530,6 @@ public class SecurityPolicyTest extends AbstractBusClientServerTestBase  {
                        || errorMessage.contains("Error during certificate path validation"));
         }
     }
-<<<<<<< HEAD
     
     @Test
     public void testCXF4122() throws Exception {
