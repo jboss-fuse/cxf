@@ -113,6 +113,9 @@ public class Destination extends AbstractEndpoint {
 
         if (null != seq) {
             if (seq.applyDeliveryAssurance(sequenceType.getMessageNumber(), message)) {
+                if (MessageUtils.isTrue(message.get(RMMessageConstants.DELIVERING_ROBUST_ONEWAY))) {
+                    return;
+                }
                 seq.acknowledge(message);
     
                 if (null != rmps.getCloseSequence()) {
@@ -207,6 +210,17 @@ public class Destination extends AbstractEndpoint {
             long mn = sequenceType.getMessageNumber().longValue();
             seq.processingComplete(mn);
             seq.purgeAcknowledged(mn);
+        }
+    }
+    
+    void releaseDeliveringStatus(Message message) {
+        RMProperties rmps = RMContextUtils.retrieveRMProperties(message, false);
+        SequenceType sequenceType = rmps.getSequence();
+        if (null != sequenceType) {
+            DestinationSequence seq = getSequence(sequenceType.getIdentifier());
+            if (null != seq) {
+                seq.removeDeliveringMessageNumber(sequenceType.getMessageNumber());
+            }
         }
     }
     

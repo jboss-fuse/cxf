@@ -16,23 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.sts.token.canceller;
-
-import org.apache.cxf.sts.request.ReceivedToken;
-
+package org.apache.cxf.systest.ws.rm;
 
 /**
- * This class encapsulates the response from a TokenCanceller instance after cancelling a token.
+ * Tests the acknowledgement delivery back to the non-decoupled port when there is some
+ * error at the provider side and how its behavior is affected by the robust in-only mode setting.
  */
-public class TokenCancellerResponse {
-    private ReceivedToken token;
-    
-    public ReceivedToken getToken() {
-        return token;
+public class ServiceInvocationAtMostOnceAckTest extends ServiceInvocationAckBase {
+    protected void setupGreeter() throws Exception {
+        setupGreeter("org/apache/cxf/systest/ws/rm/sync-ack-atmostonce-server.xml");
     }
-
-    public void setToken(ReceivedToken token) {
-        this.token = token;
-    }
-    
 }

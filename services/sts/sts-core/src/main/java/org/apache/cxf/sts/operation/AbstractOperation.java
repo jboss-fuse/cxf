@@ -525,7 +525,7 @@ public abstract class AbstractOperation {
     protected TokenValidatorResponse validateReceivedToken(
             WebServiceContext context, String realm,
             TokenRequirements tokenRequirements, ReceivedToken token) {
-        token.setValidationState(STATE.NONE);
+        token.setState(STATE.NONE);
         
         TokenRequirements validateRequirements = new TokenRequirements();
         validateRequirements.setValidateTarget(token);
@@ -537,6 +537,7 @@ public abstract class AbstractOperation {
         validatorParameters.setTokenStore(getTokenStore());
         validatorParameters.setKeyRequirements(null);
         validatorParameters.setTokenRequirements(validateRequirements);
+        validatorParameters.setToken(token);
 
         TokenValidatorResponse tokenResponse = null;
         for (TokenValidator tokenValidator : tokenValidators) {
@@ -549,15 +550,13 @@ public abstract class AbstractOperation {
             if (canHandle) {
                 try {
                     tokenResponse = tokenValidator.validateToken(validatorParameters);
-                    token.setValidationState(
-                            tokenResponse.isValid() ? STATE.VALID : STATE.INVALID
-                    );
+                    token = tokenResponse.getToken();
                     // The parsed principal is set if available. It's up to other components to
                     // deal with the STATE of the validation
                     token.setPrincipal(tokenResponse.getPrincipal());
                 } catch (RuntimeException ex) {
                     LOG.log(Level.WARNING, "Failed to validate the token", ex);
-                    token.setValidationState(STATE.INVALID);
+                    token.setState(STATE.INVALID);
                 }
                 break;
             }
