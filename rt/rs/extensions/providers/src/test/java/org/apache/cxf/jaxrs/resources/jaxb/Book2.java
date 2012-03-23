@@ -16,19 +16,36 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jaxrs.ext;
+package org.apache.cxf.jaxrs.resources.jaxb;
 
-import org.apache.cxf.message.Message;
+import javax.xml.bind.annotation.XmlRootElement;
 
-/**
- * Provider of custom contexts representing the current request
- * @param <T> Context class
- */
-public interface ContextProvider<T> {
-    /**
-     * Creates the context instance
-     * @param message the current message
-     * @return the context
-     */
-    T createContext(Message message);
+@XmlRootElement(name = "thebook2")
+public class Book2 {
+
+    private String name;
+    private int id;
+    
+    public Book2() {
+    }
+    
+    public Book2(int id) {
+        this.id = id;
+    }
+    
+    public int getId() {
+        return id;
+    }
+    
+    public void setId(int ident) {
+        id = ident;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
 }

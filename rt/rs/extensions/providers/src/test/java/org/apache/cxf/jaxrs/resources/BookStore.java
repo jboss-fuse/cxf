@@ -16,19 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jaxrs.ext;
+package org.apache.cxf.jaxrs.resources;
 
-import org.apache.cxf.message.Message;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 
-/**
- * Provider of custom contexts representing the current request
- * @param <T> Context class
- */
-public interface ContextProvider<T> {
-    /**
-     * Creates the context instance
-     * @param message the current message
-     * @return the context
-     */
-    T createContext(Message message);
+@Path("/bookstore/{id}")
+@Consumes({"application/xml", "application/json" })
+@Produces({"application/xml", "application/json" })
+public class BookStore {
+
+    @GET
+    @Path("chapter")
+    public Chapter getChapter() {
+        return new Chapter(1);
+    }
+    
 }

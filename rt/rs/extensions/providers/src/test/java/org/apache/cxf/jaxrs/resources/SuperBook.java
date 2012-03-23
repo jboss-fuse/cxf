@@ -16,19 +16,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jaxrs.ext;
 
-import org.apache.cxf.message.Message;
+package org.apache.cxf.jaxrs.resources;
 
-/**
- * Provider of custom contexts representing the current request
- * @param <T> Context class
- */
-public interface ContextProvider<T> {
-    /**
-     * Creates the context instance
-     * @param message the current message
-     * @return the context
-     */
-    T createContext(Message message);
+import javax.xml.bind.annotation.XmlRootElement;
+
+
+@XmlRootElement(name = "SuperBook")
+public class SuperBook extends Book {
+    private long superId;
+    public SuperBook() {
+    }
+    
+    public SuperBook(String name, long id, long superId) {
+        super(name, id);
+        this.superId = superId;
+    }
+    
+    public void setSuperId(long i) {
+        superId = i;
+    }
+    
+    public long getSuperId() {
+        return superId;
+    }
+
 }

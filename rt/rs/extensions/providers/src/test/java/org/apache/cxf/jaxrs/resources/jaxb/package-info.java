@@ -16,19 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jaxrs.ext;
+@javax.xml.bind.annotation.XmlSchema(namespace = "http://superbooks")
+package org.apache.cxf.jaxrs.resources.jaxb;
 
-import org.apache.cxf.message.Message;
-
-/**
- * Provider of custom contexts representing the current request
- * @param <T> Context class
- */
-public interface ContextProvider<T> {
-    /**
-     * Creates the context instance
-     * @param message the current message
-     * @return the context
-     */
-    T createContext(Message message);
-}
