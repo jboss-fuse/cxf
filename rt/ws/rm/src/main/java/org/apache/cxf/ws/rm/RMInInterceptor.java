@@ -45,6 +45,11 @@ public class RMInInterceptor extends AbstractRMInterceptor<Message> {
     @Override
     public void handleFault(Message message) {
         message.put(MAPAggregator.class.getName(), true);
+        if (MessageUtils.isTrue(message.get(RMMessageConstants.DELIVERING_ROBUST_ONEWAY))) {
+            // revert the delivering entry from the destination sequence
+            Destination destination = getManager().getDestination(message);
+            destination.releaseDeliveringStatus(message);
+        }
     }
 
     protected void handle(Message message) throws SequenceFault, RMException {
@@ -145,9 +150,11 @@ public class RMInInterceptor extends AbstractRMInterceptor<Message> {
         throws SequenceFault, RMException {
         final boolean robust =
             MessageUtils.isTrue(message.getContextualProperty(Message.ROBUST_ONEWAY));
-        if (!robust) {
-            destination.acknowledge(message);
-        }
+        if (robust) {
+            // set this property to change the acknlowledging behavior
+            message.put(RMMessageConstants.DELIVERING_ROBUST_ONEWAY, Boolean.TRUE);
+        } 
+        destination.acknowledge(message);
     }
     
     void processDeliveryAssurance(RMProperties rmps) {
