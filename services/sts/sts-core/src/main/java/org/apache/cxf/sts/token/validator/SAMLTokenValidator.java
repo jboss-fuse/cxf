@@ -18,6 +18,7 @@
  */
 package org.apache.cxf.sts.token.validator;
 
+import java.security.Principal;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -39,6 +40,7 @@ import org.apache.cxf.sts.request.ReceivedToken.STATE;
 import org.apache.cxf.sts.token.realm.CertConstraintsParser;
 import org.apache.cxf.sts.token.realm.SAMLRealmCodec;
 import org.apache.cxf.ws.security.tokenstore.SecurityToken;
+import org.apache.cxf.ws.security.tokenstore.TokenStore;
 import org.apache.ws.security.SAMLTokenPrincipal;
 import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSDocInfo;
@@ -145,13 +147,15 @@ public class SAMLTokenValidator implements TokenValidator {
             response.setPrincipal(samlPrincipal);
             
             SecurityToken secToken = null;
-            if (tokenParameters.getTokenStore() != null) {
-                int hash = 0;
-                byte[] signatureValue = assertion.getSignatureValue();
-                if (signatureValue != null && signatureValue.length > 0) {
-                    hash = Arrays.hashCode(signatureValue);
-                    secToken = tokenParameters.getTokenStore().getTokenByAssociatedHash(hash);
+            byte[] signatureValue = assertion.getSignatureValue();
+            if (tokenParameters.getTokenStore() != null && signatureValue != null
+                && signatureValue.length > 0) {
+                int hash = Arrays.hashCode(signatureValue);
+                secToken = tokenParameters.getTokenStore().getToken(Integer.toString(hash));
+                if (secToken != null && secToken.getTokenHash() != hash) {
+                    secToken = null;
                 }
+                response.setSecurityToken(secToken);
             }
             if (secToken != null && secToken.isExpired()) {
                 LOG.fine("Token: " + secToken.getId() + " is in the cache but expired - revalidating");
@@ -197,23 +201,6 @@ public class SAMLTokenValidator implements TokenValidator {
                 }
             }
            
-            DateTime validFrom = null;
-            DateTime validTill = null;
-            if (assertion.getSamlVersion().equals(SAMLVersion.VERSION_20)) {
-                validFrom = assertion.getSaml2().getConditions().getNotBefore();
-                validTill = assertion.getSaml2().getConditions().getNotOnOrAfter();
-            } else {
-                validFrom = assertion.getSaml1().getConditions().getNotBefore();
-                validTill = assertion.getSaml1().getConditions().getNotOnOrAfter();
-            }
-            if (validFrom.isAfterNow() || validTill.isBeforeNow()) {
-                LOG.log(Level.WARNING, "SAML Token condition not met");
-                if (secToken != null) {
-                    tokenParameters.getTokenStore().remove(secToken);
-                }
-                return response;
-            }
-            
             // Get the realm of the SAML token
             String tokenRealm = null;
             if (samlRealmCodec != null) {
@@ -229,13 +216,24 @@ public class SAMLTokenValidator implements TokenValidator {
                     }
                 }
             }
+            response.setTokenRealm(tokenRealm);
+            
+            if (!validateConditions(assertion, validateTarget, secToken, tokenParameters.getTokenStore())) {
+                return response;
+            }
+            
+            // Store the successfully validated token in the cache
+            if (secToken == null) {
+                storeTokenInCache(
+                    tokenParameters.getTokenStore(), assertion, tokenParameters.getPrincipal()
+                );
+            }
             
             // Add the AssertionWrapper to the properties, as the claims are required to be transformed
             Map<String, Object> addProps = new HashMap<String, Object>();
             addProps.put(AssertionWrapper.class.getName(), assertion);
             response.setAdditionalProperties(addProps);
             
-            response.setTokenRealm(tokenRealm);
             validateTarget.setState(STATE.VALID);
         } catch (WSSecurityException ex) {
             LOG.log(Level.WARNING, "", ex);
@@ -275,4 +273,61 @@ public class SAMLTokenValidator implements TokenValidator {
         }
     }
     
+    protected boolean validateConditions(
+        AssertionWrapper assertion,
+        ReceivedToken validateTarget,
+        SecurityToken secToken, 
+        TokenStore tokenStore
+    ) {
+        DateTime validFrom = null;
+        DateTime validTill = null;
+        if (assertion.getSamlVersion().equals(SAMLVersion.VERSION_20)) {
+            validFrom = assertion.getSaml2().getConditions().getNotBefore();
+            validTill = assertion.getSaml2().getConditions().getNotOnOrAfter();
+        } else {
+            validFrom = assertion.getSaml1().getConditions().getNotBefore();
+            validTill = assertion.getSaml1().getConditions().getNotOnOrAfter();
+        }
+        if (validFrom.isAfterNow()) {
+            LOG.log(Level.WARNING, "SAML Token condition not met");
+            if (secToken != null) {
+                tokenStore.remove(secToken.getId());
+            }
+            return false;
+        } else if (validTill.isBeforeNow()) {
+            LOG.log(Level.WARNING, "SAML Token condition not met");
+            if (secToken != null) {
+                tokenStore.remove(secToken.getId());
+            }
+            validateTarget.setState(STATE.EXPIRED);
+            return false;
+        }
+        return true;
+    }
+    
+    protected void storeTokenInCache(
+        TokenStore tokenStore, 
+        AssertionWrapper assertion, 
+        Principal principal
+    ) throws WSSecurityException {
+        // Store the successfully validated token in the cache
+        byte[] signatureValue = assertion.getSignatureValue();
+        if (tokenStore != null && signatureValue != null && signatureValue.length > 0) {
+            DateTime validTill = null;
+            if (assertion.getSamlVersion().equals(SAMLVersion.VERSION_20)) {
+                validTill = assertion.getSaml2().getConditions().getNotOnOrAfter();
+            } else {
+                validTill = assertion.getSaml1().getConditions().getNotOnOrAfter();
+            }
+            
+            SecurityToken securityToken = new SecurityToken(assertion.getId(), null, validTill.toDate());
+            securityToken.setToken(assertion.getElement());
+            securityToken.setPrincipal(principal);
+
+            int hash = Arrays.hashCode(signatureValue);
+            securityToken.setTokenHash(hash);
+            String identifier = Integer.toString(hash);
+            tokenStore.add(identifier, securityToken);
+        }
+    }
 }

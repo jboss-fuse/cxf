@@ -16,18 +16,31 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.systest.ws.common;
 
-package org.apache.cxf.rs.security.saml.authorization;
+import java.io.File;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-
-@Target({ElementType.TYPE, ElementType.METHOD })
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Claims {
-    String realm() default "";
-    Claim[] value();
+/**
+ * A utility class for security tests
+ */
+public final class SecurityTestUtil {
+    
+    private SecurityTestUtil() {
+        // complete
+    }
+    
+    public static void cleanup() {
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        if (tmpDir != null) {
+            File nonceFile = new File(tmpDir + File.separator + "ws-security.nonce.cache.instance.data");
+            if (nonceFile.exists()) {
+                nonceFile.delete();
+            }
+            File tsFile = new File(tmpDir + File.separator + "ws-security.timestamp.cache.instance.data");
+            if (tsFile.exists()) {
+                tsFile.delete();
+            }
+        }
+    }
+    
 }

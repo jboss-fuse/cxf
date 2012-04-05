@@ -17,27 +17,17 @@
  * under the License.
  */
 
-package org.apache.cxf.rs.security.saml.authorization;
+package org.apache.cxf.security.claims.authorization;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+
 @Target({ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Claim {
-    
-    String format() default "http://schemas.xmlsoap.org/ws/2005/05/identity/claims";
-    String name() default "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role";
-    String[] value();
-    
-    /**
-     * If set to true then all the values of this claim have to be matched 
-     */
-    boolean matchAll() default false;
-    /**
-     * If set to ClaimMode.LAX then the match will fail only if the incoming
-     * assertion has the same name and format claim with non-matching values  
-     */
-    ClaimMode mode() default ClaimMode.STRICT;
+public @interface Claims {
+    String realm() default "";
+    Claim[] value();
 }

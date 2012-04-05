@@ -16,9 +16,31 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.rs.security.saml.authorization;
+package org.apache.cxf.systest.wssec.examples.common;
 
-public enum ClaimMode {
-    STRICT,
-    LAX
+import java.io.File;
+
+/**
+ * A utility class for security tests
+ */
+public final class SecurityTestUtil {
+    
+    private SecurityTestUtil() {
+        // complete
+    }
+    
+    public static void cleanup() {
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        if (tmpDir != null) {
+            File nonceFile = new File(tmpDir + File.separator + "ws-security.nonce.cache.instance.data");
+            if (nonceFile.exists()) {
+                nonceFile.delete();
+            }
+            File tsFile = new File(tmpDir + File.separator + "ws-security.timestamp.cache.instance.data");
+            if (tsFile.exists()) {
+                tsFile.delete();
+            }
+        }
+    }
+    
 }

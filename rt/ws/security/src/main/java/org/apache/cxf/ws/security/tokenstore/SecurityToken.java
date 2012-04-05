@@ -43,16 +43,8 @@ import org.apache.ws.security.util.XmlSchemaDateFormat;
  */
 public class SecurityToken implements Serializable {
     
-    private static final long serialVersionUID = -8023092932997444513L;
+    private static final long serialVersionUID = 3820740387121650613L;
 
-    public enum State {
-        UNKNOWN,
-        ISSUED, 
-        EXPIRED, 
-        CANCELLED, 
-        RENEWED
-    };
-    
     /**
      * Token identifier
      */
@@ -64,19 +56,9 @@ public class SecurityToken implements Serializable {
     private String wsuId;
     
     /**
-     * Current state of the token
-     */
-    private State state = State.UNKNOWN;
-    
-    /**
      * The actual token in its current state
      */
     private Element token;
-    
-    /**
-     * The token in its previous state
-     */
-    private Element previousToken;
     
     /**
      * The RequestedAttachedReference element
@@ -104,11 +86,6 @@ public class SecurityToken implements Serializable {
     private Properties properties;
 
     /**
-     * A flag to assist the TokenStorage
-     */
-    private boolean changed;
-    
-    /**
      * The secret associated with the Token
      */
     private byte[] secret;
@@ -134,11 +111,15 @@ public class SecurityToken implements Serializable {
     private String encrKeySha1Value;
     
     /**
-     * A hash code associated with this token. Note that it is not the hashcode of this 
-     * token, but a hash corresponding to an association with this token. It could refer
-     * to the hash of another SecurityToken which maps to this token. 
+     * A hash code associated with this token.
      */
-    private int associatedHash;
+    private int tokenHash;
+    
+    /**
+     * This holds the identifier of another SecurityToken which represents a transformed
+     * version of this token. 
+     */
+    private String transformedTokenIdentifier;
     
     /**
      * The tokenType
@@ -160,16 +141,12 @@ public class SecurityToken implements Serializable {
     
     public SecurityToken(String id) {
         this.id = id;
-        createDefaultExpires();
     }
 
     public SecurityToken(String id, Date created, Date expires) {
         this.id = id;
         this.created = created;
         this.expires = expires;
-        if (expires == null) {
-            createDefaultExpires();
-        }
     }
     
     public SecurityToken(String id,
@@ -180,9 +157,6 @@ public class SecurityToken implements Serializable {
         this.token = cloneElement(tokenElem);
         this.created = created;
         this.expires = expires;
-        if (expires == null) {
-            createDefaultExpires();
-        }
     }
 
     public SecurityToken(String id,
@@ -192,9 +166,6 @@ public class SecurityToken implements Serializable {
         this.token = cloneElement(tokenElem);
         if (lifetimeElem != null) {
             processLifeTime(lifetimeElem);
-        }
-        if (expires == null) {
-            createDefaultExpires();
         }
     }
     
@@ -234,20 +205,6 @@ public class SecurityToken implements Serializable {
     }
 
     /**
-     * @return Returns the changed.
-     */
-    public boolean isChanged() {
-        return changed;
-    }
-
-    /**
-     * @param chnaged The changed to set.
-     */
-    public void setChanged(boolean chnaged) {
-        this.changed = chnaged;
-    }
-    
-    /**
      * @return Returns the properties.
      */
     public Properties getProperties() {
@@ -259,20 +216,6 @@ public class SecurityToken implements Serializable {
      */
     public void setProperties(Properties properties) {
         this.properties = properties;
-    }
-
-    /**
-     * @return Returns the state.
-     */
-    public State getState() {
-        return state;
-    }
-
-    /**
-     * @param state The state to set.
-     */
-    public void setState(State state) {
-        this.state = state;
     }
 
     /**
@@ -290,24 +233,24 @@ public class SecurityToken implements Serializable {
     }
 
     /**
+     * Get the identifier corresponding to a transformed version of this token
+     */
+    public String getTransformedTokenIdentifier() {
+        return transformedTokenIdentifier;
+    }
+
+    /**
+     * Set the identifier corresponding to a transformed version of this token
+     */
+    public void setTransformedTokenIdentifier(String transformedTokenIdentifier) {
+        this.transformedTokenIdentifier = transformedTokenIdentifier;
+    }
+    
+    /**
      * @return Returns the id.
      */
     public String getId() {
         return id;
-    }
-
-    /**
-     * @return Returns the presivousToken.
-     */
-    public Element getPreviousToken() {
-        return previousToken;
-    }
-
-    /**
-     * @param presivousToken The presivousToken to set.
-     */
-    public void setPreviousToken(Element previousToken) {
-        this.previousToken = cloneElement(previousToken);
     }
 
     /**
@@ -374,13 +317,9 @@ public class SecurityToken implements Serializable {
      * Return whether this SecurityToken is expired or not
      */
     public boolean isExpired() {
-        if (state == State.EXPIRED) {
-            return true;
-        }
         if (expires != null) {
             Date rightNow = new Date();
             if (expires.before(rightNow)) {
-                state = State.EXPIRED;
                 return true;
             }
         }
@@ -479,20 +418,19 @@ public class SecurityToken implements Serializable {
     }
     
     /**
-     * Set a hash code associated with this token. Note that it is not the hashcode of this 
-     * token, but a hash corresponding to an association with this token.
+     * Set a hash code associated with this token.
      * @param hash a hash code associated with this token
      */
-    public void setAssociatedHash(int hash) {
-        associatedHash = hash;
+    public void setTokenHash(int hash) {
+        tokenHash = hash;
     }
     
     /**
      * Get a hash code associated with this token.
      * @return a hash code associated with this token.
      */
-    public int getAssociatedHash() {
-        return associatedHash;
+    public int getTokenHash() {
+        return tokenHash;
     }
     
     /**
@@ -511,13 +449,4 @@ public class SecurityToken implements Serializable {
         return principal;
     }
     
-    /**
-     * Create a default Expires date 5 minutes in the future
-     */
-    private void createDefaultExpires() {
-        expires = new Date();
-        long currentTime = expires.getTime();
-        expires.setTime(currentTime + 300L * 1000L);
-    }
-
 } 

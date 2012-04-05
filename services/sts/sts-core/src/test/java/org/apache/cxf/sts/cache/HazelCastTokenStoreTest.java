@@ -18,6 +18,8 @@
  */
 package org.apache.cxf.sts.cache;
 
+import java.util.Date;
+
 import org.apache.cxf.ws.security.tokenstore.SecurityToken;
 import org.apache.cxf.ws.security.tokenstore.TokenStore;
 import org.junit.BeforeClass;
@@ -31,32 +33,63 @@ public class HazelCastTokenStoreTest extends org.junit.Assert {
         store = new HazelCastTokenStore("default");
     }
     
-    // tests STSCache apis for storing in the cache.
+    // tests TokenStore apis for storing in the cache.
     @org.junit.Test
-    public void testCacheStore() throws Exception {
+    public void testTokenAdd() throws Exception {
         String key = "key";
         SecurityToken token = new SecurityToken(key);
         store.add(token);
         SecurityToken cachedToken = store.getToken(key);
         assertEquals(token.getId(), cachedToken.getId());
-        store.remove(token);
+        store.remove(token.getId());
         assertNull(store.getToken(key));
+        
+        String newKey = "xyz";
+        store.add(newKey, token);
+        assertNull(store.getToken(key));
+        cachedToken = store.getToken(newKey);
+        assertEquals(key, cachedToken.getId());
+        store.remove(newKey);
+        assertNull(store.getToken(newKey));
     }
     
-    // tests STSCache apis for removing from the cache.
+    // tests TokenStore apis for storing in the cache with various expiration times
     @org.junit.Test
-    public void testCacheRemove() {
+    public void testTokenAddExpiration() throws Exception {
+        SecurityToken expiredToken = new SecurityToken("expiredToken");
+        Date currentDate = new Date();
+        long currentTime = currentDate.getTime();
+        Date expiry = new Date();
+        expiry.setTime(currentTime - 5000L);
+        expiredToken.setExpires(expiry);
+        store.add(expiredToken);
+        assertTrue(store.getTokenIdentifiers().isEmpty());
+        
+        SecurityToken farFutureToken = new SecurityToken("farFuture");
+        expiry = new Date();
+        expiry.setTime(Long.MAX_VALUE);
+        farFutureToken.setExpires(expiry);
+        store.add(farFutureToken);
+        
+        assertTrue(store.getTokenIdentifiers().size() == 1);
+        store.remove(farFutureToken.getId());
+        assertTrue(store.getTokenIdentifiers().isEmpty());
+    }
+    
+    // tests TokenStore apis for removing from the cache.
+    @org.junit.Test
+    public void testTokenRemove() {
         SecurityToken token1 = new SecurityToken("token1");
         SecurityToken token2 = new SecurityToken("token2");
         SecurityToken token3 = new SecurityToken("token3");
         store.add(token1);
         store.add(token2);
         store.add(token3);
-        assertTrue(store.getValidTokens().size() == 3);
-        store.remove(token3);
+        assertTrue(store.getTokenIdentifiers().size() == 3);
+        store.remove(token3.getId());
         assertNull(store.getToken("test3"));
-        store.remove(token1);
-        store.remove(token2);
-        assertTrue(store.getValidTokens().size() == 0);
+        store.remove(token1.getId());
+        store.remove(token2.getId());
+        assertTrue(store.getTokenIdentifiers().size() == 0);
     }
 }
