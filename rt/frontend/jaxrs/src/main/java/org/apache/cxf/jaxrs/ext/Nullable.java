@@ -16,22 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.systest.beanincreationexception;
 
-public class TestBeanABOImpl implements TestBeanABO {
-    private TestBeanABO bean;
-    private AddNumbersPortType client;
+package org.apache.cxf.jaxrs.ext;
 
-    public void setBean(TestBeanABO bean) {
-        this.bean = bean;
-    }
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-    public void setClient(AddNumbersPortType client) {
-        this.client = client;
-    }
-
-    public String nothing() {
-        return "" + bean + client;
-    }
-
+/**
+ * Some JAX-RS providers, notably JAXB-based ones
+ * return 400 when the incoming payload is empty.
+ * This annotation can be attached to a method parameter
+ * identifying a request body in order to get a null 
+ * injected instead  
+ * 
+ */
+@Target(ElementType.PARAMETER)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Nullable {
 }
