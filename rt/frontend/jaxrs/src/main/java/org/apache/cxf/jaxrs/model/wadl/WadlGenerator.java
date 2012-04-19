@@ -223,7 +223,15 @@ public class WadlGenerator implements RequestHandler {
         Set<ClassResourceInfo> visitedResources = new HashSet<ClassResourceInfo>();
         for (ClassResourceInfo cri : cris) {
             startResourceTag(sbResources, cri.getServiceClass(), cri.getURITemplate().getValue());
-            handleDocs(cri.getServiceClass().getAnnotations(), sbResources, DocTarget.RESOURCE, true, isJson);
+            Annotation[] anns = cri.getServiceClass().getAnnotations();
+            if (anns.length == 0) {
+                Annotation ann = AnnotationUtils.getClassAnnotation(cri.getServiceClass(), 
+                                                                    Description.class);
+                if (ann != null) {
+                    anns = new Annotation[] {ann};
+                }
+            }
+            handleDocs(anns, sbResources, DocTarget.RESOURCE, true, isJson);
             handleResource(sbResources, allTypes, qnameResolver, clsMap, cri, visitedResources, isJson);
             sbResources.append("</resource>");
         }
@@ -882,9 +890,12 @@ public class WadlGenerator implements RequestHandler {
         
         for (Element schemaRefEl : schemaRefEls) {
             String href = schemaRefEl.getAttribute(attrName);
-            String actualRef = parentRef + href;
-            schemaLocationMap.put(actualRef, parentDocLoc + href);    
-            DOMUtils.setAttribute(schemaRefEl, attrName, getBaseURI(ui) + "/" + actualRef);
+            if (!StringUtils.isEmpty(href)) {
+                String actualRef = parentRef + href;
+                schemaLocationMap.put(actualRef, parentDocLoc + href);   
+                URI schemaURI = ui.getBaseUriBuilder().path(actualRef).build();
+                DOMUtils.setAttribute(schemaRefEl, attrName, schemaURI.toString());
+            }
         }
     }
 

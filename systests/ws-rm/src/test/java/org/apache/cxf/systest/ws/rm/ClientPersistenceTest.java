@@ -37,13 +37,12 @@ import org.apache.cxf.greeter_control.Greeter;
 import org.apache.cxf.greeter_control.GreeterService;
 import org.apache.cxf.interceptor.LoggingInInterceptor;
 import org.apache.cxf.interceptor.LoggingOutInterceptor;
-import org.apache.cxf.systest.ws.policy.GreeterImpl;
-import org.apache.cxf.systest.ws.util.InMessageRecorder;
 import org.apache.cxf.systest.ws.util.MessageFlow;
-import org.apache.cxf.systest.ws.util.MessageRecorder;
-import org.apache.cxf.systest.ws.util.OutMessageRecorder;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 import org.apache.cxf.testutil.common.AbstractBusTestServerBase;
+import org.apache.cxf.testutil.recorders.InMessageRecorder;
+import org.apache.cxf.testutil.recorders.MessageRecorder;
+import org.apache.cxf.testutil.recorders.OutMessageRecorder;
 import org.apache.cxf.ws.addressing.VersionTransformer.Names200408;
 import org.apache.cxf.ws.rm.DestinationSequence;
 import org.apache.cxf.ws.rm.ProtocolVariation;
@@ -260,7 +259,10 @@ public class ClientPersistenceTest extends AbstractBusClientServerTestBase {
         mf.verifyMessageNumbers(new String[] {"5"}, true);
         mf.verifyAcknowledgements(new boolean[1], true);
 
-        mf.verifyMessages(2, false);
+        // need in-exact as it COULD be 3 acks on a slow machine
+        //normally it will ack 1,3,5 and then 1-5, but on a slow machine,
+        //I've seen 1,3,5, then 1-3,5, and then 1-5
+        mf.verifyMessages(2, false, false);
 
         // we can't reliably predict how the three remaining messages are acknowledged
 //        expectedActions = new String[] {RM10Constants.SEQUENCE_ACKNOWLEDGMENT_ACTION,
@@ -312,7 +314,7 @@ public class ClientPersistenceTest extends AbstractBusClientServerTestBase {
     }
     
     private void awaitMessages(int nExpectedOut, int nExpectedIn) {
-        awaitMessages(nExpectedOut, nExpectedIn, 10000);
+        awaitMessages(nExpectedOut, nExpectedIn, 20000);
     }
     
     private void awaitMessages(int nExpectedOut, int nExpectedIn, int timeout) {

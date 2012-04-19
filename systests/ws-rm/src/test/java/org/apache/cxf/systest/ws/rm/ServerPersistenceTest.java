@@ -35,11 +35,11 @@ import org.apache.cxf.greeter_control.Greeter;
 import org.apache.cxf.greeter_control.GreeterService;
 import org.apache.cxf.greeter_control.types.GreetMeResponse;
 import org.apache.cxf.systest.ws.util.ConnectionHelper;
-import org.apache.cxf.systest.ws.util.InMessageRecorder;
 import org.apache.cxf.systest.ws.util.MessageFlow;
-import org.apache.cxf.systest.ws.util.MessageRecorder;
-import org.apache.cxf.systest.ws.util.OutMessageRecorder;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
+import org.apache.cxf.testutil.recorders.InMessageRecorder;
+import org.apache.cxf.testutil.recorders.MessageRecorder;
+import org.apache.cxf.testutil.recorders.OutMessageRecorder;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 import org.apache.cxf.ws.addressing.VersionTransformer.Names200408;
@@ -170,8 +170,7 @@ public class ServerPersistenceTest extends AbstractBusClientServerTestBase {
     }
     
     void verifyMissingResponse(Response<GreetMeResponse> responses[]) throws Exception {
-        awaitMessages(5, 3, 20000);
-//        awaitMessages(5, 8, 10000);
+        awaitMessages(5, 3, 25000);
 
         int nDone = 0;
         for (int i = 0; i < 3; i++) {
@@ -208,7 +207,7 @@ public class ServerPersistenceTest extends AbstractBusClientServerTestBase {
         // wait until all messages have received their responses
         int nDone = 0;
         long waited = 0;
-        while (waited < 20) {
+        while (waited < 30) {
             nDone = 0;
             for (int i = 0; i < responses.length - 1; i++) {
                 if (responses[i].isDone()) {
@@ -257,7 +256,7 @@ public class ServerPersistenceTest extends AbstractBusClientServerTestBase {
     }
 
     protected void awaitMessages(int nExpectedOut, int nExpectedIn) {
-        awaitMessages(nExpectedOut, nExpectedIn, 10000);
+        awaitMessages(nExpectedOut, nExpectedIn, 20000);
     }
     
     private void awaitMessages(int nExpectedOut, int nExpectedIn, int timeout) {

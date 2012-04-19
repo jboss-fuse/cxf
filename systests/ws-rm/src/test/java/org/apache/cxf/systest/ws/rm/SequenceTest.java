@@ -67,12 +67,12 @@ import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
 import org.apache.cxf.systest.ws.util.ConnectionHelper;
-import org.apache.cxf.systest.ws.util.InMessageRecorder;
 import org.apache.cxf.systest.ws.util.MessageFlow;
-import org.apache.cxf.systest.ws.util.MessageRecorder;
-import org.apache.cxf.systest.ws.util.OutMessageRecorder;
 import org.apache.cxf.test.TestUtilities;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
+import org.apache.cxf.testutil.recorders.InMessageRecorder;
+import org.apache.cxf.testutil.recorders.MessageRecorder;
+import org.apache.cxf.testutil.recorders.OutMessageRecorder;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 import org.apache.cxf.ws.addressing.VersionTransformer.Names200408;
@@ -503,6 +503,44 @@ public class SequenceTest extends AbstractBusClientServerTestBase {
         verifyTwowayNonAnonymous();
     }
 
+    @Test
+    public void testTwowayAnonymousSequenceLength1() throws Exception {
+        init("org/apache/cxf/systest/ws/rm/seqlength1.xml");
+
+        String v = greeter.greetMe("once");
+        assertEquals("Unexpected response", "ONCE", v);
+        // outbound: CS, greetReq,     TS, SA
+        // inbound: CSR, greetResp+SA,   , TS
+
+        awaitMessages(4, 3);
+        
+        MessageFlow mf = new MessageFlow(outRecorder.getOutboundMessages(),
+            inRecorder.getInboundMessages(), Names200408.WSA_NAMESPACE_NAME, RM10Constants.NAMESPACE_URI);
+
+        mf.verifyMessages(4, true);
+        String[] expectedActions = new String[] {RM10Constants.CREATE_SEQUENCE_ACTION, 
+                                                 GREETME_ACTION,
+                                                 RM10Constants.TERMINATE_SEQUENCE_ACTION,
+                                                 RM10Constants.SEQUENCE_ACKNOWLEDGMENT_ACTION};
+
+        mf.verifyActions(expectedActions, true);
+        mf.verifyMessageNumbers(new String[] {null, "1", null, null}, true);
+        mf.verifyLastMessage(new boolean[] {false, true, false, false}, true);
+        mf.verifyAcknowledgements(new boolean[] {false, false, false, true}, true);
+
+        mf.verifyMessages(3, false);
+
+        expectedActions = new String[] {RM10Constants.CREATE_SEQUENCE_RESPONSE_ACTION, 
+                                        GREETME_RESPONSE_ACTION,
+                                        RM10Constants.TERMINATE_SEQUENCE_ACTION};
+
+        mf.verifyActions(expectedActions, false);
+        mf.verifyMessageNumbers(new String[] {null, "1", null}, false);
+        mf.verifyLastMessage(new boolean[] {false, true, false}, false);
+        mf.verifyAcknowledgements(new boolean[] {false, true, false}, false);
+        
+    }
+    
     private void verifyTwowayNonAnonymous() throws Exception {
     
         // CreateSequence and three greetMe messages

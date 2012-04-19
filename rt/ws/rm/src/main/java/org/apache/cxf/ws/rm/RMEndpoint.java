@@ -264,6 +264,13 @@ public class RMEndpoint {
         createService();
         createEndpoint(d);
         setPolicies();
+        // CXF-4218 requires a change in the DB schema, which is not practical
+        // for the released 2.5.x. Thus, this is a workaround for 2.5.x to avoid getting 
+        // the duplicate jmx registration error.
+        if (!ProtocolVariation.RM10WSA200408.equals(protocol)) {
+            LOG.log(Level.INFO, "Skip monitoring for protocol: " + protocol);
+            return;
+        }
         if (manager != null && manager.getBus() != null) {
             managedEndpoint = new ManagedRMEndpoint(this);
             instrumentationManager = manager.getBus().getExtension(InstrumentationManager.class);        
@@ -462,6 +469,17 @@ public class RMEndpoint {
         partInfo.setElementQName(consts.getTerminateSequenceOperationName());
         partInfo.setElement(true);
         partInfo.setTypeClass(protocol.getCodec().getTerminateSequenceType());
+        
+        // for the TerminateSequence operation to an anonymous endpoint
+        operationInfo = ii.addOperation(consts.getTerminateSequenceAnonymousOperationName());
+        messageInfo = operationInfo.createMessage(consts.getTerminateSequenceAnonymousOperationName(),
+                                                  MessageInfo.Type.OUTPUT);
+        operationInfo.setOutput(messageInfo.getName().getLocalPart(), messageInfo);
+        partInfo = messageInfo.addMessagePart(TERMINATE_PART_NAME);
+        partInfo.setElementQName(consts.getTerminateSequenceOperationName());
+        partInfo.setElement(true);
+        partInfo.setTypeClass(protocol.getCodec().getTerminateSequenceType());
+        
     }
 
     void buildSequenceAckOperationInfo(InterfaceInfo ii) {
@@ -526,6 +544,11 @@ public class RMEndpoint {
             addAction(boi, consts.getTerminateSequenceAction());
             bi.addOperation(boi);
 
+            boi = bi.buildOperation(consts.getTerminateSequenceAnonymousOperationName(),
+                                    null, consts.getTerminateSequenceAnonymousOperationName().getLocalPart());
+            addAction(boi, consts.getTerminateSequenceAction());
+            bi.addOperation(boi);
+
             boi = bi.buildOperation(consts.getSequenceAckOperationName(), null, null);
             addAction(boi, consts.getSequenceAckAction());
             bi.addOperation(boi);
@@ -564,7 +587,9 @@ public class RMEndpoint {
         boi.addExtensor(soi);
 
         MessageInfo info = boi.getOperationInfo().getInput();
-        info.addExtensionAttribute(JAXWSAConstants.WSAW_ACTION_QNAME, action);
+        if (info != null) {
+            info.addExtensionAttribute(JAXWSAConstants.WSAW_ACTION_QNAME, action);
+        }
         
         info = boi.getOperationInfo().getOutput();
         if (info != null) {
