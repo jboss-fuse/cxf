@@ -636,8 +636,11 @@ public abstract class AbstractBindingBuilder {
                 st = getTokenStore().getToken(id);
             }
         }
-        getTokenStore().add(st);
-        return st;
+        if (st != null) {
+            getTokenStore().add(st);
+            return st;
+        }
+        return null;
     }
 
     protected void addSignatureParts(Map<Token, Object> tokenMap,
@@ -966,7 +969,7 @@ public abstract class AbstractBindingBuilder {
         }
         secToken.setToken(assertion.getElement());
         getTokenStore().add(secToken);
-        message.setContextualProperty(SecurityConstants.TOKEN, secToken);
+        message.setContextualProperty(SecurityConstants.TOKEN_ID, secToken.getId());
     }
     
     protected String findIDFromSamlToken(Element samlToken) {

@@ -86,10 +86,12 @@ public class JAASAuthenticationFilter implements RequestHandler {
             return null;
         } catch (AuthenticationException ex) {
             return handleAuthenticationException(ex, m);
+        } catch (SecurityException ex) {
+            return handleAuthenticationException(ex, m);
         }
     }
 
-    protected Response handleAuthenticationException(AuthenticationException ex, Message m) {
+    protected Response handleAuthenticationException(SecurityException ex, Message m) {
         HttpHeaders headers = new HttpHeadersImpl(m);
         if (redirectURI != null && isRedirectPossible(headers)) {
             
@@ -114,19 +116,22 @@ public class JAASAuthenticationFilter implements RequestHandler {
         } else {
             ResponseBuilder builder = Response.status(Response.Status.UNAUTHORIZED);
             
+            StringBuilder sb = new StringBuilder();
+            
             List<String> authHeader = headers.getRequestHeader(HttpHeaders.AUTHORIZATION);
             if (authHeader.size() > 0) {
-                StringBuilder sb = new StringBuilder();
                 // should HttpHeadersImpl do it ?
                 String[] authValues = authHeader.get(0).split(" ");
                 if (authValues.length > 0) {
                     sb.append(authValues[0]);
-                    if (realmName != null) {
-                        sb.append(' ').append(realmName);
-                    }
-                    builder.header(HttpHeaders.WWW_AUTHENTICATE, sb.toString());
                 }
+            } else {
+                sb.append("Basic");
             }
+            if (realmName != null) {
+                sb.append(' ').append(realmName);
+            }
+            builder.header(HttpHeaders.WWW_AUTHENTICATE, sb.toString());
             
             return builder.build();
         }

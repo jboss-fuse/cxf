@@ -53,10 +53,13 @@ import org.apache.cxf.ws.security.tokenstore.SecurityToken;
 import org.apache.cxf.ws.security.tokenstore.TokenStore;
 import org.apache.cxf.ws.security.wss4j.policyvalidators.AbstractSamlPolicyValidator;
 import org.apache.ws.security.WSConstants;
+import org.apache.ws.security.WSDocInfo;
 import org.apache.ws.security.WSPasswordCallback;
+import org.apache.ws.security.WSSConfig;
 import org.apache.ws.security.WSSecurityEngineResult;
 import org.apache.ws.security.WSSecurityException;
 import org.apache.ws.security.components.crypto.Crypto;
+import org.apache.ws.security.handler.RequestData;
 import org.apache.ws.security.handler.WSHandlerConstants;
 import org.apache.ws.security.handler.WSHandlerResult;
 import org.apache.ws.security.saml.SAMLKeyInfo;
@@ -64,9 +67,13 @@ import org.apache.ws.security.saml.ext.AssertionWrapper;
 import org.apache.ws.security.saml.ext.bean.ConditionsBean;
 import org.apache.ws.security.saml.ext.builder.SAML1ComponentBuilder;
 import org.apache.ws.security.saml.ext.builder.SAML2ComponentBuilder;
+import org.apache.ws.security.util.UUIDGenerator;
 import org.apache.ws.security.util.WSSecurityUtil;
 import org.joda.time.DateTime;
 import org.opensaml.common.SAMLVersion;
+import org.opensaml.saml1.core.Audience;
+import org.opensaml.saml1.core.AudienceRestrictionCondition;
+import org.opensaml.saml2.core.AudienceRestriction;
 
 /**
  * A TokenRenewer implementation that renews a (valid or expired) SAML Token.
@@ -83,6 +90,7 @@ public class SAMLTokenRenewer implements TokenRenewer {
     private long maxExpiry = DEFAULT_MAX_EXPIRY;
     // boolean to enable/disable the check of proof of possession
     private boolean verifyProofOfPossession = true;
+    private boolean allowRenewalAfterExpiry;
     
     /**
      * Return true if this TokenRenewer implementation is able to renew a token.
@@ -119,6 +127,20 @@ public class SAMLTokenRenewer implements TokenRenewer {
     }
     
     /**
+     * Get whether we allow renewal after expiry. The default is false.
+     */
+    public boolean isAllowRenewalAfterExpiry() {
+        return allowRenewalAfterExpiry;
+    }
+
+    /**
+     * Set whether we allow renewal after expiry. The default is false.
+     */
+    public void setAllowRenewalAfterExpiry(boolean allowRenewalAfterExpiry) {
+        this.allowRenewalAfterExpiry = allowRenewalAfterExpiry;
+    }
+    
+    /**
      * Set a new value (in seconds) for how long a token is allowed to be expired for before renewal. 
      * The default is 30 minutes.
      */
@@ -148,33 +170,32 @@ public class SAMLTokenRenewer implements TokenRenewer {
             );
         }
         
+        TokenStore tokenStore = tokenParameters.getTokenStore();
+        if (tokenStore == null) {
+            LOG.log(Level.FINE, "A cache must be configured to use the SAMLTokenRenewer");
+            throw new STSException("Can't renew SAML assertion", STSException.REQUEST_FAILED);
+        }
+        
         try {
             AssertionWrapper assertion = new AssertionWrapper((Element)tokenToRenew.getToken());
             
-            // Check to see whether the token has expired greater than the configured max expiry time
-            if (tokenToRenew.getState() == STATE.EXPIRED) {
-                DateTime expiryDate = getExpiryDate(assertion);
-                DateTime currentDate = new DateTime();
-                if ((currentDate.getMillis() - expiryDate.getMillis()) > (maxExpiry * 1000L)) {
-                    LOG.log(Level.WARNING, "The token expired too long ago to be renewed");
-                    throw new STSException(
-                        "The token expired too long ago to be renewed", STSException.REQUEST_FAILED
-                    );
-                }
+            byte[] oldSignature = assertion.getSignatureValue();
+            int hash = Arrays.hashCode(oldSignature);
+            SecurityToken cachedToken = tokenStore.getToken(Integer.toString(hash));
+            if (cachedToken == null) {
+                LOG.log(Level.FINE, "The token to be renewed must be stored in the cache");
+                throw new STSException("Can't renew SAML assertion", STSException.REQUEST_FAILED);
             }
             
-            ProofOfPossessionValidator popValidator = new ProofOfPossessionValidator();
-            if (verifyProofOfPossession 
-                && !popValidator.checkProofOfPossession(tokenParameters, assertion.getSubjectKeyInfo())) {
-                throw new STSException(
-                    "Failed to verify the proof of possession of the key associated with the "
-                    + "saml token. No matching key found in the request.",
-                    STSException.INVALID_REQUEST
-                );
-            }
+            // Validate the Assertion
+            validateAssertion(assertion, tokenToRenew, cachedToken, tokenParameters);
+            
+            String oldId = createNewId(assertion);
+            // Remove the previous token (now expired) from the cache
+            tokenStore.remove(oldId);
+            tokenStore.remove(Integer.toString(hash));
             
             // Create new Conditions & sign the Assertion
-            byte[] oldSignature = assertion.getSignatureValue();
             createNewConditions(assertion, tokenParameters);
             signAssertion(assertion, tokenParameters);
             
@@ -187,17 +208,9 @@ public class SAMLTokenRenewer implements TokenRenewer {
             }
             doc.appendChild(token);
             
-            // Remove the previous token (now expired) from the cache
-            if (tokenParameters.getTokenStore() != null) {
-                tokenParameters.getTokenStore().remove(assertion.getId());
-                int hash = Arrays.hashCode(oldSignature);
-                tokenParameters.getTokenStore().remove(Integer.toString(hash));
-            }
-            
             // Cache the token
-            String realm = tokenParameters.getRealm();
             storeTokenInCache(
-                tokenParameters.getTokenStore(), assertion, tokenParameters.getPrincipal(), realm
+                tokenStore, assertion, tokenParameters.getPrincipal(), tokenParameters.getRealm()
             );
             
             response.setToken(token);
@@ -267,6 +280,141 @@ public class SAMLTokenRenewer implements TokenRenewer {
      */
     public Map<String, SAMLRealm> getRealmMap() {
         return realmMap;
+    }
+    
+    private void validateAssertion(
+        AssertionWrapper assertion,
+        ReceivedToken tokenToRenew,
+        SecurityToken token,
+        TokenRenewerParameters tokenParameters
+    ) throws WSSecurityException {
+        // Check the cached renewal properties
+        Properties props = token.getProperties();
+        if (props == null) {
+            LOG.log(Level.WARNING, "Error in getting properties from cached token");
+            throw new STSException("Error in getting properties from cached token", STSException.REQUEST_FAILED);
+        }
+        String isAllowRenewal = (String)props.get(STSConstants.TOKEN_RENEWING_ALLOW);
+        String isAllowRenewalAfterExpiry = 
+            (String)props.get(STSConstants.TOKEN_RENEWING_ALLOW_AFTER_EXPIRY);
+        
+        if (isAllowRenewal == null || !Boolean.valueOf(isAllowRenewal)) {
+            LOG.log(Level.WARNING, "The token is not allowed to be renewed");
+            throw new STSException("The token is not allowed to be renewed", STSException.REQUEST_FAILED);
+        }
+        
+        // Check to see whether the token has expired greater than the configured max expiry time
+        if (tokenToRenew.getState() == STATE.EXPIRED) {
+            if (!allowRenewalAfterExpiry || isAllowRenewalAfterExpiry == null
+                || !Boolean.valueOf(isAllowRenewalAfterExpiry)) {
+                LOG.log(Level.WARNING, "Renewal after expiry is not allowed");
+                throw new STSException(
+                    "Renewal after expiry is not allowed", STSException.REQUEST_FAILED
+                );
+            }
+            DateTime expiryDate = getExpiryDate(assertion);
+            DateTime currentDate = new DateTime();
+            if ((currentDate.getMillis() - expiryDate.getMillis()) > (maxExpiry * 1000L)) {
+                LOG.log(Level.WARNING, "The token expired too long ago to be renewed");
+                throw new STSException(
+                    "The token expired too long ago to be renewed", STSException.REQUEST_FAILED
+                );
+            }
+        }
+        
+        // Verify Proof of Possession
+        ProofOfPossessionValidator popValidator = new ProofOfPossessionValidator();
+        if (verifyProofOfPossession) {
+            STSPropertiesMBean stsProperties = tokenParameters.getStsProperties();
+            Crypto sigCrypto = stsProperties.getSignatureCrypto();
+            CallbackHandler callbackHandler = stsProperties.getCallbackHandler();
+            RequestData requestData = new RequestData();
+            requestData.setSigCrypto(sigCrypto);
+            WSSConfig wssConfig = WSSConfig.getNewInstance();
+            requestData.setWssConfig(wssConfig);
+            requestData.setCallbackHandler(callbackHandler);
+            // Parse the HOK subject if it exists
+            assertion.parseHOKSubject(
+                requestData, new WSDocInfo(((Element)tokenToRenew.getToken()).getOwnerDocument())
+            );
+        
+            SAMLKeyInfo keyInfo = assertion.getSubjectKeyInfo();
+            if (keyInfo == null) {
+                keyInfo = new SAMLKeyInfo((byte[])null);
+            }
+            if (!popValidator.checkProofOfPossession(tokenParameters, keyInfo)) {
+                throw new STSException(
+                    "Failed to verify the proof of possession of the key associated with the "
+                    + "saml token. No matching key found in the request.",
+                    STSException.INVALID_REQUEST
+                );
+            }
+        }
+        
+        // Check the AppliesTo address
+        String appliesToAddress = tokenParameters.getAppliesToAddress();
+        if (appliesToAddress != null) {
+            if (assertion.getSaml1() != null) {
+                List<AudienceRestrictionCondition> restrConditions = 
+                    assertion.getSaml1().getConditions().getAudienceRestrictionConditions();
+                if (!matchSaml1AudienceRestriction(appliesToAddress, restrConditions)) {
+                    LOG.log(Level.WARNING, "The AppliesTo address does not match the Audience Restriction");
+                    throw new STSException(
+                        "The AppliesTo address does not match the Audience Restriction",
+                        STSException.INVALID_REQUEST
+                    );
+                }
+            } else {
+                List<AudienceRestriction> audienceRestrs = 
+                    assertion.getSaml2().getConditions().getAudienceRestrictions();
+                if (!matchSaml2AudienceRestriction(appliesToAddress, audienceRestrs)) {
+                    LOG.log(Level.WARNING, "The AppliesTo address does not match the Audience Restriction");
+                    throw new STSException(
+                        "The AppliesTo address does not match the Audience Restriction",
+                        STSException.INVALID_REQUEST
+                    );
+                }
+            }
+        }
+        
+    }
+    
+    private boolean matchSaml1AudienceRestriction(
+        String appliesTo, List<AudienceRestrictionCondition> restrConditions
+    ) {
+        boolean found = false;
+        if (restrConditions != null && !restrConditions.isEmpty()) {
+            for (AudienceRestrictionCondition restrCondition : restrConditions) {
+                if (restrCondition.getAudiences() != null) {
+                    for (Audience audience : restrCondition.getAudiences()) {
+                        if (appliesTo.equals(audience.getUri())) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        
+        return found;
+    }
+    
+    private boolean matchSaml2AudienceRestriction(
+        String appliesTo, List<AudienceRestriction> audienceRestrictions
+    ) {
+        boolean found = false;
+        if (audienceRestrictions != null && !audienceRestrictions.isEmpty()) {
+            for (AudienceRestriction audienceRestriction : audienceRestrictions) {
+                if (audienceRestriction.getAudiences() != null) {
+                    for (org.opensaml.saml2.core.Audience audience : audienceRestriction.getAudiences()) {
+                        if (appliesTo.equals(audience.getAudienceURI())) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        return found;
     }
     
     private void signAssertion(
@@ -376,6 +524,22 @@ public class SAMLTokenRenewer implements TokenRenewer {
         }
     }
     
+    private String createNewId(AssertionWrapper assertion) {
+        if (assertion.getSaml1() != null) {
+            org.opensaml.saml1.core.Assertion saml1Assertion = assertion.getSaml1();
+            String oldId = saml1Assertion.getID();
+            saml1Assertion.setID("_" + UUIDGenerator.getUUID());
+            
+            return oldId;
+        } else {
+            org.opensaml.saml2.core.Assertion saml2Assertion = assertion.getSaml2();
+            String oldId = saml2Assertion.getID();
+            saml2Assertion.setID("_" + UUIDGenerator.getUUID());
+            
+            return oldId;
+        }
+    }
+    
     private void storeTokenInCache(
         TokenStore tokenStore, 
         AssertionWrapper assertion, 
@@ -437,7 +601,7 @@ public class SAMLTokenRenewer implements TokenRenewer {
                 WSSecurityUtil.fetchAllActionResults(results, WSConstants.UT_SIGN, signedResults);
             }
             
-            TLSSessionInfo tlsInfo = (TLSSessionInfo)messageContext.get(TLSSessionInfo.class);
+            TLSSessionInfo tlsInfo = (TLSSessionInfo)messageContext.get(TLSSessionInfo.class.getName());
             Certificate[] tlsCerts = null;
             if (tlsInfo != null) {
                 tlsCerts = tlsInfo.getPeerCertificates();

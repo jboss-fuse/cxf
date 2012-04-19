@@ -68,16 +68,16 @@ class SecureConversationOutInterceptor extends AbstractPhaseInterceptor<SoapMess
                 if (tok == null) {
                     tok = issueToken(message, aim, itok);
                 } else {
-                    renewToken(message, aim, tok, itok);
+                    tok = renewToken(message, aim, tok, itok);
                 }
                 if (tok != null) {
                     for (AssertionInfo ai : ais) {
                         ai.setAsserted(true);
                     }
-                    message.getExchange().get(Endpoint.class).put(SecurityConstants.TOKEN_ID, 
-                                                                  tok.getId());
-                    message.getExchange().put(SecurityConstants.TOKEN_ID, 
-                                              tok.getId());
+                    message.getExchange().get(Endpoint.class).put(SecurityConstants.TOKEN, tok);
+                    message.getExchange().get(Endpoint.class).put(SecurityConstants.TOKEN_ID, tok.getId());
+                    message.getExchange().put(SecurityConstants.TOKEN_ID, tok.getId());
+                    message.getExchange().put(SecurityConstants.TOKEN, tok);
                     NegotiationUtils.getTokenStore(message).add(tok);
                     
                 }
@@ -91,12 +91,12 @@ class SecureConversationOutInterceptor extends AbstractPhaseInterceptor<SoapMess
     }
     
     
-    private void renewToken(SoapMessage message,
+    private SecurityToken renewToken(SoapMessage message,
                             AssertionInfoMap aim, 
                             SecurityToken tok,
                             SecureConversationToken itok) {
         if (!tok.isExpired()) {
-            return;
+            return tok;
         }
         
         STSClient client = STSUtils.getClient(message, "sct");
@@ -107,7 +107,7 @@ class SecureConversationOutInterceptor extends AbstractPhaseInterceptor<SoapMess
             maps = (AddressingProperties)message
                 .get("javax.xml.ws.addressing.context");
         } else if (maps.getAction().getValue().endsWith("Renew")) {
-            return;
+            return tok;
         }
         synchronized (client) {
             try {
@@ -118,11 +118,11 @@ class SecureConversationOutInterceptor extends AbstractPhaseInterceptor<SoapMess
                 client.setLocation(s);
                 
                 Map<String, Object> ctx = client.getRequestContext();
-                ctx.put(SecurityConstants.TOKEN, tok);
+                ctx.put(SecurityConstants.TOKEN_ID, tok.getId());
                 if (maps != null) {
                     client.setAddressingNamespace(maps.getNamespaceURI());
                 }
-                client.renewSecurityToken(tok);
+                return client.renewSecurityToken(tok);
             } catch (RuntimeException e) {
                 throw e;
             } catch (Exception e) {
