@@ -62,8 +62,9 @@ public class CXFNonSpringJaxrsServlet extends CXFNonSpringServlet {
     private static final String SERVICE_SCOPE_PARAM = "jaxrs.scope";
     private static final String EXTENSIONS_PARAM = "jaxrs.extensions";
     private static final String LANGUAGES_PARAM = "jaxrs.languages";
-    private static final String PROPERTIES_PARAM = "jaxrs.languages";
+    private static final String PROPERTIES_PARAM = "jaxrs.properties";
     private static final String SCHEMAS_PARAM = "jaxrs.schemaLocations";
+    private static final String STATIC_SUB_RESOLUTION_PARAM = "jaxrs.static.subresources";
     private static final String SERVICE_SCOPE_SINGLETON = "singleton";
     private static final String SERVICE_SCOPE_REQUEST = "prototype";
     
@@ -87,6 +88,9 @@ public class CXFNonSpringJaxrsServlet extends CXFNonSpringServlet {
             address = "/";
         }
         bean.setAddress(address);
+        
+        bean.setStaticSubresourceResolution(getStaticSubResolutionValue(servletConfig));
+        
         String modelRef = servletConfig.getInitParameter(USER_MODEL_PARAM);
         if (modelRef != null) {
             bean.setModelRef(modelRef.trim());
@@ -108,10 +112,19 @@ public class CXFNonSpringJaxrsServlet extends CXFNonSpringServlet {
             bean.setResourceProvider(entry.getKey(), entry.getValue());
         }
         setExtensions(bean, servletConfig);
-        
+                
         bean.create();
     }
 
+    protected boolean getStaticSubResolutionValue(ServletConfig servletConfig) {
+        String param = servletConfig.getInitParameter(STATIC_SUB_RESOLUTION_PARAM);
+        if (param != null) {
+            return Boolean.valueOf(param.trim());
+        } else {
+            return false;
+        }
+    }
+    
     protected void setExtensions(JAXRSServerFactoryBean bean, ServletConfig servletConfig) {
         bean.setExtensionMappings(handleMapSequence(servletConfig.getInitParameter(EXTENSIONS_PARAM)));
         bean.setLanguageMappings(handleMapSequence(servletConfig.getInitParameter(LANGUAGES_PARAM)));
@@ -346,10 +359,13 @@ public class CXFNonSpringJaxrsServlet extends CXFNonSpringServlet {
         Application app = (Application)createSingletonInstance(appClass, props, servletConfig);
         
         String ignoreParam = servletConfig.getInitParameter(IGNORE_APP_PATH_PARAM);
-        JAXRSServerFactoryBean bean = ResourceUtils.createApplication(app, MessageUtils.isTrue(ignoreParam));
+        JAXRSServerFactoryBean bean = ResourceUtils.createApplication(app, 
+                                            MessageUtils.isTrue(ignoreParam),
+                                            getStaticSubResolutionValue(servletConfig));
         setAllInterceptors(bean, servletConfig);
         setExtensions(bean, servletConfig);
         setSchemasLocations(bean, servletConfig);
+        
         bean.setBus(getBus());
         bean.create();
     }

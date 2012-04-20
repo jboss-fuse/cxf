@@ -61,6 +61,8 @@ public final class SecurityConstants {
     
     public static final String TIMESTAMP_TTL = "ws-security.timestamp.timeToLive";
     
+    public static final String ENABLE_REVOCATION = "ws-security.enableRevocation";
+    
     //WebLogic and WCF always encrypt UsernameTokens whenever possible
     //See:  http://e-docs.bea.com/wls/docs103/webserv_intro/interop.html
     //Be default, we will encrypt as well for interop reasons.  However, this
@@ -123,12 +125,52 @@ public final class SecurityConstants {
     public static final String KERBEROS_SPN = "ws-security.kerberos.spn";
     
     /**
+     * The SpnegoClientAction implementation to use for SPNEGO. This allows the user to plug in
+     * a different implementation to obtain a service ticket.
+     */
+    public static final String SPNEGO_CLIENT_ACTION = "ws-security.spnego.client.action";
+    
+    /**
      * Set this to "false" to not cache a SecurityToken per proxy object in the 
      * IssuedTokenInterceptorProvider. This should be done if a token is being retrieved
      * from an STS in an intermediary. The default value is "true".
      */
     public static final String CACHE_ISSUED_TOKEN_IN_ENDPOINT = 
         "ws-security.cache.issued.token.in.endpoint";
+    
+    /**
+     * Set this to "true" to cache UsernameToken nonces. The default value is "false".
+     */
+    public static final String ENABLE_NONCE_CACHE = 
+        "ws-security.enable.nonce.cache";
+    
+    /**
+     * This holds a reference to a ReplayCache instance used to cache UsernameToken nonces. The
+     * default instance that is used is the EHCacheReplayCache.
+     */
+    public static final String NONCE_CACHE_INSTANCE = 
+        "ws-security.nonce.cache.instance";
+    
+    /**
+     * Set this to "true" to cache Timestamp Created Strings (these are only cached in 
+     * conjunction with a message Signature). The default value is "false".
+     */
+    public static final String ENABLE_TIMESTAMP_CACHE = 
+        "ws-security.enable.timestamp.cache";
+    
+    /**
+     * This holds a reference to a ReplayCache instance used to cache Timestamp Created Strings. The
+     * default instance that is used is the EHCacheReplayCache.
+     */
+    public static final String TIMESTAMP_CACHE_INSTANCE = 
+        "ws-security.timestamp.cache.instance";
+    
+    /**
+     * Set this property to point to a configuration file for the underlying caching implementation.
+     * The default configuration file that is used is cxf-ehcache.xml in this module.
+     */
+    public static final String CACHE_CONFIG_FILE = 
+        "ws-security.cache.config.file";
     
     public static final Set<String> ALL_PROPERTIES;
     
@@ -144,7 +186,9 @@ public final class SecurityConstants {
             SIGNATURE_TOKEN_VALIDATOR, IS_BSP_COMPLIANT, TIMESTAMP_FUTURE_TTL,
             BST_TOKEN_VALIDATOR, SAML_CALLBACK_HANDLER, STS_TOKEN_ON_BEHALF_OF,
             KERBEROS_CLIENT, SCT_TOKEN_VALIDATOR, CACHE_ISSUED_TOKEN_IN_ENDPOINT,
-            KERBEROS_JAAS_CONTEXT_NAME, KERBEROS_SPN
+            KERBEROS_JAAS_CONTEXT_NAME, KERBEROS_SPN, SPNEGO_CLIENT_ACTION,
+            ENABLE_NONCE_CACHE, NONCE_CACHE_INSTANCE, ENABLE_TIMESTAMP_CACHE,
+            TIMESTAMP_CACHE_INSTANCE, CACHE_CONFIG_FILE
         }));
         ALL_PROPERTIES = Collections.unmodifiableSet(s);
     }

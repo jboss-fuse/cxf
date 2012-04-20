@@ -26,10 +26,13 @@ import java.util.logging.Logger;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509KeyManager;
 
 import org.apache.cxf.common.logging.LogUtils;
+import org.apache.cxf.common.util.ReflectionInvokationHandler;
 import org.apache.cxf.configuration.security.ClientAuthentication;
 import org.apache.cxf.configuration.security.FiltersType;
+import org.apache.cxf.transport.https.AliasedX509ExtendedKeyManager;
 import org.apache.cxf.transport.https.SSLUtils;
 import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
 
@@ -46,7 +49,7 @@ public class CXFJettySslSocketConnector extends SslSelectChannelConnector {
     protected SecureRandom   secureRandom;
     protected List<String>   cipherSuites;
     protected FiltersType    cipherSuitesFilter;
-    
+       
     /**
      * Set the cipherSuites
      */
@@ -82,37 +85,41 @@ public class CXFJettySslSocketConnector extends SslSelectChannelConnector {
         secureRandom = random;
     }
     
+    
     /**
      * Set the ClientAuthentication (from the JAXB type) that
      * configures an HTTP Destination.
      */
     protected void setClientAuthentication(ClientAuthentication clientAuth) {
-        getSslContextFactory().setWantClientAuth(true);
+        getCxfSslContextFactory().setWantClientAuth(true);
         if (clientAuth != null) {
             if (clientAuth.isSetWant()) {
-                getSslContextFactory().setWantClientAuth(clientAuth.isWant());
+                getCxfSslContextFactory().setWantClientAuth(clientAuth.isWant());
             }
             if (clientAuth.isSetRequired()) {
-                getSslContextFactory().setNeedClientAuth(clientAuth.isRequired());
+                getCxfSslContextFactory().setNeedClientAuth(clientAuth.isRequired());
             }
         }
     }
     
     protected void doStart() throws Exception {
         // setup the create SSLContext on the SSLContextFactory
-        getSslContextFactory().setSslContext(createSSLContext());
+        getCxfSslContextFactory().setSslContext(createSSLContext());
         super.doStart();
     }
     
     protected SSLContext createSSLContext() throws Exception  {
-        String proto = getSslContextFactory().getProtocol() == null
+        String proto = getCxfSslContextFactory().getProtocol() == null
             ? "TLS"
-                : getSslContextFactory().getProtocol();
+                : getCxfSslContextFactory().getProtocol();
  
-        SSLContext context = getSslContextFactory().getProvider() == null
+        SSLContext context = getCxfSslContextFactory().getProvider() == null
             ? SSLContext.getInstance(proto)
-                : SSLContext.getInstance(proto, getSslContextFactory().getProvider());
+                : SSLContext.getInstance(proto, getCxfSslContextFactory().getProvider());
             
+        if (getCxfSslContextFactory().getCertAlias() != null) {
+            getKeyManagersWithCertAlias();
+        }
         context.init(keyManagers, trustManagers, secureRandom);
 
         String[] cs = 
@@ -122,8 +129,53 @@ public class CXFJettySslSocketConnector extends SslSelectChannelConnector {
                     cipherSuitesFilter,
                     LOG, true);
         
-        getSslContextFactory().setExcludeCipherSuites(cs);
+        getCxfSslContextFactory().setExcludeCipherSuites(cs);
         
         return context;
     }
+    
+    protected void getKeyManagersWithCertAlias() throws Exception {
+        if (getCxfSslContextFactory().getCertAlias() != null) {
+            for (int idx = 0; idx < keyManagers.length; idx++) {
+                if (keyManagers[idx] instanceof X509KeyManager) {
+                    keyManagers[idx] = new AliasedX509ExtendedKeyManager(
+                        getCxfSslContextFactory().getCertAlias(), (X509KeyManager)keyManagers[idx]);
+                }
+            }
+        }
+    }
+    
+    public CxfSslContextFactory getCxfSslContextFactory() {
+        try {
+            Object o = getClass().getMethod("getSslContextFactory").invoke(this);
+            return ReflectionInvokationHandler.createProxyWrapper(o, CxfSslContextFactory.class);
+        } catch (Exception e) {
+            //ignore, the NPE is fine
+        }
+        
+        return null;
+    }
+    
+    interface CxfSslContextFactory {
+        void setExcludeCipherSuites(String ... cs);
+
+        String getProtocol();
+        
+        String getProvider();
+        
+        void setSslContext(SSLContext createSSLContext);
+
+        void setNeedClientAuth(boolean required);
+
+        void setWantClientAuth(boolean want);
+
+        void setProtocol(String secureSocketProtocol);
+
+        void setProvider(String jsseProvider);
+        
+        void setCertAlias(String certAlias);
+        
+        String getCertAlias();
+    }
+    
 }

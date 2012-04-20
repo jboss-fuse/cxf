@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.message.Message;
+import org.apache.cxf.message.MessageUtils;
 import org.apache.cxf.ws.addressing.AddressingPropertiesImpl;
 import org.apache.cxf.ws.addressing.ContextUtils;
 import org.apache.cxf.ws.addressing.MAPAggregator;
@@ -46,6 +47,15 @@ public class RMInInterceptor extends AbstractRMInterceptor<Message> {
     @Override
     public void handleFault(Message message) {
         message.put(MAPAggregator.class.getName(), true);
+        if (MessageUtils.isTrue(message.get(RMMessageConstants.DELIVERING_ROBUST_ONEWAY))) {
+            // revert the delivering entry from the destination sequence
+            try {
+                Destination destination = getManager().getDestination(message);
+                destination.releaseDeliveringStatus(message);
+            } catch (RMException e) {
+                LOG.log(Level.WARNING, "Failed to revert the delivering status");
+            }
+        }
     }
 
     protected void handle(Message message) throws SequenceFault, RMException {
@@ -150,6 +160,12 @@ public class RMInInterceptor extends AbstractRMInterceptor<Message> {
     
     void processSequence(Destination destination, Message message) 
         throws SequenceFault, RMException {
+        final boolean robust =
+            MessageUtils.isTrue(message.getContextualProperty(Message.ROBUST_ONEWAY));
+        if (robust) {
+            // set this property to change the acknlowledging behavior
+            message.put(RMMessageConstants.DELIVERING_ROBUST_ONEWAY, Boolean.TRUE);
+        } 
         destination.acknowledge(message);
     }
     

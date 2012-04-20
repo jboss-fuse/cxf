@@ -25,6 +25,7 @@ import java.net.URL;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -108,6 +109,7 @@ import org.apache.ws.security.WSSecurityException;
 import org.apache.ws.security.WSUsernameTokenPrincipal;
 import org.apache.ws.security.components.crypto.Crypto;
 import org.apache.ws.security.components.crypto.CryptoFactory;
+import org.apache.ws.security.components.crypto.CryptoType;
 import org.apache.ws.security.conversation.ConversationConstants;
 import org.apache.ws.security.conversation.ConversationException;
 import org.apache.ws.security.handler.WSHandlerConstants;
@@ -121,7 +123,9 @@ import org.apache.ws.security.message.WSSecSignatureConfirmation;
 import org.apache.ws.security.message.WSSecTimestamp;
 import org.apache.ws.security.message.WSSecUsernameToken;
 import org.apache.ws.security.message.token.BinarySecurity;
+import org.apache.ws.security.message.token.PKIPathSecurity;
 import org.apache.ws.security.message.token.SecurityTokenReference;
+import org.apache.ws.security.message.token.X509Security;
 import org.apache.ws.security.saml.ext.AssertionWrapper;
 import org.apache.ws.security.saml.ext.SAMLParms;
 import org.apache.ws.security.util.WSSecurityUtil;
@@ -162,6 +166,7 @@ public abstract class AbstractBindingBuilder {
     Element lastDerivedKeyElement;
     Element bottomUpElement;
     Element topDownElement;
+    Element bstElement;
     
     public AbstractBindingBuilder(
                            WSSConfig config,
@@ -472,23 +477,9 @@ public abstract class AbstractBindingBuilder {
         }
         for (Token token : suppTokens.getTokens()) {
             if (token instanceof UsernameToken) {
-                WSSecUsernameToken utBuilder = addUsernameToken((UsernameToken)token);
-                if (utBuilder != null) {
-                    utBuilder.prepare(saaj.getSOAPPart());
-                    addSupportingElement(utBuilder.getUsernameTokenElement());
-                    ret.put(token, utBuilder);
-                    //WebLogic and WCF always encrypt these
-                    //See:  http://e-docs.bea.com/wls/docs103/webserv_intro/interop.html
-                    //encryptedTokensIdList.add(utBuilder.getId());
-                    if (suppTokens.isEncryptedToken()
-                        || MessageUtils.getContextualBoolean(message, 
-                                                             SecurityConstants.ALWAYS_ENCRYPT_UT,
-                                                             true)) {
-                        WSEncryptionPart part = new WSEncryptionPart(utBuilder.getId(), "Element");
-                        part.setElement(utBuilder.getUsernameTokenElement());
-                        encryptedTokensList.add(part);
-                    }
-                }
+                handleUsernameTokenSupportingToken(
+                    (UsernameToken)token, endorse, suppTokens.isEncryptedToken(), ret
+                );
             } else if (isRequestor() 
                 && (token instanceof IssuedToken
                     || token instanceof SecureConversationToken
@@ -544,9 +535,6 @@ public abstract class AbstractBindingBuilder {
                     }
 
                     String password = getPassword(uname, token, WSPasswordCallback.SIGNATURE);
-                    if (password == null) {
-                        password = "";
-                    }
                     sig.setUserInfo(uname, password);
                     try {
                         sig.prepare(saaj.getSOAPPart(), secToken.getCrypto(), secHeader);
@@ -592,6 +580,42 @@ public abstract class AbstractBindingBuilder {
             }
         }
         return ret;
+    }
+    
+    protected void handleUsernameTokenSupportingToken(
+        UsernameToken token, boolean endorse, boolean encryptedToken, Map<Token, Object> ret
+    ) throws WSSecurityException {
+        if (endorse) {
+            WSSecUsernameToken utBuilder = addDKUsernameToken(token, true);
+            if (utBuilder != null) {
+                utBuilder.prepare(saaj.getSOAPPart());
+                addSupportingElement(utBuilder.getUsernameTokenElement());
+                ret.put(token, utBuilder);
+                if (encryptedToken) {
+                    WSEncryptionPart part = new WSEncryptionPart(utBuilder.getId(), "Element");
+                    part.setElement(utBuilder.getUsernameTokenElement());
+                    encryptedTokensList.add(part);
+                }
+            }
+        } else {
+            WSSecUsernameToken utBuilder = addUsernameToken(token);
+            if (utBuilder != null) {
+                utBuilder.prepare(saaj.getSOAPPart());
+                addSupportingElement(utBuilder.getUsernameTokenElement());
+                ret.put(token, utBuilder);
+                //WebLogic and WCF always encrypt these
+                //See:  http://e-docs.bea.com/wls/docs103/webserv_intro/interop.html
+                //encryptedTokensIdList.add(utBuilder.getId());
+                if (encryptedToken
+                    || MessageUtils.getContextualBoolean(message, 
+                                                         SecurityConstants.ALWAYS_ENCRYPT_UT,
+                                                         true)) {
+                    WSEncryptionPart part = new WSEncryptionPart(utBuilder.getId(), "Element");
+                    part.setElement(utBuilder.getUsernameTokenElement());
+                    encryptedTokensList.add(part);
+                }
+            }
+        }
     }
     
     protected Element cloneElement(Element el) {
@@ -912,9 +936,6 @@ public abstract class AbstractBindingBuilder {
             }
     
             String password = getPassword(user, token, WSPasswordCallback.SIGNATURE);
-            if (password == null) {
-                password = "";
-            }
          
             // TODO configure using a KeyValue here
             assertion.signAssertion(user, password, crypto, false);
@@ -1354,12 +1375,34 @@ public abstract class AbstractBindingBuilder {
         Crypto crypto = getEncryptionCrypto(wrapper);
         message.getExchange().put(SecurityConstants.ENCRYPT_CRYPTO, crypto);
         setKeyIdentifierType(encrKey, wrapper, token);
-        setEncryptionUser(encrKey, wrapper, false, crypto);
+        boolean alsoIncludeToken = false;
+        // Find out do we also need to include the token as per the Inclusion requirement
+        if (token instanceof X509Token 
+            && token.getInclusion() != SPConstants.IncludeTokenType.INCLUDE_TOKEN_NEVER
+            && encrKey.getKeyIdentifierType() != WSConstants.BST_DIRECT_REFERENCE) {
+            alsoIncludeToken = true;
+        }
+        
+        String encrUser = setEncryptionUser(encrKey, wrapper, false, crypto);
         
         encrKey.setSymmetricEncAlgorithm(binding.getAlgorithmSuite().getEncryption());
         encrKey.setKeyEncAlgo(binding.getAlgorithmSuite().getAsymmetricKeyWrap());
         
         encrKey.prepare(saaj.getSOAPPart(), crypto);
+        
+        if (alsoIncludeToken) {
+            CryptoType cryptoType = new CryptoType(CryptoType.TYPE.ALIAS);
+            cryptoType.setAlias(encrUser);
+            X509Certificate[] certs = crypto.getX509Certificates(cryptoType);
+            BinarySecurity bstToken = new X509Security(saaj.getSOAPPart());
+            ((X509Security) bstToken).setX509Certificate(certs[0]);
+            bstToken.addWSUNamespace();
+            bstToken.setID(wssConfig.getIdAllocator().createSecureId("X509-", certs[0]));
+            WSSecurityUtil.prependChildElement(
+                secHeader.getSecurityHeader(), bstToken.getElement()
+            );
+            bstElement = bstToken.getElement();
+        }
         
         return encrKey;
     }
@@ -1371,9 +1414,28 @@ public abstract class AbstractBindingBuilder {
 
 
     public Crypto getEncryptionCrypto(TokenWrapper wrapper) throws WSSecurityException {
-        return getCrypto(wrapper, 
-                         SecurityConstants.ENCRYPT_CRYPTO,
-                         SecurityConstants.ENCRYPT_PROPERTIES);
+        Crypto crypto = getCrypto(wrapper, SecurityConstants.ENCRYPT_CRYPTO,
+                                  SecurityConstants.ENCRYPT_PROPERTIES);
+        boolean enableRevocation = MessageUtils.isTrue(
+                                       message.getContextualProperty(SecurityConstants.ENABLE_REVOCATION));
+        if (enableRevocation && crypto != null) {
+            CryptoType cryptoType = new CryptoType(CryptoType.TYPE.ALIAS);
+            String encrUser = (String)message.getContextualProperty(SecurityConstants.ENCRYPT_USERNAME);
+            if (crypto != null && encrUser == null) {
+                try {
+                    encrUser = crypto.getDefaultX509Identifier();
+                } catch (WSSecurityException e1) {
+                    throw new Fault(e1);
+                }
+            }
+            cryptoType.setAlias(encrUser);
+            X509Certificate[] certs = crypto.getX509Certificates(cryptoType);
+            if (certs != null && certs.length > 0) {
+                crypto.verifyTrust(certs, enableRevocation);
+            }
+        }
+        return crypto;
+
     }
     
     public Crypto getCrypto(
@@ -1446,31 +1508,30 @@ public abstract class AbstractBindingBuilder {
     }
     
     public void setKeyIdentifierType(WSSecBase secBase, TokenWrapper wrapper, Token token) {
+        boolean tokenTypeSet = false;
         
-        if (token.getInclusion() == SPConstants.IncludeTokenType.INCLUDE_TOKEN_NEVER) {
-            boolean tokenTypeSet = false;
-            
-            if (token instanceof X509Token) {
-                X509Token x509Token = (X509Token)token;
-                if (x509Token.isRequireIssuerSerialReference()) {
-                    secBase.setKeyIdentifierType(WSConstants.ISSUER_SERIAL);
-                    tokenTypeSet = true;
-                } else if (x509Token.isRequireKeyIdentifierReference()) {
-                    secBase.setKeyIdentifierType(WSConstants.SKI_KEY_IDENTIFIER);
-                    tokenTypeSet = true;
-                } else if (x509Token.isRequireThumbprintReference()) {
-                    secBase.setKeyIdentifierType(WSConstants.THUMBPRINT_IDENTIFIER);
-                    tokenTypeSet = true;
-                }
-            } else if (token instanceof KeyValueToken) {
-                secBase.setKeyIdentifierType(WSConstants.KEY_VALUE);
+        if (token instanceof X509Token) {
+            X509Token x509Token = (X509Token)token;
+            if (x509Token.isRequireIssuerSerialReference()) {
+                secBase.setKeyIdentifierType(WSConstants.ISSUER_SERIAL);
+                tokenTypeSet = true;
+            } else if (x509Token.isRequireKeyIdentifierReference()) {
+                secBase.setKeyIdentifierType(WSConstants.SKI_KEY_IDENTIFIER);
+                tokenTypeSet = true;
+            } else if (x509Token.isRequireThumbprintReference()) {
+                secBase.setKeyIdentifierType(WSConstants.THUMBPRINT_IDENTIFIER);
                 tokenTypeSet = true;
             }
-            
-            if (!tokenTypeSet) {
-                policyAsserted(token);
-                policyAsserted(wrapper);
-                
+        } else if (token instanceof KeyValueToken) {
+            secBase.setKeyIdentifierType(WSConstants.KEY_VALUE);
+            tokenTypeSet = true;
+        }
+        
+        policyAsserted(token);
+        policyAsserted(wrapper);
+        
+        if (!tokenTypeSet) {
+            if (token.getInclusion() == SPConstants.IncludeTokenType.INCLUDE_TOKEN_NEVER) {
                 Wss10 wss = getWss10();
                 policyAsserted(wss);
                 if (wss == null || wss.isMustSupportRefKeyIdentifier()) {
@@ -1481,15 +1542,13 @@ public abstract class AbstractBindingBuilder {
                                 && ((Wss11) wss).isMustSupportRefThumbprint()) {
                     secBase.setKeyIdentifierType(WSConstants.THUMBPRINT_IDENTIFIER);
                 }
+            } else {
+                secBase.setKeyIdentifierType(WSConstants.BST_DIRECT_REFERENCE);
             }
-        } else {
-            policyAsserted(token);
-            policyAsserted(wrapper);
-            secBase.setKeyIdentifierType(WSConstants.BST_DIRECT_REFERENCE);
         }
     }
     
-    public void setEncryptionUser(WSSecEncryptedKey encrKeyBuilder, TokenWrapper token,
+    public String setEncryptionUser(WSSecEncryptedKey encrKeyBuilder, TokenWrapper token,
                                   boolean sign, Crypto crypto) {
         String encrUser = (String)message.getContextualProperty(sign 
                                                                 ? SecurityConstants.SIGNATURE_USERNAME
@@ -1523,6 +1582,8 @@ public abstract class AbstractBindingBuilder {
         } else {
             encrKeyBuilder.setUserInfo(encrUser);
         }
+        
+        return encrUser;
     }
     
     private static X509Certificate getReqSigCert(List<WSHandlerResult> results) {
@@ -1615,6 +1676,7 @@ public abstract class AbstractBindingBuilder {
     ) throws WSSecurityException {
         WSSecSignature sig = new WSSecSignature(wssConfig);
         checkForX509PkiPath(sig, token);
+        boolean alsoIncludeToken = false;
         if (token instanceof IssuedToken || token instanceof SamlToken) {
             policyAsserted(token);
             policyAsserted(wrapper);
@@ -1666,6 +1728,13 @@ public abstract class AbstractBindingBuilder {
             sig.setCustomTokenId(sigTokId);
         } else {
             setKeyIdentifierType(sig, wrapper, token);
+            // Find out do we also need to include the token as per the Inclusion requirement
+            if (token instanceof X509Token 
+                && token.getInclusion() != SPConstants.IncludeTokenType.INCLUDE_TOKEN_NEVER
+                && (sig.getKeyIdentifierType() != WSConstants.BST_DIRECT_REFERENCE
+                    && sig.getKeyIdentifierType() != WSConstants.KEY_VALUE)) {
+                alsoIncludeToken = true;
+            }
         }
         
         boolean encryptCrypto = false;
@@ -1701,9 +1770,6 @@ public abstract class AbstractBindingBuilder {
         }
 
         String password = getPassword(user, token, WSPasswordCallback.SIGNATURE);
-        if (password == null) {
-            password = "";
-        }
         sig.setUserInfo(user, password);
         sig.setSignatureAlgorithm(binding.getAlgorithmSuite().getAsymmetricSignature());
         sig.setDigestAlgo(binding.getAlgorithmSuite().getDigest());
@@ -1713,6 +1779,25 @@ public abstract class AbstractBindingBuilder {
             sig.prepare(saaj.getSOAPPart(), crypto, secHeader);
         } catch (WSSecurityException e) {
             policyNotAsserted(token, e);
+        }
+        
+        if (alsoIncludeToken) {
+            CryptoType cryptoType = new CryptoType(CryptoType.TYPE.ALIAS);
+            cryptoType.setAlias(user);
+            X509Certificate[] certs = crypto.getX509Certificates(cryptoType);
+            BinarySecurity bstToken = null;
+            if (!sig.isUseSingleCertificate()) {
+                bstToken = new PKIPathSecurity(saaj.getSOAPPart());
+                ((PKIPathSecurity) bstToken).setX509Certificates(certs, crypto);
+            } else {
+                bstToken = new X509Security(saaj.getSOAPPart());
+                ((X509Security) bstToken).setX509Certificate(certs[0]);
+            }
+            bstToken.setID(wssConfig.getIdAllocator().createSecureId("X509-", certs[0]));
+            WSSecurityUtil.prependChildElement(
+                secHeader.getSecurityHeader(), bstToken.getElement()
+            );
+            bstElement = bstToken.getElement();
         }
         
         return sig;
@@ -1767,6 +1852,34 @@ public abstract class AbstractBindingBuilder {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
+            } else if (tempTok instanceof WSSecUsernameToken) {
+                WSSecUsernameToken utBuilder = (WSSecUsernameToken)tempTok;
+                String id = utBuilder.getId();
+
+                Date created = new Date();
+                Date expires = new Date();
+                expires.setTime(created.getTime() + 300000);
+                SecurityToken secToken = 
+                    new SecurityToken(id, utBuilder.getUsernameTokenElement(), created, expires);
+                
+                if (isTokenProtection) {
+                    sigParts.add(new WSEncryptionPart(secToken.getId()));
+                }
+                
+                try {
+                    byte[] secret = utBuilder.getDerivedKey();
+                    secToken.setSecret(secret);
+                    
+                    if (ent.getKey().isDerivedKeys()) {
+                        doSymmSignatureDerived(ent.getKey(), secToken, sigParts, isTokenProtection);
+                    } else {
+                        doSymmSignature(ent.getKey(), secToken, sigParts, isTokenProtection);
+                    }
+                } catch (Exception e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                
             }
         } 
     }
@@ -1823,7 +1936,9 @@ public abstract class AbstractBindingBuilder {
             //Set the value type of the reference
             dkSign.setCustomValueType(WSConstants.SOAPMESSAGE_NS11 + "#"
                 + WSConstants.ENC_KEY_VALUE_TYPE);
-        }
+        } else if (policyToken instanceof UsernameToken) {
+            dkSign.setCustomValueType(WSConstants.WSS_USERNAME_TOKEN_VALUE_TYPE);
+        } 
         
         dkSign.prepare(doc, secHeader);
         
@@ -1881,6 +1996,8 @@ public abstract class AbstractBindingBuilder {
                 sig.setCustomTokenValueType(WSConstants.WSS_SAML2_KI_VALUE_TYPE);
             } else if (tokenType != null) {
                 sig.setCustomTokenValueType(tokenType);
+            } else if (policyToken instanceof UsernameToken) {
+                sig.setCustomTokenValueType(WSConstants.WSS_USERNAME_TOKEN_VALUE_TYPE);
             } else {
                 sig.setCustomTokenValueType(WSConstants.WSS_SAML_KI_VALUE_TYPE);
             }

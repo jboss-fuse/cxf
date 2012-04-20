@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.message.Message;
+import org.apache.cxf.message.MessageUtils;
 import org.apache.cxf.phase.Phase;
 
 /**
@@ -42,6 +43,13 @@ public class RMDeliveryInterceptor extends AbstractRMInterceptor<Message> {
     
     public void handle(Message message) throws SequenceFault, RMException {
         LOG.entering(getClass().getName(), "handleMessage");
-        getManager().getDestination(message).processingComplete(message);
+        Destination dest = getManager().getDestination(message);
+        final boolean robust =
+            MessageUtils.isTrue(message.getContextualProperty(Message.ROBUST_ONEWAY));
+        if (robust) {
+            message.remove(RMMessageConstants.DELIVERING_ROBUST_ONEWAY);
+            dest.acknowledge(message);
+        }
+        dest.processingComplete(message);
     }
 }
