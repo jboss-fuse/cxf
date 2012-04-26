@@ -22,15 +22,12 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.Collections;
 
-import javax.ws.rs.core.UriInfo;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import org.apache.cxf.common.util.Base64Utility;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.jaxrs.ext.RequestHandler;
-import org.apache.cxf.jaxrs.impl.UriInfoImpl;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.rs.security.saml.DeflateEncoderDecoder;
 import org.apache.ws.security.saml.ext.OpenSAMLUtil;
@@ -51,7 +48,17 @@ public abstract class AbstractServiceProviderFilter implements RequestHandler {
     
     private String idpServiceAddress;
     private String issuerId;
+    private String assertionConsumerServiceAddress;
     
+    public String getAssertionConsumerServiceAddress() {
+        return assertionConsumerServiceAddress;
+    }
+
+    public void setAssertionConsumerServiceAddress(
+            String assertionConsumerServiceAddress) {
+        this.assertionConsumerServiceAddress = assertionConsumerServiceAddress;
+    }
+
     protected boolean checkSecurityContext(Message m) {
         return false;
     }
@@ -82,10 +89,9 @@ public abstract class AbstractServiceProviderFilter implements RequestHandler {
                 Collections.singletonList(authnCtxClassRef), null
             );
         
-        UriInfo ui = new UriInfoImpl(m);
         //CHECKSTYLE:OFF
         return SamlpRequestComponentBuilder.createAuthnRequest(
-                ui.getRequestUri().toString(), 
+                assertionConsumerServiceAddress, 
                 false, 
                 false,
                 "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST", 
@@ -108,7 +114,7 @@ public abstract class AbstractServiceProviderFilter implements RequestHandler {
         return URLEncoder.encode(encodedRequestMessage, "UTF-8");
     }
 
-    protected SamlRequestInfo createSamlResponseInfo(Message m) throws Exception {
+    protected SamlRequestInfo createSamlRequestInfo(Message m) throws Exception {
         Document doc = DOMUtils.createDocument();
         doc.appendChild(doc.createElement("root"));
  
@@ -118,7 +124,9 @@ public abstract class AbstractServiceProviderFilter implements RequestHandler {
         
         SamlRequestInfo info = new SamlRequestInfo();
         info.setEncodedSamlRequest(authnRequestEncoded);
-        // set relay state if any
+        
+        String originalRequestURI = (String)m.get(Message.REQUEST_URI);
+        info.setRelayState(originalRequestURI);
         return info;
     }
     

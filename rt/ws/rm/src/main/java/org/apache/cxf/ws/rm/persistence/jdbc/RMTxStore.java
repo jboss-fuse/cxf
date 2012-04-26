@@ -41,8 +41,10 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import javax.annotation.PostConstruct;
+import javax.sql.DataSource;
 
 import org.apache.cxf.common.i18n.Message;
 import org.apache.cxf.common.logging.LogUtils;
@@ -136,6 +138,9 @@ public class RMTxStore implements RMStore {
         "SELECT MSG_NO, SEND_TO, CONTENT FROM {0} WHERE SEQ_ID = ?";
     private static final String ALTER_TABLE_STMT_STR =
         "ALTER TABLE {0} ADD {1} {2}";
+    private static final String CREATE_SCHEMA_STMT_STR = "CREATE SCHEMA {0}";
+    private static final String SET_CURRENT_SCHEMA_STMT_STR = "SET CURRENT SCHEMA {0}";
+    
     private static final String DERBY_TABLE_EXISTS_STATE = "X0Y32";
     private static final int ORACLE_TABLE_EXISTS_CODE = 955;
     
@@ -161,10 +166,12 @@ public class RMTxStore implements RMStore {
     private PreparedStatement selectInboundMessagesStmt;
     private PreparedStatement selectOutboundMessagesStmt;
     
+    private DataSource dataSource;
     private String driverClassName = "org.apache.derby.jdbc.EmbeddedDriver";
     private String url = MessageFormat.format("jdbc:derby:{0};create=true", DEFAULT_DATABASE_NAME);
     private String userName;
     private String password;
+    private String schemaName;
     
     private String tableExistsState = DERBY_TABLE_EXISTS_STATE;
     private int tableExistsCode = ORACLE_TABLE_EXISTS_CODE;
@@ -203,6 +210,26 @@ public class RMTxStore implements RMStore {
         return userName;
     }
     
+    public String getSchemaName() {
+        return schemaName;
+    }
+
+    public void setSchemaName(String sn) {
+        if (sn == null || Pattern.matches("[a-zA-Z\\d]{1,32}", sn)) {
+            schemaName = sn;
+        } else {
+            throw new IllegalArgumentException("Invalid schema name: " + sn);
+        }
+    }
+
+    public DataSource getDataSource() {
+        return dataSource;
+    }
+
+    public void setDataSource(DataSource ds) {
+        dataSource = ds;
+    }
+
     public String getTableExistsState() {
         return tableExistsState;
     }
@@ -736,6 +763,30 @@ public class RMTxStore implements RMStore {
             }
         }
     }
+    
+    protected void setCurrentSchema() throws SQLException {
+        if (schemaName == null || connection == null) {
+            return;
+        }
+        
+        Statement stmt = connection.createStatement();
+        // schemaName has been verified at setSchemaName(String)
+        try {
+            stmt.executeUpdate(MessageFormat.format(CREATE_SCHEMA_STMT_STR, 
+                                                    schemaName));
+        } catch (SQLException ex) {
+            // pass through to assume it is already created
+        }
+        stmt.close();
+        stmt = connection.createStatement();
+        try {
+            stmt.executeUpdate(MessageFormat.format(SET_CURRENT_SCHEMA_STMT_STR, 
+                                                    schemaName));
+        } catch (SQLException ex) {
+            throw ex;
+        }
+        stmt.close();
+    }
 
     @PostConstruct     
     public synchronized void init() {
@@ -743,27 +794,37 @@ public class RMTxStore implements RMStore {
         if (null == connection) {
             LOG.log(Level.FINE, "Using derby.system.home: {0}", 
                     SystemPropertyAction.getProperty("derby.system.home"));
-            assert null != url;
-            assert null != driverClassName;
-            try {
-                Class.forName(driverClassName);
-            } catch (ClassNotFoundException ex) {
-                LogUtils.log(LOG, Level.SEVERE, "CONNECT_EXC", ex);
-                return;
-            }
+            if (null != dataSource) {
+                try {
+                    LOG.log(Level.FINE, "Using dataSource: " + dataSource);
+                    connection = dataSource.getConnection();
+                } catch (SQLException ex) {
+                    LogUtils.log(LOG, Level.SEVERE, "CONNECT_EXC", ex);
+                    return;
+                }
+            } else {
+                assert null != url;
+                assert null != driverClassName;
+                try {
+                    Class.forName(driverClassName);
+                } catch (ClassNotFoundException ex) {
+                    LogUtils.log(LOG, Level.SEVERE, "CONNECT_EXC", ex);
+                    return;
+                }
     
-            try {
-                LOG.log(Level.FINE, "Using url: " + url);
-                connection = DriverManager.getConnection(url, userName, password);
-    
-            } catch (SQLException ex) {
-                LogUtils.log(LOG, Level.SEVERE, "CONNECT_EXC", ex);
-                return;
+                try {
+                    LOG.log(Level.FINE, "Using url: " + url);
+                    connection = DriverManager.getConnection(url, userName, password);
+                } catch (SQLException ex) {
+                    LogUtils.log(LOG, Level.SEVERE, "CONNECT_EXC", ex);
+                    return;
+                }
             }
         }
         
         try {
             connection.setAutoCommit(true);
+            setCurrentSchema();
             createTables();
         } catch (SQLException ex) {
             LogUtils.log(LOG, Level.SEVERE, "CONNECT_EXC", ex);
