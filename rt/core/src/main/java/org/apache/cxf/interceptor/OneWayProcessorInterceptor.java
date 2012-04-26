@@ -32,6 +32,7 @@ import org.apache.cxf.io.DelegatingInputStream;
 import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageImpl;
+import org.apache.cxf.message.MessageUtils;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
 import org.apache.cxf.transport.Conduit;
@@ -136,11 +137,17 @@ public class OneWayProcessorInterceptor extends AbstractPhaseInterceptor<Message
                         lock.wait(20);
                     }
                 } catch (RejectedExecutionException e) {
-                    //the executor queue is full, so run the task in the caller thread
                     LOG.warning(
                         "Executor queue is full, run the oneway invocation task in caller thread." 
                         + "  Users can specify a larger executor queue to avoid this.");
-                    chain.resume();
+                    // only block the thread if the prop is unset or set to false, otherwise let it go
+                    if (!MessageUtils.isTrue(
+                        message.getContextualProperty(
+                            "org.apache.cxf.oneway.rejected_execution_exception"))) {
+                        //the executor queue is full, so run the task in the caller thread
+                        chain.resume();
+                    }
+                    
                 } catch (InterruptedException e) {
                     //ignore - likely a busy work queue so we'll just let the one-way go
                 }
