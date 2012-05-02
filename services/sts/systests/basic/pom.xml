@@ -165,6 +165,7 @@
                         <configuration>
                             <systemPropertyVariables>
                                 <sts.deployment>standalone</sts.deployment>
+                                <java.io.tmpdir>${basedir}/target/tmp</java.io.tmpdir>
                             </systemPropertyVariables>
                         </configuration>
                     </plugin>
@@ -181,6 +182,7 @@
                         <configuration>
                             <systemPropertyVariables>
                                 <sts.deployment>war</sts.deployment>
+                                <java.io.tmpdir>${basedir}/target/tmp</java.io.tmpdir>
                             </systemPropertyVariables>
                         </configuration>
                     </plugin>
@@ -241,6 +243,7 @@
                              <argLine>-Djava.endorsed.dirs=${basedir}/target/endorsed</argLine>
                              <systemPropertyVariables>
                                 <sts.deployment>standalone</sts.deployment>
+                                <java.io.tmpdir>${basedir}/target/tmp</java.io.tmpdir>
                              </systemPropertyVariables>
                          </configuration>
                     </plugin>

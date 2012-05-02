@@ -627,7 +627,7 @@ public class STSClient implements Configurable, InterceptorProvider {
         String keyTypeTemplate = null;
         String sptt = null;
         
-        if (template != null) {
+        if (template != null && DOMUtils.getFirstElement(template) != null) {
             if (this.useSecondaryParameters()) {
                 writer.writeStartElement("wst", "SecondaryParameters", namespace);
             }
@@ -804,8 +804,8 @@ public class STSClient implements Configurable, InterceptorProvider {
     protected void writeElementsForRSTPublicKey(W3CDOMStreamWriter writer,
             X509Certificate cert) throws Exception {
         writer.writeStartElement("wst", "UseKey", namespace);
-        writer.writeStartElement("dsig", "KeyInfo", "http://www.w3.org/2000/09/xmldsig#");
-        writer.writeNamespace("dsig", "http://www.w3.org/2000/09/xmldsig#");
+        writer.writeStartElement("ds", "KeyInfo", "http://www.w3.org/2000/09/xmldsig#");
+        writer.writeNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
 
         boolean useCert = useCertificateForConfirmationKeyInfo;
         String useCertStr = (String)getProperty(SecurityConstants.STS_TOKEN_USE_CERT_FOR_KEYINFO);
@@ -817,7 +817,7 @@ public class STSClient implements Configurable, InterceptorProvider {
             certElem.addCertificate(cert);
             writer.getCurrentNode().appendChild(certElem.getElement());
         } else {
-            writer.writeStartElement("dsig", "KeyValue", "http://www.w3.org/2000/09/xmldsig#");
+            writer.writeStartElement("ds", "KeyValue", "http://www.w3.org/2000/09/xmldsig#");
             PublicKey key = cert.getPublicKey();
             String pubKeyAlgo = key.getAlgorithm();
             if ("DSA".equalsIgnoreCase(pubKeyAlgo)) {
@@ -884,7 +884,7 @@ public class STSClient implements Configurable, InterceptorProvider {
         }
         
         String sptt = null;
-        if (template != null) {
+        if (template != null && DOMUtils.getFirstElement(template) != null) {
             if (this.useSecondaryParameters()) {
                 writer.writeStartElement("wst", "SecondaryParameters", namespace);
             }
@@ -1255,6 +1255,7 @@ public class STSClient implements Configurable, InterceptorProvider {
         Element lte = null;
         Element entropy = null;
         String tt = null;
+        String retKeySize = null;
 
         while (el != null) {
             String ln = el.getLocalName();
@@ -1273,6 +1274,8 @@ public class STSClient implements Configurable, InterceptorProvider {
                     entropy = el;
                 } else if ("TokenType".equals(ln)) {
                     tt = DOMUtils.getContent(el);
+                } else if ("KeySize".equals(ln)) {
+                    retKeySize = DOMUtils.getContent(el);
                 }
             }
             el = DOMUtils.getNextElement(el);
@@ -1318,9 +1321,18 @@ public class STSClient implements Configurable, InterceptorProvider {
                     // Right now we only use PSHA1 as the computed key algo
                     P_SHA1 psha1 = new P_SHA1();
 
-                    int length = (keySize > 0) ? keySize : 256;
-                    if (algorithmSuite != null) {
-                        length = (keySize > 0) ? keySize : algorithmSuite.getMaximumSymmetricKeyLength();
+                    int length = 0;
+                    if (retKeySize != null) {
+                        try {
+                            length = Integer.parseInt(retKeySize);
+                        } catch (NumberFormatException ex) {
+                            // do nothing
+                        }
+                    } else {
+                        length = keySize;
+                    }
+                    if (length <= 0) {
+                        length = 256;
                     }
                     try {
                         secret = psha1.createKey(requestorEntropy, serviceEntr, 0, length / 8);

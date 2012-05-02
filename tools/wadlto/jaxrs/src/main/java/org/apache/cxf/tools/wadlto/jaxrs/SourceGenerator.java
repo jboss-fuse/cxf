@@ -1256,8 +1256,9 @@ public class SourceGenerator {
     
     private JCodeModel createCodeModel(List<SchemaInfo> schemaElements, Set<String> type) {
         
-
         SchemaCompiler compiler = createCompiler(type);
+        compiler.setEntityResolver(OASISCatalogManager.getCatalogManager(bus)
+                                       .getEntityResolver());
         if (compilerArgs.size() > 0) {
             compiler.getOptions().addGrammar(new InputSource("null"));
             compiler.getOptions().parseArguments(compilerArgs.toArray(new String[] {}));
