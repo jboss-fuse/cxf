@@ -183,6 +183,26 @@
     </jaxws:endpoint> 
     
     <jaxws:endpoint 
+       id="AsymmetricSignatureSP11"
+       address="http://localhost:${testutil.ports.Server}/DoubleItX509AsymmetricSignatureSP11" 
+       serviceName="s:DoubleItService"
+       endpointName="s:DoubleItAsymmetricSignatureSP11Port"
+       xmlns:s="http://www.example.org/contract/DoubleIt"
+       implementor="org.apache.cxf.systest.ws.common.DoubleItImpl"
+       wsdlLocation="org/apache/cxf/systest/ws/x509/DoubleItX509Signature.wsdl">
+        
+       <jaxws:properties>
+          <entry key="ws-security.callback-handler" 
+                  value="org.apache.cxf.systest.ws.wssec10.client.KeystorePasswordCallback"/>
+          <entry key="ws-security.signature.properties" 
+                  value="org/apache/cxf/systest/ws/wssec10/client/bob.properties"/> 
+          <entry key="ws-security.encryption.properties" 
+                  value="org/apache/cxf/systest/ws/wssec10/client/alice.properties"/> 
+       </jaxws:properties> 
+     
+    </jaxws:endpoint> 
+    
+    <jaxws:endpoint 
        id="AsymmetricEncryption"
        address="http://localhost:${testutil.ports.Server}/DoubleItX509AsymmetricEncryption" 
        serviceName="s:DoubleItService"
@@ -260,6 +280,23 @@
     </jaxws:endpoint> 
     
     <jaxws:endpoint 
+       id="TransportEndorsingSP11"
+       address="https://localhost:${testutil.ports.Server.2}/DoubleItX509TransportEndorsingSP11" 
+       serviceName="s:DoubleItService"
+       endpointName="s:DoubleItTransportEndorsingSP11Port"
+       xmlns:s="http://www.example.org/contract/DoubleIt"
+       implementor="org.apache.cxf.systest.ws.common.DoubleItImpl"
+       wsdlLocation="org/apache/cxf/systest/ws/x509/DoubleItX509.wsdl"
+       depends-on="tls-settings">
+        
+       <jaxws:properties>
+          <entry key="ws-security.encryption.properties" 
+                  value="org/apache/cxf/systest/ws/wssec10/client/alice.properties"/> 
+       </jaxws:properties> 
+     
+    </jaxws:endpoint> 
+    
+    <jaxws:endpoint 
        id="TransportSignedEndorsing"
        address="https://localhost:${testutil.ports.Server.2}/DoubleItX509TransportSignedEndorsing" 
        serviceName="s:DoubleItService"
@@ -298,6 +335,23 @@
        address="https://localhost:${testutil.ports.Server.2}/DoubleItX509TransportSignedEndorsingEncrypted" 
        serviceName="s:DoubleItService"
        endpointName="s:DoubleItTransportSignedEndorsingEncryptedPort"
+       xmlns:s="http://www.example.org/contract/DoubleIt"
+       implementor="org.apache.cxf.systest.ws.common.DoubleItImpl"
+       wsdlLocation="org/apache/cxf/systest/ws/x509/DoubleItX509.wsdl"
+       depends-on="tls-settings">
+        
+       <jaxws:properties>
+          <entry key="ws-security.encryption.properties" 
+                  value="org/apache/cxf/systest/ws/wssec10/client/alice.properties"/> 
+       </jaxws:properties> 
+     
+    </jaxws:endpoint> 
+    
+    <jaxws:endpoint 
+       id="TransportSupportingSigned"
+       address="https://localhost:${testutil.ports.Server.2}/DoubleItX509TransportSupportingSigned" 
+       serviceName="s:DoubleItService"
+       endpointName="s:DoubleItTransportSupportingSignedPort"
        xmlns:s="http://www.example.org/contract/DoubleIt"
        implementor="org.apache.cxf.systest.ws.common.DoubleItImpl"
        wsdlLocation="org/apache/cxf/systest/ws/x509/DoubleItX509.wsdl"

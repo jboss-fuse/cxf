@@ -22,8 +22,20 @@ import org.w3c.dom.Element;
 
 import org.apache.cxf.configuration.spring.AbstractBeanDefinitionParser;
 import org.apache.cxf.ws.rm.persistence.jdbc.RMTxStore;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 
 public class RMTxStoreBeanDefinitionParser extends AbstractBeanDefinitionParser {
+
+    @Override
+    protected void mapAttribute(BeanDefinitionBuilder bean, Element e, String name, String val) {
+        if ("dataSource".equals(name)) {
+            if (val != null && val.trim().length() > 0) {
+                bean.addPropertyReference("dataSource", val);
+            }
+        } else {
+            super.mapAttribute(bean, e, name, val);    
+        }
+    }
 
     @Override
     protected Class<?> getBeanClass(Element element) {

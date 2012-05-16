@@ -31,13 +31,11 @@ import org.eclipse.jetty.webapp.WebAppContext;
 
 
 public class BookServerSpring extends AbstractBusTestServerBase {
-    public static final String PORT = allocatePort(BookServerSpring.class);
+    static final String PORT = allocatePort(BookServerSpring.class);
 
     private org.eclipse.jetty.server.Server server;
     
     protected void run() {
-        System.out.println("Starting Server");
-
         server = new org.eclipse.jetty.server.Server();
 
         SelectChannelConnector connector = new SelectChannelConnector();

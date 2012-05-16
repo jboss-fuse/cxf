@@ -42,6 +42,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.cxf.jaxrs.JAXRSServerFactoryBean;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.jaxrs.lifecycle.SingletonResourceProvider;
+import org.apache.cxf.jaxrs.model.AbstractResourceInfo;
 import org.apache.cxf.jaxrs.provider.JAXBElementProvider;
 import org.apache.cxf.staxutils.CachingXmlEventWriter;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
@@ -96,6 +97,8 @@ public class JAXRSClientServerStreamingTest extends AbstractBusClientServerTestB
     
     @BeforeClass
     public static void startServers() throws Exception {
+        AbstractResourceInfo.clearAllMaps();
+        //keep out of process due to stack traces testing failures
         assertTrue("server did not launch correctly",
                    launchServer(Server.class));
     }
@@ -108,7 +111,7 @@ public class JAXRSClientServerStreamingTest extends AbstractBusClientServerTestB
     
     @Test
     public void testGetBook123Fail() throws Exception {
-        WebClient wc = WebClient.create("http://localhost:" + PORT + "/bookstore/books/123");
+        WebClient wc = WebClient.create("http://localhost:" + PORT + "/bookstore/books/text/xml/123");
         wc.accept("text/xml");
         wc.header("fail-write", "");
         Response r = wc.get();
@@ -117,7 +120,7 @@ public class JAXRSClientServerStreamingTest extends AbstractBusClientServerTestB
     
     @Test
     public void testGetBookUsingStaxWriter() throws Exception {
-        getAndCompare("http://localhost:" + PORT + "/bookstore/books/123",
+        getAndCompare("http://localhost:" + PORT + "/bookstore/books/text/xml/123",
                       "text/xml", 200);
     }
     

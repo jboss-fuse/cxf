@@ -44,6 +44,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -238,11 +239,11 @@ public class JSONProvider<T> extends AbstractJAXBProvider<T>  {
         } catch (DepthExceededStaxException e) {
             throw new WebApplicationException(413);
         } catch (XMLStreamException e) {
-            throw new WebApplicationException(e);
+            handleXMLStreamException(e, true);
         } catch (WebApplicationException e) {
             throw e;
         } catch (Exception e) {
-            throw new WebApplicationException(e);
+            throw new WebApplicationException(e, Response.status(400).build());
         }
         // unreachable
         return null;
@@ -359,7 +360,7 @@ public class JSONProvider<T> extends AbstractJAXBProvider<T>  {
         } catch (JAXBException e) {
             handleJAXBException(e, false);
         } catch (XMLStreamException e) {
-            throw new WebApplicationException(e);
+            handleXMLStreamException(e, false);
         } catch (Exception e) {
             throw new WebApplicationException(e);
         }
@@ -505,6 +506,9 @@ public class JSONProvider<T> extends AbstractJAXBProvider<T>  {
         }
         
         Marshaller ms = createMarshaller(actualObject, actualClass, genericType, enc);
+        if (!namespaceMap.isEmpty()) {
+            setNamespaceMapper(ms, namespaceMap);
+        }
         marshal(ms, actualObject, actualClass, genericType, enc, os, false);
     }
     

@@ -23,7 +23,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,13 +53,13 @@ import org.apache.cxf.jaxrs.client.ResponseReader;
 import org.apache.cxf.jaxrs.client.ServerWebApplicationException;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.jaxrs.ext.xml.XMLSource;
+import org.apache.cxf.jaxrs.model.AbstractResourceInfo;
 import org.apache.cxf.jaxrs.provider.JAXBElementProvider;
 import org.apache.cxf.jaxrs.provider.XSLTJaxbProvider;
 import org.apache.cxf.systest.jaxrs.BookStore.BookInfo;
 import org.apache.cxf.systest.jaxrs.BookStore.BookInfoInterface;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 
-import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -68,15 +67,13 @@ import org.junit.Test;
 public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
     public static final String PORT = BookServer.PORT;
     public static final String PORT2 = allocatePort(JAXRSClientServerBookTest.class);
-
+    
     @BeforeClass
     public static void startServers() throws Exception {
+        AbstractResourceInfo.clearAllMaps();
         assertTrue("server did not launch correctly",
                    launchServer(BookServer.class, true));
-    }
-    @After
-    public void resetBookServer() throws Exception {
-        new URL("http://localhost:" + PORT + "/bookstore/reset").openStream().close();
+        createStaticBus();
     }
     
     @Test
@@ -1406,38 +1403,13 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
         try {
             int result = httpclient.executeMethod(put);
             assertEquals(200, result);
+            InputStream expected = getClass().getResourceAsStream("resources/expected_update_book.txt");
+            assertEquals(getStringFromInputStream(expected), 
+                         getStringFromInputStream(put.getResponseBodyAsStream()));
         } finally {
             // Release current connection to the connection pool once you are
             // done
             put.releaseConnection();
-        }
-
-        // Verify result
-        endpointAddress = "http://localhost:" + PORT + "/bookstore/books/123";
-        URL url = new URL(endpointAddress);
-        URLConnection connect = url.openConnection();
-        connect.addRequestProperty("Accept", "application/xml");
-        InputStream in = connect.getInputStream();
-        assertNotNull(in);
-
-        InputStream expected = getClass().getResourceAsStream("resources/expected_update_book.txt");
-
-        assertEquals(getStringFromInputStream(expected), getStringFromInputStream(in));
-
-        // Roll back changes:
-        File input1 = new File(getClass().getResource("resources/expected_get_book123.txt").toURI());
-        PutMethod put1 = new PutMethod(endpointAddress);
-        RequestEntity entity1 = new FileRequestEntity(input1, "text/xml; charset=ISO-8859-1");
-        put1.setRequestEntity(entity1);
-        HttpClient httpclient1 = new HttpClient();
-
-        try {
-            int result = httpclient1.executeMethod(put);
-            assertEquals(200, result);
-        } finally {
-            // Release current connection to the connection pool once you are
-            // done
-            put1.releaseConnection();
         }
     }  
     
@@ -1479,38 +1451,13 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
         try {
             int result = httpclient.executeMethod(put);
             assertEquals(200, result);
+            InputStream expected = getClass().getResourceAsStream("resources/expected_update_book.txt");
+            assertEquals(getStringFromInputStream(expected), 
+                         getStringFromInputStream(put.getResponseBodyAsStream()));
         } finally {
             // Release current connection to the connection pool once you are
             // done
             put.releaseConnection();
-        }
-
-        // Verify result
-        endpointAddress = "http://localhost:" + PORT + "/bookstore/books/123";
-        URL url = new URL(endpointAddress);
-        URLConnection connection = url.openConnection();
-        connection.addRequestProperty("Accept", "application/xml");
-        InputStream in = connection.getInputStream();
-        assertNotNull(in);
-
-        InputStream expected = getClass().getResourceAsStream("resources/expected_update_book.txt");
-
-        assertEquals(getStringFromInputStream(expected), getStringFromInputStream(in));
-
-        // Roll back changes:
-        File input1 = new File(getClass().getResource("resources/expected_get_book123.txt").toURI());
-        PutMethod put1 = new PutMethod(endpointAddress);
-        RequestEntity entity1 = new FileRequestEntity(input1, "text/xml; charset=ISO-8859-1");
-        put1.setRequestEntity(entity1);
-        HttpClient httpclient1 = new HttpClient();
-
-        try {
-            int result = httpclient1.executeMethod(put);
-            assertEquals(200, result);
-        } finally {
-            // Release current connection to the connection pool once you are
-            // done
-            put1.releaseConnection();
         }
     } 
     
@@ -1817,7 +1764,7 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
                                int expectedStatus) throws Exception {
         GetMethod get = new GetMethod(address);
         get.setRequestHeader("Accept", acceptType);
-        get.addRequestHeader("Cookie", "a=b,c=d");
+        get.addRequestHeader("Cookie", "a=b;c=d");
         get.addRequestHeader("Cookie", "e=f");
         get.setRequestHeader("Accept-Language", "da;q=0.8,en");
         get.setRequestHeader("Book", "1,2,3");

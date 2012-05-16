@@ -265,8 +265,14 @@ Examples:
             <option id="validate" maxOccurs="1">
                 <annotation>
                     Specifies that the WSDL is validated before generating the code. Using 
-                    this option is highly recommended.
+                    this option is highly recommended.  By default, only very basic validation
+                    is done to make sure the WSDL meets the WSI-BasicProfile standards that
+                    CXF requires.  -validate=none can turn off those checks while -validate or 
+                    -validate=all turns on additional schema validation and other checks.
                 </annotation>
+                <associatedArgument placement="immediate">
+                    <annotation>[=all|basic|none]</annotation>
+                </associatedArgument>
                 <switch>validate</switch>
             </option>
 
@@ -353,6 +359,15 @@ Examples:
                     <annotation>fault-serialVersionUID</annotation>
                 </associatedArgument>
             </option>
+            <option id="encoding" maxOccurs="1">
+                <annotation>
+                    Specifies the charset encoding to use when generating java sources 
+                </annotation>
+                <switch>encoding</switch>
+                <associatedArgument placement="afterSpace">
+                    <annotation>encoding</annotation>
+                </associatedArgument>
+            </option>
 
             <option id="exceptionSuper" maxOccurs="1">
                 <annotation>
@@ -413,7 +428,6 @@ Examples:
 	            </annotation>
 	            <switch>wsdlList</switch>
 	        </option>
-
         </optionGroup>
         <argument id="wsdlurl" minOccurs="1" maxOccurs="1">
             <annotation>

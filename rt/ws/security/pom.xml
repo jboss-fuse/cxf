@@ -33,7 +33,7 @@
     </parent>
     <properties>
         <cxf.osgi.import>
-            net.sf.ehcache*;resolution:=optional,
+            net.sf.ehcache*;resolution:=optional;version="[2.5, 3.0.0)",
         </cxf.osgi.import>
     </properties>
 
@@ -104,17 +104,7 @@
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
         </dependency>
-        <dependency>
-            <groupId>xalan</groupId>
-            <artifactId>xalan</artifactId>
-            <version>2.7.1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>xml-apis</groupId>
-                    <artifactId>xml-apis</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15</artifactId>
@@ -187,7 +177,7 @@
         </plugins>
     </build>
 
-     <profiles>
+    <profiles>
         <profile>
             <id>jdk15</id>
             <activation>
@@ -209,6 +199,17 @@
                     <artifactId>${extra.saaj.dep.artifactId}</artifactId>
                     <version>${extra.saaj.dep.version}</version>
                     <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>xalan</groupId>
+                    <artifactId>xalan</artifactId>
+                    <version>2.7.1</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>xml-apis</groupId>
+                            <artifactId>xml-apis</artifactId>
+                        </exclusion>
+                    </exclusions>
                 </dependency>
             </dependencies>
             <build>

@@ -450,12 +450,24 @@ public class STSClient implements Configurable, InterceptorProvider {
         return client;
     }
     
-    public void configureViaEPR(EndpointReferenceType ref) {
+    public void configureViaEPR(EndpointReferenceType ref, boolean useEPRWSAAddrAsMEXLocation) {
         if (client != null) {
             return;
         }
         location = EndpointReferenceUtils.getAddress(ref);
-        String mexLoc = findMEXLocation(ref);
+        final QName sName = EndpointReferenceUtils.getServiceName(ref, bus);
+        if (sName != null) {
+            serviceName = sName;
+            final QName epName = EndpointReferenceUtils.getPortQName(ref, bus);
+            if (epName != null) {
+                endpointName = epName;
+            }
+        }
+        final String wsdlLoc = EndpointReferenceUtils.getWSDLLocation(ref);
+        if (wsdlLoc != null) {
+            wsdlLocation = wsdlLoc;
+        }
+        String mexLoc = findMEXLocation(ref, useEPRWSAAddrAsMEXLocation);
         if (mexLoc != null) {
             try {
                 JaxWsProxyFactoryBean proxyFac = new JaxWsProxyFactoryBean();
@@ -493,7 +505,7 @@ public class STSClient implements Configurable, InterceptorProvider {
             }
         }
     }
-    protected String findMEXLocation(EndpointReferenceType ref) {
+    protected String findMEXLocation(EndpointReferenceType ref, boolean useEPRWSAAddrAsMEXLocation) {
         if (ref.getMetadata() != null && ref.getMetadata().getAny() != null) {
             for (Object any : ref.getMetadata().getAny()) {
                 if (any instanceof Element) {
@@ -504,7 +516,7 @@ public class STSClient implements Configurable, InterceptorProvider {
                 }
             }
         }
-        return EndpointReferenceUtils.getAddress(ref);
+        return useEPRWSAAddrAsMEXLocation ? EndpointReferenceUtils.getAddress(ref) : null;
     }
     protected String findMEXLocation(Element ref) {
         Element el = DOMUtils.getFirstElement(ref);
@@ -1195,7 +1207,7 @@ public class STSClient implements Configurable, InterceptorProvider {
     protected void addLifetime(XMLStreamWriter writer) throws XMLStreamException {
         Date creationTime = new Date();
         Date expirationTime = new Date();
-        expirationTime.setTime(creationTime.getTime() + (ttl * 1000L));
+        expirationTime.setTime(creationTime.getTime() + ((long)ttl * 1000L));
 
         XmlSchemaDateFormat fmt = new XmlSchemaDateFormat();
         writer.writeStartElement("wst", "Lifetime", namespace);

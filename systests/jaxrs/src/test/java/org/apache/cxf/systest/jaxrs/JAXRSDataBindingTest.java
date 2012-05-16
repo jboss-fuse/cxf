@@ -28,6 +28,7 @@ import org.apache.cxf.interceptor.Interceptor;
 import org.apache.cxf.interceptor.LoggingInInterceptor;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactoryBean;
 import org.apache.cxf.jaxrs.client.WebClient;
+import org.apache.cxf.jaxrs.model.AbstractResourceInfo;
 import org.apache.cxf.jaxrs.provider.aegis.AegisElementProvider;
 import org.apache.cxf.jaxrs.provider.json.DataBindingJSONProvider;
 import org.apache.cxf.jibx.JibxDataBinding;
@@ -46,8 +47,9 @@ public class JAXRSDataBindingTest extends AbstractBusClientServerTestBase {
 
     @BeforeClass
     public static void startServers() throws Exception {
+        AbstractResourceInfo.clearAllMaps();
         assertTrue("server did not launch correctly", 
-                   launchServer(BookDataBindingServer.class));
+                   launchServer(BookDataBindingServer.class, true));
     }
     
     

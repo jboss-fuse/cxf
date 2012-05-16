@@ -488,8 +488,12 @@ public class SourceGenerator {
     
     private String firstCharToUpperCase(String name) {
         StringBuilder sb = new StringBuilder();
-        sb.append(Character.toUpperCase(name.charAt(0)));
-        return name.length() > 1 ? sb.append(name.substring(1)).toString() : sb.toString();
+        if (name.length() > 0) {
+            sb.append(Character.toUpperCase(name.charAt(0)));
+            return name.length() > 1 ? sb.append(name.substring(1)).toString() : sb.toString();
+        } else {
+            return sb.toString();
+        }
     }
     
     private boolean writeAnnotations(boolean interfaceIsGenerated) {
@@ -638,7 +642,11 @@ public class SourceGenerator {
             boolean responseTypeAvailable = true;
             if (methodNameLowerCase.length() > 0) {
                 responseTypeAvailable = writeResponseType(responseEls, sbCode, imports, info);
-                sbCode.append(id + suffixName);
+                String genMethodName = id + suffixName;
+                if (methodNameLowerCase.equals(genMethodName)) {
+                    genMethodName += firstCharToUpperCase(currentPath.replaceAll("/", ""));
+                }
+                sbCode.append(genMethodName);
             } else {
                 boolean expandedQName = id.startsWith("{");
                 QName qname = convertToQName(id, expandedQName);
@@ -1004,8 +1012,8 @@ public class SourceGenerator {
             return XSD_SPECIFIC_TYPE_MAP.get(value);
         } else {
             String actualValue = value.replaceAll("[\\-\\_]", "");
-            if (!actualValue.equals(value) && pair.length > 1) {
-                actualValue = convertRefToClassName(pair[0], actualValue, actualValue, info, imports);
+            if (pair.length > 1) {
+                actualValue = convertRefToClassName(pair[0], actualValue, "String", info, imports);
             }
             return actualValue;
         }
@@ -1026,17 +1034,15 @@ public class SourceGenerator {
                 if (clsName != null) {
                     addImport(imports, clsName);
                     int index = clsName.lastIndexOf(".");
+                    
                     if (index != -1) {
-                        actualValue = clsName.substring(index + 1);
-                    } else {
-                        actualValue = clsName;
-                    }       
+                        clsName = clsName.substring(index + 1);
+                    } 
+                    return clsName;      
                 }
-            } else {
-                actualValue = defaultValue;
             }
         }
-        return actualValue;
+        return defaultValue;
     }
     
     private String getElementRefName(Element repElement,
