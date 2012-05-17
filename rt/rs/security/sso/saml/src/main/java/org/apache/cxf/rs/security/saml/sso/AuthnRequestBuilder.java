@@ -16,29 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.rs.security.saml.sso.state;
 
-public class ResponseState {
+package org.apache.cxf.rs.security.saml.sso;
 
-    private String relayState;
-    private long createdAt;
-    private long expiresAt;
+import org.apache.cxf.message.Message;
+import org.opensaml.saml2.core.AuthnRequest;
+
+/**
+ * This interface defines a method to create a SAML 2.0 Protocol AuthnRequest.
+ */
+public interface AuthnRequestBuilder {
     
-    public ResponseState(String relayState, long createdAt, long expiresAt) {
-        this.relayState = relayState;
-        this.createdAt = createdAt;
-        this.expiresAt = expiresAt;
-    }
-
-    public long getCreatedAt() {
-        return createdAt;
-    }
-    
-    public long getExpiresAt() {
-        return expiresAt;
-    }
-
-    public String getRelayState() {
-        return relayState;
-    }
+    /**
+     * Create a SAML 2.0 Protocol AuthnRequest
+     */
+    AuthnRequest createAuthnRequest(
+        Message message, 
+        String issuerId,
+        String assertionConsumerServiceAddress
+    ) throws Exception;
 }
