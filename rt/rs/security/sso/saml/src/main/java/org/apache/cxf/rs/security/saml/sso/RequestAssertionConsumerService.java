@@ -19,21 +19,17 @@
 package org.apache.cxf.rs.security.saml.sso;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Date;
-import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.zip.DataFormatException;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -42,12 +38,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.w3c.dom.Document;
 
-import org.apache.cxf.common.classloader.ClassLoaderUtils;
 import org.apache.cxf.common.i18n.BundleUtils;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.Base64Exception;
@@ -55,14 +51,10 @@ import org.apache.cxf.common.util.Base64Utility;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.jaxrs.ext.MessageContext;
-import org.apache.cxf.message.Message;
 import org.apache.cxf.rs.security.saml.DeflateEncoderDecoder;
 import org.apache.cxf.rs.security.saml.sso.state.RequestState;
 import org.apache.cxf.rs.security.saml.sso.state.ResponseState;
-import org.apache.cxf.transport.http.AbstractHTTPDestination;
 import org.apache.ws.security.WSSecurityException;
-import org.apache.ws.security.components.crypto.Crypto;
-import org.apache.ws.security.components.crypto.CryptoFactory;
 import org.apache.ws.security.saml.ext.OpenSAMLUtil;
 import org.opensaml.xml.XMLObject;
 
@@ -75,11 +67,14 @@ public class RequestAssertionConsumerService extends AbstractSSOSpHandler {
     
     private boolean supportDeflateEncoding = true;
     private boolean supportBase64Encoding = true;
-    private Crypto signatureCrypto;
-    private String signaturePropertiesFile;
+    private boolean enforceAssertionsSigned = true;
 
+    private MessageContext messageContext;
+    
     @Context 
-    private MessageContext jaxrsContext;
+    public void setMessageContext(MessageContext mc) {
+        this.messageContext = mc;
+    }
     
     public void setSupportDeflateEncoding(boolean deflate) {
         supportDeflateEncoding = deflate;
@@ -88,24 +83,18 @@ public class RequestAssertionConsumerService extends AbstractSSOSpHandler {
         return supportDeflateEncoding;
     }
     
+    /**
+     * Enforce that Assertions must be signed if the POST binding was used. The default is true.
+     */
+    public void setEnforceAssertionsSigned(boolean enforceAssertionsSigned) {
+        this.enforceAssertionsSigned = enforceAssertionsSigned;
+    }
+    
     public void setSupportBase64Encoding(boolean supportBase64Encoding) {
         this.supportBase64Encoding = supportBase64Encoding;
     }
     public boolean isSupportBase64Encoding() {
         return supportBase64Encoding;
-    }
-    
-    public void setSignatureCrypto(Crypto crypto) {
-        signatureCrypto = crypto;
-    }
-    
-    /**
-     * Set the String corresponding to the signature Properties class
-     * @param signaturePropertiesFile the String corresponding to the signature properties file
-     */
-    public void setSignaturePropertiesFile(String signaturePropertiesFile) {
-        this.signaturePropertiesFile = signaturePropertiesFile;
-        LOG.fine("Setting signature properties: " + signaturePropertiesFile);
     }
     
     @POST
@@ -179,7 +168,8 @@ public class RequestAssertionConsumerService extends AbstractSSOSpHandler {
                                             requestState.getWebAppDomain());
         
         // Finally, redirect to the service provider endpoint
-        return Response.seeOther(targetURI).header("Set-Cookie", contextCookie).build();
+        return Response.seeOther(targetURI).header(HttpHeaders.SET_COOKIE,
+                                                   contextCookie).build();
     }
     
     private RequestState processRelayState(String relayState) {
@@ -285,18 +275,18 @@ public class RequestAssertionConsumerService extends AbstractSSOSpHandler {
     ) {
         try {
             SAMLSSOResponseValidator ssoResponseValidator = new SAMLSSOResponseValidator();
-            ssoResponseValidator.setAssertionConsumerURL((String)jaxrsContext.get(Message.REQUEST_URL));
+            ssoResponseValidator.setAssertionConsumerURL(
+                messageContext.getUriInfo().getAbsolutePath().toString());
 
-            HttpServletRequest httpRequest = 
-                (HttpServletRequest)jaxrsContext.get(AbstractHTTPDestination.HTTP_REQUEST);
-            ssoResponseValidator.setClientAddress(httpRequest.getRemoteAddr());
+            ssoResponseValidator.setClientAddress(
+                 messageContext.getHttpServletRequest().getRemoteAddr());
 
             ssoResponseValidator.setIssuerIDP(requestState.getIdpServiceAddress());
             ssoResponseValidator.setRequestId(requestState.getSamlRequestId());
             ssoResponseValidator.setSpIdentifier(requestState.getIssuerId());
+            ssoResponseValidator.setEnforceAssertionsSigned(enforceAssertionsSigned);
 
-            // TODO post binding
-            return ssoResponseValidator.validateSamlResponse(samlResponse, false);
+            return ssoResponseValidator.validateSamlResponse(samlResponse, postBinding);
         } catch (WSSecurityException ex) {
             reportError("INVALID_SAML_RESPONSE");
             throw new WebApplicationException(400);
@@ -320,58 +310,6 @@ public class RequestAssertionConsumerService extends AbstractSSOSpHandler {
         org.apache.cxf.common.i18n.Message errorMsg = 
             new org.apache.cxf.common.i18n.Message(code, BUNDLE);
         LOG.warning(errorMsg.toString());
-    }
-    
-    private Crypto getSignatureCrypto() {
-        if (signatureCrypto == null && signaturePropertiesFile != null) {
-            Properties sigProperties = getProps(signaturePropertiesFile);
-            if (sigProperties == null) {
-                LOG.fine("Cannot load signature properties using: " + signaturePropertiesFile);
-                return null;
-            }
-            try {
-                signatureCrypto = CryptoFactory.getInstance(sigProperties);
-            } catch (WSSecurityException ex) {
-                LOG.fine("Error in loading the signature Crypto object: " + ex.getMessage());
-                return null;
-            }
-        }
-        return signatureCrypto;
-    }
-    
-    private static Properties getProps(Object o) {
-        Properties properties = null;
-        if (o instanceof Properties) {
-            properties = (Properties)o;
-        } else if (o instanceof String) {
-            URL url = null;
-            try {
-                url = ClassLoaderUtils.getResource((String)o, RequestAssertionConsumerService.class);
-                if (url == null) {
-                    url = new URL((String)o);
-                }
-                if (url != null) {
-                    properties = new Properties();
-                    InputStream ins = url.openStream();
-                    properties.load(ins);
-                    ins.close();
-                }
-            } catch (IOException e) {
-                LOG.fine(e.getMessage());
-                properties = null;
-            }
-        } else if (o instanceof URL) {
-            properties = new Properties();
-            try {
-                InputStream ins = ((URL)o).openStream();
-                properties.load(ins);
-                ins.close();
-            } catch (IOException e) {
-                LOG.fine(e.getMessage());
-                properties = null;
-            }            
-        }
-        return properties;
     }
     
 }

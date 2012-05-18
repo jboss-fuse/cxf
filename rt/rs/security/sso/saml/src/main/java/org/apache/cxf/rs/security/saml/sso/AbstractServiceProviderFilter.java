@@ -24,6 +24,7 @@ import java.net.URLEncoder;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.UUID;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.ws.rs.WebApplicationException;
@@ -47,7 +48,6 @@ import org.apache.cxf.rs.security.saml.sso.state.RequestState;
 import org.apache.cxf.rs.security.saml.sso.state.ResponseState;
 import org.apache.ws.security.saml.ext.OpenSAMLUtil;
 import org.apache.ws.security.util.DOM2Writer;
-
 import org.opensaml.saml2.core.AuthnRequest;
 
 public abstract class AbstractServiceProviderFilter extends AbstractSSOSpHandler 
@@ -63,6 +63,21 @@ public abstract class AbstractServiceProviderFilter extends AbstractSSOSpHandler
     private String assertionConsumerServiceAddress;
     private String webAppDomain;
     private AuthnRequestBuilder authnRequestBuilder = new DefaultAuthnRequestBuilder();
+    private boolean signRequest;
+    private String signatureUsername;
+    private boolean addEndpointAddressToContext;
+    
+    public void setAddEndpointAddressToContext(boolean add) {
+        addEndpointAddressToContext = add;
+    }
+    
+    public void setSignRequest(boolean signRequest) {
+        this.signRequest = signRequest;
+    }
+    
+    public boolean isSignRequest() {
+        return signRequest;
+    }
     
     public void setAuthnRequestBuilder(AuthnRequestBuilder authnRequestBuilder) {
         this.authnRequestBuilder = authnRequestBuilder;
@@ -84,7 +99,24 @@ public abstract class AbstractServiceProviderFilter extends AbstractSSOSpHandler
     public String getIdpServiceAddress() {
         return idpServiceAddress;
     }
-
+    
+    /**
+     * Set the username/alias to use to sign any request
+     * @param signatureUsername the username/alias to use to sign any request
+     */
+    public void setSignatureUsername(String signatureUsername) {
+        this.signatureUsername = signatureUsername;
+        LOG.fine("Setting signatureUsername: " + signatureUsername);
+    }
+    
+    /**
+     * Get the username/alias to use to sign any request
+     * @return the username/alias to use to sign any request
+     */
+    public String getSignatureUsername() {
+        return signatureUsername;
+    }
+    
     private String getIssuerId(Message m) {
         if (issuerId == null) {
             return new UriInfoImpl(m).getBaseUri().toString();
@@ -99,7 +131,11 @@ public abstract class AbstractServiceProviderFilter extends AbstractSSOSpHandler
         
         Cookie securityContextCookie = cookies.get(SSOConstants.SECURITY_CONTEXT_TOKEN);
         if (securityContextCookie == null) {
-            reportError("MISSING_RESPONSE_STATE");
+            // most likely it means that the user has not been offered
+            // a chance to get logged on yet, though it might be that the browser
+            // has removed an expired cookie from its cache; warning is too noisy in the
+            // former case
+            reportTrace("MISSING_RESPONSE_STATE");
             return false;
         }
         String contextKey = securityContextCookie.getValue();
@@ -128,15 +164,14 @@ public abstract class AbstractServiceProviderFilter extends AbstractSSOSpHandler
         return true;
     }
     
-    protected String encodeAuthnRequest(Element authnRequestElement)
+    protected String deflateEncodeAuthnRequest(Element authnRequestElement)
         throws IOException {
         String requestMessage = DOM2Writer.nodeToString(authnRequestElement);
         
         DeflateEncoderDecoder encoder = new DeflateEncoderDecoder();
         byte[] deflatedBytes = encoder.deflateToken(requestMessage.getBytes("UTF-8"));
         
-        String encodedRequestMessage = Base64Utility.encode(deflatedBytes);
-        return URLEncoder.encode(encodedRequestMessage, "UTF-8");
+        return Base64Utility.encode(deflatedBytes);
     }
 
     protected SamlRequestInfo createSamlRequestInfo(Message m) throws Exception {
@@ -149,14 +184,19 @@ public abstract class AbstractServiceProviderFilter extends AbstractSSOSpHandler
                 m, getIssuerId(m), getAbsoluteAssertionServiceAddress(m)
             );
         Element authnRequestElement = OpenSAMLUtil.toDom(authnRequest, doc);
-        String authnRequestEncoded = encodeAuthnRequest(authnRequestElement);
+        String authnRequestEncoded = deflateEncodeAuthnRequest(authnRequestElement);
         
         SamlRequestInfo info = new SamlRequestInfo();
-        info.setEncodedSamlRequest(authnRequestEncoded);
+        info.setSamlRequest(authnRequestEncoded);
         
-        String httpBasePath = (String)m.get("http.base.path");
-        String webAppContext = URI.create(httpBasePath).getRawPath();
-        String originalRequestURI = (String)m.get(Message.REQUEST_URI);
+        String webAppContext = null;
+        if (addEndpointAddressToContext) {
+            webAppContext = new UriInfoImpl(m).getBaseUri().getRawPath();
+        } else {
+            String httpBasePath = (String)m.get("http.base.path");
+            webAppContext = URI.create(httpBasePath).getRawPath();
+        }
+        String originalRequestURI = new UriInfoImpl(m).getRequestUri().toString();
         
         RequestState requestState = new RequestState(originalRequestURI,
                                                      getIdpServiceAddress(),
@@ -197,6 +237,14 @@ public abstract class AbstractServiceProviderFilter extends AbstractSSOSpHandler
         org.apache.cxf.common.i18n.Message errorMsg = 
             new org.apache.cxf.common.i18n.Message(code, BUNDLE);
         LOG.warning(errorMsg.toString());
+    }
+    
+    protected void reportTrace(String code) {
+        if (LOG.isLoggable(Level.FINE)) {
+            org.apache.cxf.common.i18n.Message errorMsg = 
+                new org.apache.cxf.common.i18n.Message(code, BUNDLE);
+            LOG.fine(errorMsg.toString());
+        }
     }
 
     public String getWebAppDomain() {
