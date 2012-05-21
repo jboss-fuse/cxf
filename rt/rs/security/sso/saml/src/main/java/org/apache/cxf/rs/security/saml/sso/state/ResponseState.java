@@ -18,14 +18,26 @@
  */
 package org.apache.cxf.rs.security.saml.sso.state;
 
+
 public class ResponseState {
 
+    private String assertion;
     private String relayState;
+    private String webAppContext;
+    private String webAppDomain;
     private long createdAt;
     private long expiresAt;
     
-    public ResponseState(String relayState, long createdAt, long expiresAt) {
+    public ResponseState(String assertion,
+                         String relayState,
+                         String webAppContext,
+                         String webAppDomain,
+                         long createdAt, 
+                         long expiresAt) {
+        this.assertion = assertion;
         this.relayState = relayState;
+        this.webAppContext = webAppContext;
+        this.webAppDomain = webAppDomain;
         this.createdAt = createdAt;
         this.expiresAt = expiresAt;
     }
@@ -40,5 +52,17 @@ public class ResponseState {
 
     public String getRelayState() {
         return relayState;
+    }
+    
+    public String getWebAppContext() {
+        return webAppContext;
+    }
+
+    public String getWebAppDomain() {
+        return webAppDomain;
+    }
+    
+    public String getAssertion() {
+        return assertion;
     }
 }

@@ -19,8 +19,10 @@
 package org.apache.cxf.rs.security.saml.sso;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.security.Principal;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.UUID;
@@ -37,6 +39,7 @@ import org.w3c.dom.Element;
 
 import org.apache.cxf.common.i18n.BundleUtils;
 import org.apache.cxf.common.logging.LogUtils;
+import org.apache.cxf.common.security.SimplePrincipal;
 import org.apache.cxf.common.util.Base64Utility;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.jaxrs.ext.RequestHandler;
@@ -44,8 +47,12 @@ import org.apache.cxf.jaxrs.impl.HttpHeadersImpl;
 import org.apache.cxf.jaxrs.impl.UriInfoImpl;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.rs.security.saml.DeflateEncoderDecoder;
+import org.apache.cxf.rs.security.saml.SAMLUtils;
+import org.apache.cxf.rs.security.saml.assertion.Subject;
 import org.apache.cxf.rs.security.saml.sso.state.RequestState;
 import org.apache.cxf.rs.security.saml.sso.state.ResponseState;
+import org.apache.cxf.security.SecurityContext;
+import org.apache.ws.security.saml.ext.AssertionWrapper;
 import org.apache.ws.security.saml.ext.OpenSAMLUtil;
 import org.apache.ws.security.util.DOM2Writer;
 import org.opensaml.saml2.core.AuthnRequest;
@@ -130,25 +137,12 @@ public abstract class AbstractServiceProviderFilter extends AbstractSSOSpHandler
         Map<String, Cookie> cookies = headers.getCookies();
         
         Cookie securityContextCookie = cookies.get(SSOConstants.SECURITY_CONTEXT_TOKEN);
-        if (securityContextCookie == null) {
-            // most likely it means that the user has not been offered
-            // a chance to get logged on yet, though it might be that the browser
-            // has removed an expired cookie from its cache; warning is too noisy in the
-            // former case
-            reportTrace("MISSING_RESPONSE_STATE");
-            return false;
-        }
-        String contextKey = securityContextCookie.getValue();
-        ResponseState responseState = getStateProvider().getResponseState(contextKey);
+        
+        ResponseState responseState = getValidResponseState(securityContextCookie, m);
         if (responseState == null) {
-            reportError("MISSING_RESPONSE_STATE");
-            return false;
+            return false;    
         }
-        if (isStateExpired(responseState.getCreatedAt(), responseState.getExpiresAt())) {
-            reportError("EXPIRED_RESPONSE_STATE");
-            getStateProvider().removeResponseState(contextKey);
-            return false;
-        }
+        
         Cookie relayStateCookie = cookies.get(SSOConstants.RELAY_STATE);
         if (relayStateCookie == null) {
             reportError("MISSING_RELAY_COOKIE");
@@ -156,12 +150,81 @@ public abstract class AbstractServiceProviderFilter extends AbstractSSOSpHandler
         }
         String originalRelayState = responseState.getRelayState();
         if (!originalRelayState.equals(relayStateCookie.getValue())) {
+            // perhaps the response state should also be removed
             reportError("INVALID_RELAY_STATE");
             return false;
         }
-        //TODO: use ResponseState to set up a proper SecurityContext 
-        //      on the current message
+        try {
+            String assertion = responseState.getAssertion();
+            AssertionWrapper assertionWrapper = 
+                new AssertionWrapper(
+                    DOMUtils.readXml(new StringReader(assertion)).getDocumentElement());
+            setSecurityContext(m, assertionWrapper);
+        } catch (Exception ex) {
+            reportError("INVALID_RESPONSE_STATE");
+            return false;
+        }
         return true;
+    }
+    
+    protected void setSecurityContext(Message m, AssertionWrapper assertionWrapper) {
+        // don't worry about roles/claims for now, just set a basic SecurityContext
+        Subject subject = SAMLUtils.getSubject(m, assertionWrapper);
+        final String name = subject.getName();
+        
+        if (name != null) {
+            final SecurityContext sc = new SecurityContext() {
+
+                public Principal getUserPrincipal() {
+                    return new SimplePrincipal(name);
+                }
+
+                public boolean isUserInRole(String role) {
+                    return false;
+                }
+            };
+            m.put(SecurityContext.class, sc);
+        }
+    }
+    
+    protected ResponseState getValidResponseState(Cookie securityContextCookie, 
+                                                  Message m) {
+        if (securityContextCookie == null) {
+            // most likely it means that the user has not been offered
+            // a chance to get logged on yet, though it might be that the browser
+            // has removed an expired cookie from its cache; warning is too noisy in the
+            // former case
+            reportTrace("MISSING_RESPONSE_STATE");
+            return null;
+        }
+        String contextKey = securityContextCookie.getValue();
+        
+        ResponseState responseState = getStateProvider().getResponseState(contextKey);
+        
+        if (responseState == null) {
+            reportError("MISSING_RESPONSE_STATE");
+            return null;
+        }
+        if (isStateExpired(responseState.getCreatedAt(), responseState.getExpiresAt())) {
+            reportError("EXPIRED_RESPONSE_STATE");
+            getStateProvider().removeResponseState(contextKey);
+            return null;
+        }
+        String webAppContext = getWebAppContext(m);
+        if (webAppDomain != null 
+            && (responseState.getWebAppDomain() == null 
+                || !webAppDomain.equals(responseState.getWebAppDomain()))
+            || responseState.getWebAppContext() == null
+            || !webAppContext.equals(responseState.getWebAppContext())) {
+            getStateProvider().removeResponseState(contextKey);
+            reportError("INVALID_RESPONSE_STATE");
+            return null;
+        }
+        if (responseState.getAssertion() == null) {
+            reportError("INVALID_RESPONSE_STATE");
+            return null;
+        }
+        return responseState;
     }
     
     protected String deflateEncodeAuthnRequest(Element authnRequestElement)
@@ -189,13 +252,7 @@ public abstract class AbstractServiceProviderFilter extends AbstractSSOSpHandler
         SamlRequestInfo info = new SamlRequestInfo();
         info.setSamlRequest(authnRequestEncoded);
         
-        String webAppContext = null;
-        if (addEndpointAddressToContext) {
-            webAppContext = new UriInfoImpl(m).getBaseUri().getRawPath();
-        } else {
-            String httpBasePath = (String)m.get("http.base.path");
-            webAppContext = URI.create(httpBasePath).getRawPath();
-        }
+        String webAppContext = getWebAppContext(m);
         String originalRequestURI = new UriInfoImpl(m).getRequestUri().toString();
         
         RequestState requestState = new RequestState(originalRequestURI,
@@ -247,6 +304,15 @@ public abstract class AbstractServiceProviderFilter extends AbstractSSOSpHandler
         }
     }
 
+    private String getWebAppContext(Message m) {
+        if (addEndpointAddressToContext) {
+            return new UriInfoImpl(m).getBaseUri().getRawPath();
+        } else {
+            String httpBasePath = (String)m.get("http.base.path");
+            return URI.create(httpBasePath).getRawPath();
+        }
+    }
+    
     public String getWebAppDomain() {
         return webAppDomain;
     }
