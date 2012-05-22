@@ -47,8 +47,8 @@ public class JAXRSContainerTest extends ProcessorTestBase {
 
             assertNotNull(output.list());
             
-            verifyFiles("java", true, false, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 10);
-            verifyFiles("class", true, false, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 10);
+            verifyFiles("java", true, false, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 10, true);
+            verifyFiles("class", true, false, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 10, true);
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -72,8 +72,8 @@ public class JAXRSContainerTest extends ProcessorTestBase {
 
             assertNotNull(output.list());
             
-            verifyFiles("java", true, false, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 10);
-            verifyFiles("class", true, false, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 10);
+            verifyFiles("java", true, false, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 10, true);
+            verifyFiles("class", true, false, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 10, true);
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -97,8 +97,8 @@ public class JAXRSContainerTest extends ProcessorTestBase {
 
             assertNotNull(output.list());
             
-            verifyFiles("java", true, false, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 10);
-            verifyFiles("class", true, false, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 10);
+            verifyFiles("java", true, false, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 10, true);
+            verifyFiles("class", true, false, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 10, true);
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -279,6 +279,7 @@ public class JAXRSContainerTest extends ProcessorTestBase {
             context.put(WadlToolConstants.CFG_OUTPUTDIR, output.getCanonicalPath());
             context.put(WadlToolConstants.CFG_WADLURL, getLocation("/wadl/singleResource.xml"));
             context.put(WadlToolConstants.CFG_RESOURCENAME, "CustomResource");
+            context.put(WadlToolConstants.CFG_GENERATE_ENUMS, "true");
             context.put(WadlToolConstants.CFG_COMPILE, "true");
             
             container.setContext(context);
@@ -287,12 +288,14 @@ public class JAXRSContainerTest extends ProcessorTestBase {
             assertNotNull(output.list());
             
             List<File> javaFiles = FileUtils.getFilesRecurse(output, ".+\\." + "java" + "$");
-            assertEquals(1, javaFiles.size());
+            assertEquals(2, javaFiles.size());
             assertTrue(checkContains(javaFiles, "application.CustomResource.java"));
+            assertTrue(checkContains(javaFiles, "application.Theid.java"));
             
             List<File> classFiles = FileUtils.getFilesRecurse(output, ".+\\." + "class" + "$");
-            assertEquals(1, classFiles.size());
+            assertEquals(2, classFiles.size());
             assertTrue(checkContains(classFiles, "application.CustomResource.class"));
+            assertTrue(checkContains(classFiles, "application.Theid.class"));
         } catch (Exception e) {
             e.printStackTrace();
             fail();
@@ -328,6 +331,66 @@ public class JAXRSContainerTest extends ProcessorTestBase {
         }
     }
     
+    @Test    
+    public void testCodeGenNoIds3() {
+        try {
+            JAXRSContainer container = new JAXRSContainer(null);
+
+            ToolContext context = new ToolContext();
+            context.put(WadlToolConstants.CFG_OUTPUTDIR, output.getCanonicalPath());
+            context.put(WadlToolConstants.CFG_WADLURL, getLocation("/wadl/resourcesNoId.xml"));
+            context.put(WadlToolConstants.CFG_COMPILE, "true");
+            
+            container.setContext(context);
+            container.execute();
+
+            assertNotNull(output.list());
+            
+            List<File> javaFiles = FileUtils.getFilesRecurse(output, ".+\\." + "java" + "$");
+            assertEquals(1, javaFiles.size());
+            assertTrue(checkContains(javaFiles, "application.TestRsResource.java"));
+            List<File> classFiles = FileUtils.getFilesRecurse(output, ".+\\." + "class" + "$");
+            assertEquals(1, classFiles.size());
+            assertTrue(checkContains(classFiles, "application.TestRsResource.class"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+    
+    @Test    
+    public void testCodeTwoSchemasSameTargetNs() {
+        try {
+            JAXRSContainer container = new JAXRSContainer(null);
+
+            ToolContext context = new ToolContext();
+            context.put(WadlToolConstants.CFG_OUTPUTDIR, output.getCanonicalPath());
+            context.put(WadlToolConstants.CFG_WADLURL, getLocation("/wadl/resourceSameTargetNsSchemas.xml"));
+            context.put(WadlToolConstants.CFG_COMPILE, "true");
+            
+            container.setContext(context);
+            container.execute();
+
+            List<File> javaFiles = FileUtils.getFilesRecurse(output, ".+\\." + "java" + "$");
+            assertEquals(4, javaFiles.size());
+            assertTrue(checkContains(javaFiles, "application.Resource.java"));
+            assertTrue(checkContains(javaFiles, "com.example.test.ObjectFactory.java"));
+            assertTrue(checkContains(javaFiles, "com.example.test.package-info.java"));
+            assertTrue(checkContains(javaFiles, "com.example.test.TestCompositeObject.java"));
+            List<File> classFiles = FileUtils.getFilesRecurse(output, ".+\\." + "class" + "$");
+            assertEquals(4, classFiles.size());
+            assertTrue(checkContains(classFiles, "application.Resource.class"));
+            assertTrue(checkContains(classFiles, "com.example.test.ObjectFactory.class"));
+            assertTrue(checkContains(classFiles, "com.example.test.package-info.class"));
+            assertTrue(checkContains(classFiles, "com.example.test.TestCompositeObject.class"));
+
+            
+            assertNotNull(output.list());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
     @Test    
     public void testCodeGenWithResourceSet() {
         try {
@@ -373,8 +436,8 @@ public class JAXRSContainerTest extends ProcessorTestBase {
 
             assertNotNull(output.list());
             
-            verifyFiles("java", true, false, "superbooks", "custom.books", 10);
-            verifyFiles("class", true, false, "superbooks", "custom.books", 10);
+            verifyFiles("java", true, false, "superbooks", "custom.books", 10, true);
+            verifyFiles("class", true, false, "superbooks", "custom.books", 10, true);
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -399,8 +462,8 @@ public class JAXRSContainerTest extends ProcessorTestBase {
 
             assertNotNull(output.list());
             
-            verifyFiles("java", true, false, "custom.books.schema", "custom.books.service", 10);
-            verifyFiles("class", true, false, "custom.books.schema", "custom.books.service", 10);
+            verifyFiles("java", true, false, "custom.books.schema", "custom.books.service", 10, true);
+            verifyFiles("class", true, false, "custom.books.schema", "custom.books.service", 10, true);
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -424,8 +487,8 @@ public class JAXRSContainerTest extends ProcessorTestBase {
 
             assertNotNull(output.list());
             
-            verifyFiles("java", true, false, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 10);
-            verifyFiles("class", true, false, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 10);
+            verifyFiles("java", true, false, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 10, true);
+            verifyFiles("class", true, false, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 10, true);
         } catch (Exception e) {
             fail();
             e.printStackTrace();
@@ -449,8 +512,8 @@ public class JAXRSContainerTest extends ProcessorTestBase {
 
             assertNotNull(output.list());
             
-            verifyFiles("java", true, true, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 11);
-            verifyFiles("class", true, true, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 11);
+            verifyFiles("java", true, true, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 12, true);
+            verifyFiles("class", true, true, "superbooks", "org.apache.cxf.jaxrs.model.wadl", 12, true);
         } catch (Exception e) {
             fail();
             e.printStackTrace();
@@ -472,7 +535,7 @@ public class JAXRSContainerTest extends ProcessorTestBase {
 
             assertNotNull(output.list());
             
-            verifyTypes("superbooks", "java");
+            verifyTypes("superbooks", "java", true);
             
         } catch (Exception e) {
             fail();
@@ -481,9 +544,17 @@ public class JAXRSContainerTest extends ProcessorTestBase {
     }
     
     private void verifyFiles(String ext, boolean subresourceExpected, boolean interfacesAndImpl, 
-                             String schemaPackage, String resourcePackage, int expectedCount) {    
+                             String schemaPackage, String resourcePackage, int expectedCount) {
+        verifyFiles(ext, subresourceExpected, interfacesAndImpl, schemaPackage, resourcePackage,
+                    expectedCount, false);
+    }
+    
+    private void verifyFiles(String ext, boolean subresourceExpected, boolean interfacesAndImpl, 
+                             String schemaPackage, String resourcePackage, int expectedCount,
+                             boolean enumTypeExpected) {    
         List<File> files = FileUtils.getFilesRecurse(output, ".+\\." + ext + "$");
-        int size = interfacesAndImpl ? expectedCount : expectedCount - 2;
+        int offset = enumTypeExpected ? 1 : 2;
+        int size = interfacesAndImpl ? expectedCount : expectedCount - offset;
         if (!subresourceExpected) {
             size--;
         }
@@ -503,9 +574,9 @@ public class JAXRSContainerTest extends ProcessorTestBase {
         }
     }
     
-    private void verifyTypes(String schemaPackage, String ext) {
+    private void verifyTypes(String schemaPackage, String ext, boolean enumTypeExpected) {
         List<File> files = FileUtils.getFilesRecurse(output, ".+\\." + ext + "$");
-        assertEquals(5, files.size());
+        assertEquals(enumTypeExpected ? 6 : 5, files.size());
         doVerifyTypes(files, schemaPackage, ext);
     }
     

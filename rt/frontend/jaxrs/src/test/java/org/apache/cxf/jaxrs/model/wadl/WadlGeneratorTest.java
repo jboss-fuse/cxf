@@ -30,9 +30,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.ws.rs.Consumes;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.xml.bind.annotation.XmlRootElement;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -254,6 +259,35 @@ public class WadlGeneratorTest extends Assert {
     }
     
     @Test
+    public void testTwoSchemasSameNs() throws Exception {
+        WadlGenerator wg = new WadlGenerator();
+        wg.setApplicationTitle("My Application");
+        wg.setNamespacePrefix("ns");
+        ClassResourceInfo cri = 
+            ResourceUtils.createClassResourceInfo(TestResource.class, TestResource.class, true, true);
+        Message m = mockMessage("http://localhost:8080/baz", "/bar", WadlGenerator.WADL_QUERY, null);
+        
+        Response r = wg.handleRequest(m, cri);
+        checkResponse(r);
+        Document doc = DOMUtils.readXml(new StringReader(r.getEntity().toString()));
+        checkDocs(doc.getDocumentElement(), "My Application", "", "");
+        List<Element> grammarEls = DOMUtils.getChildrenWithName(doc.getDocumentElement(), 
+                                                                WadlGenerator.WADL_NS, 
+                                                                "grammars");
+        assertEquals(1, grammarEls.size());
+        List<Element> schemasEls = DOMUtils.getChildrenWithName(grammarEls.get(0), 
+              XmlSchemaConstants.XSD_NAMESPACE_URI, "schema");
+        assertEquals(2, schemasEls.size());
+        assertEquals("http://example.com/test", schemasEls.get(0).getAttribute("targetNamespace"));
+        assertEquals("http://example.com/test", schemasEls.get(1).getAttribute("targetNamespace"));
+        List<Element> reps = DOMUtils.findAllElementsByTagNameNS(doc.getDocumentElement(), 
+                                       WadlGenerator.WADL_NS, "representation");
+        assertEquals(2, reps.size());
+        assertEquals("ns1:testCompositeObject", reps.get(0).getAttribute("element"));
+        assertEquals("ns1:testCompositeObject", reps.get(1).getAttribute("element"));
+    }
+    
+    @Test
     public void testRootResourceWithSingleSlash() throws Exception {
         WadlGenerator wg = new WadlGenerator();
         ClassResourceInfo cri = 
@@ -307,7 +341,9 @@ public class WadlGeneratorTest extends Assert {
         Response r = wg.handleRequest(m, null);
         assertEquals(WadlGenerator.WADL_TYPE.toString(),
                      r.getMetadata().getFirst(HttpHeaders.CONTENT_TYPE));
-        Document doc = DOMUtils.readXml(new StringReader(r.getEntity().toString()));
+        String wadl = r.getEntity().toString();
+        //System.out.println(wadl);
+        Document doc = DOMUtils.readXml(new StringReader(wadl));
         checkGrammars(doc.getDocumentElement(), "thebook", "thebook2", "thechapter");
         List<Element> els = getWadlResourcesInfo(doc, "http://localhost:8080/baz", 2);
         checkBookStoreInfo(els.get(0), "prefix1:thebook", "prefix1:thebook2", "prefix1:thechapter");
@@ -500,7 +536,20 @@ public class WadlGeneratorTest extends Assert {
         // verify book-subresource /book resource
         // GET 
         verifyGetResourceMethod(subResourceEls.get(0), bookEl, null);
-        // verify book-subresource /form1 resource
+        
+        verifyFormSubResources(subResourceEls);
+        
+        // verify subresource /chapter/{id}
+        List<Element> chapterMethodEls = getElements(subResourceEls.get(5), "resource", 1);
+        assertEquals("/id", chapterMethodEls.get(0).getAttribute("path"));
+        verifyParameters(subResourceEls.get(5), 1, 
+                         new Param("cid", "template", "xs:int"));
+        // GET
+        verifyGetResourceMethod(chapterMethodEls.get(0), chapterEl, "Get the chapter");
+    }
+    
+    private void verifyFormSubResources(List<Element> subResourceEls) {
+     // verify book-subresource /form1 resource
         List<Element> form1MethodEls = getElements(subResourceEls.get(1), "method", 1);
         
         assertEquals("POST", form1MethodEls.get(0).getAttribute("name"));
@@ -519,14 +568,17 @@ public class WadlGeneratorTest extends Assert {
                          new Param("field1", "query", "xs:string"),
                          new Param("field2", "query", "xs:string"));
         
-        
-        // verify subresource /chapter/{id}
-        List<Element> chapterMethodEls = getElements(subResourceEls.get(5), "resource", 1);
-        assertEquals("/id", chapterMethodEls.get(0).getAttribute("path"));
-        verifyParameters(subResourceEls.get(5), 1, 
-                         new Param("cid", "template", "xs:int"));
-        // GET
-        verifyGetResourceMethod(chapterMethodEls.get(0), chapterEl, "Get the chapter");
+        // verify book-subresource /form2 resource
+        verifyParameters(subResourceEls.get(3), 1, 
+                         new Param("id", "template", "xs:string"));
+        List<Element> form3MethodEls = getElements(subResourceEls.get(3), "method", 1);
+        List<Element> form3RequestEls = getElements(form3MethodEls.get(0), "request", 1);
+        verifyParameters(form3RequestEls.get(0), 1, 
+                         new Param("headerId", "header", "xs:string"));
+        List<Element> form3RequestRepEls = getElements(form3RequestEls.get(0), "representation", 1);
+        verifyParameters(form3RequestRepEls.get(0), 2, 
+                         new Param("field1", "query", "xs:string"),
+                         new Param("field2", "query", "xs:string"));
     }
     
     private List<Element> getElements(Element resource, String name, int expectedSize) {
@@ -733,6 +785,35 @@ public class WadlGeneratorTest extends Assert {
         
         public boolean isRepeating() {
             return repeating;
+        }
+    }
+    
+    @XmlRootElement(namespace = "http://example.com/test")
+    public static class TestCompositeObject {
+        private int id;
+        private String name;
+        public int getId() {
+            return id;
+        }
+        public void setId(int id) {
+            this.id = id;
+        }
+        public String getName() {
+            return name;
+        }
+        public void setName(String name) {
+            this.name = name;
+        }
+    }
+
+    public static class TestResource {
+    
+        @PUT
+        @Path("setTest3")
+        @Produces("application/xml")
+        @Consumes("application/xml")
+        public TestCompositeObject setTest3(TestCompositeObject transfer) {
+            return transfer;
         }
     }
 }

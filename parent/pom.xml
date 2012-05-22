@@ -124,6 +124,7 @@
         <cxf.commons-collections.version>3.2.1</cxf.commons-collections.version>
 
         <cxf.cglib.bundle.version>2.2_2</cxf.cglib.bundle.version>
+        <cxf.cglib.osgi.version>[2.1.3,3.0.0)</cxf.cglib.osgi.version>
         <cxf.fastinfoset.bundle.version>1.2.7_4</cxf.fastinfoset.bundle.version>
         <cxf.hazelcast.version>1.9.4</cxf.hazelcast.version>
         <cxf.ehcache.version>2.5.1</cxf.ehcache.version>
@@ -341,6 +342,7 @@
                         <argLine>${cxf.surefire.fork.vmargs}</argLine>
                         <parallel>${cxf.surefire.parallel.mode}</parallel>
                         <systemPropertyVariables>
+                            <java.io.tmpdir>${basedir}/target</java.io.tmpdir>
                             <cxf.useRandomFirstPort>true</cxf.useRandomFirstPort>
                             <org.apache.ws.commons.schema.protectReadOnlyCollections>${cxf.protect-xmlschema-collections}</org.apache.ws.commons.schema.protectReadOnlyCollections>
                             <cxf.validateServiceSchemas>${cxf.validateServices}</cxf.validateServiceSchemas>
@@ -382,7 +384,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-remote-resources-plugin</artifactId>
-                <version>1.2.1</version>
+                <version>1.3</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.apache.cxf.build-utils</groupId>

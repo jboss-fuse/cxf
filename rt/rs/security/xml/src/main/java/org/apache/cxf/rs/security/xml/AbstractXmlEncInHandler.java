@@ -53,6 +53,8 @@ import org.apache.xml.security.utils.Constants;
 
 public abstract class AbstractXmlEncInHandler extends AbstractXmlSecInHandler {
     
+    private EncryptionProperties encProps;
+    
     public void decryptContent(Message message) {
         Message outMs = message.getExchange().getOutMessage();
         Message inMsg = outMs == null ? message : outMs.getExchange().getInMessage();
@@ -65,10 +67,17 @@ public abstract class AbstractXmlEncInHandler extends AbstractXmlSecInHandler {
         
         byte[] symmetricKeyBytes = getSymmetricKeyBytes(message, root);
                 
-        String algorithm = getEncodingMethodAlgorithm(root);
+        String symKeyAlgo = getEncodingMethodAlgorithm(root);
+        
+        if (encProps != null && encProps.getEncryptionSymmetricKeyAlgo() != null
+            && !encProps.getEncryptionSymmetricKeyAlgo().equals(symKeyAlgo)) {
+            throwFault("Encryption Symmetric Key Algorithm is not supported", null);
+        }
+        
+        
         byte[] decryptedPayload = null;
         try {
-            decryptedPayload = decryptPayload(root, symmetricKeyBytes, algorithm);
+            decryptedPayload = decryptPayload(root, symmetricKeyBytes, symKeyAlgo);
         } catch (Exception ex) {
             throwFault("Payload can not be decrypted", ex);
         }
@@ -87,11 +96,20 @@ public abstract class AbstractXmlEncInHandler extends AbstractXmlSecInHandler {
     
     // Subclasses can overwrite it and return the bytes, assuming they know the actual key
     protected byte[] getSymmetricKeyBytes(Message message, Element encDataElement) {
+        
+        String cryptoKey = null; 
+        String propKey = null;
+        if (SecurityUtils.isSignedAndEncryptedTwoWay(message)) {
+            cryptoKey = SecurityConstants.SIGNATURE_CRYPTO;
+            propKey = SecurityConstants.SIGNATURE_PROPERTIES;
+        } else {
+            cryptoKey = SecurityConstants.ENCRYPT_CRYPTO;
+            propKey = SecurityConstants.ENCRYPT_PROPERTIES;
+        }
+        
         Crypto crypto = null;
         try {
-            crypto = new CryptoLoader().getCrypto(message,
-                               SecurityConstants.ENCRYPT_CRYPTO,
-                               SecurityConstants.ENCRYPT_PROPERTIES);
+            crypto = new CryptoLoader().getCrypto(message, cryptoKey, propKey);
         } catch (Exception ex) {
             throwFault("Crypto can not be loaded", ex);
         }
@@ -111,8 +129,21 @@ public abstract class AbstractXmlEncInHandler extends AbstractXmlSecInHandler {
         }
         
         // now start decrypting
-        String algorithm = getEncodingMethodAlgorithm(encKeyElement);
-        String digestAlgorithm = getDigestMethodAlgorithm(encKeyElement);
+        String keyEncAlgo = getEncodingMethodAlgorithm(encKeyElement);
+        String digestAlgo = getDigestMethodAlgorithm(encKeyElement);
+        
+        if (encProps != null) {
+            if (encProps.getEncryptionKeyTransportAlgo() != null
+                && !encProps.getEncryptionKeyTransportAlgo().equals(keyEncAlgo)) {
+                throwFault("Symmetric Key Algorithm is not supported", null);
+            }
+            if (encProps.getEncryptionDigestAlgo() != null
+                && (digestAlgo == null || !encProps.getEncryptionDigestAlgo().equals(digestAlgo))) {
+                throwFault("Digest Algorithm is not supported", null);
+            }
+        }
+        
+        
         Element cipherValue = getNode(encKeyElement, WSConstants.ENC_NS, 
                                                "CipherValue", 0);
         if (cipherValue == null) {
@@ -122,8 +153,8 @@ public abstract class AbstractXmlEncInHandler extends AbstractXmlSecInHandler {
             return decryptSymmetricKey(cipherValue.getTextContent().trim(),
                                        cert,
                                        crypto,
-                                       algorithm,
-                                       digestAlgorithm,
+                                       keyEncAlgo,
+                                       digestAlgo,
                                        message);
         } catch (Exception ex) {
             throwFault(ex.getMessage(), ex);
@@ -139,22 +170,27 @@ public abstract class AbstractXmlEncInHandler extends AbstractXmlSecInHandler {
          * 
          */
         
-        Element certNode = getNode(encKeyElement, 
-                                   Constants.SignatureSpecNS, "X509Certificate", 0);
-        if (certNode != null) {
-            try {
-                return SecurityUtils.loadX509Certificate(crypto, certNode);
-            } catch (Exception ex) {
-                throwFault("X509Certificate can not be created", ex);
+        String keyIdentifierType = encProps != null ? encProps.getEncryptionKeyIdType() : null;
+        if (keyIdentifierType == null || keyIdentifierType.equals(SecurityUtils.X509_CERT)) {
+            Element certNode = getNode(encKeyElement, 
+                                       Constants.SignatureSpecNS, "X509Certificate", 0);
+            if (certNode != null) {
+                try {
+                    return SecurityUtils.loadX509Certificate(crypto, certNode);
+                } catch (Exception ex) {
+                    throwFault("X509Certificate can not be created", ex);
+                }
             }
         }
-        certNode = getNode(encKeyElement, 
-                Constants.SignatureSpecNS, "X509IssuerSerial", 0);
-        if (certNode != null) {
-            try {
-                return SecurityUtils.loadX509IssuerSerial(crypto, certNode);
-            } catch (Exception ex) {
-                throwFault("X509Certificate can not be created", ex);
+        if (keyIdentifierType == null || keyIdentifierType.equals(SecurityUtils.X509_ISSUER_SERIAL)) {
+            Element certNode = getNode(encKeyElement, 
+                    Constants.SignatureSpecNS, "X509IssuerSerial", 0);
+            if (certNode != null) {
+                try {
+                    return SecurityUtils.loadX509IssuerSerial(crypto, certNode);
+                } catch (Exception ex) {
+                    throwFault("X509Certificate can not be created", ex);
+                }
             }
         }
         throwFault("Certificate is missing", null);
@@ -232,6 +268,9 @@ public abstract class AbstractXmlEncInHandler extends AbstractXmlSecInHandler {
         }
         
     }
-    
+
+    public void setEncryptionProperties(EncryptionProperties properties) {
+        this.encProps = properties;
+    }
     
 }
