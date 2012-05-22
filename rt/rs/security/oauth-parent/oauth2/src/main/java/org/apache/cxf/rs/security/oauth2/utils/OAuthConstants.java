@@ -41,6 +41,7 @@ public final class OAuthConstants {
     public static final String AUTHORIZATION_CODE_GRANT = "authorization_code";
     public static final String CLIENT_CREDENTIALS_GRANT = "client_credentials";
     public static final String IMPLICIT_GRANT = "implicit";
+    public static final String REFRESH_TOKEN_GRANT = "refresh_token";
     // etc
     
     // Well-known token types
@@ -50,6 +51,8 @@ public final class OAuthConstants {
     // Token Authorization schemes
     public static final String BEARER_AUTHORIZATION_SCHEME = "Bearer";
     public static final String MAC_AUTHORIZATION_SCHEME = "Mac";
+    public static final String ALL_AUTH_SCHEMES = "*";
+
     
     // Authorization Code grant constants
     public static final String AUTHORIZATION_CODE_VALUE = "code";

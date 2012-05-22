@@ -17,14 +17,28 @@
  * under the License.
  */
 
-package org.apache.cxf.rs.security.oauth2.provider;
+package org.apache.cxf.ws.security.wss4j.policyvalidators;
 
-import java.util.List;
+import org.w3c.dom.Element;
 
-import org.apache.cxf.rs.security.oauth2.common.AccessTokenValidation;
+import org.apache.ws.security.saml.ext.AssertionWrapper;
 
-public interface AccessTokenValidator {
-    List<String> getSupportedAuthorizationSchemes();
-    AccessTokenValidation validateAccessToken(String authScheme, String authSchemeData)
-        throws OAuthServiceException;
+/**
+ * Validate a WS-SecurityPolicy Claims policy.
+ */
+public interface ClaimsPolicyValidator {
+    
+    /**
+     * Validate a particular Claims policy against a received SAML Assertion. 
+     * Return true if the policy is valid.
+     */
+    boolean validatePolicy(
+        Element claimsPolicy,
+        AssertionWrapper assertion
+    );
+    
+    /**
+     * Return the dialect that this ClaimsPolicyValidator can parse
+     */
+    String getDialect();
 }
