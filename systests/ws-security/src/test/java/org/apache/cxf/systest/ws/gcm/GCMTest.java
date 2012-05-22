@@ -56,7 +56,13 @@ public class GCMTest extends AbstractBusClientServerTestBase {
             launchServer(Server.class, true)
         );
     }
-
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
+    
     @org.junit.Test
     public void testAESGCM128() throws Exception {
         if (!unrestrictedPoliciesInstalled) {
@@ -77,6 +83,8 @@ public class GCMTest extends AbstractBusClientServerTestBase {
                 service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(gcmPort, PORT);
         gcmPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -99,6 +107,8 @@ public class GCMTest extends AbstractBusClientServerTestBase {
                 service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(gcmPort, PORT);
         gcmPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -121,6 +131,8 @@ public class GCMTest extends AbstractBusClientServerTestBase {
                 service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(gcmPort, PORT);
         gcmPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     private boolean checkUnrestrictedPoliciesInstalled() {

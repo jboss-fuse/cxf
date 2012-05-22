@@ -81,6 +81,12 @@ public class BearerTest extends AbstractBusClientServerTestBase {
             );
         }
     }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
 
     @org.junit.Test
     public void testSAML2Bearer() throws Exception {
@@ -103,6 +109,8 @@ public class BearerTest extends AbstractBusClientServerTestBase {
         }
         
         doubleIt(transportSaml2Port, 45);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -150,6 +158,8 @@ public class BearerTest extends AbstractBusClientServerTestBase {
         store.add(tok);
         
         doubleIt(transportSaml2Port, 50);
+        
+        bus.shutdown(true);
     }
     
     

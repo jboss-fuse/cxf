@@ -51,6 +51,12 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
             launchServer(Server.class, true)
         );
     }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
 
     @org.junit.Test
     public void testPlaintext() throws Exception {
@@ -70,6 +76,8 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(utPort, PORT);
         
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -90,6 +98,8 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(utPort, PORT);
         
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -110,6 +120,8 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(utPort, PORT);
         
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -130,6 +142,8 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(utPort, PORT);
         
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -149,6 +163,8 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
                 service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(utPort, PORT);
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -168,6 +184,8 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
                 service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(utPort, PORT);
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -187,6 +205,8 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
                 service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(utPort, PORT);
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -213,6 +233,8 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
             String error = "The received token does not match the token inclusion requirement";
             assertTrue(ex.getMessage().contains(error));
         }
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -248,6 +270,7 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
             assertTrue(ex.getMessage().contains(error));
         }
         
+        bus.shutdown(true);
     }
     
 }

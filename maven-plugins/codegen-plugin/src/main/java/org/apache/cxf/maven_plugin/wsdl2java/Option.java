@@ -347,6 +347,9 @@ public class Option {
     public void setValidateWsdl(boolean validateWsdl) {
         this.validateWsdl = validateWsdl;
     }
+    public void setValidate(String v) {
+        this.validateWsdl = v == null ? false : Boolean.parseBoolean(v);
+    }
     
     public boolean isNoTypes() {
         return noTypes == null ? false : noTypes;

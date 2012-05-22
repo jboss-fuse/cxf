@@ -64,6 +64,12 @@ public class SpnegoTokenTest extends AbstractBusClientServerTestBase {
             launchServer(Server.class, true)
         );
     }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
 
     @org.junit.Test
     @org.junit.Ignore
@@ -89,6 +95,8 @@ public class SpnegoTokenTest extends AbstractBusClientServerTestBase {
         
         int result = spnegoPort.doubleIt(25);
         assertTrue(result == 50);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -115,6 +123,8 @@ public class SpnegoTokenTest extends AbstractBusClientServerTestBase {
         
         int result = spnegoPort.doubleIt(25);
         assertTrue(result == 50);
+        
+        bus.shutdown(true);
     }
     
     

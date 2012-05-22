@@ -61,6 +61,12 @@ public class ClaimsTest extends AbstractBusClientServerTestBase {
                 launchServer(STSServer.class, true)
         );
     }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
 
     @org.junit.Test
     public void testSaml1Claims() throws Exception {
@@ -80,6 +86,8 @@ public class ClaimsTest extends AbstractBusClientServerTestBase {
         updateAddressPort(transportClaimsPort, PORT);
         
         doubleIt(transportClaimsPort, 25);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -105,6 +113,8 @@ public class ClaimsTest extends AbstractBusClientServerTestBase {
         } catch (Exception ex) {
             // expected
         }
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -125,6 +135,8 @@ public class ClaimsTest extends AbstractBusClientServerTestBase {
         updateAddressPort(transportClaimsPort, PORT);
         
         doubleIt(transportClaimsPort, 25);
+        
+        bus.shutdown(true);
     }
     
     private static void doubleIt(DoubleItPortType port, int numToDouble) {

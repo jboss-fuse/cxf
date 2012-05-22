@@ -61,6 +61,12 @@ public class TransformationTest extends AbstractBusClientServerTestBase {
             launchServer(STSServer.class, true)
         );
     }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
 
     @org.junit.Test
     public void testTokenTransformation() throws Exception {
@@ -80,6 +86,8 @@ public class TransformationTest extends AbstractBusClientServerTestBase {
         updateAddressPort(transportUTPort, PORT);
         
         doubleIt(transportUTPort, 25);
+        
+        bus.shutdown(true);
     }
     
     private static void doubleIt(DoubleItPortType port, int numToDouble) {

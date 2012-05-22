@@ -60,6 +60,12 @@ public class JaxwsBasicAuthTest extends AbstractBusClientServerTestBase {
                    launchServer(STSServer.class, true)
         );
     }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
 
     @org.junit.Test
     public void testBasicAuth() throws Exception {
@@ -79,6 +85,8 @@ public class JaxwsBasicAuthTest extends AbstractBusClientServerTestBase {
         updateAddressPort(port, PORT);
         
         doubleIt(port, 25);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -106,6 +114,8 @@ public class JaxwsBasicAuthTest extends AbstractBusClientServerTestBase {
             assertTrue(message.contains("STS Authentication failed")
                 || message.contains("Validation of security token failed"));
         }
+        
+        bus.shutdown(true);
     }
 
     private static void doubleIt(DoubleItPortType port, int numToDouble) {

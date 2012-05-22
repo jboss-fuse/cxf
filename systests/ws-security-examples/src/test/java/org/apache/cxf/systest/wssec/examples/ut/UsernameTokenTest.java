@@ -53,6 +53,12 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
             launchServer(Server.class, true)
         );
     }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
 
     /**
      * 2.1.1.1 UsernameToken with plain text password
@@ -75,6 +81,8 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(utPort, PORT);
         
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -98,6 +106,8 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(utPort, PORT);
         
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -121,6 +131,8 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(utPort, PORT);
         
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -144,6 +156,8 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(utPort, PORT2);
         
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -167,6 +181,8 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(utPort, PORT);
         
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -190,6 +206,8 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(utPort, PORT);
         
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -213,5 +231,7 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(utPort, PORT);
         
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
 }

@@ -52,6 +52,12 @@ public class X509TokenTest extends AbstractBusClientServerTestBase {
             launchServer(Server.class, true)
         );
     }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
 
     /**
      * 2.2.1 (WSS1.0) X.509 Certificates, Sign, Encrypt
@@ -74,6 +80,8 @@ public class X509TokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(x509Port, PORT);
         
         x509Port.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -97,6 +105,8 @@ public class X509TokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(x509Port, PORT);
         
         x509Port.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -120,6 +130,8 @@ public class X509TokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(x509Port, PORT);
         
         x509Port.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -143,6 +155,8 @@ public class X509TokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(x509Port, PORT);
         
         x509Port.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     

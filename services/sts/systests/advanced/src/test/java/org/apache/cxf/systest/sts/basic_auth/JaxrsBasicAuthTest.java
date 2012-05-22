@@ -51,6 +51,12 @@ public class JaxrsBasicAuthTest extends AbstractBusClientServerTestBase {
                    launchServer(STSServer.class, true)
         );
     }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
 
     @org.junit.Test
     public void testBasicAuth() throws Exception {

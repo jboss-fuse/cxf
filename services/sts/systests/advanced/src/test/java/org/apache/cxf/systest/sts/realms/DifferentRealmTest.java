@@ -65,6 +65,12 @@ public class DifferentRealmTest extends AbstractBusClientServerTestBase {
                 launchServer(STSServer2.class, true)
         );
     }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
 
     /**
      * In this test, a token is issued by the first STS in realm "A". The second STS is configured
@@ -88,6 +94,8 @@ public class DifferentRealmTest extends AbstractBusClientServerTestBase {
 
         // Transport port
         doubleIt(transportPort, 25);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -113,6 +121,8 @@ public class DifferentRealmTest extends AbstractBusClientServerTestBase {
 
         // Transport port
         doubleIt(transportPort, 25);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -141,6 +151,8 @@ public class DifferentRealmTest extends AbstractBusClientServerTestBase {
         } catch (Exception ex) {
             // expected
         }
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -167,6 +179,8 @@ public class DifferentRealmTest extends AbstractBusClientServerTestBase {
 
         // Transport port
         doubleIt(transportPort, 25);
+        
+        bus.shutdown(true);
     }
 
     private static void doubleIt(DoubleItPortType port, int numToDouble) {

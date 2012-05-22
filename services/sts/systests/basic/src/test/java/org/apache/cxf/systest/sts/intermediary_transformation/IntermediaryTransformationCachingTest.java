@@ -79,6 +79,12 @@ public class IntermediaryTransformationCachingTest extends AbstractBusClientServ
             );
         }
     }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
 
     @org.junit.Test
     public void testIntermediaryTransformationCaching() throws Exception {
@@ -106,6 +112,8 @@ public class IntermediaryTransformationCachingTest extends AbstractBusClientServ
         // Make another invocation - this should work as the intermediary caches the token
         // even though its STSClient is disabled after the first invocation
         doubleIt(transportPort, 30);
+        
+        bus.shutdown(true);
     }
     
     private static void doubleIt(DoubleItPortType port, int numToDouble) {

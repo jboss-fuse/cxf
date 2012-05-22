@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.interceptor.Fault;
-import org.apache.cxf.interceptor.StaxOutInterceptor;
+import org.apache.cxf.interceptor.MessageSenderInterceptor;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.io.CachedOutputStreamCallback;
 import org.apache.cxf.io.WriteOnCloseOutputStream;
@@ -47,10 +47,10 @@ public class OutMessageRecorder extends AbstractPhaseInterceptor<Message> {
     private List<byte[]> outbound;
 
     public OutMessageRecorder() {
-        super(Phase.PRE_STREAM);
+        super(Phase.PREPARE_SEND);
         outbound = new CopyOnWriteArrayList<byte[]>();
-        addAfter(RetransmissionInterceptor.class.getName());
-        addBefore(StaxOutInterceptor.class.getName());
+        addAfter(MessageSenderInterceptor.class.getName());
+        addAfter("org.apache.cxf.ws.rm.RetransmissionInterceptor");
     }
     
     public void handleMessage(Message message) throws Fault {

@@ -80,6 +80,12 @@ public class CachingTest extends AbstractBusClientServerTestBase {
                    launchServer(STSServer.class, true)
         );
     }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
 
     @org.junit.Test
     public void testSTSClientCaching() throws Exception {
@@ -119,6 +125,8 @@ public class CachingTest extends AbstractBusClientServerTestBase {
         } catch (SOAPFaultException ex) {
             // Expected
         }
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -157,6 +165,8 @@ public class CachingTest extends AbstractBusClientServerTestBase {
         } catch (SOAPFaultException ex) {
             // Expected
         }
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -205,6 +215,8 @@ public class CachingTest extends AbstractBusClientServerTestBase {
         // Try again using the original SAML token - this should work as it should be cached by the service
         tok.setToken(storedToken);
         doubleIt(transportSaml1Port, 35);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -240,6 +252,8 @@ public class CachingTest extends AbstractBusClientServerTestBase {
         // This will pass as the UsernameToken should be cached
         p.getRequestContext().put(SecurityConstants.USERNAME, "alice");
         doubleIt(transportUTPort, 35);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -277,6 +291,8 @@ public class CachingTest extends AbstractBusClientServerTestBase {
         p.getRequestContext().put(SecurityConstants.SIGNATURE_USERNAME, "myclientkey");
         p.getRequestContext().put(SecurityConstants.SIGNATURE_PROPERTIES, "clientKeystore.properties");
         doubleIt(bstPort, 35);
+        
+        bus.shutdown(true);
     }
     
     private SecurityToken requestSecurityToken(

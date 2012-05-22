@@ -64,6 +64,12 @@ public class CustomOnBehalfOfTest extends AbstractBusClientServerTestBase {
                    launchServer(STSServer.class, true)
         );
     }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
 
     @org.junit.Test
     public void testUsernameOnBehalfOf() throws Exception {
@@ -86,6 +92,8 @@ public class CustomOnBehalfOfTest extends AbstractBusClientServerTestBase {
             "ws-security.username", "alice"
         );
         doubleIt(transportPort, 25);
+        
+        bus.shutdown(true);
     }
 
     private static void doubleIt(DoubleItPortType port, int numToDouble) {

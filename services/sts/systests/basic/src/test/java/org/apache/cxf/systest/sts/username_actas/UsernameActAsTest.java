@@ -65,7 +65,7 @@ public class UsernameActAsTest extends AbstractBusClientServerTestBase {
             launchServer(Server.class, true)
         );
         String deployment = System.getProperty("sts.deployment");
-        if ("standalone".equals(deployment)) {
+        if ("standalone".equals(deployment) || deployment == null) {
             standalone = true;
             assertTrue(
                     "Server failed to launch",
@@ -74,6 +74,12 @@ public class UsernameActAsTest extends AbstractBusClientServerTestBase {
                     launchServer(STSServer.class, true)
             );
         }
+    }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
     }
 
     @org.junit.Test
@@ -119,6 +125,8 @@ public class UsernameActAsTest extends AbstractBusClientServerTestBase {
         } catch (Exception ex) {
             // expected
         }
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -207,6 +215,8 @@ public class UsernameActAsTest extends AbstractBusClientServerTestBase {
         } catch (Exception ex) {
             // expected
         }
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -297,6 +307,8 @@ public class UsernameActAsTest extends AbstractBusClientServerTestBase {
         } catch (Exception ex) {
             //
         }
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -388,6 +400,8 @@ public class UsernameActAsTest extends AbstractBusClientServerTestBase {
         } catch (Exception ex) {
             //
         }
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -448,6 +462,8 @@ public class UsernameActAsTest extends AbstractBusClientServerTestBase {
         } catch (Exception ex) {
             //
         }
+        
+        bus.shutdown(true);
     }
 
     private static void doubleIt(DoubleItPortType port, int numToDouble) {

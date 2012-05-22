@@ -89,6 +89,12 @@ public class IssueUnitTest extends AbstractBusClientServerTestBase {
             );
         }
     }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
 
     /**
      * Test the Symmetric Key SAML1 case
@@ -127,6 +133,8 @@ public class IssueUnitTest extends AbstractBusClientServerTestBase {
         assertTrue(OpenSAMLUtil.isMethodHolderOfKey(confirmMethod));
         SAMLKeyInfo subjectKeyInfo = assertion.getSubjectKeyInfo();
         assertTrue(subjectKeyInfo.getSecret() != null);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -165,6 +173,8 @@ public class IssueUnitTest extends AbstractBusClientServerTestBase {
         assertTrue(OpenSAMLUtil.isMethodHolderOfKey(confirmMethod));
         SAMLKeyInfo subjectKeyInfo = assertion.getSubjectKeyInfo();
         assertTrue(subjectKeyInfo.getCerts() != null);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -200,6 +210,8 @@ public class IssueUnitTest extends AbstractBusClientServerTestBase {
             confirmMethod = methods.get(0);
         }
         assertTrue(confirmMethod.contains("bearer"));
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -248,6 +260,8 @@ public class IssueUnitTest extends AbstractBusClientServerTestBase {
             confirmMethod = methods.get(0);
         }
         assertNotNull(confirmMethod);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -268,6 +282,8 @@ public class IssueUnitTest extends AbstractBusClientServerTestBase {
         } catch (Exception ex) {
             // expected
         }
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -304,6 +320,8 @@ public class IssueUnitTest extends AbstractBusClientServerTestBase {
             confirmMethod = methods.get(0);
         }
         assertTrue(confirmMethod.contains("bearer"));
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -339,6 +357,8 @@ public class IssueUnitTest extends AbstractBusClientServerTestBase {
             confirmMethod = methods.get(0);
         }
         assertTrue(confirmMethod.contains("bearer"));
+        
+        bus.shutdown(true);
     }
     
     private SecurityToken requestSecurityToken(

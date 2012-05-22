@@ -120,7 +120,8 @@ public class Soap12FaultInInterceptor extends AbstractSoapInterceptor {
                                         fault,
                                         XPathConstants.STRING);                       
         } catch (XMLStreamException e) {
-            throw new SoapFault("Could not parse message.", 
+            throw new SoapFault("Could not parse message.",
+                                e,
                                 message.getVersion().getSender());
         }
 

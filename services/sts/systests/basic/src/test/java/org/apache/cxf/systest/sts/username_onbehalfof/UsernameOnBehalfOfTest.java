@@ -74,6 +74,12 @@ public class UsernameOnBehalfOfTest extends AbstractBusClientServerTestBase {
             );
         }
     }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
 
     @org.junit.Test
     public void testUsernameOnBehalfOf() throws Exception {
@@ -117,6 +123,8 @@ public class UsernameOnBehalfOfTest extends AbstractBusClientServerTestBase {
         } catch (Exception ex) {
             // expected
         }
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -205,6 +213,8 @@ public class UsernameOnBehalfOfTest extends AbstractBusClientServerTestBase {
         } catch (Exception ex) {
             // expected
         }
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -295,6 +305,8 @@ public class UsernameOnBehalfOfTest extends AbstractBusClientServerTestBase {
         } catch (Exception ex) {
             //
         }
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -386,6 +398,8 @@ public class UsernameOnBehalfOfTest extends AbstractBusClientServerTestBase {
         } catch (Exception ex) {
             //
         }
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -446,6 +460,8 @@ public class UsernameOnBehalfOfTest extends AbstractBusClientServerTestBase {
         } catch (Exception ex) {
             //
         }
+        
+        bus.shutdown(true);
     }
     
     private static void doubleIt(DoubleItPortType port, int numToDouble) {

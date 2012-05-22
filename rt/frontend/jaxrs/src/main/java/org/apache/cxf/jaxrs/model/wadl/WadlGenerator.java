@@ -37,6 +37,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -220,7 +222,7 @@ public class WadlGenerator implements RequestHandler {
             schemaWriter == null ? null : createElementQNameResolver(context);
 
         Map<Class<?>, QName> clsMap = new IdentityHashMap<Class<?>, QName>();
-        Set<ClassResourceInfo> visitedResources = new HashSet<ClassResourceInfo>();
+        Set<ClassResourceInfo> visitedResources = new LinkedHashSet<ClassResourceInfo>();
         for (ClassResourceInfo cri : cris) {
             startResourceTag(sbResources, cri.getServiceClass(), cri.getURITemplate().getValue());
             handleDocs(cri.getServiceClass().getAnnotations(), sbResources, DocTarget.RESOURCE, true, isJson);
@@ -315,7 +317,7 @@ public class WadlGenerator implements RequestHandler {
     }
 
     private Map<Parameter, Object> getClassParameters(ClassResourceInfo cri) {
-        Map<Parameter, Object> classParams = new HashMap<Parameter, Object>();
+        Map<Parameter, Object> classParams = new LinkedHashMap<Parameter, Object>();
         List<Method> paramMethods = cri.getParameterMethods();
         for (Method m : paramMethods) {
             classParams.put(ResourceUtils.getParameter(0, m.getAnnotations(),
@@ -405,14 +407,19 @@ public class WadlGenerator implements RequestHandler {
         if (getMethod(ori).getParameterTypes().length != 0 || classParams.size() != 0) {
             sb.append("<request>");
             handleDocs(anns, sb, DocTarget.REQUEST, false, isJson);
-            if (isFormRequest(ori)) {
+            
+            boolean isForm = isFormRequest(ori);
+            
+            doHandleClassParams(sb, classParams, isJson, ParameterType.QUERY, ParameterType.HEADER);
+            for (Parameter p : ori.getParameters()) {
+                if (isForm && p.getType() == ParameterType.REQUEST_BODY) {
+                    continue;
+                }
+                handleParameter(sb, jaxbTypes, qnameResolver, clsMap, ori, p, isJson);
+            }
+            if (isForm) {
                 handleFormRepresentation(sb, jaxbTypes, qnameResolver, clsMap, ori, getFormClass(ori), 
                         isJson);
-            } else {
-                doHandleClassParams(sb, classParams, isJson, ParameterType.QUERY, ParameterType.HEADER);
-                for (Parameter p : ori.getParameters()) {
-                    handleParameter(sb, jaxbTypes, qnameResolver, clsMap, ori, p, isJson);
-                }
             }
             sb.append("</request>");
         }
@@ -501,7 +508,7 @@ public class WadlGenerator implements RequestHandler {
     
     private void doHandleClassParams(StringBuilder sb, Map<Parameter, Object> params,
                                      boolean isJson, ParameterType... pType) {
-        Set<ParameterType> pTypes = new HashSet<ParameterType>(Arrays.asList(pType));
+        Set<ParameterType> pTypes = new LinkedHashSet<ParameterType>(Arrays.asList(pType));
         for (Map.Entry<Parameter, Object> entry : params.entrySet()) {
             Parameter pm = entry.getKey();
             Object obj = entry.getValue();
@@ -920,10 +927,17 @@ public class WadlGenerator implements RequestHandler {
         }
         SchemaCollection xmlSchemaCollection = new SchemaCollection();
         Collection<DOMSource> schemas = new HashSet<DOMSource>();
+        List<String> targetNamespaces = new ArrayList<String>();
         try {
             for (DOMResult r : JAXBUtils.generateJaxbSchemas(context,
                                     CastUtils.cast(Collections.emptyMap(), String.class, DOMResult.class))) {
-                schemas.add(new DOMSource(r.getNode(), r.getSystemId()));
+                DOMSource source = new DOMSource(r.getNode(), r.getSystemId());
+                schemas.add(source);
+                String tns = 
+                    ((Document)source.getNode()).getDocumentElement().getAttribute("targetNamespace");
+                if (!StringUtils.isEmpty(tns)) {
+                    targetNamespaces.add(tns);
+                }
             }
         } catch (IOException e) {
             LOG.fine("No schema can be generated");
@@ -933,10 +947,12 @@ public class WadlGenerator implements RequestHandler {
         boolean hackAroundEmptyNamespaceIssue = false;
         for (DOMSource r : schemas) {
             hackAroundEmptyNamespaceIssue =
-                              addSchemaDocument(xmlSchemaCollection,
-                             (Document)r.getNode(),
-                              r.getSystemId(),
-                              hackAroundEmptyNamespaceIssue);
+                              addSchemaDocument(
+                                  xmlSchemaCollection,
+                                  targetNamespaces,
+                                  (Document)r.getNode(),
+                                  r.getSystemId(),
+                                  hackAroundEmptyNamespaceIssue);
         }
         return xmlSchemaCollection;
     }
@@ -945,13 +961,13 @@ public class WadlGenerator implements RequestHandler {
 
         XmlRootElement root = type.getAnnotation(XmlRootElement.class);
         if (root != null) {
-            QName qname = getQNameFromParts(root.name(), root.namespace(), clsMap);
+            QName qname = getQNameFromParts(root.name(), root.namespace(), type, clsMap);
             if (qname != null) {
                 return qname;
             }
             String ns = JAXBUtils.getPackageNamespace(type);
             if (ns != null) {
-                return getQNameFromParts(root.name(), ns, clsMap);
+                return getQNameFromParts(root.name(), ns, type, clsMap);
             } else {
                 return null;
             }
@@ -965,6 +981,7 @@ public class WadlGenerator implements RequestHandler {
             Object instance = type.newInstance();
             return getQNameFromParts(jaxbInfo.getElementLocalName(instance),
                                      jaxbInfo.getElementNamespaceURI(instance),
+                                     type,
                                      clsMap);
         } catch (Exception ex) {
             // ignore
@@ -1020,6 +1037,7 @@ public class WadlGenerator implements RequestHandler {
     
     // TODO : can we reuse this block with JAXBBinding somehow ?
     public boolean addSchemaDocument(SchemaCollection col,
+                                     List<String> tnsList,
                                      Document d,
                                      String systemId,
                                      boolean hackAroundEmptyNamespaceIssue) {
@@ -1033,7 +1051,7 @@ public class WadlGenerator implements RequestHandler {
             //create a copy of the dom so we
             //can modify it.
             d = copy(d);
-            ns = "";
+            ns = tnsList.isEmpty() ? "" : tnsList.get(0);
             d.getDocumentElement().setAttribute("targetNamespace", ns);
         }
 
@@ -1100,14 +1118,25 @@ public class WadlGenerator implements RequestHandler {
     }
 
 
-    private QName getQNameFromParts(String name, String namespace, Map<Class<?>, QName> clsMap) {
-        if (name == null || JAXB_DEFAULT_NAME.equals(name) || name.length() == 0) {
-            return null;
-        }
+    private QName getQNameFromParts(String name, 
+                                    String namespace,
+                                    Class<?> type,
+                                    Map<Class<?>, QName> clsMap) {
         if (namespace == null || JAXB_DEFAULT_NAMESPACE.equals(namespace) || namespace.length() == 0) {
             return null;
         }
-
+        if (name == null || name.length() == 0) {
+            return null;
+        }
+        if (JAXB_DEFAULT_NAME.equals(name)) {
+            name = type.getSimpleName();
+            StringBuilder sb = new StringBuilder();
+            sb.append(Character.toLowerCase(name.charAt(0))); 
+            if (name.length() > 1) {
+                sb.append(name.substring(1));
+            }
+            name = sb.toString();
+        }
         String prefix = getPrefix(namespace, clsMap);
         return new QName(namespace, name, prefix);
     }
@@ -1433,7 +1462,9 @@ public class WadlGenerator implements RequestHandler {
                     return qname;
                 } else {
                     return getQNameFromParts(qname.getLocalPart(),
-                                             qname.getNamespaceURI(), clsMap);
+                                             qname.getNamespaceURI(),
+                                             type,
+                                             clsMap);
                 }
             }
             return null;
@@ -1459,7 +1490,7 @@ public class WadlGenerator implements RequestHandler {
                     elementName = name.toLowerCase();
                 }
                 if (elementName != null) {
-                    return getQNameFromParts(elementName, entry.getKey(), clsMap);
+                    return getQNameFromParts(elementName, entry.getKey(), type, clsMap);
                 }
             }
             return null;

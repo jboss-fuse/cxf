@@ -47,6 +47,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
+import javax.xml.bind.PropertyException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.ValidationEventHandler;
 import javax.xml.bind.annotation.XmlAnyElement;
@@ -54,6 +55,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import javax.xml.namespace.QName;
+import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 import javax.xml.validation.Schema;
@@ -64,6 +66,7 @@ import org.apache.cxf.common.i18n.BundleUtils;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.PackageUtils;
 import org.apache.cxf.jaxb.JAXBUtils;
+import org.apache.cxf.jaxb.NamespaceMapper;
 import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.apache.cxf.jaxrs.model.ClassResourceInfo;
 import org.apache.cxf.jaxrs.utils.InjectionUtils;
@@ -83,8 +86,11 @@ public abstract class AbstractJAXBProvider extends AbstractConfigurableProvider
     protected static final ResourceBundle BUNDLE = BundleUtils.getBundle(AbstractJAXBProvider.class);
 
     protected static final Logger LOG = LogUtils.getL7dLogger(AbstractJAXBProvider.class);
+    protected static final String NS_MAPPER_PROPERTY = "com.sun.xml.bind.namespacePrefixMapper";
+    protected static final String NS_MAPPER_PROPERTY_INT = "com.sun.xml.internal.bind.namespacePrefixMapper";
     private static final String JAXB_DEFAULT_NAMESPACE = "##default";
     private static final String JAXB_DEFAULT_NAME = "##default";
+    
     
     protected Set<Class<?>> collectionContextClasses = new HashSet<Class<?>>();
     
@@ -119,6 +125,21 @@ public abstract class AbstractJAXBProvider extends AbstractConfigurableProvider
     private boolean validateBeforeWrite;
     private ValidationEventHandler eventHandler;
     private DocumentDepthProperties depthProperties;
+    
+    protected static void setNamespaceMapper(Marshaller ms, Map<String, String> map) throws Exception {
+        NamespaceMapper nsMapper = new NamespaceMapper(map);
+        setMarshallerProp(ms, nsMapper, NS_MAPPER_PROPERTY, NS_MAPPER_PROPERTY_INT);
+    }
+    
+    protected static void setMarshallerProp(Marshaller ms, Object value, 
+                                          String name1, String name2) throws Exception {
+        try {
+            ms.setProperty(name1, value);
+        } catch (PropertyException ex) {
+            ms.setProperty(name2, value);
+        }
+        
+    }
     
     public void setValidationHandler(ValidationEventHandler handler) {
         eventHandler = handler;
@@ -530,8 +551,8 @@ public abstract class AbstractJAXBProvider extends AbstractConfigurableProvider
         ex.printStackTrace(new PrintWriter(sw));
         return sw.toString();
     }
-    
-    protected static void handleJAXBException(JAXBException e, boolean read) {
+    //TODO: move these methods into the dedicated utility class
+    protected static StringBuilder handleExceptionStart(Exception e) {
         LOG.warning(getStackTrace(e));
         StringBuilder sb = new StringBuilder();
         if (e.getMessage() != null) {
@@ -540,6 +561,19 @@ public abstract class AbstractJAXBProvider extends AbstractConfigurableProvider
         if (e.getCause() != null && e.getCause().getMessage() != null) {
             sb.append(e.getCause().getMessage()).append(". ");
         }
+        return sb;
+    }
+    
+    protected static void handleExceptionEnd(Throwable t, String message, boolean read) {
+        Response.Status status = read 
+            ? Response.Status.BAD_REQUEST : Response.Status.INTERNAL_SERVER_ERROR; 
+        Response r = Response.status(status)
+            .type(MediaType.TEXT_PLAIN).entity(message).build();
+        throw new WebApplicationException(t, r);
+    }
+    
+    protected static void handleJAXBException(JAXBException e, boolean read) {
+        StringBuilder sb = handleExceptionStart(e);
         if (e.getLinkedException() != null && e.getLinkedException().getMessage() != null) {
             sb.append(e.getLinkedException().getMessage()).append(". ");
         }
@@ -547,11 +581,12 @@ public abstract class AbstractJAXBProvider extends AbstractConfigurableProvider
             ? e.getLinkedException() : e.getCause() != null ? e.getCause() : e;
         String message = new org.apache.cxf.common.i18n.Message("JAXB_EXCEPTION", 
                              BUNDLE, sb.toString()).toString();
-        Response.Status status = read 
-            ? Response.Status.BAD_REQUEST : Response.Status.INTERNAL_SERVER_ERROR; 
-        Response r = Response.status(status)
-            .type(MediaType.TEXT_PLAIN).entity(message).build();
-        throw new WebApplicationException(t, r);
+        handleExceptionEnd(t, message, read);
+    }
+    
+    protected static void handleXMLStreamException(XMLStreamException e, boolean read) {
+        StringBuilder sb = handleExceptionStart(e);
+        handleExceptionEnd(e, sb.toString(), read);
     }
     
     public void setOutTransformElements(Map<String, String> outElements) {

@@ -103,6 +103,12 @@ public class WSSecurityClientTest extends AbstractBusClientServerTestBase {
         );
     }
     
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
+    
     @Test
     public void testUsernameToken() throws Exception {
         final javax.xml.ws.Service svc 

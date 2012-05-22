@@ -53,6 +53,12 @@ public class SecureConversationTest extends AbstractBusClientServerTestBase {
         );
     }
 
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
+    
     /**
      * 2.4.1 (WSS 1.0) Secure Conversation bootstrapped by Mutual
      * Authentication with X.509 Certificates
@@ -75,6 +81,8 @@ public class SecureConversationTest extends AbstractBusClientServerTestBase {
         updateAddressPort(samlPort, PORT);
         
         samlPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
 }

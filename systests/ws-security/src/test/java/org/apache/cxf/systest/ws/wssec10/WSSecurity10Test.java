@@ -67,6 +67,12 @@ public class WSSecurity10Test extends AbstractBusClientServerTestBase {
             launchServer(Server.class, true)
         );
     }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
 
     @Test
     public void testClientServer() {
@@ -113,6 +119,8 @@ public class WSSecurity10Test extends AbstractBusClientServerTestBase {
             final String output = port.echo(INPUT);
             assertEquals(INPUT, output);
         }
+        
+        bus.shutdown(true);
     }
     
     private static URL getWsdlLocation(String portPrefix) {

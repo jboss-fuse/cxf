@@ -41,6 +41,7 @@ public class WSSCTest extends AbstractBusClientServerTestBase {
        
     private static final String OUT = "CXF : ping";
     private static wssec.wssc.PingService svc;
+    private static Bus bus;
     
     @BeforeClass
     public static void startServers() throws Exception {
@@ -51,14 +52,19 @@ public class WSSCTest extends AbstractBusClientServerTestBase {
             launchServer(Server.class, true)
         );
         
-        final Bus bus = 
-            new SpringBusFactory().createBus("org/apache/cxf/systest/ws/wssc/client/client.xml");
+        bus = new SpringBusFactory().createBus("org/apache/cxf/systest/ws/wssc/client/client.xml");
         BusFactory.setDefaultBus(bus);
         BusFactory.setThreadDefaultBus(bus);
         
         svc = new wssec.wssc.PingService();
     }
     
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        bus.shutdown(true);
+        stopAllServers();
+    }
     
     @Test
     public void testSecureConversationMutualCertificate10SignEncryptIPingService() throws Exception {

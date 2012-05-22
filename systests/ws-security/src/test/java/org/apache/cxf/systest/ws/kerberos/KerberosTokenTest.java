@@ -67,6 +67,12 @@ public class KerberosTokenTest extends AbstractBusClientServerTestBase {
             launchServer(Server.class, true)
         );
     }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
 
     @org.junit.Test
     @org.junit.Ignore
@@ -88,6 +94,8 @@ public class KerberosTokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(kerberosPort, PORT2);
         int result = kerberosPort.doubleIt(25);
         assertTrue(result == 50);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -115,6 +123,8 @@ public class KerberosTokenTest extends AbstractBusClientServerTestBase {
         
         int result = kerberosPort.doubleIt(25);
         assertTrue(result == 50);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -142,6 +152,8 @@ public class KerberosTokenTest extends AbstractBusClientServerTestBase {
         
         int result = kerberosPort.doubleIt(25);
         assertTrue(result == 50);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -169,6 +181,8 @@ public class KerberosTokenTest extends AbstractBusClientServerTestBase {
         
         int result = kerberosPort.doubleIt(25);
         assertTrue(result == 50);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -191,6 +205,8 @@ public class KerberosTokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(kerberosPort, PORT2);
         int result = kerberosPort.doubleIt(25);
         assertTrue(result == 50);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -213,6 +229,8 @@ public class KerberosTokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(kerberosPort, PORT);
         int result = kerberosPort.doubleIt(25);
         assertTrue(result == 50);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -235,6 +253,8 @@ public class KerberosTokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(kerberosPort, PORT);
         int result = kerberosPort.doubleIt(25);
         assertTrue(result == 50);
+        
+        bus.shutdown(true);
     }
     
     
@@ -258,6 +278,8 @@ public class KerberosTokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(kerberosPort, PORT);
         int result = kerberosPort.doubleIt(25);
         assertTrue(result == 50);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -285,6 +307,8 @@ public class KerberosTokenTest extends AbstractBusClientServerTestBase {
         
         int result = kerberosPort.doubleIt(25);
         assertTrue(result == 50);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -312,6 +336,8 @@ public class KerberosTokenTest extends AbstractBusClientServerTestBase {
         
         int result = kerberosPort.doubleIt(25);
         assertTrue(result == 50);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -339,6 +365,8 @@ public class KerberosTokenTest extends AbstractBusClientServerTestBase {
         
         int result = kerberosPort.doubleIt(25);
         assertTrue(result == 50);
+        
+        bus.shutdown(true);
     }
     
     @org.junit.Test
@@ -366,6 +394,8 @@ public class KerberosTokenTest extends AbstractBusClientServerTestBase {
         
         int result = kerberosPort.doubleIt(25);
         assertTrue(result == 50);
+        
+        bus.shutdown(true);
     }
     
     

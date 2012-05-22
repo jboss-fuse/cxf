@@ -50,6 +50,12 @@ public class SecurityContextTokenCancelTest extends AbstractBusClientServerTestB
                    launchServer(STSServer.class, true)
         );
     }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
 
     @org.junit.Test
     public void testCancelSecurityContextToken() throws Exception {
@@ -75,6 +81,8 @@ public class SecurityContextTokenCancelTest extends AbstractBusClientServerTestB
         String endorsingPort = "{http://docs.oasis-open.org/ws-sx/ws-trust/200512/}Transport_Endorsing_Port";
         cancelled = cancelSecurityToken(bus, wsdlLocation, endorsingPort, true, token);
         assertTrue(cancelled);
+        
+        bus.shutdown(true);
     }
     
     private SecurityToken requestSecurityToken(

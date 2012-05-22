@@ -52,6 +52,12 @@ public class UsernameTokenDerivedTest extends AbstractBusClientServerTestBase {
             launchServer(ServerDerived.class, true)
         );
     }
+    
+    @org.junit.AfterClass
+    public static void cleanup() throws Exception {
+        SecurityTestUtil.cleanup();
+        stopAllServers();
+    }
 
     /**
      * Here the key derived from a UsernameToken is used as a protection token for the 
@@ -75,6 +81,8 @@ public class UsernameTokenDerivedTest extends AbstractBusClientServerTestBase {
         updateAddressPort(utPort, PORT);
         
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -99,6 +107,8 @@ public class UsernameTokenDerivedTest extends AbstractBusClientServerTestBase {
         updateAddressPort(utPort, PORT);
         
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -123,6 +133,8 @@ public class UsernameTokenDerivedTest extends AbstractBusClientServerTestBase {
         updateAddressPort(utPort, PORT);
         
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -147,6 +159,8 @@ public class UsernameTokenDerivedTest extends AbstractBusClientServerTestBase {
         updateAddressPort(utPort, PORT2);
         
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -171,6 +185,8 @@ public class UsernameTokenDerivedTest extends AbstractBusClientServerTestBase {
         updateAddressPort(utPort, PORT);
         
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -195,6 +211,8 @@ public class UsernameTokenDerivedTest extends AbstractBusClientServerTestBase {
         updateAddressPort(utPort, PORT);
         
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
     /**
@@ -219,6 +237,8 @@ public class UsernameTokenDerivedTest extends AbstractBusClientServerTestBase {
         updateAddressPort(utPort, PORT);
         
         utPort.doubleIt(25);
+        
+        bus.shutdown(true);
     }
     
 }

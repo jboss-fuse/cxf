@@ -44,7 +44,6 @@ import javax.ws.rs.ext.Provider;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-import javax.xml.bind.PropertyException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import javax.xml.namespace.QName;
@@ -56,7 +55,6 @@ import javax.xml.stream.XMLStreamWriter;
 import javax.xml.transform.Source;
 
 import org.apache.cxf.helpers.CastUtils;
-import org.apache.cxf.jaxb.NamespaceMapper;
 import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.apache.cxf.jaxrs.ext.xml.XMLInstruction;
 import org.apache.cxf.jaxrs.ext.xml.XMLSource;
@@ -77,8 +75,6 @@ import org.apache.cxf.staxutils.transform.TransformUtils;
 @Provider
 public class JAXBElementProvider extends AbstractJAXBProvider  {
     private static final String XML_PI_START = "<?xml version=\"1.0\" encoding=\"";
-    private static final String NS_MAPPER_PROPERTY = "com.sun.xml.bind.namespacePrefixMapper";
-    private static final String NS_MAPPER_PROPERTY_INT = "com.sun.xml.internal.bind.namespacePrefixMapper";
     private static final String XML_PI_PROPERTY = "com.sun.xml.bind.xmlHeaders";
     private static final String XML_PI_PROPERTY_INT = "com.sun.xml.internal.bind.xmlHeaders";
     
@@ -191,7 +187,7 @@ public class JAXBElementProvider extends AbstractJAXBProvider  {
             throw e;
         } catch (Exception e) {
             LOG.warning(getStackTrace(e));
-            throw new WebApplicationException(e);        
+            throw new WebApplicationException(e, Response.status(400).build());        
         }
         // unreachable
         return null;
@@ -365,11 +361,6 @@ public class JAXBElementProvider extends AbstractJAXBProvider  {
         marshal(obj, cls, genericType, enc, os, mt, ms);
     }
     
-    protected static void setNamespaceMapper(Marshaller ms, Map<String, String> map) throws Exception {
-        NamespaceMapper nsMapper = new NamespaceMapper(map);
-        setMarshallerProp(ms, nsMapper, NS_MAPPER_PROPERTY, NS_MAPPER_PROPERTY_INT);
-    }
-    
     protected void marshal(Object obj, Class<?> cls, Type genericType, 
                            String enc, OutputStream os, MediaType mt) throws Exception {
         marshal(obj, cls, genericType, enc, os, mt, new Annotation[]{});
@@ -433,15 +424,7 @@ public class JAXBElementProvider extends AbstractJAXBProvider  {
         }
     }
     
-    private static void setMarshallerProp(Marshaller ms, Object value, 
-                                          String name1, String name2) throws Exception {
-        try {
-            ms.setProperty(name1, value);
-        } catch (PropertyException ex) {
-            ms.setProperty(name2, value);
-        }
-        
-    }
+    
     
     protected void addAttachmentMarshaller(Marshaller ms) {
         Collection<Attachment> attachments = getAttachments(true);
