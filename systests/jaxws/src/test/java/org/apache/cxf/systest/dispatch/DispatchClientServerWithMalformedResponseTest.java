@@ -58,14 +58,18 @@ public class DispatchClientServerWithMalformedResponseTest extends AbstractBusCl
     private int asyncHandlerInvokedCount;
     
     public static class Server extends AbstractBusTestServerBase {        
-
+        Endpoint ep;
         protected void run() {
+            setBus(BusFactory.getDefaultBus());
             Object implementor = new GreeterImpl();
             String address = "http://localhost:"
                 + TestUtil.getPortNumber(DispatchClientServerWithMalformedResponseTest.class)
                 + "/SOAPDispatchService/SoapDispatchPort";
-            Endpoint.publish(address, implementor);
-
+            ep = Endpoint.publish(address, implementor);
+        }
+        @Override
+        public void tearDown() {
+            ep.stop();
         }
 
         public static void main(String[] args) {
@@ -83,14 +87,16 @@ public class DispatchClientServerWithMalformedResponseTest extends AbstractBusCl
 
     @BeforeClass
     public static void startServers() throws Exception {
-        assertTrue("server did not launch correctly", launchServer(Server.class));
+        createStaticBus();
+        assertTrue("server did not launch correctly", launchServer(Server.class, true));
     }
     
     @org.junit.Before
     public void setUp() {
-        BusFactory.getDefaultBus().getOutInterceptors().add(new LoggingOutInterceptor());
-        BusFactory.getDefaultBus().getInInterceptors().add(new LoggingInInterceptor());
-        BusFactory.getDefaultBus().getInInterceptors().add(new MalformedResponseInterceptor());
+        BusFactory.setThreadDefaultBus(getStaticBus());
+        BusFactory.getThreadDefaultBus().getOutInterceptors().add(new LoggingOutInterceptor());
+        BusFactory.getThreadDefaultBus().getInInterceptors().add(new LoggingInInterceptor());
+        BusFactory.getThreadDefaultBus().getInInterceptors().add(new MalformedResponseInterceptor());
     }
     
     private void waitForFuture(Future<?> fd) throws Exception {

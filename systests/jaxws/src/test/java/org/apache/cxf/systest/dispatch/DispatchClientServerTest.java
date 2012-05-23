@@ -56,11 +56,8 @@ import org.xml.sax.InputSource;
 
 
 import org.apache.cxf.BusFactory;
-import org.apache.cxf.bus.spring.SpringBusFactory;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.helpers.XMLUtils;
-import org.apache.cxf.interceptor.LoggingInInterceptor;
-import org.apache.cxf.interceptor.LoggingOutInterceptor;
 import org.apache.cxf.jaxws.DispatchImpl;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 import org.apache.cxf.testutil.common.AbstractBusTestServerBase;
@@ -87,13 +84,15 @@ public class DispatchClientServerTest extends AbstractBusClientServerTestBase {
     private static String greeterPort = TestUtil.getPortNumber(DispatchClientServerTest.class); 
     
     public static class Server extends AbstractBusTestServerBase {        
-
+        Endpoint ep;
+        
         protected void run() {
+            setBus(BusFactory.getDefaultBus());
             Object implementor = new GreeterImpl();
             String address = "http://localhost:"
                 + TestUtil.getPortNumber(DispatchClientServerTest.class)
                 + "/SOAPDispatchService/SoapDispatchPort";
-            Endpoint ep = Endpoint.create(SOAPBinding.SOAP11HTTP_BINDING, implementor);
+            ep = Endpoint.create(SOAPBinding.SOAP11HTTP_BINDING, implementor);
             
             Map<String, Object> properties = new HashMap<String, Object>();
             Map<String, String> nsMap = new HashMap<String, String>();
@@ -103,6 +102,12 @@ public class DispatchClientServerTest extends AbstractBusClientServerTestBase {
             
             ep.setProperties(properties);
             ep.publish(address);
+            BusFactory.setDefaultBus(null);
+            BusFactory.setThreadDefaultBus(null);
+        }
+        @Override
+        public void tearDown() {
+            ep.stop();
         }
 
         public static void main(String[] args) {
@@ -120,13 +125,8 @@ public class DispatchClientServerTest extends AbstractBusClientServerTestBase {
 
     @BeforeClass
     public static void startServers() throws Exception {
-        assertTrue("server did not launch correctly", launchServer(Server.class));
-    }
-    
-    @org.junit.Before
-    public void setUp() {
-        BusFactory.getDefaultBus().getOutInterceptors().add(new LoggingOutInterceptor());
-        BusFactory.getDefaultBus().getInInterceptors().add(new LoggingInInterceptor());
+        createStaticBus();
+        assertTrue("server did not launch correctly", launchServer(Server.class, true));
     }
     
     private void waitForFuture(Future fd) throws Exception {
@@ -581,12 +581,8 @@ public class DispatchClientServerTest extends AbstractBusClientServerTestBase {
 
     @Test
     public void testJAXBObjectPAYLOADWithFeature() throws Exception {
-        bus = BusFactory.getDefaultBus(false);
-        bus.shutdown(true);
-        
-        this.configFileName = "org/apache/cxf/systest/dispatch/client-config.xml";
-        SpringBusFactory bf = (SpringBusFactory)SpringBusFactory.newInstance();
-        bus = bf.createBus(configFileName, false);
+        createBus("org/apache/cxf/systest/dispatch/client-config.xml");
+        BusFactory.setThreadDefaultBus(bus);
         
         URL wsdl = getClass().getResource("/wsdl/hello_world.wsdl");
         assertNotNull(wsdl);
@@ -623,7 +619,7 @@ public class DispatchClientServerTest extends AbstractBusClientServerTestBase {
 
         assertEquals("Feature based interceptors has to be added to out chain.", 
                      1, TestDispatchFeature.getOutInterceptorCount());
-
+        bus.shutdown(true);
     }
     
     @Test
