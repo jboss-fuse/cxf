@@ -35,14 +35,16 @@ import javax.xml.ws.Response;
 import javax.xml.ws.Service;
 
 
-import org.apache.cxf.BusFactory;
 import org.apache.cxf.interceptor.LoggingInInterceptor;
 import org.apache.cxf.interceptor.LoggingOutInterceptor;
+import org.apache.cxf.staxutils.StaxUtils;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 import org.apache.cxf.testutil.common.AbstractBusTestServerBase;
 import org.apache.cxf.testutil.common.TestUtil;
 import org.apache.hello_world_soap_http.GreeterImpl;
 import org.apache.hello_world_soap_http.SOAPService;
+
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -57,16 +59,19 @@ public class DispatchClientServerWithHugeResponseTest extends AbstractBusClientS
         TestUtil.getPortNumber(DispatchClientServerWithHugeResponseTest.class); 
     
     public static class Server extends AbstractBusTestServerBase {        
-
+        Endpoint ep;
+        
         protected void run() {
             Object implementor = new GreeterImpl();
             String address = "http://localhost:"
                 + TestUtil.getPortNumber(DispatchClientServerWithHugeResponseTest.class)
                 + "/SOAPDispatchService/SoapDispatchPort";
-            Endpoint.publish(address, implementor);
-
+            ep = Endpoint.publish(address, implementor);
         }
-
+        @Override
+        public void tearDown() {
+            ep.stop();
+        }
         public static void main(String[] args) {
             try {
                 Server s = new Server();
@@ -82,24 +87,30 @@ public class DispatchClientServerWithHugeResponseTest extends AbstractBusClientS
 
     @BeforeClass
     public static void startServers() throws Exception {
-        assertTrue("server did not launch correctly", launchServer(Server.class));
+        //must be out of process so the system properties aren't in effect
+        assertTrue("server did not launch correctly", launchServer(Server.class, false));
     }
     
     @org.junit.Before
-    public void setUp() {
-        System.setProperty("org.apache.cxf.staxutils.innerElementLevelThreshold", "12");
-        System.setProperty("org.apache.cxf.staxutils.innerElementCountThreshold", "12");
-        BusFactory.getDefaultBus().getOutInterceptors().add(new LoggingOutInterceptor());
-        BusFactory.getDefaultBus().getInInterceptors().add(new LoggingInInterceptor());
+    public void setUp() throws Exception {
+        StaxUtils.setInnerElementCountThreshold(12);
+        StaxUtils.setInnerElementLevelThreshold(12);
+        createBus();
+        getBus().getOutInterceptors().add(new LoggingOutInterceptor());
+        getBus().getInInterceptors().add(new LoggingInInterceptor());
     }
     
+    @AfterClass
+    public static void cleanup() throws Exception {
+        StaxUtils.setInnerElementCountThreshold(-1);
+        StaxUtils.setInnerElementLevelThreshold(-1);
+    }
     
-   
     @Test
     public void testStackOverflowErrorForSOAPMessageWithHugeResponse() throws Exception {
         HugeResponseInterceptor hugeResponseInterceptor = 
             new HugeResponseInterceptor(ResponseInterceptorType.overflow);
-        BusFactory.getDefaultBus().getInInterceptors().add(hugeResponseInterceptor);
+        getBus().getInInterceptors().add(hugeResponseInterceptor);
         URL wsdl = getClass().getResource("/wsdl/hello_world.wsdl");
         assertNotNull(wsdl);
 
@@ -127,7 +138,7 @@ public class DispatchClientServerWithHugeResponseTest extends AbstractBusClientS
         } catch (Throwable e) {
             assertTrue(e.getCause() instanceof StackOverflowError);
         } finally {
-            BusFactory.getDefaultBus().getInInterceptors().remove(hugeResponseInterceptor);
+            getBus().getInInterceptors().remove(hugeResponseInterceptor);
         }
         
     }
@@ -136,7 +147,7 @@ public class DispatchClientServerWithHugeResponseTest extends AbstractBusClientS
     public void testThresholdfForSOAPMessageWithHugeResponse() throws Exception {
         HugeResponseInterceptor hugeResponseInterceptor = 
             new HugeResponseInterceptor(ResponseInterceptorType.ElementLevelThreshold);
-        BusFactory.getDefaultBus().getInInterceptors().add(hugeResponseInterceptor);
+        getBus().getInInterceptors().add(hugeResponseInterceptor);
         URL wsdl = getClass().getResource("/wsdl/hello_world.wsdl");
         assertNotNull(wsdl);
 
@@ -164,16 +175,16 @@ public class DispatchClientServerWithHugeResponseTest extends AbstractBusClientS
         } catch (Throwable e) {
             assertTrue(e.getCause().getMessage().startsWith("reach the innerElementLevelThreshold"));
         } finally {
-            BusFactory.getDefaultBus().getInInterceptors().remove(hugeResponseInterceptor);
+            getBus().getInInterceptors().remove(hugeResponseInterceptor);
         }
         
     }
 
     @Test
-    public void testElementCountThresholdfForSOAPMessageWithHugeResponse() throws Exception {
+    public void testElementCountThresholdfForSOAPMessageWithHugeResponse() throws Throwable {
         HugeResponseInterceptor hugeResponseInterceptor = 
             new HugeResponseInterceptor(ResponseInterceptorType.ElementCountThreshold);
-        BusFactory.getDefaultBus().getInInterceptors().add(hugeResponseInterceptor);
+        getBus().getInInterceptors().add(hugeResponseInterceptor);
         URL wsdl = getClass().getResource("/wsdl/hello_world.wsdl");
         assertNotNull(wsdl);
 
@@ -200,9 +211,15 @@ public class DispatchClientServerWithHugeResponseTest extends AbstractBusClientS
             fail("We should not have encountered a timeout, " 
                 + "should get some exception tell me stackoverflow");
         } catch (Throwable e) {
+            if (e.getCause() == null) {
+                throw e;
+            }
+            if (e.getCause().getMessage() == null) {
+                throw e;
+            }
             assertTrue(e.getCause().getMessage().startsWith("reach the innerElementCountThreshold"));
         } finally {
-            BusFactory.getDefaultBus().getInInterceptors().remove(hugeResponseInterceptor);
+            getBus().getInInterceptors().remove(hugeResponseInterceptor);
         }
         
     }
