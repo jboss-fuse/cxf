@@ -74,7 +74,6 @@ import javax.xml.transform.dom.DOMSource;
 
 import org.apache.cxf.annotations.GZIP;
 import org.apache.cxf.common.util.ProxyHelper;
-import org.apache.cxf.jaxrs.ext.Nullable;
 import org.apache.cxf.jaxrs.ext.Oneway;
 import org.apache.cxf.jaxrs.ext.search.SearchCondition;
 import org.apache.cxf.jaxrs.ext.search.SearchContext;
