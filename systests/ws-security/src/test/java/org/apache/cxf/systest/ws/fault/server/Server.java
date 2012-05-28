@@ -17,37 +17,31 @@
  * under the License.
  */
 
-package org.apache.cxf.jaxrs.model;
+package org.apache.cxf.systest.ws.fault.server;
+
+import java.net.URL;
 
 import org.apache.cxf.Bus;
+import org.apache.cxf.BusFactory;
+import org.apache.cxf.bus.spring.SpringBusFactory;
+import org.apache.cxf.testutil.common.AbstractBusTestServerBase;
 
-public class ProviderInfo<T> extends AbstractResourceInfo {
+public class Server extends AbstractBusTestServerBase {
 
-    private T provider;
-    
-    public ProviderInfo(T provider, Bus bus) {
-        super(provider.getClass(), provider.getClass(), true, bus);
-        this.provider = provider;
-    }
-    
-    @Override
-    public boolean isSingleton() {
-        return true;
+    public Server() {
+
     }
 
-    public T getProvider() {
-        return provider;
-    }
-    
-    public boolean equals(Object obj) {
-        if (!(obj instanceof ProviderInfo)) {
-            return false;
+    protected void run()  {
+        URL busFile = Server.class.getResource("server.xml");
+        Bus busLocal = new SpringBusFactory().createBus(busFile);
+        BusFactory.setDefaultBus(busLocal);
+        setBus(busLocal);
+
+        try {
+            new Server();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        return provider.equals(((ProviderInfo<?>)obj).getProvider());
     }
-
-    public int hashCode() {
-        return provider.hashCode();
-    }
-
 }
