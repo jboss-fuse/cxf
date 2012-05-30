@@ -42,6 +42,7 @@ import javax.xml.stream.XMLStreamWriter;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.bus.spring.SpringBusFactory;
+import org.apache.cxf.feature.AbstractFeature;
 import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.interceptor.AbstractOutDatabindingInterceptor;
 import org.apache.cxf.interceptor.Fault;
@@ -63,6 +64,7 @@ import org.apache.cxf.phase.Phase;
  *
  */
 public class WebClient extends AbstractClient {
+    private static final String REQUEST_CLASS = "request.class";
     private static final String REQUEST_TYPE = "request.type";
     private static final String RESPONSE_CLASS = "response.class";
     private static final String RESPONSE_TYPE = "response.type";
@@ -129,10 +131,10 @@ public class WebClient extends AbstractClient {
     }
     
     /**
-     * Creates a Spring-configuration aware WebClient
+     * Creates WebClient
      * @param baseAddress baseAddress
      * @param providers list of providers
-     * @param configLocation classpath location of Spring configuration resource, can be null  
+     * @param configLocation classpath location of the configuration resource, can be null  
      * @return WebClient instance
      */
     public static WebClient create(String baseAddress, List<?> providers, String configLocation) {
@@ -142,9 +144,27 @@ public class WebClient extends AbstractClient {
     }
     
     /**
-     * Creates a Spring-configuration aware WebClient
+     * Creates WebClient with a list of custom features
      * @param baseAddress baseAddress
-     * @param configLocation classpath location of Spring configuration resource, can be null  
+     * @param providers list of providers
+     * @param features the features which will be applied to the client
+     * @param configLocation classpath location of the configuration resource, can be null
+     * @return WebClient instance
+     */
+    public static WebClient create(String baseAddress, 
+                                   List<?> providers, 
+                                   List<AbstractFeature> features,
+                                   String configLocation) {
+        JAXRSClientFactoryBean bean = getBean(baseAddress, configLocation);
+        bean.setProviders(providers);
+        bean.setFeatures(features);
+        return bean.createWebClient();
+    }
+    
+    /**
+     * Creates WebClient
+     * @param baseAddress baseAddress
+     * @param configLocation classpath location of the configuration resource, can be null  
      * @return WebClient instance
      */
     public static WebClient create(String baseAddress, String configLocation) {
@@ -154,11 +174,11 @@ public class WebClient extends AbstractClient {
     }
     
     /**
-     * Creates a Spring-configuration aware WebClient which will do basic authentication
+     * Creates WebClient which will do basic authentication
      * @param baseAddress baseAddress
      * @param username username
      * @param password password
-     * @param configLocation classpath location of Spring configuration resource, can be null  
+     * @param configLocation classpath location of the configuration resource, can be null  
      * @return WebClient instance
      */
     public static WebClient create(String baseAddress, String username, String password, 
@@ -322,6 +342,20 @@ public class WebClient extends AbstractClient {
      */
     public <T> T invoke(String httpMethod, Object body, Class<T> responseClass) {
         Response r = doInvoke(httpMethod, body, null, responseClass, responseClass);
+        return responseClass.cast(responseClass == Response.class ? r : r.getEntity());
+    }
+    
+    /**
+     * Does HTTP invocation and returns types response object 
+     * @param httpMethod HTTP method 
+     * @param body request body, can be null
+     * @param requestClass request body class
+     * @param responseClass expected type of response object
+     * @return typed object, can be null. Response status code and headers 
+     *         can be obtained too, see Client.getResponse()
+     */
+    public <T> T invoke(String httpMethod, Object body, Class<?> requestClass, Class<T> responseClass) {
+        Response r = doInvoke(httpMethod, body, requestClass, null, responseClass, responseClass);
         return responseClass.cast(responseClass == Response.class ? r : r.getEntity());
     }
     
@@ -675,8 +709,21 @@ public class WebClient extends AbstractClient {
         return (WebClient)super.reset();
     }
     
-    protected Response doInvoke(String httpMethod, Object body, Type inGenericType,
-                                Class<?> responseClass, Type outGenericType) {
+    protected Response doInvoke(String httpMethod, 
+                                Object body, 
+                                Type inGenericType,
+                                Class<?> responseClass, 
+                                Type outGenericType) {
+        return doInvoke(httpMethod, body, body == null ? null : body.getClass(), inGenericType, 
+            responseClass, outGenericType);
+    }
+    
+    protected Response doInvoke(String httpMethod, 
+                                Object body, 
+                                Class<?> requestClass,
+                                Type inGenericType,
+                                Class<?> responseClass, 
+                                Type outGenericType) {
         
         MultivaluedMap<String, String> headers = getHeaders();
         boolean contentTypeNotSet = headers.getFirst(HttpHeaders.CONTENT_TYPE) == null;
@@ -693,7 +740,7 @@ public class WebClient extends AbstractClient {
             headers.putSingle(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML_TYPE.toString());
         }
         resetResponse();
-        Response r = doChainedInvocation(httpMethod, headers, body, inGenericType, 
+        Response r = doChainedInvocation(httpMethod, headers, body, requestClass, inGenericType, 
                                          responseClass, outGenericType, null, null);
         if (r.getStatus() >= 400 && responseClass != Response.class) {
             throw new ServerWebApplicationException(r);
@@ -710,16 +757,18 @@ public class WebClient extends AbstractClient {
         
         Map<String, Object> reqContext = CastUtils.cast((Map<?, ?>)invContext.get(REQUEST_CONTEXT));
         String httpMethod = (String)reqContext.get(Message.HTTP_REQUEST_METHOD);
+        Class<?> requestClass = (Class<?>)reqContext.get(REQUEST_CLASS);
         Type inType = (Type)reqContext.get(REQUEST_TYPE);
         Class<?> respClass = (Class<?>)reqContext.get(RESPONSE_CLASS);
         Type outType = (Type)reqContext.get(RESPONSE_TYPE);
-        return doChainedInvocation(httpMethod, headers, body, inType, 
+        return doChainedInvocation(httpMethod, headers, body, requestClass, inType, 
                                    respClass, outType, exchange, invContext);
     }
     //CHECKSTYLE:OFF
     protected Response doChainedInvocation(String httpMethod, 
                                            MultivaluedMap<String, String> headers, 
                                            Object body, 
+                                           Class<?> requestClass,
                                            Type inGenericType,
                                            Class<?> responseClass, 
                                            Type outGenericType,
@@ -732,6 +781,7 @@ public class WebClient extends AbstractClient {
         
         Map<String, Object> reqContext = getRequestContext(m);
         reqContext.put(Message.HTTP_REQUEST_METHOD, httpMethod);
+        reqContext.put(REQUEST_CLASS, requestClass);
         reqContext.put(REQUEST_TYPE, inGenericType);
         reqContext.put(RESPONSE_CLASS, responseClass);
         reqContext.put(RESPONSE_TYPE, outGenericType);
@@ -824,12 +874,17 @@ public class WebClient extends AbstractClient {
             Object body = objs.get(0);
             
             Map<String, Object> requestContext = WebClient.this.getRequestContext(outMessage);
-            Type type = null;
+            Class<?> requestClass = null;
+            Type requestType = null;
             if (requestContext != null) {
-                type = (Type)requestContext.get(REQUEST_TYPE);
+                requestClass = (Class<?>)requestContext.get(REQUEST_CLASS);
+                requestType = (Type)requestContext.get(REQUEST_TYPE);
             }
+            boolean isAssignable = requestClass != null && requestClass.isAssignableFrom(body.getClass());
             try {
-                writeBody(body, outMessage, type == null ? body.getClass() : type, 
+                writeBody(body, outMessage, 
+                          requestClass == null || !isAssignable ? body.getClass() : requestClass,
+                          requestType == null || !isAssignable ? body.getClass() : requestType, 
                           new Annotation[]{}, headers, os);
                 if (os != null) {
                     os.flush();

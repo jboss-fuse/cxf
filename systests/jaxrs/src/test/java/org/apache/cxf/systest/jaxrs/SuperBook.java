@@ -17,18 +17,19 @@
  * under the License.
  */
 
-package org.apache.cxf.rs.security.saml.sso;
+package org.apache.cxf.systest.jaxrs;
 
-import java.io.Closeable;
-import java.io.IOException;
+import javax.xml.bind.annotation.XmlRootElement;
 
-public interface TokenReplayCache<T> extends Closeable {
 
-    T getId(T id);
-
-    void putId(T id);
-
-    void putId(T id, long timeToLive);
+@XmlRootElement(name = "SuperBook")
+public class SuperBook extends Book {
     
-    void close() throws IOException;
+    public SuperBook() {
+        
+    }
+    
+    public SuperBook(String name, long id) {
+        super(name, id);
+    }
 }

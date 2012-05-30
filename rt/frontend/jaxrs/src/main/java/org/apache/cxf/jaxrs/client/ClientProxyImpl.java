@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -632,11 +633,16 @@ public class ClientProxyImpl extends AbstractClient implements
             Object body = objs.get(0);
             try {
                 if (bodyIndex != -1) {
+                    Class<?> paramClass = method.getParameterTypes()[bodyIndex];
+                    Type paramType = method.getGenericParameterTypes()[bodyIndex];
+                    
+                    boolean isAssignable = paramClass.isAssignableFrom(body.getClass());
                     writeBody(body, outMessage,
-                              method.getGenericParameterTypes()[bodyIndex],
+                              isAssignable ? paramClass : body.getClass(),
+                              isAssignable ? paramType : body.getClass(),
                               anns, headers, os);
                 } else {
-                    writeBody(body, outMessage, body.getClass(), 
+                    writeBody(body, outMessage, body.getClass(), body.getClass(), 
                               anns, headers, os);
                 }
             } catch (Exception ex) {
