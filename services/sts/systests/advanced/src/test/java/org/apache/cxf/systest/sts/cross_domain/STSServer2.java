@@ -16,33 +16,35 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-package demo.wssec.sts;
+package org.apache.cxf.systest.sts.cross_domain;
 
 import java.net.URL;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.bus.spring.SpringBusFactory;
+import org.apache.cxf.testutil.common.AbstractBusTestServerBase;
 
-public class Server {
+public class STSServer2 extends AbstractBusTestServerBase {
 
-    protected Server() throws Exception {
-        System.out.println("Starting STS");
+    public STSServer2() {
 
-        SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = Server.class.getResource("wssec-sts.xml");
-        Bus bus = bf.createBus(busFile.toString());
-        BusFactory.setDefaultBus(bus);
     }
 
-    public static void main(String args[]) throws Exception {
-        System.out.println();
-        new Server();
-        System.out.println("Server ready...");
+    protected void run()  {
+        URL busFile = STSServer2.class.getResource("cxf-sts-saml2.xml");
+        Bus busLocal = new SpringBusFactory().createBus(busFile);
+        BusFactory.setDefaultBus(busLocal);
+        setBus(busLocal);
 
-        Thread.sleep(5 * 60 * 1000);
-        System.out.println("Server exiting");
-        System.exit(0);
+        try {
+            new STSServer2();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public static void main(String args[]) {
+        new STSServer2().run();
     }
 }

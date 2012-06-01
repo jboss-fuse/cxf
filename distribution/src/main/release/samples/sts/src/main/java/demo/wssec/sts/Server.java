@@ -17,22 +17,22 @@
  * under the License.
  */
 
-package demo.wssec.server;
+package demo.wssec.sts;
 
 import java.net.URL;
-
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.bus.spring.SpringBusFactory;
+import org.springframework.core.io.ClassPathResource;
 
 public class Server {
 
     protected Server() throws Exception {
-        System.out.println("Starting Server");
+        System.out.println("Starting STS");
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = Server.class.getResource("wssec-server.xml");
+        URL busFile = new ClassPathResource("wssec-sts.xml").getURL();
         Bus bus = bf.createBus(busFile.toString());
         BusFactory.setDefaultBus(bus);
     }
