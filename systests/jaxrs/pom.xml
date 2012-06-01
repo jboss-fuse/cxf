@@ -391,6 +391,20 @@
                 </configuration>
             </execution>
         </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.jibx</groupId>
+            <artifactId>jibx-tools</artifactId>
+            <version>${cxf.jibx.version}</version>
+            <!-- excludes the below eclipse dependency to make CI happy -->
+            <exclusions>
+                  <exclusion>
+                     <groupId>org.eclipse.core</groupId>
+                     <artifactId>commands</artifactId>
+                 </exclusion>
+           </exclusions>
+         </dependency>
+       </dependencies>
     </plugin>
             <plugin>
                 <groupId>org.apache.cxf</groupId>
