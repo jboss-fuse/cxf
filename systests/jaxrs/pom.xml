@@ -398,10 +398,30 @@
             <version>${cxf.jibx.version}</version>
             <!-- excludes the below eclipse dependency to make CI happy -->
             <exclusions>
-                  <exclusion>
-                     <groupId>org.eclipse.core</groupId>
-                     <artifactId>commands</artifactId>
-                 </exclusion>
+              <exclusion>
+                  <groupId>org.eclipse.equinox</groupId>
+                  <artifactId>common</artifactId>
+              </exclusion>
+              <exclusion>
+                  <groupId>org.eclipse.equinox</groupId>
+                  <artifactId>app</artifactId>
+              </exclusion>
+              <exclusion>
+                  <groupId>org.eclipse.core</groupId>
+                  <artifactId>resources</artifactId>
+              </exclusion>
+              <exclusion>
+                  <groupId>org.eclipse.core</groupId>
+                  <artifactId>jobs</artifactId>
+              </exclusion>
+              <exclusion>
+                  <groupId>org.eclipse.core</groupId>
+                  <artifactId>commands</artifactId>
+              </exclusion>
+              <exclusion>
+                  <groupId>org.eclipse.equinox</groupId>
+                  <artifactId>registry</artifactId>
+              </exclusion>
            </exclusions>
          </dependency>
        </dependencies>
