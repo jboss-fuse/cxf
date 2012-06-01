@@ -26,6 +26,7 @@ import java.util.List;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.apache.cxf.common.util.ProxyHelper;
+import org.apache.cxf.feature.AbstractFeature;
 import org.apache.cxf.jaxrs.model.UserResource;
 
 /**
@@ -67,18 +68,16 @@ public final class JAXRSClientFactory {
      * @return typed proxy
      */
     public static <T> T create(URI baseURI, Class<T> cls, boolean inheritHeaders) {
-        
         JAXRSClientFactoryBean bean = getBean(baseURI.toString(), cls, null);
         bean.setInheritHeaders(inheritHeaders);
         return bean.create(cls);
-        
     }
     
     /**
      * Creates a proxy
      * @param baseAddress baseAddress
      * @param cls resource class, if not interface then a CGLIB proxy will be created
-     * @param config classpath location of Spring configuration resource
+     * @param configLocation classpath location of the configuration resource
      * @return typed proxy
      */
     public static <T> T create(String baseAddress, Class<T> cls, String configLocation) {
@@ -92,7 +91,7 @@ public final class JAXRSClientFactory {
      * @param cls resource class, if not interface then a CGLIB proxy will be created
      *        This class is expected to have a root JAXRS Path annotation containing
      *        template variables, for ex, "/path/{id1}/{id2}"  
-     * @param config classpath location of Spring configuration resource
+     * @param configLocation classpath location of the configuration resource
      * @param varValues values to replace root Path template variables   
      * @return typed proxy
      */
@@ -136,7 +135,7 @@ public final class JAXRSClientFactory {
      * @param baseAddress baseAddress
      * @param cls proxy class, if not interface then a CGLIB proxy will be created
      * @param providers list of providers
-     * @param config classpath location of Spring configuration resource
+     * @param configLocation classpath location of the configuration resource
      * @return typed proxy
      */
     public static <T> T create(String baseAddress, Class<T> cls, List<?> providers, String configLocation) {
@@ -146,12 +145,30 @@ public final class JAXRSClientFactory {
     }
     
     /**
+     * Creates a proxy
+     * @param baseAddress baseAddress
+     * @param cls proxy class, if not interface then a CGLIB proxy will be created
+     * @param providers list of providers
+     * @param features the features which will be applied to the client
+     * @param configLocation classpath location of the configuration resource
+     * @return typed proxy
+     */
+    public static <T> T create(String baseAddress, Class<T> cls, List<?> providers,
+                               List<AbstractFeature> features,                    
+                               String configLocation) {
+        JAXRSClientFactoryBean bean = getBean(baseAddress, cls, configLocation);
+        bean.setProviders(providers);
+        bean.setFeatures(features);
+        return bean.create(cls);
+    }
+    
+    /**
      * Creates a proxy which will do basic authentication
      * @param baseAddress baseAddress
      * @param cls proxy class, if not interface then a CGLIB proxy will be created
      * @param username username
      * @param password password
-     * @param config classpath location of Spring configuration resource
+     * @param configLocation classpath location of the configuration resource
      * @return typed proxy
      */
     public static <T> T create(String baseAddress, Class<T> cls, String username,
@@ -180,6 +197,7 @@ public final class JAXRSClientFactory {
      * @param cls proxy class, if not interface then a CGLIB proxy will be created
      * @param modelRef model location
      * @param providers list of providers
+     * @param configLocation classpath location of the configuration resource
      * @return typed proxy
      */
     public static <T> T createFromModel(String baseAddress, Class<T> cls, String modelRef, 
@@ -217,6 +235,7 @@ public final class JAXRSClientFactory {
      * @param baseAddress baseAddress
      * @param cls proxy class, if not interface then a CGLIB proxy will be created
      * @param modelBeans model beans
+     * @param configLocation classpath location of the configuration resource
      * @return typed proxy
      */
     public static <T> T createFromModel(String baseAddress, Class<T> cls, List<UserResource> modelBeans, 
@@ -230,6 +249,7 @@ public final class JAXRSClientFactory {
      * @param cls proxy class, if not interface then a CGLIB proxy will be created
      * @param modelBeans model beans
      * @param providers list of providers
+     * @param configLocation classpath location of the configuration resource
      * @return typed proxy
      */
     public static <T> T createFromModel(String baseAddress, Class<T> cls, List<UserResource> modelBeans,

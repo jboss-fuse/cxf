@@ -98,7 +98,7 @@
         <cxf.jibx.version>1.2.3</cxf.jibx.version>
         <cxf.axiom.version>1.2.10</cxf.axiom.version>
         <cxf.jettison.version>1.3.1</cxf.jettison.version>
-        <cxf.wss4j.version>1.6.5</cxf.wss4j.version>
+        <cxf.wss4j.version>1.6.6</cxf.wss4j.version>
         <cxf.joda.time.version>1.6.2</cxf.joda.time.version>
         <cxf.opensaml.version>2.5.1</cxf.opensaml.version>
         <cxf.opensamlws.version>1.4.2-1</cxf.opensamlws.version>
@@ -339,6 +339,7 @@
                         <systemPropertyVariables>
                             <java.io.tmpdir>${basedir}/target</java.io.tmpdir>
                             <cxf.useRandomFirstPort>true</cxf.useRandomFirstPort>
+                            <org.apache.cxf.JDKBugHacks.all>true</org.apache.cxf.JDKBugHacks.all>
                             <org.apache.ws.commons.schema.protectReadOnlyCollections>${cxf.protect-xmlschema-collections}</org.apache.ws.commons.schema.protectReadOnlyCollections>
                             <cxf.validateServiceSchemas>${cxf.validateServices}</cxf.validateServiceSchemas>
                             <java.awt.headless>${java.awt.headless}</java.awt.headless>

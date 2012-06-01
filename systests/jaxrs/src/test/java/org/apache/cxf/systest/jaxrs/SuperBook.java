@@ -16,22 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.systest.ws.common;
 
-import javax.jws.WebService;
+package org.apache.cxf.systest.jaxrs;
 
-import org.apache.cxf.feature.Features;
-import org.example.contract.doubleit.DoubleItFault;
-import org.example.contract.doubleit.DoubleItPortType;
+import javax.xml.bind.annotation.XmlRootElement;
 
-@WebService(targetNamespace = "http://www.example.org/contract/DoubleIt", 
-            serviceName = "DoubleItService", 
-            endpointInterface = "org.example.contract.doubleit.DoubleItPortType")
-@Features(features = "org.apache.cxf.feature.LoggingFeature")              
-public class DoubleItImpl implements DoubleItPortType {
+
+@XmlRootElement(name = "SuperBook")
+public class SuperBook extends Book {
     
-    public int doubleIt(int numberToDouble) throws DoubleItFault {
-        return numberToDouble * 2;
+    public SuperBook() {
+        
     }
     
+    public SuperBook(String name, long id) {
+        super(name, id);
+    }
 }
