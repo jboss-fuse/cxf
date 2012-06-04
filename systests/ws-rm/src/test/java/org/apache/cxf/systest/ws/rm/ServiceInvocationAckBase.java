@@ -34,14 +34,12 @@ import org.apache.cxf.greeter_control.GreeterService;
 import org.apache.cxf.greeter_control.types.FaultLocation;
 import org.apache.cxf.interceptor.ServiceInvokerInterceptor;
 import org.apache.cxf.phase.Phase;
-import org.apache.cxf.test.TestUtilities;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 import org.apache.cxf.testutil.common.AbstractBusTestServerBase;
 import org.apache.cxf.ws.rm.RMManager;
+import org.apache.cxf.ws.rm.RetransmissionQueue;
 
 import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -49,15 +47,14 @@ import org.junit.Test;
  * error at the provider side and how its behavior is affected by the robust in-only mode setting.
  */
 public abstract class ServiceInvocationAckBase extends AbstractBusClientServerTestBase {
-    public static final String PORT = allocatePort(Server.class);
-    
     private static final Logger LOG = LogUtils.getLogger(ServiceInvocationAckBase.class);
 
-    private static final String CONTROL_PORT_ADDRESS = 
-        "http://localhost:" + PORT + "/SoapContext/ControlPort";
-
     public static class Server extends AbstractBusTestServerBase {
-
+        String port;
+        Endpoint ep;
+        public Server(String args[]) {
+            port = args[0];
+        }
         protected void run() {
             SpringBusFactory factory = new SpringBusFactory();
             Bus bus = factory.createBus();
@@ -65,23 +62,15 @@ public abstract class ServiceInvocationAckBase extends AbstractBusClientServerTe
             setBus(bus);
 
             ControlImpl implementor = new ControlImpl();
-            implementor.setAddress("http://localhost:" + PORT + "/SoapContext/GreeterPort");
+            implementor.setAddress("http://localhost:" + port + "/SoapContext/GreeterPort");
             GreeterImpl greeterImplementor = new GreeterImpl();
             implementor.setImplementor(greeterImplementor);
-            Endpoint.publish(CONTROL_PORT_ADDRESS, implementor);
+            ep = Endpoint.publish("http://localhost:" + port + "/SoapContext/ControlPort", implementor);
             LOG.fine("Published control endpoint.");
         }
-
-        public static void main(String[] args) {
-            try {
-                Server s = new Server();
-                s.start();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                System.exit(-1);
-            } finally {
-                System.out.println("done!");
-            }
+        public void tearDown() {
+            ep.stop();
+            ep = null;
         }
     }
     
@@ -90,17 +79,13 @@ public abstract class ServiceInvocationAckBase extends AbstractBusClientServerTe
     private Bus greeterBus;
     private Greeter greeter;
     
+    public abstract String getPort();
 
-    @BeforeClass
-    public static void startServers() throws Exception {
-        TestUtilities.setKeepAliveSystemProperty(false);
-        assertTrue("server did not launch correctly", launchServer(Server.class, true));
+    public static void startServer(String port) throws Exception {
+        assertTrue("server did not launch correctly", 
+                   launchServer(Server.class, null, new String[] {port}, true));
     }
     
-    @AfterClass
-    public static void cleanup() {
-        TestUtilities.recoverKeepAliveSystemProperty();
-    }
     
     @After
     public void tearDown() {
@@ -133,16 +118,16 @@ public abstract class ServiceInvocationAckBase extends AbstractBusClientServerTe
 
         // the message is acked and the invocation takes place
         greeter.greetMeOneWay("one");
-        Thread.sleep(6000L);
-        assertTrue("RetransmissionQueue must be empty", manager.getRetransmissionQueue().isEmpty());
+        waitForEmpty(manager.getRetransmissionQueue());
     
         control.setFaultLocation(location);
 
         // the invocation fails but the message is acked because the delivery succeeds
         greeter.greetMeOneWay("two");
-        Thread.sleep(6000L);
-        assertTrue("RetransmissionQueue must be empty", manager.getRetransmissionQueue().isEmpty());
+        waitForEmpty(manager.getRetransmissionQueue());
     }
+    
+    
 
     @Test
     public void testRobustInvocationHandling() throws Exception {
@@ -160,23 +145,48 @@ public abstract class ServiceInvocationAckBase extends AbstractBusClientServerTe
         
         // the message is acked and the invocation takes place
         greeter.greetMeOneWay("one");
-        Thread.sleep(6000L);
-        assertTrue("RetransmissionQueue must be empty", manager.getRetransmissionQueue().isEmpty());
+        waitForEmpty(manager.getRetransmissionQueue());
 
         control.setFaultLocation(location);
 
         // the invocation fails but the message is acked because the delivery succeeds
         greeter.greetMeOneWay("two");
-        Thread.sleep(6000L);
-        assertFalse("RetransmissionQueue must not be empty", manager.getRetransmissionQueue().isEmpty());
-        
+        waitForNotEmpty(manager.getRetransmissionQueue());
+
         location.setPhase(null);
         control.setFaultLocation(location);
 
         // the retransmission succeeds and the invocation succeeds, the message is acked
-        Thread.sleep(6000L);
-        assertTrue("RetransmissionQueue must be empty", manager.getRetransmissionQueue().isEmpty());
+        waitForEmpty(manager.getRetransmissionQueue());
         
+    }
+
+    private void waitForNotEmpty(RetransmissionQueue retransmissionQueue) throws Exception {
+        long start = System.currentTimeMillis();
+        while (true) {
+            Thread.sleep(100);
+            if (!retransmissionQueue.isEmpty()) {
+                return;
+            }
+            long total = System.currentTimeMillis() - start;
+            if (total > 10000L) {
+                fail("RetransmissionQueue must not be empty");
+            }
+        }
+    }
+
+    private void waitForEmpty(RetransmissionQueue retransmissionQueue) throws Exception {
+        long start = System.currentTimeMillis();
+        while (true) {
+            Thread.sleep(100);
+            if (retransmissionQueue.isEmpty()) {
+                return;
+            }
+            long total = System.currentTimeMillis() - start;
+            if (total > 10000L) {
+                fail("RetransmissionQueue must be empty");
+            }
+        }
     }
 
     protected void setupGreeter(String cfgResource) throws NumberFormatException, MalformedURLException {
@@ -188,7 +198,7 @@ public abstract class ServiceInvocationAckBase extends AbstractBusClientServerTe
 
         ControlService cs = new ControlService();
         control = cs.getControlPort();
-        updateAddressPort(control, PORT);
+        updateAddressPort(control, getPort());
         
         assertTrue("Failed to start greeter", control.startGreeter(cfgResource));
         
@@ -199,8 +209,10 @@ public abstract class ServiceInvocationAckBase extends AbstractBusClientServerTe
         GreeterService gs = new GreeterService();
 
         greeter = gs.getGreeterPort();
-        updateAddressPort(greeter, PORT);
+        updateAddressPort(greeter, getPort());
         LOG.fine("Created greeter client.");
 
     }
+
+
 }
