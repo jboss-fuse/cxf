@@ -32,10 +32,6 @@
     <description>Apache CXF JAX-RS System Tests</description>
     <url>http://cxf.apache.org</url>
     
-    <properties>
-        <cxf.surefire.fork.mode>pertest</cxf.surefire.fork.mode>
-    </properties>
-    
     <dependencies>
         <dependency>
             <groupId>xalan</groupId>
