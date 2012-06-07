@@ -67,6 +67,7 @@ public class WSSCTest extends AbstractBusClientServerTestBase {
         stopAllServers();
     }
     
+    
     @Test
     public void testSecureConversationMutualCertificate10SignEncryptIPingService() throws Exception {
         runTest("SecureConversation_MutualCertificate10SignEncrypt_IPingService");
