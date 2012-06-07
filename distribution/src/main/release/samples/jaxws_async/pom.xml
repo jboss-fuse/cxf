@@ -23,7 +23,6 @@
     <name>JAX-WS Asynchronous Demo using Document/Literal Style</name>
     <version>2.6.x-fuse-SNAPSHOT</version>
     <description>JAX-WS Asynchronous Demo using Document/Literal Style</description>
-    <version>2.6.x-fuse-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <parent>
