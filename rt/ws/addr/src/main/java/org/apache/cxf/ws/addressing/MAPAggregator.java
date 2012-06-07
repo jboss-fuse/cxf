@@ -33,7 +33,6 @@ import java.util.logging.Logger;
 import javax.wsdl.extensions.ExtensibilityElement;
 import javax.xml.namespace.QName;
 import javax.xml.ws.WebFault;
-import javax.xml.ws.WebServiceException;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.binding.soap.SoapBindingConstants;
@@ -620,12 +619,12 @@ public class MAPAggregator extends AbstractPhaseInterceptor<Message> {
                     }
                 }
                 if (missingWsaHeader) {
-                    String reason = BUNDLE.getString("MISSING_ACTION_MESSAGE");
-                    throw new WebServiceException(reason + new QName(Names.WSA_NAMESPACE_NAME,
-                                                          Names.HEADER_REQUIRED_NAME));
+                    throw new SoapFault("MISSING_ACTION_MESSAGE", BUNDLE,
+                                        new QName(Names.WSA_NAMESPACE_NAME,
+                                                  Names.HEADER_REQUIRED_NAME));
                 }
             }
-            if (MessageUtils.isPartialResponse(message)
+            if (MessageUtils.isPartialResponse(message) 
                 && message.getExchange().getOutMessage() != null) {
                 // marked as a partial response, let's see if it really is
                 MessageInfo min = message.get(MessageInfo.class);
