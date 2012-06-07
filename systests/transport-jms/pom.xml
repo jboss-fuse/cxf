@@ -31,6 +31,7 @@
     <description>Apache CXF Transport System Tests JMS</description>
     <version>2.4.x-fuse-SNAPSHOT</version>
     <url>http://cxf.apache.org</url>
+
     <build>
         <plugins>
             <plugin>
@@ -318,8 +319,4 @@
         </dependency>
 
     </dependencies>
-    <properties>
-        <cxf.surefire.fork.mode>pertest</cxf.surefire.fork.mode>
-    </properties>
-
 </project>
