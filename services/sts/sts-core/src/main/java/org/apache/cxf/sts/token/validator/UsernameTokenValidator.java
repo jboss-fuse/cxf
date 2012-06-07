@@ -19,7 +19,9 @@
 package org.apache.cxf.sts.token.validator;
 
 import java.security.Principal;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -34,6 +36,8 @@ import org.w3c.dom.Element;
 
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.helpers.DOMUtils;
+import org.apache.cxf.jaxb.JAXBContextCache;
+import org.apache.cxf.jaxb.JAXBContextCache.CachedContextAndSchemas;
 import org.apache.cxf.sts.QNameConstants;
 import org.apache.cxf.sts.STSConstants;
 import org.apache.cxf.sts.STSPropertiesMBean;
@@ -41,6 +45,7 @@ import org.apache.cxf.sts.request.ReceivedToken;
 import org.apache.cxf.sts.request.TokenRequirements;
 import org.apache.cxf.sts.token.realm.UsernameTokenRealmCodec;
 
+import org.apache.cxf.ws.security.sts.provider.model.ObjectFactory;
 import org.apache.cxf.ws.security.sts.provider.model.secext.UsernameTokenType;
 import org.apache.cxf.ws.security.tokenstore.SecurityToken;
 
@@ -139,8 +144,14 @@ public class UsernameTokenValidator implements TokenValidator {
         // Marshall the received JAXB object into a DOM Element
         Element usernameTokenElement = null;
         try {
-            JAXBContext jaxbContext = 
-                JAXBContext.newInstance("org.apache.cxf.ws.security.sts.provider.model");
+            Set<Class<?>> classes = new HashSet<Class<?>>();
+            classes.add(ObjectFactory.class);
+            classes.add(org.apache.cxf.ws.security.sts.provider.model.wstrust14.ObjectFactory.class);
+                    
+            CachedContextAndSchemas cache = 
+                JAXBContextCache.getCachedContextAndSchemas(classes, null, null, null, false);
+            JAXBContext jaxbContext = cache.getContext();
+            
             Marshaller marshaller = jaxbContext.createMarshaller();
             Document doc = DOMUtils.createDocument();
             Element rootElement = doc.createElement("root-element");
@@ -169,7 +180,8 @@ public class UsernameTokenValidator implements TokenValidator {
             if (ut.getPassword() == null) {
                 return response;
             }
-            if (secToken == null || (secToken.getAssociatedHash() != ut.hashCode())) {
+            if (secToken == null || secToken.isExpired()
+                || (secToken.getAssociatedHash() != ut.hashCode())) {
                 Credential credential = new Credential();
                 credential.setUsernametoken(ut);
                 validator.validate(credential, requestData);
