@@ -114,6 +114,7 @@ public class JAXRSClientServerSpringBookTest extends AbstractBusClientServerTest
     
         checkSchemas(address, "/book.xsd", "/bookid.xsd", "import");
         checkSchemas(address, "/bookid.xsd", null, null);
+        checkWadlResourcesInfo(address, address, "/book.xsd", 1);
     }
     
     private void checkSchemas(String address, String schemaSegment, 
@@ -489,6 +490,14 @@ public class JAXRSClientServerSpringBookTest extends AbstractBusClientServerTest
         String endpointAddress =
             "http://localhost:" + PORT + "/the/thebooks4/bookstore/books/aegis/retrieve"; 
         getBookAegis(endpointAddress, "application/xml", "RETRIEVE"); 
+    }
+    
+    @Test
+    public void testRetrieveGetBookAegis() throws Exception {
+        
+        String endpointAddress =
+            "http://localhost:" + PORT + "/the/thebooks4/bookstore/books/aegis/retrieve/get"; 
+        getBookAegis(endpointAddress, "application/xml"); 
     }
     
     @Test

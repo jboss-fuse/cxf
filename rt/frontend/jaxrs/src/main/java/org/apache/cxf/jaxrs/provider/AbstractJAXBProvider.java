@@ -37,7 +37,6 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ContextResolver;
@@ -124,6 +123,8 @@ public abstract class AbstractJAXBProvider extends AbstractConfigurableProvider
     private boolean validateOutput;
     private boolean validateBeforeWrite;
     private ValidationEventHandler eventHandler;
+    private Unmarshaller.Listener unmarshallerListener;
+    private Marshaller.Listener marshallerListener;
     private DocumentDepthProperties depthProperties;
     
     protected static void setNamespaceMapper(Marshaller ms, Map<String, String> map) throws Exception {
@@ -192,20 +193,16 @@ public abstract class AbstractJAXBProvider extends AbstractConfigurableProvider
         jaxbElementClassMap = map;
     }
     
-    protected void checkContentLength() {
-        if (mc != null) {
-            HttpHeaders headers = mc.getHttpHeaders();
-            if (headers != null) {
-                List<String> values = mc.getHttpHeaders().getRequestHeader(HttpHeaders.CONTENT_LENGTH);
-                if (values.size() == 1 && "0".equals(values.get(0))) {
-                    String message = new org.apache.cxf.common.i18n.Message("EMPTY_BODY", BUNDLE).toString();
-                    LOG.warning(message);
-                    throw new WebApplicationException(400);
-                }
-            }
-        }
+    protected boolean isPayloadEmpty() {
+        return mc != null ? isPayloadEmpty(mc.getHttpHeaders()) : false;     
     }
     
+    protected void reportEmptyContentLength() {
+        String message = new org.apache.cxf.common.i18n.Message("EMPTY_BODY", BUNDLE).toString();
+        LOG.warning(message);
+        throw new WebApplicationException(400);
+    }
+
     protected <T> T getStaxHandlerFromCurrentMessage(Class<T> staxCls) {
         Message m = PhaseInterceptorChain.getCurrentMessage();
         if (m != null) {
@@ -483,6 +480,9 @@ public abstract class AbstractJAXBProvider extends AbstractConfigurableProvider
         if (eventHandler != null) {
             unmarshaller.setEventHandler(eventHandler);
         }
+        if (unmarshallerListener != null) {
+            unmarshaller.setListener(unmarshallerListener);
+        }
         if (uProperties != null) {
             for (Map.Entry<String, Object> entry : uProperties.entrySet()) {
                 unmarshaller.setProperty(entry.getKey(), entry.getValue());
@@ -501,6 +501,9 @@ public abstract class AbstractJAXBProvider extends AbstractConfigurableProvider
         Marshaller marshaller = context.createMarshaller();
         if (enc != null) {
             marshaller.setProperty(Marshaller.JAXB_ENCODING, enc);
+        }
+        if (marshallerListener != null) {
+            marshaller.setListener(marshallerListener);
         }
         validateObjectIfNeeded(marshaller, obj);
         return marshaller;
@@ -689,6 +692,14 @@ public abstract class AbstractJAXBProvider extends AbstractConfigurableProvider
 
     public void setDepthProperties(DocumentDepthProperties depthProperties) {
         this.depthProperties = depthProperties;
+    }
+
+    public void setUnmarshallerListener(Unmarshaller.Listener unmarshallerListener) {
+        this.unmarshallerListener = unmarshallerListener;
+    }
+
+    public void setMarshallerListener(Marshaller.Listener marshallerListener) {
+        this.marshallerListener = marshallerListener;
     }
 
     @XmlRootElement

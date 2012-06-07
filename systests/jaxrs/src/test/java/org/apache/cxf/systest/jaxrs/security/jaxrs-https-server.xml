@@ -28,7 +28,9 @@ under the License.
         http://cxf.apache.org/transports/http-jetty/configuration   http://cxf.apache.org/schemas/configuration/http-jetty.xsd
         http://cxf.apache.org/configuration/security                http://cxf.apache.org/schemas/configuration/security.xsd
         ">
+
 	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"/>
+	
 
     <httpj:engine-factory id="port-9095-tls-config">
         <httpj:engine port="${testutil.ports.jaxrs-https}">
@@ -44,22 +46,5 @@ under the License.
             </httpj:tlsServerParameters>
         </httpj:engine>
     </httpj:engine-factory>
-
-    <!-- -->
-    <!-- HTTP/S configuration for proxy & web clients -->
-    <!-- -->
-    <http:conduit name="https://localhost:.*/bookstore/securebooks.*">
-        <http:client ConnectionTimeout="3000000" ReceiveTimeout="3000000"/>
-        <http:tlsClientParameters disableCNCheck="true">
-            <sec:keyManagers keyPassword="password">
-	           <sec:keyStore type="JKS" password="password" 
-	                file="src/test/java/org/apache/cxf/systest/http/resources/Morpit.jks"/>
-	           </sec:keyManagers>
-	        <sec:trustManagers>
-	           <sec:keyStore type="JKS" password="password"
-	               file="src/test/java/org/apache/cxf/systest/http/resources/Truststore.jks"/>
-	        </sec:trustManagers>
-        </http:tlsClientParameters>
-    </http:conduit>
 
 </beans>

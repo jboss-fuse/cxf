@@ -33,7 +33,7 @@ import javax.xml.soap.SOAPMessage;
 import javax.xml.stream.XMLStreamReader;
 
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
+import org.w3c.dom.Node;
 
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.binding.soap.Soap12;
@@ -126,8 +126,15 @@ public class SAAJInInterceptorTest extends TestBase {
         assertEquals("soap:Server", fault.getFaultCode());
         assertEquals("This is a fault string", fault.getFaultString());
         Detail faultDetail = fault.getDetail();
-        NodeList faultDetailChildNodes = faultDetail.getChildNodes();
-        assertEquals(2, faultDetailChildNodes.getLength());
+        int count = 0;
+        Node nd = faultDetail.getFirstChild();
+        while (nd != null) {
+            if (nd instanceof Element) {
+                count++;
+            }
+            nd = nd.getNextSibling();
+        }
+        assertEquals(2, count);
         
         Iterator<?> detailEntries = faultDetail.getDetailEntries();
         DetailEntry detailEntry = (DetailEntry)detailEntries.next();
@@ -136,6 +143,31 @@ public class SAAJInInterceptorTest extends TestBase {
         detailEntry = (DetailEntry)detailEntries.next();
         assertEquals("errorstring", detailEntry.getLocalName());
         assertEquals("This is a fault detail error string", detailEntry.getTextContent());
+        
+    }
+    
+    @Test
+    public void testFaultDetailSOAP12() throws Exception {
+        try {
+            prepareSoapMessage("../test-soap-12-fault-detail.xml");
+        } catch (IOException ioe) {
+            fail("Failed in creating soap message");
+        }
+
+        staxIntc.handleMessage(soapMessage);
+        rhi.handleMessage(soapMessage);
+        sbi.handleMessage(soapMessage);
+
+        // check the xmlReader should be placed on the first entry of the body
+        // element
+        XMLStreamReader xmlReader = soapMessage.getContent(XMLStreamReader.class);
+        xmlReader.nextTag();
+        saajIntc.handleMessage(soapMessage);
+        
+        SOAPMessage parsedMessage = soapMessage.getContent(SOAPMessage.class);
+        SOAPFault fault = parsedMessage.getSOAPBody().getFault();
+        assertEquals("Simulated failure", fault.getFaultReasonTexts().next());
+        assertEquals("soap:Receiver", fault.getFaultCode());
         
     }
     

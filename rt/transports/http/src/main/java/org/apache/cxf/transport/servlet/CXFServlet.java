@@ -20,17 +20,27 @@ package org.apache.cxf.transport.servlet;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.util.Collection;
 
 import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
+import org.apache.cxf.common.util.ReflectionUtil;
+import org.apache.cxf.helpers.CastUtils;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
-public class CXFServlet extends CXFNonSpringServlet {
+public class CXFServlet extends CXFNonSpringServlet
+    implements ApplicationListener<ContextRefreshedEvent> {
+    private static final long serialVersionUID = -5922443981969455305L;
     private boolean busCreated;
     private XmlWebApplicationContext createdContext; 
     
@@ -41,6 +51,11 @@ public class CXFServlet extends CXFNonSpringServlet {
     protected void loadBus(ServletConfig sc) {
         ApplicationContext wac = WebApplicationContextUtils.
             getWebApplicationContext(sc.getServletContext());
+        
+        if (wac instanceof AbstractApplicationContext) {
+            addListener((AbstractApplicationContext)wac);
+        }
+        
         String configLocation = sc.getInitParameter("config-location");
         if (configLocation == null) {
             try {
@@ -57,10 +72,22 @@ public class CXFServlet extends CXFNonSpringServlet {
             wac = createSpringContext(wac, sc, configLocation);
         }
         if (wac != null) {
-            setBus(wac.getBean("cxf", Bus.class));
+            setBus((Bus)wac.getBean("cxf", Bus.class));
         } else {
             busCreated = true;
             setBus(BusFactory.newInstance().createBus());
+        }
+    }
+
+    protected void addListener(AbstractApplicationContext wac) {
+        try {
+            //spring 2 vs spring 3 return type is different
+            Method m = wac.getClass().getMethod("getApplicationListeners");
+            Collection<Object> c = CastUtils.cast((Collection<?>)ReflectionUtil
+                                                      .setAccessible(m).invoke(wac));
+            c.add(this);
+        } catch (Throwable t) {
+            //ignore.
         }
     }
 
@@ -123,9 +150,20 @@ public class CXFServlet extends CXFNonSpringServlet {
         if (busCreated) {
             //if we created the Bus, we need to destroy it.  Otherwise, spring will handleit.
             getBus().shutdown(true);
+            setBus(null);
         }
         if (createdContext != null) {
             createdContext.close();
+        }
+    }
+
+    public void onApplicationEvent(ContextRefreshedEvent event) {
+        destroy();
+        setBus(null);
+        try {
+            init(getServletConfig());
+        } catch (ServletException e) {
+            throw new RuntimeException("Unable to reinitialize the CXFServlet", e);
         }
     }
 

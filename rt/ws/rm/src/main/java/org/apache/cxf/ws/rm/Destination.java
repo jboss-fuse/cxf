@@ -145,6 +145,7 @@ public class Destination extends AbstractEndpoint {
             SequenceFaultFactory sff = new SequenceFaultFactory(consts);
             throw sff.createUnknownSequenceFault(sequenceType.getIdentifier());
         }
+
     }
     
     void ackRequested(Message message) throws SequenceFault, RMException {

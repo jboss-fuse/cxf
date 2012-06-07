@@ -18,6 +18,7 @@
  */
 package org.apache.cxf.ws.security.wss4j;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
