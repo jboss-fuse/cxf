@@ -22,7 +22,6 @@ package org.apache.cxf.ws.security.tokenstore;
 import java.io.IOException;
 import java.net.URL;
 
-import org.apache.cxf.Bus;
 import org.apache.cxf.common.classloader.ClassLoaderUtils;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.resource.ResourceManager;
@@ -67,7 +66,7 @@ public abstract class TokenStoreFactory {
         Object o = message.getContextualProperty(SecurityConstants.CACHE_CONFIG_FILE);
         if (o instanceof String) {
             URL url = null;
-            ResourceManager rm = message.getExchange().get(Bus.class).getExtension(ResourceManager.class);
+            ResourceManager rm = message.getExchange().getBus().getExtension(ResourceManager.class);
             url = rm.resolveResource((String)o, URL.class);
             try {
                 if (url == null) {
