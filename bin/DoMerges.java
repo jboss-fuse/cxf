@@ -109,6 +109,9 @@ public class DoMerges {
         }
         public void optimize(Ranges blocked, Set<Integer> ignores) {
             Iterator<Range> it = this.iterator();
+            if (!it.hasNext()) {
+                return;
+            }
             Range last = it.next();
             while (it.hasNext()) {
                 Range r = it.next();
@@ -257,7 +260,9 @@ public class DoMerges {
         line = reader.readLine();
         while (line != null) {
             int idx = line.indexOf(':');
-            parseRevs(line.substring(idx + 1), blocked);
+            if (idx != -1) {
+                parseRevs(line.substring(idx + 1).trim(), blocked);
+            }
             line = reader.readLine();
         } 
         p.waitFor();
