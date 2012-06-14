@@ -16,9 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-@javax.xml.bind.annotation.XmlSchema(namespace = "http://superbooks",
- xmlns = { @XmlNs(prefix = "os", namespaceURI = "http://superbooks") })
-package org.apache.cxf.jaxrs.resources.jaxb;
 
-import javax.xml.bind.annotation.XmlNs;
+package org.apache.cxf.systest.servlet;
 
+import javax.servlet.http.HttpServlet;
+
+/**
+ * 
+ */
+public class TestServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
+
+}
