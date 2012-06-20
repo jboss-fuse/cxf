@@ -70,6 +70,8 @@ import org.xml.sax.ContentHandler;
 import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.jaxrs.ext.MessageContextImpl;
 import org.apache.cxf.jaxrs.ext.xml.XMLSource;
+import org.apache.cxf.jaxrs.fortest.jaxb.jaxbelement.ParamJAXBElement;
+import org.apache.cxf.jaxrs.fortest.jaxb.jaxbelement.ParamType;
 import org.apache.cxf.jaxrs.fortest.jaxb.packageinfo.Book2;
 import org.apache.cxf.jaxrs.fortest.jaxb.packageinfo.Book2NoRootElement;
 import org.apache.cxf.jaxrs.impl.MetadataMap;
@@ -187,10 +189,21 @@ public class JAXBElementProviderTest extends Assert {
         ClassResourceInfo cri = 
             ResourceUtils.createClassResourceInfo(XmlListResource.class, XmlListResource.class, true, true);
         JAXBElementProvider provider = new JAXBElementProvider();
+        provider.setSingleJaxbContext(true);
         provider.setExtraClass(new Class[]{XmlObject.class});
         provider.init(Collections.singletonList(cri));
         testXmlList(provider);
         
+    }
+    
+    @Test
+    public void testGenericsAndSingleContext() throws Exception {
+        ClassResourceInfo cri = 
+            ResourceUtils.createClassResourceInfo(XmlListResource.class, XmlListResource.class, true, true);
+        JAXBElementProvider provider = new JAXBElementProvider();
+        provider.setSingleJaxbContext(true);
+        provider.init(Collections.singletonList(cri));
+        testXmlList(provider);
     }
     
     @SuppressWarnings("unchecked")
@@ -591,6 +604,34 @@ public class JAXBElementProviderTest extends Assert {
         provider.writeTo(books, m.getReturnType(), m.getGenericReturnType(),
                        new Annotation[0], MediaType.TEXT_XML_TYPE, new MetadataMap<String, Object>(), bos);
         doReadUnqualifiedCollection(bos.toString(), "setBooks", List.class);
+    }
+    
+    @SuppressWarnings({"rawtypes", "unchecked" })
+    @Test
+    public void testReadJAXBElement() throws Exception {
+        String xml = "<Book><id>123</id><name>CXF in Action</name></Book>";
+        JAXBElementProvider provider = new JAXBElementProvider();
+        JAXBElement jaxbElement = (JAXBElement)provider.readFrom((Class)JAXBElement.class, Book.class,
+             new Annotation[0], MediaType.TEXT_XML_TYPE, new MetadataMap<String, String>(),
+             new ByteArrayInputStream(xml.getBytes("UTF-8")));
+        Book book = (Book)jaxbElement.getValue();
+        assertEquals(123L, book.getId());
+        assertEquals("CXF in Action", book.getName());
+        
+    }
+    
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testReadParamJAXBElement() throws Exception {
+        String xml = "<param xmlns=\"http://jaxbelement/10\">"
+            + "<filter name=\"foo\"/><comment>a</comment></param>";
+        JAXBElementProvider provider = new JAXBElementProvider();
+        ParamJAXBElement jaxbElement = (ParamJAXBElement)provider.readFrom((Class)ParamJAXBElement.class,
+            ParamJAXBElement.class,
+            new Annotation[0], MediaType.TEXT_XML_TYPE, new MetadataMap<String, String>(),
+            new ByteArrayInputStream(xml.getBytes("UTF-8")));
+        ParamType param = (ParamType)jaxbElement.getValue();
+        assertEquals("a", param.getComment());
     }
     
     @Test
