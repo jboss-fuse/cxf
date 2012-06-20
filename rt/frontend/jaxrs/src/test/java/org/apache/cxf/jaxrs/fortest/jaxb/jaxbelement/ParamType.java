@@ -16,26 +16,32 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jaxrs.ext.search;
+package org.apache.cxf.jaxrs.fortest.jaxb.jaxbelement;
 
-public class FiqlParseException extends Exception {
+import java.io.Serializable;
 
-    private static final long serialVersionUID = 1182999957472822704L;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 
-    public FiqlParseException() {
-        super();
+//CHECKSTYLE:OFF
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "paramType", propOrder = {"comment"} )
+public class ParamType implements Serializable {
+    private static final long serialVersionUID = 4935166047393324749L;
+    
+    @XmlElement(name = "comment")
+    protected String comment;
+
+    
+    public String getComment() {
+        return comment;
     }
 
-    public FiqlParseException(String arg0, Throwable arg1) {
-        super(arg0, arg1);
-    }
-
-    public FiqlParseException(String arg0) {
-        super(arg0);
-    }
-
-    public FiqlParseException(Throwable arg0) {
-        super(arg0);
+    public void setComment(String value) {
+        this.comment = value;
     }
 
 }
+//CHECKSTYLE:ON

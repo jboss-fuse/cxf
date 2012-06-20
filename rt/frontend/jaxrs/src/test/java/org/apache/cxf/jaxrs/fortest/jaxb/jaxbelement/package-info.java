@@ -16,17 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jaxrs.ext.search;
-
-/**
- * Interface for visitors to SearchCondition objects.
- * Custom implementations can use it to convert SearchCondition into
- * specific query language such as SQL, etc
- */
-
-public interface SearchConditionVisitor<T> {
-    /*
-     * Callback providing a current SearchCondition object 
-     */
-    void visit(SearchCondition<T> sc);
-}
+@javax.xml.bind.annotation.XmlSchema(namespace = "http://jaxbelement/10", 
+                                     elementFormDefault = javax.xml.bind.annotation.XmlNsForm.QUALIFIED)
+package org.apache.cxf.jaxrs.fortest.jaxb.jaxbelement;

@@ -16,17 +16,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jaxrs.ext.search;
+package org.apache.cxf.jaxrs.fortest.jaxb.jaxbelement;
 
-/**
- * Interface for visitors to SearchCondition objects.
- * Custom implementations can use it to convert SearchCondition into
- * specific query language such as SQL, etc
- */
+import javax.xml.bind.JAXBElement;
+import javax.xml.namespace.QName;
 
-public interface SearchConditionVisitor<T> {
-    /*
-     * Callback providing a current SearchCondition object 
-     */
-    void visit(SearchCondition<T> sc);
+@SuppressWarnings({
+    "unchecked", "rawtypes"
+})
+//CHECKSTYLE:OFF
+public class ParamJAXBElement extends JAXBElement<ParamType> {
+
+    private static final long serialVersionUID = 4994571526736505284L;
+    protected final static QName NAME = new QName("http://jaxbelement/10", "param");
+    
+    public ParamJAXBElement(ParamType value) {
+        super(NAME, ((Class) ParamType.class), null, value);
+    }
+
+    public ParamJAXBElement() {
+        super(NAME, ((Class) ParamType.class), null, null);
+    }
+
 }
+//CHECKSTYLE:ON

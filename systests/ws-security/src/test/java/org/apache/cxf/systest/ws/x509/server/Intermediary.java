@@ -16,17 +16,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jaxrs.ext.search;
 
-/**
- * Interface for visitors to SearchCondition objects.
- * Custom implementations can use it to convert SearchCondition into
- * specific query language such as SQL, etc
- */
+package org.apache.cxf.systest.ws.x509.server;
 
-public interface SearchConditionVisitor<T> {
-    /*
-     * Callback providing a current SearchCondition object 
-     */
-    void visit(SearchCondition<T> sc);
+import java.net.URL;
+
+import org.apache.cxf.Bus;
+import org.apache.cxf.BusFactory;
+import org.apache.cxf.bus.spring.SpringBusFactory;
+import org.apache.cxf.testutil.common.AbstractBusTestServerBase;
+
+public class Intermediary extends AbstractBusTestServerBase {
+
+    public Intermediary() {
+
+    }
+
+    protected void run()  {
+        URL busFile = Intermediary.class.getResource("intermediary.xml");
+        Bus busLocal = new SpringBusFactory().createBus(busFile);
+        BusFactory.setDefaultBus(busLocal);
+        setBus(busLocal);
+    }
 }

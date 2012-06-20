@@ -18,15 +18,6 @@
  */
 package org.apache.cxf.jaxrs.ext.search;
 
-/**
- * Interface for visitors to SearchCondition objects.
- * Custom implementations can use it to convert SearchCondition into
- * specific query language such as SQL, etc
- */
-
-public interface SearchConditionVisitor<T> {
-    /*
-     * Callback providing a current SearchCondition object 
-     */
-    void visit(SearchCondition<T> sc);
+public interface SearchConditionParser<T> {
+    SearchCondition<T> parse(String fiqlExpression) throws SearchParseException;
 }

@@ -18,15 +18,24 @@
  */
 package org.apache.cxf.jaxrs.ext.search;
 
-/**
- * Interface for visitors to SearchCondition objects.
- * Custom implementations can use it to convert SearchCondition into
- * specific query language such as SQL, etc
- */
+public class SearchParseException extends Exception {
 
-public interface SearchConditionVisitor<T> {
-    /*
-     * Callback providing a current SearchCondition object 
-     */
-    void visit(SearchCondition<T> sc);
+    private static final long serialVersionUID = 1182999957472822704L;
+
+    public SearchParseException() {
+        super();
+    }
+
+    public SearchParseException(String arg0, Throwable arg1) {
+        super(arg0, arg1);
+    }
+
+    public SearchParseException(String arg0) {
+        super(arg0);
+    }
+
+    public SearchParseException(Throwable arg0) {
+        super(arg0);
+    }
+
 }
