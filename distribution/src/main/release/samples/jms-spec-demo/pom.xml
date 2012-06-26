@@ -146,23 +146,23 @@
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-frontend-jaxws</artifactId>
-            <version>2.5.0.fuse-7-0-x-SNAPSHOT</version>
+            <version>2.5.0.fuse-7-0-068</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-transports-http</artifactId>
-            <version>2.5.0.fuse-7-0-x-SNAPSHOT</version>
+            <version>2.5.0.fuse-7-0-068</version>
         </dependency>
         <!-- Jetty is needed if you're using the CXFServlet -->
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-transports-http-jetty</artifactId>
-            <version>2.5.0.fuse-7-0-x-SNAPSHOT</version>
+            <version>2.5.0.fuse-7-0-068</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-transports-jms</artifactId>
-            <version>2.5.0.fuse-7-0-x-SNAPSHOT</version>
+            <version>2.5.0.fuse-7-0-068</version>
         </dependency>
         <dependency>
             <groupId>org.apache.activemq</groupId>
