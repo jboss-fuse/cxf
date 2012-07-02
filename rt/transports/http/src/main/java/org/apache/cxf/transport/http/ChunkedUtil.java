@@ -78,12 +78,12 @@ final class ChunkedUtil {
      * @param connection the given HttpURLConnection
      * @return an input stream containing the response content if non-empty
      */
-    @SuppressWarnings("resource")
     private static InputStream getNonEmptyContent(
         HttpURLConnection connection
     ) {
         InputStream in = null;
         try {
+            @SuppressWarnings("resource")
             PushbackInputStream pin = 
                 new PushbackInputStream(connection.getInputStream());
             int c = pin.read();

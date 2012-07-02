@@ -553,6 +553,7 @@ public class BookStore {
         return found.get(0);
     }
     
+    
     @GET
     @Path("/books/text/xml/{bookId}")
     @Produces("text/xml")
