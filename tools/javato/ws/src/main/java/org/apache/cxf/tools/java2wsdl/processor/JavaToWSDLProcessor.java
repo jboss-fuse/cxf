@@ -142,6 +142,7 @@ public class JavaToWSDLProcessor implements Processor {
         factory.setWSDLVersion(getWSDLVersion());
 
         AbstractGenerator<?> generator = factory.newGenerator();
+        generator.setToolContext(context);
         generator.setAllowImports(context.containsKey(ToolConstants.CFG_CREATE_XSD_IMPORTS));
         generator.setOutputBase(wsdlFile);
         return generator;
@@ -149,6 +150,7 @@ public class JavaToWSDLProcessor implements Processor {
 
     public void generate(ServiceInfo service, File output) throws ToolException {
         for (AbstractGenerator<?> generator : generators) {
+            generator.setToolContext(context);
             generator.setServiceModel(service);
             generator.setBus(getBus());
             generator.generate(output);

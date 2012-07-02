@@ -400,9 +400,10 @@ public class IDLToWSDLProcessor extends IDLProcessor {
         
         if (env.optionSet(ToolCorbaConstants.CFG_WSDL_ENCODING)) { 
             String encoding = env.get(ToolCorbaConstants.CFG_WSDL_ENCODING).toString();            
-            return FileWriterUtil.getWriter(new File(outputDirectory, filename), encoding); 
+            return new FileWriterUtil()
+                .getWriter(new File(outputDirectory, filename), encoding); 
         } else {
-            FileWriterUtil fw = new FileWriterUtil(outputDirectory);        
+            FileWriterUtil fw = new FileWriterUtil(outputDirectory, null);        
             return fw.getWriter("", filename); 
         }       
     }
@@ -410,9 +411,9 @@ public class IDLToWSDLProcessor extends IDLProcessor {
     public Writer getOutputWriter(File file) throws Exception {        
         if (env.optionSet(ToolCorbaConstants.CFG_WSDL_ENCODING)) { 
             String encoding = env.get(ToolCorbaConstants.CFG_WSDL_ENCODING).toString();            
-            return FileWriterUtil.getWriter(file, encoding); 
+            return new FileWriterUtil().getWriter(file, encoding); 
         } else {
-            return FileWriterUtil.getWriter(file);
+            return new FileWriterUtil().getWriter(file, "UTF-8");
         }       
     }    
 
@@ -505,6 +506,7 @@ public class IDLToWSDLProcessor extends IDLProcessor {
                     FileReader fileReader = new FileReader(addrFile);
                     BufferedReader bufferedReader = new BufferedReader(fileReader);
                     addr = bufferedReader.readLine();
+                    bufferedReader.close();
                 } catch (Exception ex) {
                     throw new ToolException(ex.getMessage(), ex);
                 }
@@ -635,6 +637,7 @@ public class IDLToWSDLProcessor extends IDLProcessor {
                     while (token != null) {
                         int pos = token.indexOf("=");
                         if (pos == -1) {
+                            reader.close();
                             throw new RuntimeException("Mapping of idl modules to namespaces "
                                                        + "is not specified correctly in the file "
                                                        + mapping + "."
@@ -645,6 +648,7 @@ public class IDLToWSDLProcessor extends IDLProcessor {
                         map.put(token.substring(0, pos), token.substring(pos + 1));
                         token = reader.readLine();
                     }
+                    reader.close();
                 } catch (Exception ex) {
                     throw new RuntimeException("Incorrect properties file for mns mapping - " + mapping
                                                + ". Cause: " + ex.getMessage());
