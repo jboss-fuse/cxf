@@ -57,6 +57,7 @@ import org.apache.cxf.jaxws.spring.NamespaceHandler.SpringServerFactoryBean;
 import org.apache.cxf.message.Message;
 import org.apache.hello_world_soap_http.Greeter;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.springframework.beans.factory.BeanCreationException;
@@ -462,6 +463,8 @@ public class SpringBeansTest extends Assert {
         assertEquals(2, PostConstructCalledCount.getCount());
         assertEquals(2, PostConstructCalledCount.getInjectedCount());
     }
+
+    @Ignore // JIRA SF-418
     @Test
     public void testCXF3959SpringInject() throws Exception {
         PostConstructCalledCount.reset();
