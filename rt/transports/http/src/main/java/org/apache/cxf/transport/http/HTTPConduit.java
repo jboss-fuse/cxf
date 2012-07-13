@@ -171,6 +171,8 @@ public class HTTPConduit
      * The Logger for this class.
      */
     private static final Logger LOG = LogUtils.getL7dLogger(HTTPConduit.class);
+
+    private static boolean hasLoggedAsyncWarning;
     
     /**
      * This constant holds the suffix ".http-conduit" that is appended to the 
@@ -1525,6 +1527,7 @@ public class HTTPConduit
                         }
                     }
                 };
+                HTTPClientPolicy policy = getClient(outMessage);
                 try {
                     Executor ex = outMessage.getExchange().get(Executor.class);
                     if (ex == null) {
@@ -1534,14 +1537,30 @@ public class HTTPConduit
                         if (qu == null) {
                             qu = mgr.getAutomaticWorkQueue();
                         }
-                        qu.execute(runnable, 5000);
+                        long timeout = 5000;
+                        if (policy != null && policy.isSetAsyncExecuteTimeout()) {
+                            timeout = policy.getAsyncExecuteTimeout();
+                        }
+                        if (timeout > 0) {
+                            qu.execute(runnable, timeout);
+                        } else {
+                            qu.execute(runnable);
+                        }
                     } else {
                         outMessage.getExchange().put(Executor.class.getName() 
                                                  + ".USING_SPECIFIED", Boolean.TRUE);
                         ex.execute(runnable);
                     }
                 } catch (RejectedExecutionException rex) {
-                    LOG.warning("EXECUTOR_FULL");
+                    if (policy != null && policy.isSetAsyncExecuteTimeoutRejection()
+                        && policy.isAsyncExecuteTimeoutRejection()) {
+                        throw rex;
+                    }
+                    if (!hasLoggedAsyncWarning) {
+                        LOG.warning("EXECUTOR_FULL_WARNING");
+                        hasLoggedAsyncWarning = true;
+                    }
+                    LOG.fine("EXECUTOR_FULL");
                     handleResponseInternal();
                 }
             }
