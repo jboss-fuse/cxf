@@ -16,27 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.common.security;
+package org.apache.cxf.rs.security.oauth.services;
 
-import java.security.Principal;
-
-import org.apache.cxf.security.SecurityContext;
-
-public class SimpleSecurityContext implements SecurityContext {
-    private SimplePrincipal principal;
-    public SimpleSecurityContext(String name) {
-        this(new SimplePrincipal(name));
+public class OOBAuthorizationResponse {
+    private String requestToken;
+    private String verifier;
+    private String state;
+    public String getRequestToken() {
+        return requestToken;
     }
-    public SimpleSecurityContext(SimplePrincipal principal) {
-        this.principal = principal;
+    public void setRequestToken(String requestToken) {
+        this.requestToken = requestToken;
     }
-    
-    public Principal getUserPrincipal() {
-        return principal;
+    public String getVerifier() {
+        return verifier;
     }
-
-    public boolean isUserInRole(String role) {
-        return false;
+    public void setVerifier(String verifier) {
+        this.verifier = verifier;
     }
-
+    public String getState() {
+        return state;
+    }
+    public void setState(String state) {
+        this.state = state;
+    }
 }
