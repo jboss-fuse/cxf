@@ -39,6 +39,7 @@ import org.apache.cxf.rs.security.oauth.data.Client;
 import org.apache.cxf.rs.security.oauth.data.RequestToken;
 import org.apache.cxf.rs.security.oauth.data.RequestTokenRegistration;
 import org.apache.cxf.rs.security.oauth.provider.OAuthDataProvider;
+import org.apache.cxf.rs.security.oauth.provider.OAuthServiceException;
 import org.apache.cxf.rs.security.oauth.utils.OAuthConstants;
 import org.apache.cxf.rs.security.oauth.utils.OAuthUtils;
 
@@ -104,40 +105,40 @@ public class RequestTokenHandler {
 
             return Response.ok(responseBody).build();
         } catch (OAuthProblemException e) {
-            if (LOG.isLoggable(Level.WARNING)) {
-                LOG.log(Level.WARNING, "An OAuth-related problem: {0}", new Object[] {e.fillInStackTrace()});
-            }
+            LOG.log(Level.WARNING, "An OAuth-related problem: {0}", new Object[] {e.fillInStackTrace()});
             int code = e.getHttpStatusCode();
-            if (code == 200) {
-                code = HttpServletResponse.SC_UNAUTHORIZED; 
+            if (code == HttpServletResponse.SC_OK) {
+                code = e.getProblem() == OAuth.Problems.CONSUMER_KEY_UNKNOWN
+                    ? 401 : 400; 
             }
-            return OAuthUtils.handleException(e, code, String.valueOf(e.getParameters().get("realm")));
+            return OAuthUtils.handleException(mc, e, code);
+        } catch (OAuthServiceException e) {
+            return OAuthUtils.handleException(mc, e, HttpServletResponse.SC_BAD_REQUEST);
         } catch (Exception e) {
-            if (LOG.isLoggable(Level.SEVERE)) {
-                LOG.log(Level.SEVERE, "Unexpected internal server exception: {0}",
-                    new Object[] {e.fillInStackTrace()});
-            }
-            return OAuthUtils.handleException(e, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            LOG.log(Level.SEVERE, "Unexpected internal server exception: {0}",
+                new Object[] {e.fillInStackTrace()});
+            return OAuthUtils.handleException(mc, e, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 
     protected void validateCallbackURL(Client client,
                                        String oauthCallback) throws OAuthProblemException {
-
-        if (StringUtils.isEmpty(oauthCallback) 
-            || client.getCallbackURI() != null
-                && !oauthCallback.equals(client.getCallbackURI())
-            || client.getApplicationURI() != null
-                && !oauthCallback.startsWith(client.getApplicationURI())) {
-            OAuthProblemException problemEx = new OAuthProblemException(
-                OAuth.Problems.PARAMETER_REJECTED + " - " + OAuth.OAUTH_CALLBACK);
-            problemEx
-                .setParameter(OAuthProblemException.HTTP_STATUS_CODE,
-                    HttpServletResponse.SC_BAD_REQUEST);
-            throw problemEx;
-            
+        // the callback must not be empty or null, and it should either match
+        // the pre-registered callback URI or have the common root with the
+        // the pre-registered application URI
+        if (!StringUtils.isEmpty(oauthCallback) 
+            && (!StringUtils.isEmpty(client.getCallbackURI())
+                && oauthCallback.equals(client.getCallbackURI())
+                || !StringUtils.isEmpty(client.getApplicationURI())
+                && oauthCallback.startsWith(client.getApplicationURI()))) {
+            return;
         }
-        
+        OAuthProblemException problemEx = new OAuthProblemException(
+            OAuth.Problems.PARAMETER_REJECTED + " - " + OAuth.OAUTH_CALLBACK);
+        problemEx
+            .setParameter(OAuthProblemException.HTTP_STATUS_CODE,
+                HttpServletResponse.SC_BAD_REQUEST);
+        throw problemEx;
     }
 
     public void setTokenLifetime(long tokenLifetime) {

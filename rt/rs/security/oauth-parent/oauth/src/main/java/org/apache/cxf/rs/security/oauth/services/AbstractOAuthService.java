@@ -35,7 +35,7 @@ public abstract class AbstractOAuthService {
     
     private OAuthDataProvider dataProvider;
     private OAuthValidator validator = new DefaultOAuthValidator();
-
+    
     @Context 
     public void setMessageContext(MessageContext context) {
         this.mc = context;    
@@ -60,6 +60,5 @@ public abstract class AbstractOAuthService {
     public void setValidator(OAuthValidator validator) {
         this.validator = validator;
     }
-    
     
 }
