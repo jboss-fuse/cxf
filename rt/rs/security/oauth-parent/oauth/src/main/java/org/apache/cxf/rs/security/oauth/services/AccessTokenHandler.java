@@ -29,6 +29,7 @@ import javax.ws.rs.core.Response;
 import net.oauth.OAuth;
 import net.oauth.OAuthMessage;
 import net.oauth.OAuthProblemException;
+import net.oauth.OAuthValidator;
 
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.StringUtils;
@@ -37,6 +38,7 @@ import org.apache.cxf.rs.security.oauth.data.AccessToken;
 import org.apache.cxf.rs.security.oauth.data.AccessTokenRegistration;
 import org.apache.cxf.rs.security.oauth.data.RequestToken;
 import org.apache.cxf.rs.security.oauth.provider.OAuthDataProvider;
+import org.apache.cxf.rs.security.oauth.provider.OAuthServiceException;
 import org.apache.cxf.rs.security.oauth.utils.OAuthConstants;
 import org.apache.cxf.rs.security.oauth.utils.OAuthUtils;
 
@@ -54,7 +56,9 @@ public class AccessTokenHandler {
             OAuth.OAUTH_NONCE
         };
     
-    public Response handle(MessageContext mc, OAuthDataProvider dataProvider) {
+    public Response handle(MessageContext mc, 
+                           OAuthDataProvider dataProvider,
+                           OAuthValidator validator) {
         try {
             OAuthMessage oAuthMessage = 
                 OAuthUtils.getOAuthMessage(mc, mc.getHttpServletRequest(), REQUIRED_PARAMETERS);
@@ -75,8 +79,11 @@ public class AccessTokenHandler {
                 throw new OAuthProblemException(OAuthConstants.VERIFIER_INVALID);
             }
             
-            OAuthUtils.validateMessage(oAuthMessage, requestToken.getClient(), requestToken,
-                                       dataProvider);
+            OAuthUtils.validateMessage(oAuthMessage, 
+                                       requestToken.getClient(), 
+                                       requestToken,
+                                       dataProvider,
+                                       validator);
 
             AccessTokenRegistration reg = new AccessTokenRegistration();
             reg.setRequestToken(requestToken);
@@ -91,19 +98,19 @@ public class AccessTokenHandler {
             return Response.ok(responseString).build();
 
         } catch (OAuthProblemException e) {
-            if (LOG.isLoggable(Level.WARNING)) {
-                LOG.log(Level.WARNING, "An OAuth-related problem: {0}", new Object[] {e.fillInStackTrace()});
-            }
+            LOG.log(Level.WARNING, "An OAuth-related problem: {0}", new Object[] {e.fillInStackTrace()});
             int code = e.getHttpStatusCode();
-            if (code == 200) {
-                code = HttpServletResponse.SC_UNAUTHORIZED; 
+            if (code == HttpServletResponse.SC_OK) {
+                code = e.getProblem() == OAuth.Problems.CONSUMER_KEY_UNKNOWN
+                    ? 401 : 400;
             }
-            return OAuthUtils.handleException(e, code, String.valueOf(e.getParameters().get("realm")));
+            return OAuthUtils.handleException(mc, e, code);
+        } catch (OAuthServiceException e) {
+            return OAuthUtils.handleException(mc, e, HttpServletResponse.SC_BAD_REQUEST);
         } catch (Exception e) {
-            if (LOG.isLoggable(Level.WARNING)) {
-                LOG.log(Level.WARNING, "Server Exception: {0}", new Object[] {e.fillInStackTrace()});
-            }
-            return OAuthUtils.handleException(e, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            LOG.log(Level.SEVERE, "Unexpected internal server exception: {0}",
+                new Object[] {e.fillInStackTrace()});
+            return OAuthUtils.handleException(mc, e, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 }

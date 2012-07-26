@@ -25,8 +25,9 @@ package org.apache.cxf.rs.security.oauth.utils;
 public final class OAuthConstants {
     
     public static final String OAUTH_DATA_PROVIDER_CLASS = "oauth.data.provider-class";
-    public static final String OAUTH_DATA_VALIDATOR_CLASS = "oauth.data.validator-class";
+    public static final String OAUTH_VALIDATOR_CLASS = "oauth.data.validator-class";
     public static final String OAUTH_DATA_PROVIDER_INSTANCE_KEY = "oauth.data.provider-instance.key";
+    public static final String OAUTH_VALIDATOR_INSTANCE_KEY = "oauth.data.validator-instance.key";
 
     public static final String VERIFIER_INVALID = "verifier_invalid";
 
@@ -38,6 +39,8 @@ public final class OAuthConstants {
 
     public static final String X_OAUTH_SCOPE = "scope";
     public static final String OAUTH_CONSUMER_SECRET = "oauth_consumer_secret";
+    
+    public static final String OAUTH_CALLBACK_OOB = "oob";
     
     private OAuthConstants() {
         
