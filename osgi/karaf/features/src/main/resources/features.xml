@@ -78,7 +78,7 @@
         <bundle start-level='20'>mvn:org.codehaus.woodstox/woodstox-core-asl/${cxf.woodstox.core.version}</bundle>
 
         <feature version='${project.version}'>cxf-jaxb</feature>
-        <feature version="[2,3)">http</feature>
+        <feature version="[2,3)">http-whiteboard</feature>
         <feature version="[3,4)">spring</feature>
         <feature version="[1.2,2)">spring-dm</feature>
         <feature version="[3,4)">spring-jms</feature>

@@ -368,7 +368,7 @@ public class WSDL2JavaMojo extends AbstractMojo {
         for (WsdlOption wsdlOption : effectiveWsdlOptions) {
             WsdlArtifact wsdlA = wsdlOption.getWsdlArtifact();
             if (wsdlA == null) {
-                return;
+                continue;
             }
             Artifact wsdlArtifact = artifactFactory.createArtifact(wsdlA.getGroupId(), wsdlA.getArtifactId(),
                                                                    wsdlA.getVersion(),
