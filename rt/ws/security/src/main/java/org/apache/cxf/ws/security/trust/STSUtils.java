@@ -119,7 +119,6 @@ public final class STSUtils {
         }
         return client;
     }
-    
     public static Endpoint createSTSEndpoint(Bus bus, 
                                              String namespace,
                                              String transportId,
@@ -127,11 +126,34 @@ public final class STSUtils {
                                              String soapVersion,
                                              Policy policy,
                                              QName epName) throws BusException, EndpointException {
+        return createSTSEndpoint(bus, namespace, transportId, location, soapVersion, policy, epName, false);
+    }     
+    public static Endpoint createSCEndpoint(Bus bus, 
+                                             String namespace,
+                                             String transportId,
+                                             String location,
+                                             String soapVersion,
+                                             Policy policy) throws BusException, EndpointException {
+        return createSTSEndpoint(bus, namespace, transportId, location, soapVersion, policy, null, true);
+    }     
+    
+    
+    //CHECKSTYLE:OFF
+    private static Endpoint createSTSEndpoint(Bus bus, 
+                                             String namespace,
+                                             String transportId,
+                                             String location,
+                                             String soapVersion,
+                                             Policy policy,
+                                             QName epName,
+                                             boolean sc) throws BusException, EndpointException {
+        //CHECKSTYLE:ON
+
         Service service = null;
         String ns = namespace + "/wsdl";
         ServiceInfo si = new ServiceInfo();
         
-        QName iName = new QName(ns, "SecurityTokenService");
+        QName iName = new QName(ns, sc ? "SecureConversationTokenService" : "SecurityTokenService");
         si.setName(iName);
         InterfaceInfo ii = new InterfaceInfo(si, iName);
         
@@ -166,7 +188,7 @@ public final class STSUtils {
             soi = new SoapOperationInfo();
             boi.addExtensor(soi);
         }
-        soi.setAction(namespace + "/RST/Issue");
+        soi.setAction(namespace + (sc ? "/RST/SCT" : "/RST/Issue"));
         
         boi = bi.getOperation(coi);
         soi = boi.getExtensor(SoapOperationInfo.class);
@@ -190,11 +212,16 @@ public final class STSUtils {
         mpi.setElementQName(new QName(namespace, "RequestSecurityToken"));
         
         MessageInfo mio = oi.createMessage(new QName(servNamespace, 
-                                                     "RequestSecurityTokenResponseMsg"), 
-                                           MessageInfo.Type.OUTPUT);
+            "RequestSecurityTokenResponseMsg"), 
+            MessageInfo.Type.OUTPUT);
         oi.setOutput("RequestSecurityTokenResponseMsg", mio);
         mpi = mio.addMessagePart("response");
-        mpi.setElementQName(new QName(namespace, "RequestSecurityTokenResponse"));
+        
+        if (WST_NS_05_02.equals(namespace)) {
+            mpi.setElementQName(new QName(namespace, "RequestSecurityTokenResponse"));
+        } else {
+            mpi.setElementQName(new QName(namespace, "RequestSecurityTokenResponseCollection"));
+        }
         return oi;
     }
     private static OperationInfo addCancelOperation(InterfaceInfo ii, 
