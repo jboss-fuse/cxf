@@ -101,7 +101,7 @@ public class SpringBeanLocator implements ConfiguredBeanLocator {
         }
     }
     
-    
+
     /** {@inheritDoc}*/
     public List<String> getBeanNamesOfType(Class<?> type) {
         Set<String> s = new LinkedHashSet<String>(Arrays.asList(context.getBeanNamesForType(type,
@@ -120,7 +120,7 @@ public class SpringBeanLocator implements ConfiguredBeanLocator {
         s.removeAll(passThroughs);
         List<T> lst = new LinkedList<T>();
         for (String n : s) {
-            lst.add(context.getBean(n, type));
+            lst.add(type.cast(context.getBean(n, type)));
         }
         lst.addAll(orig.getBeansOfType(type));
         if (lst.isEmpty()) {

@@ -45,6 +45,7 @@ import org.apache.cxf.binding.soap.SoapFault;
 import org.apache.cxf.binding.soap.SoapMessage;
 import org.apache.cxf.binding.soap.SoapVersion;
 import org.apache.cxf.binding.soap.interceptor.AbstractSoapInterceptor;
+import org.apache.cxf.binding.soap.interceptor.SoapActionInInterceptor;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.headers.Header;
@@ -78,8 +79,8 @@ public class MAPCodec extends AbstractSoapInterceptor {
     private static final Logger LOG = LogUtils.getL7dLogger(MAPCodec.class);
     private static final String IS_REFERENCE_PARAM_ATTR_NAME = "IsReferenceParameter";
     private static final ResourceBundle BUNDLE = LOG.getResourceBundle();
-    private static final String ONE_WAY_DECOUPLED_FAULT_SUPPORT = 
-        "org.apache.cxf.ws.addressing.oneway.decoupled_fault_support";
+    private static final String DECOUPLED_FAULT_SUPPORT = 
+        "org.apache.cxf.ws.addressing.decoupled_fault_support";
     
     /**
      * REVISIT: map usage that the *same* interceptor instance 
@@ -116,7 +117,7 @@ public class MAPCodec extends AbstractSoapInterceptor {
      * @param message the messsage
      */
     public void handleMessage(SoapMessage message) {
-        mediate(message);
+        mediate(message);        
     }
 
     /**
@@ -152,16 +153,16 @@ public class MAPCodec extends AbstractSoapInterceptor {
                 }
             }
         } else if (MessageUtils.getContextualBoolean(message, 
-                                                     ONE_WAY_DECOUPLED_FAULT_SUPPORT, 
+                                                     DECOUPLED_FAULT_SUPPORT, 
                                                      false)) {
-            new OneWayDecoupledFaultHandler().handleFault(message);
+            new DecoupledFaultHandler().handleFault(message);
         }
     }
 
     /**
-     * Mediate message flow, peforming MAP {en|de}coding.
+     * Mediate message flow, performing MAP {en|de}coding.
      * 
-     * @param message the messsage message
+     * @param message the message message
      */     
     private void mediate(SoapMessage message) {
         if (!MessageUtils.getContextualBoolean(message, MAPAggregator.ADDRESSING_DISABLED, false)) {
@@ -171,7 +172,19 @@ public class MAPCodec extends AbstractSoapInterceptor {
                 AddressingProperties maps = decode(message);
                 ContextUtils.storeMAPs(maps, message, false);
                 markPartialResponse(message, maps);
-                restoreExchange(message, maps);     
+                restoreExchange(message, maps);
+                
+                if (maps != null 
+                    && !MessageUtils.isRequestor(message) 
+                    && message.getExchange().getBindingOperationInfo() == null
+                    && !MessageUtils.isOutbound(message)
+                    && maps.getAction() != null) {
+                    //try and use the Action from the maps to find the operation
+                    String action = maps.getAction().getValue();
+                    if (action != null) {
+                        SoapActionInInterceptor.getAndSetOperation(message, action);
+                    }
+                }
             }
         }
     }
