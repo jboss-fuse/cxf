@@ -35,8 +35,8 @@ import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageContentsList;
+import org.apache.cxf.message.MessageUtils;
 import org.apache.cxf.phase.Phase;
-import org.apache.cxf.service.Service;
 import org.apache.cxf.service.model.BindingMessageInfo;
 import org.apache.cxf.service.model.BindingOperationInfo;
 import org.apache.cxf.service.model.MessageInfo;
@@ -193,13 +193,15 @@ public class DocLiteralInInterceptor extends AbstractInDatabindingInterceptor {
                         p = findMessagePart(exchange, operations, elName, client, paramNum, message);
                     }
                     
-                    //Make sure the elName found on the wire is actually OK for 
-                    //the purpose we need it
-                    validatePart(p, elName, si, ep.getService());
+                    boolean dlb = Boolean.TRUE.equals(si.getProperty("soap.force.doclit.bare"));
+                    if (!dlb) {
+                        //Make sure the elName found on the wire is actually OK for 
+                        //the purpose we need it
+                        validatePart(p, elName, message);
+                    }
              
                     o = dr.read(p, xmlReader);
-                    if (Boolean.TRUE.equals(si.getProperty("soap.force.doclit.bare")) 
-                        && parameters.isEmpty()) {
+                    if (dlb && parameters.isEmpty()) {
                         // webservice provider does not need to ensure size
                         parameters.add(o);
                     } else {
@@ -223,7 +225,7 @@ public class DocLiteralInInterceptor extends AbstractInDatabindingInterceptor {
         }
     }
     
-    private void validatePart(MessagePartInfo p, QName elName, ServiceInfo si, Service service) {
+    private void validatePart(MessagePartInfo p, QName elName, Message m) {
         if (p == null) {
             throw new Fault(new org.apache.cxf.common.i18n.Message("NO_PART_FOUND", LOG, elName),
                             Fault.FAULT_CODE_CLIENT);
@@ -238,13 +240,16 @@ public class DocLiteralInInterceptor extends AbstractInDatabindingInterceptor {
                 synth = b;
             }
         }
-        if ((si != null && Boolean.TRUE.equals(si.getProperty("soap.force.doclit.bare")))
-             || (service != null && Boolean.TRUE.equals(service.get("soap.force.doclit.bare")))) {
+        
+        if (MessageUtils.getContextualBoolean(m, "soap.no.validate.parts", false)) {
             // something like a Provider service or similar that is forcing a
             // doc/lit/bare on an endpoint that may not really be doc/lit/bare.  
             // we need to just let these through per spec so the endpoint
             // can process it
             synth = true;
+        }
+        if (synth) {
+            return;
         }
         if (p.isElement()) {
             if (p.getConcreteName() != null
