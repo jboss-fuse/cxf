@@ -48,7 +48,7 @@
                 <artifactId>maven-war-plugin</artifactId>
                 <version>2.1</version>
                 <configuration>
-                    <webXml>${cxf.release.base}/etc/web.xml</webXml>
+                    <webXml>src/main/webapp/WEB-INF/web.xml</webXml>
                 </configuration>
             </plugin>
             <plugin>
@@ -65,6 +65,7 @@
                 </configuration>
             </plugin>
         </plugins>
+        <finalName>java_first_jaxws</finalName>
     </build>
     <profiles>
         <profile>
