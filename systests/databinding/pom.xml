@@ -344,7 +344,7 @@
             <artifactId>jibx-tools</artifactId>
         </dependency>
         <!-- Added the below eclipse dependency to make CI happy -->
-        <dependency>
+        <!--dependency>
             <groupId>org.eclipse.equinox</groupId>
             <artifactId>app</artifactId>
             <version>1.0.0-v20070606</version>
@@ -385,7 +385,7 @@
             <groupId>org.eclipse.core</groupId>
             <artifactId>jobs</artifactId>
             <version>3.3.0-v20070423</version>
-        </dependency>
+        </dependency-->
     </dependencies>
 
 </project>
