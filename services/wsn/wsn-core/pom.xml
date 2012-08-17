@@ -129,7 +129,7 @@
                 <configuration>
                     <instructions>
                         <Require-Bundle>
-                            org.apache.activemq.activemq-core,org.apache.cxf.services.wsn.cxf-services-wsn-api
+                            org.apache.activemq.activemq-core,org.apache.cxf.services.wsn.cxf-services-wsn-api,org.apache.cxf.bundle
                         </Require-Bundle>
                         <Import-Package>
                             org.apache.cxf.wsn.util.*;version=${project.version},
