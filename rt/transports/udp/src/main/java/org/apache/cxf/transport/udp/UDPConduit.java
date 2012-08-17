@@ -85,8 +85,7 @@ public class UDPConduit extends AbstractConduit {
             inMessage.setExchange(message.getExchange());
             message.getExchange().setInMessage(inMessage);
             
-            IoSessionInputStream ins = new IoSessionInputStream();
-            ins.write((IoBuffer)buf);
+            IoSessionInputStream ins = new IoSessionInputStream(buf);
             inMessage.setContent(InputStream.class, ins);
             inMessage.put(IoSessionInputStream.class, ins);
             
@@ -107,7 +106,7 @@ public class UDPConduit extends AbstractConduit {
             
         } else {
             IoSessionInputStream ins = message.getExchange().getInMessage().get(IoSessionInputStream.class);
-            ins.write((IoBuffer)buf);
+            ins.setBuffer((IoBuffer)buf);
         }
     }
     
@@ -162,10 +161,8 @@ public class UDPConduit extends AbstractConduit {
                 if (s.indexOf('/') != -1) {
                     s = s.substring(0, s.indexOf('/'));
                 }
-                final int port = Integer.parseInt(s);
-                message.setContent(OutputStream.class, 
-                    new UDPBroadcastOutputStream(port, message));
-                
+                int port = Integer.parseInt(s);
+                sendViaBroadcast(message, port);
             } else {
                 InetSocketAddress isa = null;
                 String hp = ""; 
@@ -181,10 +178,10 @@ public class UDPConduit extends AbstractConduit {
                 if (connFuture == null) {
                     connFuture = connector.connect(isa);
                     connFuture.await();
+                    ((DatagramSessionConfig)connFuture.getSession().getConfig()).setSendBufferSize(64 * 1024);
+                    ((DatagramSessionConfig)connFuture.getSession().getConfig()).setReceiveBufferSize(64 * 1024);
                 }
                 connFuture.getSession().setAttribute(CXF_MESSAGE_ATTR, message);
-                ((DatagramSessionConfig)connFuture.getSession().getConfig()).setSendBufferSize(64 * 1024);
-                ((DatagramSessionConfig)connFuture.getSession().getConfig()).setReceiveBufferSize(64 * 1024);
                 message.setContent(OutputStream.class, new UDPConduitOutputStream(connector, connFuture, message));
                 message.getExchange().put(ConnectFuture.class, connFuture);
                 message.getExchange().put(HOST_PORT, uri.getHost() + ":" + uri.getPort());
@@ -192,6 +189,12 @@ public class UDPConduit extends AbstractConduit {
         } catch (Exception ex) {
             throw new IOException(ex);
         }
+    }
+
+    private void sendViaBroadcast(Message message, int port) {
+        message.setContent(OutputStream.class, 
+                           new UDPBroadcastOutputStream(port, message));
+
     }
 
     private final class UDPBroadcastOutputStream extends LoadingByteArrayOutputStream {
@@ -205,9 +208,11 @@ public class UDPConduit extends AbstractConduit {
 
         public void close() throws IOException {
             super.close();
-            final DatagramSocket socket = new DatagramSocket();
+            DatagramSocket socket;
+            socket = new DatagramSocket();
+            socket.setSendBufferSize(this.size());
+            socket.setReceiveBufferSize(64 * 1024);
             socket.setBroadcast(true);
-
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
             while (interfaces.hasMoreElements()) {
                 NetworkInterface networkInterface = interfaces.nextElement();
@@ -297,9 +302,6 @@ public class UDPConduit extends AbstractConduit {
             }
             closed = true;
             send();
-            if (message.getExchange().isOneWay()) {
-                future.getSession().close(true);
-            }
         }
     }
     
