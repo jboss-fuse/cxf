@@ -79,6 +79,7 @@ import org.apache.cxf.common.jaxb.JAXBUtils.SchemaCompiler;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.PackageUtils;
 import org.apache.cxf.common.util.ReflectionInvokationHandler;
+import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.common.util.SystemPropertyAction;
 import org.apache.cxf.common.xmlschema.SchemaCollection;
 import org.apache.cxf.common.xmlschema.XmlSchemaConstants;
@@ -91,9 +92,6 @@ import org.apache.cxf.service.model.SchemaInfo;
 import org.apache.cxf.staxutils.StaxUtils;
 import org.apache.ws.commons.schema.XmlSchema;
 
-/**
- * TODO: This will need to be moved into a separate module
- */
 public class SourceGenerator {
     public static final String CODE_TYPE_GRAMMAR = "grammar";
     public static final String CODE_TYPE_PROXY = "proxy";
@@ -110,6 +108,11 @@ public class SourceGenerator {
     private static final List<String> HTTP_OK_STATUSES =
         Arrays.asList(new String[] {"200", "201", "202", "203", "204"});
     
+    private static final Set<Class<?>> OPTIONAL_PARAMS = 
+        new HashSet<Class<?>>(Arrays.<Class<?>>asList(QueryParam.class, 
+                                                      HeaderParam.class,
+                                                      MatrixParam.class,
+                                                      FormParam.class));
     private static final Map<String, Class<?>> HTTP_METHOD_ANNOTATIONS;
     private static final Map<String, Class<?>> PARAM_ANNOTATIONS;
     private static final Set<String> RESOURCE_LEVEL_PARAMS;
@@ -146,8 +149,22 @@ public class SourceGenerator {
         
         XSD_SPECIFIC_TYPE_MAP = new HashMap<String, String>();
         XSD_SPECIFIC_TYPE_MAP.put("string", "String");
-        XSD_SPECIFIC_TYPE_MAP.put("decimal", "java.math.BigInteger");
         XSD_SPECIFIC_TYPE_MAP.put("integer", "long");
+        XSD_SPECIFIC_TYPE_MAP.put("int", "int");
+        XSD_SPECIFIC_TYPE_MAP.put("long", "long");
+        XSD_SPECIFIC_TYPE_MAP.put("byte", "byte");
+        XSD_SPECIFIC_TYPE_MAP.put("boolean", "boolean");
+        XSD_SPECIFIC_TYPE_MAP.put("unsignedInt", "long");
+        XSD_SPECIFIC_TYPE_MAP.put("unsignedShort", "int");
+        XSD_SPECIFIC_TYPE_MAP.put("unsignedByte", "short");
+        XSD_SPECIFIC_TYPE_MAP.put("unsignedLong", "java.math.BigInteger");
+        XSD_SPECIFIC_TYPE_MAP.put("decimal", "java.math.BigInteger");
+        XSD_SPECIFIC_TYPE_MAP.put("positiveInteger", "java.math.BigInteger");
+        XSD_SPECIFIC_TYPE_MAP.put("QName", "javax.xml.namespace.QName");
+        XSD_SPECIFIC_TYPE_MAP.put("duration", "javax.xml.datatype.Duration");
+        XSD_SPECIFIC_TYPE_MAP.put("date", "java.util.Date");
+        XSD_SPECIFIC_TYPE_MAP.put("dateTime", "java.util.Date");
+        XSD_SPECIFIC_TYPE_MAP.put("time", "java.util.Date");
     }
 
     private Comparator<String> importsComparator;
@@ -167,7 +184,8 @@ public class SourceGenerator {
     private List<InputSource> schemaPackageFiles = Collections.emptyList();
     private List<String> compilerArgs = new ArrayList<String>();
     private Map<String, String> schemaPackageMap = Collections.emptyMap();
-    private Map<String, String> schemaTypesMap = Collections.emptyMap();
+    private Map<String, String> javaTypeMap = Collections.emptyMap();
+    private Map<String, String> mediaTypesMap = Collections.emptyMap();
     private Bus bus;
     private boolean supportMultipleXmlReps;
     
@@ -613,6 +631,7 @@ public class SourceGenerator {
             if (id.length() == 0) {
                 id = methodNameLowerCase;
             }
+            
             String suffixName = "";
             if (!jaxpSourceRequired && inXmlRep != null && xmlRequestReps.size() > 1) {
                 String value = inXmlRep.getAttribute("element");
@@ -648,7 +667,8 @@ public class SourceGenerator {
                 responseTypeAvailable = writeResponseType(responseEls, sbCode, imports, info);
                 String genMethodName = id + suffixName;
                 if (methodNameLowerCase.equals(genMethodName)) {
-                    genMethodName += firstCharToUpperCase(currentPath.replaceAll("/", ""));
+                    genMethodName += firstCharToUpperCase(
+                        currentPath.replaceAll("/", "").replaceAll("\\{", "").replaceAll("\\}", ""));
                 }
                 sbCode.append(genMethodName);
             } else {
@@ -762,7 +782,7 @@ public class SourceGenerator {
                 return el;
             }
         }
-        return null;
+        return repElements.isEmpty() ? null : repElements.get(0);
     }
     
     private boolean writeResponseType(List<Element> responseEls,
@@ -865,7 +885,7 @@ public class SourceGenerator {
             boolean isRepeating = Boolean.valueOf(paramEl.getAttribute("repeating"));
             String type = enumCreated ? getTypicalClassName(name)
                 : getPrimitiveType(paramEl, info, imports);
-            if (paramAnn == QueryParam.class
+            if (OPTIONAL_PARAMS.contains(paramAnn)
                 && (isRepeating || !Boolean.valueOf(paramEl.getAttribute("required")))    
                 && AUTOBOXED_PRIMITIVES_MAP.containsKey(type)) {
                 type = AUTOBOXED_PRIMITIVES_MAP.get(type);
@@ -889,6 +909,10 @@ public class SourceGenerator {
             if (!jaxpRequired) {    
                 elementParamType = getElementRefName(repElement, info, imports);
                 if (elementParamType != null) {
+                    int lastIndex = elementParamType.lastIndexOf('.');
+                    if (lastIndex != -1) {
+                        elementParamType = elementParamType.substring(lastIndex + 1);
+                    }
                     elementParamName = elementParamType.toLowerCase();
                 }
             } else {
@@ -1013,7 +1037,11 @@ public class SourceGenerator {
         String[] pair = type.split(":");
         String value = pair.length == 2 ? pair[1] : type;
         if (XSD_SPECIFIC_TYPE_MAP.containsKey(value)) {
-            return XSD_SPECIFIC_TYPE_MAP.get(value);
+            String theType = XSD_SPECIFIC_TYPE_MAP.get(value);
+            if (javaTypeMap.containsKey(theType)) {
+                theType = javaTypeMap.get(theType);
+            }
+            return theType;
         } else {
             String actualValue = value.replaceAll("[\\-\\_]", "");
             if (pair.length > 1) {
@@ -1063,6 +1091,12 @@ public class SourceGenerator {
                 return convertRefToClassName(pair[0], pair[1], null, info, imports);
             }
         } else {
+            // try mediaTypesMap first
+            String mediaType = repElement.getAttribute("mediaType");
+            if (!StringUtils.isEmpty(mediaType) && mediaTypesMap.containsKey(mediaType)) {
+                return mediaTypesMap.get(mediaType);
+            }
+            
             Element param = DOMUtils.getFirstChildWithName(repElement, getWadlNamespace(), "param");
             if (param != null) {
                 return getPrimitiveType(param, info, imports);
@@ -1081,8 +1115,8 @@ public class SourceGenerator {
                 clsName = matchClassName(typeClassNames, packageName, elementTypeName.replaceAll("_", ""));
             }
         }
-        if (clsName == null && schemaTypesMap != null) {
-            clsName = schemaTypesMap.get(packageName + "." + localName);
+        if (clsName == null && javaTypeMap != null) {
+            clsName = javaTypeMap.get(packageName + "." + localName);
         }
         return clsName;
     }
@@ -1387,8 +1421,12 @@ public class SourceGenerator {
         this.schemaPackageMap = map;
     }
     
-    public void setSchemaTypesMap(Map<String, String> map) {
-        this.schemaTypesMap = map;
+    public void setJavaTypeMap(Map<String, String> map) {
+        this.javaTypeMap = map;
+    }
+    
+    public void setMediaTypeMap(Map<String, String> map) {
+        this.mediaTypesMap = map;
     }
     
     public void setBus(Bus bus) {

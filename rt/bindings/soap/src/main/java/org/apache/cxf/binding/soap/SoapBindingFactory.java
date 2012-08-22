@@ -451,7 +451,7 @@ public class SoapBindingFactory extends AbstractBindingFactory {
         if (binding.getService() != null) {
             for (EndpointInfo ei: binding.getService().getEndpoints()) {
                 if (ei.getAddress() != null && ei.getAddress().startsWith("soap.udp")) {
-                    setupUDP(sb);
+                    setupUDP(sb, ei);
                 }
             }
         }
@@ -459,7 +459,7 @@ public class SoapBindingFactory extends AbstractBindingFactory {
         return sb;
     }
 
-    protected void setupUDP(InterceptorProvider p) {
+    protected void setupUDP(InterceptorProvider p, EndpointInfo ei) {
         //soap UDP requires ws-addressing turned on
         WSAddressingFeature add = new WSAddressingFeature();
         add.setAddressingRequired(true);
@@ -493,6 +493,8 @@ public class SoapBindingFactory extends AbstractBindingFactory {
                 message.put(AbstractOutDatabindingInterceptor.DISABLE_OUTPUTSTREAM_OPTIMIZATION, Boolean.TRUE);
             }
         });
+        // don't send the optional ReplyTo headers if we don't need to either
+        ei.setProperty("ws-addressing.write.optional.replyto", Boolean.FALSE);
     }
     
     protected void addMessageFromBinding(ExtensibilityElement ext, BindingOperationInfo bop,
@@ -893,7 +895,7 @@ public class SoapBindingFactory extends AbstractBindingFactory {
             && d.getAddress().getAddress().getValue() != null 
             && d.getAddress().getAddress().getValue().startsWith("soap.udp")) {
             //soap.udp REQUIRES usage of WS-Addressing... we need to turn this on
-            setupUDP(e);
+            setupUDP(e, e.getEndpointInfo());
         }
         if (mo == null) {
             super.addListener(d, e);

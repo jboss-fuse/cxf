@@ -249,7 +249,7 @@ public class MAPCodec extends AbstractSoapInterceptor {
                                     AttributedURIType.class,  
                                     jaxbContext);
                 }
-                if (needsReplyTo(maps)) {
+                if (needsReplyTo(maps, message)) {
                     encodeAsExposed(maps,
                             message,
                             maps.getReplyTo(), 
@@ -322,7 +322,18 @@ public class MAPCodec extends AbstractSoapInterceptor {
         }
     }
 
-    private boolean needsReplyTo(AddressingProperties maps) {
+    private boolean needsReplyTo(AddressingProperties maps, SoapMessage m) {
+        if (!MessageUtils.getContextualBoolean(m, "ws-addressing.write.optional.replyto", true)) {
+            if (ContextUtils.isNoneAddress(maps.getReplyTo())
+                && m.getExchange().isOneWay()) {
+                //one-way + none, not needed
+                return false;
+            }
+            if (ContextUtils.isAnonymousAddress(maps.getReplyTo())) {
+                //anonymous is the default if not specified, not needed
+                return false;
+            }
+        }
         return maps.getReplyTo() != null 
             && maps.getReplyTo().getAddress() != null
             && maps.getReplyTo().getAddress().getValue() != null
@@ -553,6 +564,17 @@ public class MAPCodec extends AbstractSoapInterceptor {
                         }
                     }
                 }
+                
+                if (maps != null && !MessageUtils.isRequestor(message) && maps.getReplyTo() == null) {
+                    //per spec, if unspecified, replyTo is anon
+                    AttributedURIType address =
+                        ContextUtils.getAttributedURI(Names.WSA_ANONYMOUS_ADDRESS);
+                    EndpointReferenceType replyTo =
+                        ContextUtils.WSA_OBJECT_FACTORY.createEndpointReferenceType();
+                    replyTo.setAddress(address);
+                    maps.setReplyTo(replyTo);
+                }
+
                 if (null != referenceParameterHeaders && null != maps) {
                     decodeReferenceParameters(referenceParameterHeaders, maps, unmarshaller);
                 }
@@ -803,8 +825,14 @@ public class MAPCodec extends AbstractSoapInterceptor {
                 } else if (!MessageUtils.getContextualBoolean(message,
                                           "org.apache.cxf.ws.addressing.MAPAggregator.addressingDisabled",
                                           false)) {
-                    LOG.log(Level.WARNING, "CORRELATION_FAILURE_MSG");
-                    message.getInterceptorChain().abort();
+                    //see if it can directly be correlated with the out message:
+                    AddressingProperties outp = ContextUtils.retrieveMAPs(message.getExchange().getOutMessage(),
+                                                                          false, true, false);
+                    if (outp == null 
+                        || !outp.getMessageID().getValue().equals(maps.getRelatesTo().getValue())) {
+                        LOG.log(Level.WARNING, "CORRELATION_FAILURE_MSG");
+                        message.getInterceptorChain().abort();
+                    }
                 }
             }
         } else if (maps == null && isRequestor(message)) {
