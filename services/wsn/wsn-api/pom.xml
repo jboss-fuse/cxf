@@ -73,6 +73,9 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
+                        <Require-Bundle>
+                            org.apache.cxf.bundle
+                        </Require-Bundle>
                         <Import-Package>
                             javax.xml.bind*;version="[0.0,3)",
                             javax.jws*;version="[0.0,3)",
