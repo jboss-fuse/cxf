@@ -20,9 +20,13 @@
 package org.apache.cxf.ws.discovery.internal;
 
 import java.io.IOException;
+import java.net.URI;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.xml.bind.JAXBContext;
@@ -38,6 +42,7 @@ import javax.xml.ws.EndpointReference;
 import javax.xml.ws.Provider;
 import javax.xml.ws.WebServiceProvider;
 import javax.xml.ws.soap.Addressing;
+import javax.xml.ws.wsaddressing.W3CEndpointReferenceBuilder;
 
 import org.w3c.dom.Document;
 
@@ -95,20 +100,40 @@ public class WSDiscoveryServiceImpl implements WSDiscoveryService {
         ht.setScopes(new ScopesType());
         ht.setMetadataVersion(1);
         ht.getTypes().add(server.getEndpoint().getEndpointInfo().getInterface().getName());
-        Object o = server.getEndpoint().get("ws-discover.scopes");
+        Object o = server.getEndpoint().get("ws-discovery-scopes");
         if (o != null) {
             setScopes(ht, o);
         }
         setXAddrs(ht, server);
+        String uuid = (String)server.getEndpoint().get("ws-discovery-uuid");
+        if (uuid != null) {
+            //persistent uuid
+            W3CEndpointReferenceBuilder builder = new W3CEndpointReferenceBuilder();
+            builder.address(uuid);
+            ht.setEndpointReference(builder.build());
+        }
         ht = client.register(ht);
         registered.add(ht);
         server.getEndpoint().put(HelloType.class.getName(), ht);
     }
 
     private void setXAddrs(HelloType ht, Server server) {
-        String s = server.getEndpoint().getEndpointInfo().getAddress();
-        //FIXME - servlet mode, need all the servlet information to create a full address
-        ht.getXAddrs().add(s);
+        String s = (String)server.getEndpoint().get("ws-discovery-published-url");
+        if (s == null) {
+            s = (String)server.getEndpoint().getEndpointInfo().getProperty("ws-discovery-published-url");
+        } 
+        if (s == null) {
+            s = (String)server.getEndpoint().get("publishedEndpointUrl");
+        }
+        if (s == null) {
+            s = (String)server.getEndpoint().getEndpointInfo().getProperty("publishedEndpointUrl");
+        }
+        if (s == null) {
+            s = server.getEndpoint().getEndpointInfo().getAddress();
+        }
+        if (s != null) {
+            ht.getXAddrs().add(s);
+        }
     }
 
     private void setScopes(HelloType ht, Object o) {
@@ -140,6 +165,9 @@ public class WSDiscoveryServiceImpl implements WSDiscoveryService {
     public synchronized void startup() {
         if (!started) {
             udpEndpoint = Endpoint.create(new WSDiscoveryProvider());
+            Map<String, Object> props = new HashMap<String, Object>();
+            props.put("jaxws.provider.interpretNullAsOneway", "true");
+            udpEndpoint.setProperties(props);
             udpEndpoint.publish("soap.udp://239.255.255.250:3702");
             started = true;
         }
@@ -184,6 +212,47 @@ public class WSDiscoveryServiceImpl implements WSDiscoveryService {
         return pmt;
     }
     
+    
+    private UUID toUUID(String scope) {
+        URI uri = URI.create(scope);
+        if (uri.getScheme() == null) {
+            return UUID.fromString(scope);
+        } else {
+            if (uri.getScheme().equals("urn")) {
+                uri = URI.create(uri.getSchemeSpecificPart()); 
+            } 
+            if (uri.getScheme().equals("uuid")) {
+                return UUID.fromString(uri.getSchemeSpecificPart());
+            }
+        }
+        return null;
+    }
+
+    private boolean compare(String s, String s2) {
+        if (s != null) {
+            return s.equalsIgnoreCase(s2);
+        }
+        return false;
+    }
+    private boolean matchURIs(URI probe, URI target) {
+        if (compare(target.getScheme(), probe.getScheme()) 
+            && compare(target.getAuthority(), probe.getAuthority())) {
+            String[] ppath = probe.getPath().split("/");
+            String[] tpath = target.getPath().split("/");
+                    
+            if (ppath.length <= tpath.length) {
+                for (int i = 0; i < ppath.length; i++) {
+                    if (!ppath[i].equals(tpath[i])) { 
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }                    
+        return false;
+    }
+
+    
     private void matchScopes(ProbeType pt, List<HelloType> consider) {
         if (pt.getScopes() == null || pt.getScopes().getValue().isEmpty()) {
             return;
@@ -199,13 +268,49 @@ public class WSDiscoveryServiceImpl implements WSDiscoveryService {
             boolean matches = false;
             
             if ("http://docs.oasis-open.org/ws-dd/ns/discovery/2009/01/rfc3986".equals(mb)) {
-                //FIXME
+                matches = true;
+                if (!pt.getScopes().getValue().isEmpty()) {
+                    for (String ps : pt.getScopes().getValue()) {
+                        boolean foundOne = false; 
+                        URI psuri = URI.create(ps);
+                        for (String hts : ht.getScopes().getValue()) {
+                            URI hturi = URI.create(hts);
+                            if (matchURIs(psuri, hturi)) {
+                                foundOne = true;
+                            }
+                        }
+                        matches &= foundOne;
+                    }
+                }
             } else if ("http://docs.oasis-open.org/ws-dd/ns/discovery/2009/01/uuid".equals(mb)) {
-                //FIXME
+                matches = true;
+                if (!pt.getScopes().getValue().isEmpty()) {
+                    for (String ps : pt.getScopes().getValue()) {
+                        boolean foundOne = false; 
+                        UUID psuuid = toUUID(ps);
+                        for (String hts : ht.getScopes().getValue()) {
+                            UUID htuuid = toUUID(hts);
+                            if (!htuuid.equals(psuuid)) {
+                                foundOne = true;
+                            }
+                        }
+                        matches &= foundOne;
+                    }
+                }
             } else if ("http://docs.oasis-open.org/ws-dd/ns/discovery/2009/01/ldap".equals(mb)) {
-                //FIXME
+                //LDAP not supported
+                if (!pt.getScopes().getValue().isEmpty()) {
+                    matches = false;
+                }
             } else if ("http://docs.oasis-open.org/ws-dd/ns/discovery/2009/01/strcmp0".equals(mb)) {
-                //FIXME
+                matches = true;
+                if (!pt.getScopes().getValue().isEmpty()) {
+                    for (String s : pt.getScopes().getValue()) {
+                        if (!ht.getScopes().getValue().contains(s)) {
+                            matches = false;
+                        }
+                    }
+                }
             } else if ("http://docs.oasis-open.org/ws-dd/ns/discovery/2009/01/none".equals(mb)
                 && (ht.getScopes() == null || ht.getScopes().getValue().isEmpty())) {
                 matches = true;
