@@ -29,7 +29,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -1051,7 +1050,7 @@ public abstract class HTTPConduit
 
         protected String conduitName;
         
-        protected String url;
+        protected URI url;
 
         protected WrappedOutputStream(
                 Message outMessage, 
@@ -1059,7 +1058,7 @@ public abstract class HTTPConduit
                 boolean isChunking,
                 int chunkThreshold,
                 String conduitName,
-                String url
+                URI url
         ) {
             super(chunkThreshold);
             this.outMessage = outMessage;
@@ -1096,7 +1095,7 @@ public abstract class HTTPConduit
         // methods used for the incoming side
         protected abstract int getResponseCode() throws IOException;
         protected abstract String getResponseMessage() throws IOException;
-        protected abstract void updateResponseHeaders(Message inMessage);
+        protected abstract void updateResponseHeaders(Message inMessage) throws IOException;
         protected abstract void handleResponseAsync() throws IOException;
         protected abstract void closeInputStream() throws IOException;
         protected abstract boolean usingProxy();
@@ -1109,7 +1108,14 @@ public abstract class HTTPConduit
         protected abstract void updateCookiesBeforeRetransmit() throws IOException;
 
         
-        protected void handleResponseOnWorkqueue(boolean allowCurrentThread) throws IOException {
+        protected void handleNoOutput() throws IOException {
+            //For GET and DELETE and such, this will be called
+            //For some implementations, this notice may be required to 
+            //actually execute the request
+        }
+
+        
+        protected void handleResponseOnWorkqueue(boolean allowCurrentThread, boolean forceWQ) throws IOException {
             Runnable runnable = new Runnable() {
                 public void run() {
                     try {
@@ -1125,7 +1131,18 @@ public abstract class HTTPConduit
             HTTPClientPolicy policy = getClient(outMessage);
             try {
                 Executor ex = outMessage.getExchange().get(Executor.class);
-                if (ex == null) {
+                if (forceWQ && ex != null) {
+                    final Executor ex2 = ex;
+                    final Runnable origRunnable = runnable;
+                    runnable = new Runnable() {
+                        public void run() {
+                            outMessage.getExchange().put(Executor.class.getName() 
+                                                         + ".USING_SPECIFIED", Boolean.TRUE);
+                            ex2.execute(origRunnable);
+                        }
+                    };
+                }
+                if (ex == null || forceWQ) {
                     WorkQueueManager mgr = outMessage.getExchange().get(Bus.class)
                         .getExtension(WorkQueueManager.class);
                     AutomaticWorkQueue qu = mgr.getNamedWorkQueue("http-conduit");
@@ -1183,6 +1200,7 @@ public abstract class HTTPConduit
             // If this is a GET method we must not touch the output
             // stream as this automagically turns the request into a POST.
             if (getMethod().equals("GET")) {
+                handleNoOutput();
                 return;
             }
             
@@ -1248,9 +1266,11 @@ public abstract class HTTPConduit
             String method = getMethod();
             if (!"POST".equals(method)
                 && !"PUT".equals(method)) {
+                handleNoOutput();
                 return;
             }
             if (outMessage.get("org.apache.cxf.post.empty") != null) {
+                handleNoOutput();
                 return;
             }
             
@@ -1291,7 +1311,7 @@ public abstract class HTTPConduit
                 handleHttpRetryException(e);
             } catch (IOException e) {
                 String origMessage = e.getMessage();
-                if (origMessage != null && origMessage.contains(url)) {
+                if (origMessage != null && origMessage.contains(url.toString())) {
                     throw e;
                 }
                 throw mapException(e.getClass().getSimpleName() 
@@ -1383,7 +1403,7 @@ public abstract class HTTPConduit
             updateResponseHeaders(m);
             String newURL = extractLocation(Headers.getSetProtocolHeaders(m));
 
-            detectRedirectLoop(getConduitName(), url, newURL, outMessage);
+            detectRedirectLoop(getConduitName(), url.toString(), newURL, outMessage);
             if (newURL != null) {
                 new Headers(outMessage).removeAuthorizationHeaders();
                 
@@ -1416,12 +1436,7 @@ public abstract class HTTPConduit
             Message m = new MessageImpl();
             updateResponseHeaders(m);
             HttpAuthHeader authHeader = new HttpAuthHeader(Headers.getSetProtocolHeaders(m).get("WWW-Authenticate"));
-            URI currentURI;
-            try {
-                currentURI = new URI(url);
-            } catch (URISyntaxException e) {
-                throw new IOException(e);
-            }
+            URI currentURI = url;
             String realm = authHeader.getRealm();
             detectAuthorizationLoop(getConduitName(), outMessage, currentURI, realm);
             AuthorizationPolicy effectiveAthPolicy = getEffectiveAuthPolicy(outMessage);
@@ -1440,7 +1455,7 @@ public abstract class HTTPConduit
             }
             new Headers(outMessage).setAuthorization(authorizationToken);
             cookies.writeToMessageHeaders(outMessage);
-            retransmit(url);
+            retransmit(url.toString());
             return true;
         }
 
@@ -1507,7 +1522,7 @@ public abstract class HTTPConduit
             boolean noExceptions = MessageUtils.isTrue(outMessage.getContextualProperty(
                 "org.apache.cxf.http.no_io_exceptions"));
             if (responseCode >= 400 && responseCode != 500 && !noExceptions) {
-                throw new HTTPException(responseCode, getResponseMessage(), new URL(url));
+                throw new HTTPException(responseCode, getResponseMessage(), url.toURL());
             }
 
             InputStream in = null;
@@ -1520,7 +1535,7 @@ public abstract class HTTPConduit
                     // partial response
                     closeInputStream();
                     if (isOneway(exchange) && responseCode > 300) {
-                        throw new HTTPException(responseCode, getResponseMessage(), new URL(url));
+                        throw new HTTPException(responseCode, getResponseMessage(), url.toURL());
                     }
                     ClientCallback cc = exchange.get(ClientCallback.class);
                     if (null != cc) {
@@ -1642,7 +1657,7 @@ public abstract class HTTPConduit
             if (trustDecider != null || decider2 != null) {
                 try {
                     // We must connect or we will not get the credentials.
-                    // The call is (said to be) ingored internally if
+                    // The call is (said to be) ignored internally if
                     // already connected.
                     HttpsURLConnectionInfo info = getHttpsURLConnectionInfo();
                     if (trustDecider != null) {
