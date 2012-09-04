@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.ClientException;
 import javax.ws.rs.core.UriBuilder;
 
 import net.oauth.OAuth;
@@ -30,8 +32,6 @@ import net.oauth.OAuthAccessor;
 import net.oauth.OAuthConsumer;
 import net.oauth.OAuthMessage;
 
-import org.apache.cxf.jaxrs.client.ClientWebApplicationException;
-import org.apache.cxf.jaxrs.client.ServerWebApplicationException;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.jaxrs.ext.form.Form;
 import org.apache.cxf.rs.security.oauth.provider.OAuthServiceException;
@@ -172,7 +172,7 @@ public final class OAuthClientUtils {
             }
             return sb.toString();
         } catch (Exception ex) {
-            throw new ClientWebApplicationException(ex);
+            throw new ClientException(ex);
         }
     }
     
@@ -187,7 +187,7 @@ public final class OAuthClientUtils {
             Form form = tokenService.post(null, Form.class);
             return new Token(form.getData().getFirst("oauth_token"),
                     form.getData().getFirst("oauth_token_secret"));
-        } catch (ServerWebApplicationException ex) {
+        } catch (WebApplicationException ex) {
             throw new OAuthServiceException(ex);
         }
     }
