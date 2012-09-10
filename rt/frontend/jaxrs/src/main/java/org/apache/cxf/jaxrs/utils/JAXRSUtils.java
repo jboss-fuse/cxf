@@ -62,6 +62,8 @@ import javax.ws.rs.RedirectionException;
 import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.ServiceUnavailableException;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.HttpHeaders;
@@ -91,6 +93,7 @@ import org.apache.cxf.jaxrs.ext.MessageContextImpl;
 import org.apache.cxf.jaxrs.ext.ProtocolHeaders;
 import org.apache.cxf.jaxrs.ext.ProtocolHeadersImpl;
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
+import org.apache.cxf.jaxrs.impl.ContainerRequestContextImpl;
 import org.apache.cxf.jaxrs.impl.HttpHeadersImpl;
 import org.apache.cxf.jaxrs.impl.HttpServletResponseFilter;
 import org.apache.cxf.jaxrs.impl.MetadataMap;
@@ -1260,9 +1263,8 @@ public final class JAXRSUtils {
     
     @SuppressWarnings("unchecked")
     public static <T extends Throwable> Response convertFaultToResponse(T ex, Message inMessage) {
-        
-        ExceptionMapper<T> mapper = 
-            ProviderFactory.getInstance(inMessage).createExceptionMapper(ex, inMessage);
+        ProviderFactory factory = ProviderFactory.getInstance(inMessage);
+        ExceptionMapper<T> mapper = factory.createExceptionMapper(ex, inMessage);
         if (mapper != null) {
             if (ex.getClass() == WebApplicationException.class 
                 && mapper.getClass() != WebApplicationExceptionMapper.class) {
@@ -1270,7 +1272,6 @@ public final class JAXRSUtils {
                 Class<?> exceptionClass = getWebApplicationExceptionClass(webEx.getResponse(), 
                                                                           WebApplicationException.class);
                 if (exceptionClass != WebApplicationException.class) {
-                    //TODO: consider using switch statements
                     try {
                         Constructor<?> ctr = exceptionClass.getConstructor(Response.class);
                         ex = (T)ctr.newInstance(webEx.getResponse());
@@ -1280,11 +1281,14 @@ public final class JAXRSUtils {
                     }
                 }
             }
+            
             try {
                 return mapper.toResponse(ex);
             } catch (Exception mapperEx) {
                 mapperEx.printStackTrace();
                 return Response.serverError().build();
+            } finally {
+                factory.clearExceptionMapperProxies();
             }
         }
         
@@ -1332,4 +1336,23 @@ public final class JAXRSUtils {
         return XMLUtils.convertStringToQName(name, "");
     }
     
+    public static boolean runContainerFilters(ProviderFactory pf, Message m, boolean preMatch, 
+                                              List<String> names) {
+        List<ProviderInfo<ContainerRequestFilter>> containerFilters = names == null 
+            ? pf.getGlobalContainerRequestFilters(preMatch) : pf.getBoundContainerRequestFilters(names);
+        if (!containerFilters.isEmpty()) {
+            ContainerRequestContext context = new ContainerRequestContextImpl(m, true);
+            for (ProviderInfo<ContainerRequestFilter> filter : containerFilters) {
+                try {
+                    filter.getProvider().filter(context);
+                } catch (IOException ex) {
+                    throw new WebApplicationException(ex);
+                }
+                if (m.getExchange().get(Response.class) != null) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

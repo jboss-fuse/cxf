@@ -71,6 +71,7 @@ import org.apache.hello_world.Greeter;
 import org.apache.hello_world.services.SOAPService;
 
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import org.springframework.context.ApplicationContext;
@@ -108,34 +109,12 @@ import org.springframework.context.ApplicationContext;
  * the Hostname Verifier.
  */
 public class HTTPConduitTest extends AbstractBusClientServerTestBase {
-    public static final String PORT0 = BusServer.PORT0;
-    public static final String PORT1 = BusServer.PORT1;
-    public static final String PORT2 = BusServer.PORT2;
-    public static final String PORT3 = BusServer.PORT3;
-    public static final String PORT4 = BusServer.PORT4;
-    public static final String PORT5 = BusServer.PORT5;
-    public static final String PORT6 = BusServer.PORT6;
-    public static final String PORT7 = BusServer.PORT7;
-    public static final String PORT8 = BusServer.PORT8;
-
     private static final boolean IN_PROCESS = true;
     
     private static TLSClientParameters tlsClientParameters = new TLSClientParameters();
-    private static Map<String, String> addrMap = new TreeMap<String, String>();
     private static List<String> servers = new ArrayList<String>();
 
-    static {
-        addrMap.put("Mortimer", "http://localhost:" + PORT0 + "/");
-        addrMap.put("Tarpin",   "https://localhost:" + PORT3 + "/");
-        addrMap.put("Rethwel",  "http://localhost:" + PORT4 + "/");
-        addrMap.put("Poltim",   "https://localhost:" + PORT5 + "/");
-        addrMap.put("Gordy",    "https://localhost:" + PORT1 + "/");
-        addrMap.put("Bethal",   "https://localhost:" + PORT2 + "/");
-        addrMap.put("Abost",    "http://localhost:" + PORT7 + "/");
-        addrMap.put("Hurlon",   "http://localhost:" + PORT6 + "/");
-        addrMap.put("Morpit",   "https://localhost:" + PORT8 + "/");
-        tlsClientParameters.setDisableCNCheck(true);
-    }
+    private static Map<String, String> addrMap = new TreeMap<String, String>();
     
     static {
         try {
@@ -187,6 +166,29 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
         //new QName("http://apache.org/hello_world", "Abost");
     public HTTPConduitTest() {
     }
+    
+    
+    public static String getPort(String s) {
+        return BusServer.PORTMAP.get(s);
+    }
+    
+    @BeforeClass
+    public static void allocatePorts() {
+        BusServer.resetPortMap();
+        addrMap.clear();
+        addrMap.put("Mortimer", "http://localhost:" + getPort("PORT0") + "/");
+        addrMap.put("Tarpin",   "https://localhost:" + getPort("PORT3") + "/");
+        addrMap.put("Rethwel",  "http://localhost:" + getPort("PORT4") + "/");
+        addrMap.put("Poltim",   "https://localhost:" + getPort("PORT5") + "/");
+        addrMap.put("Gordy",    "https://localhost:" + getPort("PORT1") + "/");
+        addrMap.put("Bethal",   "https://localhost:" + getPort("PORT2") + "/");
+        addrMap.put("Abost",    "http://localhost:" + getPort("PORT7") + "/");
+        addrMap.put("Hurlon",   "http://localhost:" + getPort("PORT6") + "/");
+        addrMap.put("Morpit",   "https://localhost:" + getPort("PORT8") + "/");
+        tlsClientParameters.setDisableCNCheck(true);
+        servers.clear();
+    }
+
 
     /**
      * This function is used to start up a server. It only "starts" a
@@ -197,13 +199,15 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
      * server approach allieviates the pain in starting them all just to run
      * a particular test in the debugger.
      */
-    public static synchronized boolean startServer(String name) {
+    public synchronized boolean startServer(String name) {
         if (servers.contains(name)) {
             return true;
         }
         Bus bus = BusFactory.getThreadDefaultBus(false);
         URL serverC =
             Server.class.getResource("resources/" + name + ".cxf");
+        BusFactory.setDefaultBus(null);
+        BusFactory.setThreadDefaultBus(null);
         boolean server = launchServer(Server.class, null,
                 new String[] { 
                     name, 
@@ -282,6 +286,16 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
         return fac.getTrustManagers();
     }
 
+    //methods that a subclass can override to inject a Proxy into the flow
+    //and assert the proxy was appropriately called
+    public void configureProxy(Client c) {
+    }
+    public void resetProxyCount() {
+    }
+    public void assertProxyRequestCount(int i) {
+    }
+
+    
     private Greeter getMortimerGreeter() throws MalformedURLException {
         URL wsdl = getClass().getResource("resources/greeting.wsdl");
         assertNotNull("WSDL is null", wsdl);
@@ -291,7 +305,9 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
 
         Greeter mortimer = service.getPort(mortimerQ, Greeter.class);
         assertNotNull("Port is null", mortimer);
-        updateAddressPort(mortimer, PORT0);
+        updateAddressPort(mortimer, getPort("PORT0"));
+        
+        configureProxy(ClientProxy.getClient(mortimer));
         return mortimer;
     }
 
@@ -301,8 +317,11 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
         Greeter mortimer = getMortimerGreeter();
 
         String answer = mortimer.sayHi();
+        answer = mortimer.sayHi();
+        answer = mortimer.sayHi();
         assertTrue("Unexpected answer: " + answer, 
                 "Bonjour from Mortimer".equals(answer));
+        assertProxyRequestCount(3);
     }
 
     @Test
@@ -318,6 +337,7 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
         } finally {
             rootLogger.setLevel(oldLevel);
         }
+        assertProxyRequestCount(1);
     }
 
     /**
@@ -343,7 +363,8 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
 
         Greeter rethwel = service.getPort(rethwelQ, Greeter.class);
         assertNotNull("Port is null", rethwel);
-        updateAddressPort(rethwel, PORT5);
+        updateAddressPort(rethwel, getPort("PORT4"));
+        configureProxy(ClientProxy.getClient(rethwel));
 
         String answer = null;
         try {
@@ -352,6 +373,7 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
         } catch (Exception e) {
             //e.printStackTrace();
         }
+        assertProxyRequestCount(1);
         
     }
     
@@ -391,12 +413,14 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
         assertNotNull("Service is null", service);
 
         Greeter rethwel = service.getPort(rethwelQ, Greeter.class);
-        updateAddressPort(rethwel, PORT4);
+        updateAddressPort(rethwel, getPort("PORT4"));
         assertNotNull("Port is null", rethwel);
+        configureProxy(ClientProxy.getClient(rethwel));
         
         String answer = rethwel.sayHi();
         assertTrue("Unexpected answer: " + answer, 
                 "Bonjour from Mortimer".equals(answer));
+        assertProxyRequestCount(2);        
     }
     
     /**
@@ -425,7 +449,8 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
 
         Greeter hurlon = service.getPort(hurlonQ, Greeter.class);
         assertNotNull("Port is null", hurlon);
-        updateAddressPort(hurlon, PORT6);
+        updateAddressPort(hurlon, getPort("PORT6"));
+        configureProxy(ClientProxy.getClient(hurlon));
         
         String answer = null;
         try {
@@ -436,7 +461,7 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
             // read from the StreamReader
             //e.printStackTrace();
         }
-        
+        assertProxyRequestCount(2);        
     }
     /**
      * This methods tests a basic https connection to Bethal.
@@ -459,8 +484,9 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
         assertNotNull("Service is null", service);
 
         Greeter bethal = service.getPort(bethalQ, Greeter.class);
+
         assertNotNull("Port is null", bethal);
-        updateAddressPort(bethal, PORT2);
+        updateAddressPort(bethal, getPort("PORT2"));
         verifyBethalClient(bethal);        
     }
     
@@ -476,7 +502,7 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
         
         ApplicationContext context = bus.getExtension(BusApplicationContext.class);
         Greeter bethal = (Greeter)context.getBean("Bethal");        
-        updateAddressPort(bethal, PORT2);
+        updateAddressPort(bethal, getPort("PORT2"));
         // verify the client side's setting
         verifyBethalClient(bethal);         
     }
@@ -486,6 +512,7 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
     // we just verify the configurations are loaded successfully
     private void verifyBethalClient(Greeter bethal) {
         Client client = ClientProxy.getClient(bethal);
+
         HTTPConduit http = 
             (HTTPConduit) client.getConduit();
         
@@ -504,6 +531,9 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
                      "Betty", authPolicy.getUserName());
         assertEquals("Set the wrong pass word form the configuration",
                      "password", authPolicy.getPassword());
+
+        configureProxy(ClientProxy.getClient(bethal));
+        
         String answer = bethal.sayHi();
         answer = bethal.sayHi();
         answer = bethal.sayHi();
@@ -511,6 +541,10 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
         answer = bethal.sayHi();
         assertTrue("Unexpected answer: " + answer, 
                 "Bonjour from Bethal".equals(answer));
+        
+        //With HTTPS, it will just be a CONNECT to the proxy and all the 
+        //data is encrypted.  Thus, the proxy cannot distinquish the requests
+        assertProxyRequestCount(0);
     }
     
     /**
@@ -530,7 +564,7 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
 
         Greeter bethal = service.getPort(bethalQ, Greeter.class);
         assertNotNull("Port is null", bethal);
-        updateAddressPort(bethal, PORT2);
+        updateAddressPort(bethal, getPort("PORT2"));
         
         // Okay, I'm sick of configuration files.
         // This also tests dynamic configuration of the conduit.
@@ -552,9 +586,11 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
         http.setTlsClientParameters(tlsClientParameters);
         http.setAuthorization(authPolicy);
         
+        configureProxy(client);
         String answer = bethal.sayHi();
         assertTrue("Unexpected answer: " + answer, 
                 "Bonjour from Bethal".equals(answer));
+        assertProxyRequestCount(0);
     }
     
 
@@ -571,7 +607,7 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
 
         Greeter poltim = service.getPort(poltimQ, Greeter.class);
         assertNotNull("Port is null", poltim);
-        updateAddressPort(poltim, PORT5);
+        updateAddressPort(poltim, getPort("PORT5"));
 
         // Okay, I'm sick of configuration files.
         // This also tests dynamic configuration of the conduit.
@@ -585,7 +621,11 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
         
         http.setClient(httpClientPolicy);
         http.setTlsClientParameters(tlsClientParameters);
+        configureProxy(client);
         poltim.sayHi();
+        //client -> poltim is https and thus not recorded but then redirected to mortimer
+        //client -> mortimer is http and recoreded
+        assertProxyRequestCount(1);
     }
     
     class MyHttpsTrustDecider extends MessageTrustDecider {
@@ -656,7 +696,7 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
 
         Greeter bethal = service.getPort(bethalQ, Greeter.class);
         assertNotNull("Port is null", bethal);
-        updateAddressPort(bethal, PORT2);
+        updateAddressPort(bethal, getPort("PORT2"));
         
         // Okay, I'm sick of configuration files.
         // This also tests dynamic configuration of the conduit.
@@ -681,9 +721,12 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
         // Our expected server should be OU=Bethal
         http.setTrustDecider(new MyHttpsTrustDecider("Bethal"));
         
+        configureProxy(client);
         String answer = bethal.sayHi();
         assertTrue("Unexpected answer: " + answer, 
                 "Bonjour from Bethal".equals(answer));
+        assertProxyRequestCount(0);
+        
         
         // Nobody will not equal OU=Bethal
         MyHttpsTrustDecider trustDecider =
@@ -697,6 +740,7 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
             //assertTrue("Trust Decider was not called", 
             //              0 > trustDecider.wasCalled());
         }
+        assertProxyRequestCount(0);
     }
 
     @Test
@@ -713,7 +757,7 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
 
         Greeter tarpin = service.getPort(tarpinQ, Greeter.class);
         assertNotNull("Port is null", tarpin);
-        updateAddressPort(tarpin, PORT3);
+        updateAddressPort(tarpin, getPort("PORT3"));
         
         // Okay, I'm sick of configuration files.
         // This also tests dynamic configuration of the conduit.
@@ -743,7 +787,9 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
         
         // We actually get our answer from Bethal at the end of the
         // redirects.
+        configureProxy(ClientProxy.getClient(tarpin));
         String answer = tarpin.sayHi();
+        assertProxyRequestCount(0);
         
         assertTrue("Trust Decider wasn't called correctly", 
                        3 == trustDecider.wasCalled());
@@ -759,6 +805,7 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
         } catch (Exception e) {
             //e.printStackTrace();
         }
+        assertProxyRequestCount(0);
         
         // Set back to unlimited.
         http.getClient().setMaxRetransmits(-1);
@@ -777,7 +824,7 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
             assertTrue("Trust Decider wasn't called correctly",
                      2 == trustDecider.wasCalled());
         }
-        
+        assertProxyRequestCount(0);
     }
 
     public class MyBasicAuthSupplier implements HttpAuthSupplier {
@@ -856,7 +903,7 @@ public class HTTPConduitTest extends AbstractBusClientServerTestBase {
 
         Greeter gordy = service.getPort(gordyQ, Greeter.class);
         assertNotNull("Port is null", gordy);
-        updateAddressPort(gordy, PORT1);
+        updateAddressPort(gordy, getPort("PORT1"));
         
         // Okay, I'm sick of configuration files.
         // This also tests dynamic configuration of the conduit.
