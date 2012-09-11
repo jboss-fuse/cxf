@@ -20,11 +20,21 @@
 package org.apache.cxf.systest.jaxrs;
 
 import java.io.IOException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.ws.rs.NameBinding;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.container.ContainerResponseContext;
+import javax.ws.rs.container.ContainerResponseFilter;
+import javax.ws.rs.container.PreMatching;
+import javax.ws.rs.core.UriInfo;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
@@ -47,6 +57,8 @@ public class BookServer20 extends AbstractBusTestServerBase {
         List<Object> providers = new ArrayList<Object>();
         
         providers.add(new PreMatchContainerRequestFilter());
+        providers.add(new PostMatchContainerResponseFilter());
+        providers.add(new PostMatchContainerResponseFilter2());
         sf.setProviders(providers);
         sf.setResourceProvider(BookStore.class,
                                new SingletonResourceProvider(new BookStore(), true));
@@ -74,12 +86,49 @@ public class BookServer20 extends AbstractBusTestServerBase {
         }
     }
     
+    @PreMatching
     private static class PreMatchContainerRequestFilter implements ContainerRequestFilter {
 
         @Override
         public void filter(ContainerRequestContext context) throws IOException {
             context.getHeaders().add("BOOK", "123");
+            
+            UriInfo ui = context.getUriInfo();
+            String path = ui.getPath(false);
+            if ("wrongpath".equals(path)) {
+                context.setRequestUri(URI.create("/bookstore/bookheaders/simple"));
+            }
         }
+        
+    }
+    
+    public static class PostMatchContainerResponseFilter implements ContainerResponseFilter {
+
+        @Override
+        public void filter(ContainerRequestContext requestContext,
+                           ContainerResponseContext responseContext) throws IOException {
+            responseContext.getHeaders().add("Response", "OK");
+        }
+        
+    }
+    
+    @CustomHeaderAdded
+    public static class PostMatchContainerResponseFilter2 implements ContainerResponseFilter {
+
+        @Override
+        public void filter(ContainerRequestContext requestContext,
+                           ContainerResponseContext responseContext) throws IOException {
+            responseContext.getHeaders().add("Custom", "custom");
+            Book book = (Book)responseContext.getEntity();
+            responseContext.setEntity(new Book(book.getName(), 1 + book.getId()), null, null);
+        }
+        
+    }
+    
+    @Target({ ElementType.TYPE, ElementType.METHOD })
+    @Retention(value = RetentionPolicy.RUNTIME)
+    @NameBinding
+    public @interface CustomHeaderAdded { 
         
     }
 }

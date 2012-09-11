@@ -39,6 +39,7 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.cxf.helpers.CastUtils;
+import org.apache.cxf.jaxrs.utils.HttpUtils;
 import org.apache.cxf.message.Message;
 
 public class ContainerRequestContextImpl implements ContainerRequestContext {
@@ -50,15 +51,18 @@ public class ContainerRequestContextImpl implements ContainerRequestContext {
     private Message m;
     private Map<String, Object> props;
     private boolean preMatch;
-    public ContainerRequestContextImpl(Message message, boolean preMatch) {
+    private boolean responseContext;
+    public ContainerRequestContextImpl(Message message, boolean preMatch, boolean responseContext) {
         this.m = message;
         this.props = CastUtils.cast((Map<?, ?>)message.get(PROPERTY_KEY));
         this.h = new HttpHeadersImpl(message);
         this.preMatch = preMatch;
+        this.responseContext = responseContext;
     }
     
     @Override
     public void abortWith(Response response) {
+        checkContext();
         m.getExchange().put(Response.class, response);
     }
 
@@ -172,11 +176,13 @@ public class ContainerRequestContextImpl implements ContainerRequestContext {
 
     @Override
     public void setEntityStream(InputStream is) {
+        checkContext();
         m.put(InputStream.class, is);
     }
 
     @Override
     public void setMethod(String method) throws IllegalStateException {
+        checkContext();
         m.put(Message.HTTP_REQUEST_METHOD, method);
 
     }
@@ -196,7 +202,7 @@ public class ContainerRequestContextImpl implements ContainerRequestContext {
         if (!preMatch) {
             throw new IllegalStateException();
         }
-        m.put(Message.REQUEST_URI, requestUri.toString());
+        HttpUtils.resetRequestURI(m, requestUri.toString());
     }
 
     @Override
@@ -216,5 +222,11 @@ public class ContainerRequestContextImpl implements ContainerRequestContext {
 
     private HttpHeaders getHttpHeaders() {
         return h != null ? h : new HttpHeadersImpl(m);
+    }
+    
+    private void checkContext() {
+        if (responseContext) {
+            throw new IllegalStateException();
+        }
     }
 }
