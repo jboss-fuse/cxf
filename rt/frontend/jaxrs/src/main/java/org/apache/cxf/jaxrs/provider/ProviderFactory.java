@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import javax.ws.rs.BindingPriority;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.ClientRequestFilter;
@@ -50,6 +51,8 @@ import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
+import javax.ws.rs.ext.ReaderInterceptor;
+import javax.ws.rs.ext.WriterInterceptor;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
@@ -64,8 +67,10 @@ import org.apache.cxf.jaxrs.ext.ParameterHandler;
 import org.apache.cxf.jaxrs.ext.RequestHandler;
 import org.apache.cxf.jaxrs.ext.ResponseHandler;
 import org.apache.cxf.jaxrs.impl.HttpHeadersImpl;
+import org.apache.cxf.jaxrs.impl.ReaderInterceptorMBR;
 import org.apache.cxf.jaxrs.impl.RequestPreprocessor;
 import org.apache.cxf.jaxrs.impl.WebApplicationExceptionMapper;
+import org.apache.cxf.jaxrs.impl.WriterInterceptorMBW;
 import org.apache.cxf.jaxrs.model.ClassResourceInfo;
 import org.apache.cxf.jaxrs.model.ProviderInfo;
 import org.apache.cxf.jaxrs.model.wadl.WadlGenerator;
@@ -80,6 +85,7 @@ public final class ProviderFactory {
     private static final Logger LOG = LogUtils.getL7dLogger(ProviderFactory.class);
     private static final ProviderFactory SHARED_FACTORY = getInstance();
     
+    private static final String DEFAULT_FILTER_NAME_BINDING = "org.apache.cxf.filter.binding";
     private static final String JAXB_PROVIDER_NAME = "org.apache.cxf.jaxrs.provider.JAXBElementProvider";
     private static final String JSON_PROVIDER_NAME = "org.apache.cxf.jaxrs.provider.json.JSONProvider";
     
@@ -103,6 +109,23 @@ public final class ProviderFactory {
         new ArrayList<ProviderInfo<ContextResolver<?>>>(1);
     private List<ProviderInfo<ContextProvider<?>>> contextProviders = 
         new ArrayList<ProviderInfo<ContextProvider<?>>>(1);
+    
+    // ParamConverter and ParamConverterProvider is introduced in JAX-RS 2.0
+    // ParameterHandler will have to be deprecated
+    private List<ProviderInfo<ParameterHandler<?>>> paramHandlers = 
+        new ArrayList<ProviderInfo<ParameterHandler<?>>>(1);
+    
+    private List<ProviderInfo<MessageBodyReader<?>>> jaxbReaders = 
+        new ArrayList<ProviderInfo<MessageBodyReader<?>>>();
+    private List<ProviderInfo<MessageBodyWriter<?>>> jaxbWriters = 
+        new ArrayList<ProviderInfo<MessageBodyWriter<?>>>();
+    
+    private List<ProviderInfo<ReaderInterceptor>> readerInterceptors = 
+        new ArrayList<ProviderInfo<ReaderInterceptor>>(1);
+    private List<ProviderInfo<WriterInterceptor>> writerInterceptors = 
+        new ArrayList<ProviderInfo<WriterInterceptor>>(1);
+    
+    // Server specific providers
     private List<ProviderInfo<ExceptionMapper<?>>> exceptionMappers = 
         new ArrayList<ProviderInfo<ExceptionMapper<?>>>(1);
     
@@ -113,36 +136,14 @@ public final class ProviderFactory {
         new ArrayList<ProviderInfo<ResponseHandler>>(1);
     
     // ContainerRequestFilter & ContainerResponseFilter are introduced in JAX-RS 2.0
-    private List<ProviderInfo<ContainerRequestFilter>> globalContainerRequestFilters = 
+    private List<ProviderInfo<ContainerRequestFilter>> preMatchContainerRequestFilters = 
         new ArrayList<ProviderInfo<ContainerRequestFilter>>(1);
-    private List<ProviderInfo<ContainerRequestFilter>> globalPreContainerRequestFilters = 
-        new ArrayList<ProviderInfo<ContainerRequestFilter>>(1);
-    private Map<String, ProviderInfo<ContainerRequestFilter>> boundContainerRequestFilters = 
-        new LinkedHashMap<String, ProviderInfo<ContainerRequestFilter>>();
-    private List<ProviderInfo<ContainerResponseFilter>> globalContainerResponseFilters = 
-        new ArrayList<ProviderInfo<ContainerResponseFilter>>(1);
-    private List<ProviderInfo<ContainerResponseFilter>> globalPreContainerResponseFilters = 
-        new ArrayList<ProviderInfo<ContainerResponseFilter>>(1);
-    private Map<String, ProviderInfo<ContainerResponseFilter>> boundContainerResponseFilters = 
-        new LinkedHashMap<String, ProviderInfo<ContainerResponseFilter>>();
-    
-    // ParamConverter and ParamConverterProvider is introduced in JAX-RS 2.0
-    // ParameterHandler will have to be deprecated
-    private List<ProviderInfo<ParameterHandler<?>>> paramHandlers = 
-        new ArrayList<ProviderInfo<ParameterHandler<?>>>(1);
-    
+    private Map<NameKey, ProviderInfo<ContainerRequestFilter>> postMatchContainerRequestFilters = 
+        new LinkedHashMap<NameKey, ProviderInfo<ContainerRequestFilter>>();
+    private Map<NameKey, ProviderInfo<ContainerResponseFilter>> postMatchContainerResponseFilters = 
+        new LinkedHashMap<NameKey, ProviderInfo<ContainerResponseFilter>>();
     private RequestPreprocessor requestPreprocessor;
     private ProviderInfo<Application> application;
-    
-    private List<ProviderInfo<MessageBodyReader<?>>> jaxbReaders = 
-        new ArrayList<ProviderInfo<MessageBodyReader<?>>>();
-    private List<ProviderInfo<MessageBodyWriter<?>>> jaxbWriters = 
-        new ArrayList<ProviderInfo<MessageBodyWriter<?>>>();
-    
-    private Collection<ProviderInfo<?>> injectedProviders = 
-        new LinkedList<ProviderInfo<?>>();
-    
-    private Bus bus;
     
     // Client-only providers, consider introducing ClientProviderFactory
     private List<ProviderInfo<ClientRequestFilter>> clientRequestFilters = 
@@ -151,6 +152,13 @@ public final class ProviderFactory {
         new ArrayList<ProviderInfo<ClientResponseFilter>>(1);
     private List<ProviderInfo<ResponseExceptionMapper<?>>> responseExceptionMappers = 
         new ArrayList<ProviderInfo<ResponseExceptionMapper<?>>>(1);
+   
+    // List of injected providers
+    private Collection<ProviderInfo<?>> injectedProviders = 
+        new LinkedList<ProviderInfo<?>>();
+    
+    private Bus bus;
+    
     
     private ProviderFactory(Bus bus) {
         this.bus = bus;
@@ -435,6 +443,75 @@ public final class ProviderFactory {
             }
         }
     }
+        
+    
+    public <T> List<ReaderInterceptor> createMessageBodyReaderInterceptor(Class<T> bodyType,
+                                                            Type parameterType,
+                                                            Annotation[] parameterAnnotations,
+                                                            MediaType mediaType,
+                                                            Message m) {
+        MessageBodyReader<T> mr = createMessageBodyReader(bodyType,
+                                                      parameterType,
+                                                      parameterAnnotations,
+                                                      mediaType,
+                                                      m);
+        if (mr != null) {
+            ReaderInterceptor mbrReader = new ReaderInterceptorMBR(mr);
+            
+            int size = readerInterceptors.size();
+            List<ReaderInterceptor> interceptors = null;
+            if (size > 0) {
+                interceptors = new ArrayList<ReaderInterceptor>(size + 1);
+                for (ProviderInfo<ReaderInterceptor> p : readerInterceptors) {
+                    InjectionUtils.injectContexts(p.getProvider(), p, m);
+                    interceptors.add(p.getProvider());
+                }
+                interceptors.add(mbrReader);
+            } else {
+                interceptors = Collections.singletonList(mbrReader);
+            }
+            
+            return interceptors;
+        } else {
+            return null;
+        }
+    }
+    
+    public <T> List<WriterInterceptor> createMessageBodyWriterInterceptor(Class<T> bodyType,
+                                                                          Type parameterType,
+                                                                          Annotation[] parameterAnnotations,
+                                                                          MediaType mediaType,
+                                                                          Message m) {
+        MessageBodyWriter<T> mw = createMessageBodyWriter(bodyType,
+                                                      parameterType,
+                                                      parameterAnnotations,
+                                                      mediaType,
+                                                      m);
+        if (mw != null) {
+            
+            @SuppressWarnings({
+                "unchecked", "rawtypes"
+            })
+            WriterInterceptor mbwWriter = new WriterInterceptorMBW((MessageBodyWriter)mw);
+              
+            int size = writerInterceptors.size();
+            List<WriterInterceptor> interceptors = null;
+            if (size > 0) {
+                interceptors = new ArrayList<WriterInterceptor>(size + 1);
+                for (ProviderInfo<WriterInterceptor> p : writerInterceptors) {
+                    InjectionUtils.injectContexts(p.getProvider(), p, m);
+                    interceptors.add(p.getProvider());
+                }
+                interceptors.add(mbwWriter);
+            } else {
+                interceptors = Collections.singletonList(mbwWriter);
+            }
+            
+            return interceptors;
+        } else {
+            return null;
+        }
+    }
     
     
     
@@ -476,22 +553,16 @@ public final class ProviderFactory {
     }
     
     public List<ProviderInfo<ContainerRequestFilter>> getPreMatchContainerRequestFilters() {
-        return Collections.unmodifiableList(globalPreContainerRequestFilters);
+        return Collections.unmodifiableList(preMatchContainerRequestFilters);
     }
     
     public List<ProviderInfo<ContainerRequestFilter>> getPostMatchContainerRequestFilters(List<String> names) {
-        return getPostMatchContainerFilters(globalContainerRequestFilters, 
-                                            boundContainerRequestFilters, 
+        return getPostMatchContainerFilters(postMatchContainerRequestFilters, 
                                             names);
     }
     
-    public List<ProviderInfo<ContainerResponseFilter>> getPreMatchContainerResponseFilters() {
-        return Collections.unmodifiableList(globalPreContainerResponseFilters);
-    }
-    
-    public List<ProviderInfo<ContainerResponseFilter>> getPostMatchContainerResponseFilters(List<String> names) {
-        return getPostMatchContainerFilters(globalContainerResponseFilters, 
-                                            boundContainerResponseFilters, 
+    public List<ProviderInfo<ContainerResponseFilter>> getContainerResponseFilters(List<String> names) {
+        return getPostMatchContainerFilters(postMatchContainerResponseFilters, 
                                             names);
     }
     
@@ -502,24 +573,23 @@ public final class ProviderFactory {
     public List<ProviderInfo<ClientResponseFilter>> getClientResponseFilters() {
         return Collections.unmodifiableList(clientResponseFilters);
     }
-    
-    private static <T> List<ProviderInfo<T>> getPostMatchContainerFilters(List<ProviderInfo<T>> globalFilters,
-                                                                         Map<String, ProviderInfo<T>> boundFilters,
-                                                                         List<String> names) {
+
+    //TODO: Also sort based on BindingPriority
+    private static <T> List<ProviderInfo<T>> getPostMatchContainerFilters(Map<NameKey, ProviderInfo<T>> boundFilters,
+                                                                          List<String> names) {
         
-        if (globalFilters.isEmpty() && boundFilters.isEmpty()) {
+        if (boundFilters.isEmpty()) {
             return Collections.emptyList();
         }
+        boolean namesEmpty = names == null || names.isEmpty();
         
         List<ProviderInfo<T>> list = new LinkedList<ProviderInfo<T>>();
-        list.addAll(globalFilters);
-
-        if (names != null) {
-            for (String name : names) {
-                ProviderInfo<T> filter = boundFilters.get(name);
-                if (filter != null) {
-                    list.add(filter);
-                }
+        // TODO: Replace with a plain array
+        for (Map.Entry<NameKey, ProviderInfo<T>> entry : boundFilters.entrySet()) {
+            String entryName = entry.getKey().getName();
+            if (!namesEmpty && names.contains(entryName)
+                || entryName.equals(DEFAULT_FILTER_NAME_BINDING)) {
+                list.add(entry.getValue());                    
             }
         }
         return list;
@@ -589,6 +659,11 @@ public final class ProviderFactory {
 //CHECKSTYLE:OFF       
     private void setProviders(Object... providers) {
         
+        List<ProviderInfo<ContainerRequestFilter>> postMatchRequestFilters = 
+            new LinkedList<ProviderInfo<ContainerRequestFilter>>();
+        List<ProviderInfo<ContainerResponseFilter>> postMatchResponseFilters = 
+            new LinkedList<ProviderInfo<ContainerResponseFilter>>();
+        
         for (Object o : providers) {
             if (o == null) {
                 continue;
@@ -620,13 +695,25 @@ public final class ProviderFactory {
             }
             
             if (ContainerRequestFilter.class.isAssignableFrom(oClass)) {
-                addContainerRequestFilter(
-                   new ProviderInfo<ContainerRequestFilter>((ContainerRequestFilter)o, bus));
+                addContainerFilter(postMatchRequestFilters,
+                   new ProviderInfo<ContainerRequestFilter>((ContainerRequestFilter)o, bus),
+                   preMatchContainerRequestFilters);
             }
             
             if (ContainerResponseFilter.class.isAssignableFrom(oClass)) {
-                addContainerResponseFilter(
-                   new ProviderInfo<ContainerResponseFilter>((ContainerResponseFilter)o, bus)); 
+                addContainerFilter(postMatchResponseFilters,
+                   new ProviderInfo<ContainerResponseFilter>((ContainerResponseFilter)o, bus),
+                   null); 
+            }
+            
+            if (ReaderInterceptor.class.isAssignableFrom(oClass)) {
+                readerInterceptors.add(
+                   new ProviderInfo<ReaderInterceptor>((ReaderInterceptor)o, bus));
+            }
+            
+            if (WriterInterceptor.class.isAssignableFrom(oClass)) {
+                writerInterceptors.add(
+                   new ProviderInfo<WriterInterceptor>((WriterInterceptor)o, bus));
             }
             
             if (ClientRequestFilter.class.isAssignableFrom(oClass)) {
@@ -651,48 +738,56 @@ public final class ProviderFactory {
                 paramHandlers.add(new ProviderInfo<ParameterHandler<?>>((ParameterHandler<?>)o, bus)); 
             }
         }
-        //TODO: BindingPriority has to be checked too
         sortReaders();
         sortWriters();
         sortContextResolvers();
         
+        Collections.sort(preMatchContainerRequestFilters, new BindingPriorityComparator(true));
+        mapContainerFilters(postMatchContainerRequestFilters, postMatchRequestFilters, true);
+        mapContainerFilters(postMatchContainerResponseFilters, postMatchResponseFilters, false);
+        Collections.sort(readerInterceptors, new BindingPriorityComparator(true));
+        Collections.sort(writerInterceptors, new BindingPriorityComparator(false));
+        
+        Collections.sort(clientRequestFilters, new BindingPriorityComparator(true));
+        Collections.sort(clientResponseFilters, new BindingPriorityComparator(false));
+        
         injectContextProxies(messageReaders, messageWriters, contextResolvers, 
             requestHandlers, responseHandlers, exceptionMappers,
-            boundContainerRequestFilters.values(), globalPreContainerRequestFilters, globalContainerRequestFilters,
-            boundContainerResponseFilters.values(), globalPreContainerResponseFilters, globalContainerResponseFilters,
+            postMatchContainerRequestFilters.values(), preMatchContainerRequestFilters,
+            postMatchContainerResponseFilters.values(),
             responseExceptionMappers, clientRequestFilters, clientResponseFilters);
     }
 //CHECKSTYLE:ON
     
-    private void addContainerRequestFilter(ProviderInfo<ContainerRequestFilter> p) {
-        addContainerFilter(p, boundContainerRequestFilters, 
-                           globalPreContainerRequestFilters, globalContainerRequestFilters);
-    }
-    
-    private void addContainerResponseFilter(ProviderInfo<ContainerResponseFilter> p) {
-        addContainerFilter(p, boundContainerResponseFilters, 
-                           globalPreContainerResponseFilters, globalContainerResponseFilters);
-    }
-    
-    private static <T> void addContainerFilter(ProviderInfo<T> p,
-                                               Map<String, ProviderInfo<T>> boundFilters,
-                                               List<ProviderInfo<T>> globalPreFilters,
-                                               List<ProviderInfo<T>> globalPostFilters) {
-        T filter = p.getProvider();
-        Annotation[] annotations = filter.getClass().getAnnotations();
-        List<String> names = AnnotationUtils.getNameBindings(annotations);
-        if (!names.isEmpty()) {
+    private static <T> void mapContainerFilters(Map<NameKey, ProviderInfo<T>> map,
+                                                List<ProviderInfo<T>> postMatchFilters,
+                                                boolean ascending) {
+        
+        Collections.sort(postMatchFilters, new PostMatchFilterComparator(ascending));
+        for (ProviderInfo<T> p : postMatchFilters) { 
+            List<String> names = AnnotationUtils.getNameBindings(
+                p.getProvider().getClass().getAnnotations());
+            names = names.isEmpty() ? Collections.singletonList(DEFAULT_FILTER_NAME_BINDING) : names;
+            //TODO:  Would it be faster to have a single NameKey to keep all the names ?
             for (String name : names) {
-                boundFilters.put(name, p);
-            }
-        } else {
-            boolean isPreMatch = AnnotationUtils.getAnnotation(annotations, PreMatching.class) != null;
-            if (isPreMatch) {
-                globalPreFilters.add(p);
-            } else {
-                globalPostFilters.add(p);
+                map.put(new NameKey(name), p);
             }
         }
+        
+    }
+    
+    private static <T> void addContainerFilter(List<ProviderInfo<T>> postMatchFilters,
+                                               ProviderInfo<T> p,
+                                               List<ProviderInfo<T>> preMatchFilters) {
+        T filter = p.getProvider();
+        if (preMatchFilters != null
+            && AnnotationUtils.getAnnotation(filter.getClass().getAnnotations(), 
+                                             PreMatching.class) != null) {
+            preMatchFilters.add(p);
+        } else {
+            postMatchFilters.add(p);
+        }
+        
     }
     
     static void injectContextValues(ProviderInfo<?> pi, Message m) {
@@ -981,12 +1076,9 @@ public final class ProviderFactory {
         exceptionMappers.clear();
         requestHandlers.clear();
         responseHandlers.clear();
-        globalContainerRequestFilters.clear();
-        globalContainerResponseFilters.clear();
-        boundContainerRequestFilters.clear();
-        boundContainerResponseFilters.clear();
-        globalPreContainerRequestFilters.clear();
-        globalPreContainerResponseFilters.clear();
+        postMatchContainerRequestFilters.clear();
+        postMatchContainerResponseFilters.clear();
+        preMatchContainerRequestFilters.clear();
         paramHandlers.clear();
         responseExceptionMappers.clear();
         clientRequestFilters.clear();
@@ -1108,6 +1200,58 @@ public final class ProviderFactory {
         return getGenericInterfaces(cls.getSuperclass());
     }
     
+    private static class PostMatchFilterComparator extends BindingPriorityComparator {
+        public PostMatchFilterComparator(boolean ascending) {
+            super(ascending);
+        }
+        
+        @Override
+        public int compare(ProviderInfo<?> p1, ProviderInfo<?> p2) {
+            int result = super.compare(p1, p2);
+            if (result == 0) {
+                Integer namesSize1 = 
+                    AnnotationUtils.getNameBindings(p1.getProvider().getClass().getAnnotations()).size();
+                Integer namesSize2 = 
+                    AnnotationUtils.getNameBindings(p2.getProvider().getClass().getAnnotations()).size();
+                
+                // if we have two filters with the same binding priority, 
+                // then put a filter with more name bindings upfront 
+                // (this effectively puts name bound filters before global ones)
+                result = namesSize1.compareTo(namesSize2) * -1;
+            }
+            return result; 
+        }
+    }
+    
+    private static class BindingPriorityComparator extends AbstactBindingPriorityComparator {
+        public BindingPriorityComparator(boolean ascending) {
+            super(ascending);
+        }
+    }
+    
+    private abstract static class AbstactBindingPriorityComparator implements 
+        Comparator<ProviderInfo<?>> {
+    
+        private boolean ascending; 
+        
+        protected AbstactBindingPriorityComparator(boolean ascending) {
+            this.ascending = ascending; 
+        }
+        
+        public int compare(ProviderInfo<?> p1, ProviderInfo<?> p2) {
+            Integer b1Value = getBindingPriorityValue(p1);
+            Integer b2Value = getBindingPriorityValue(p2);
+            
+            int result = b1Value.compareTo(b2Value);
+            return ascending ? result : result * -1;      
+        }
+        
+        private int getBindingPriorityValue(ProviderInfo<?> p) {
+            BindingPriority b = p.getProvider().getClass().getAnnotation(BindingPriority.class);
+            return b == null ? BindingPriority.USER : b.value();
+        }
+    }
+    
     static class ContextResolverProxy<T> implements ContextResolver<T> {
         private List<ContextResolver<T>> candidates; 
         public ContextResolverProxy(List<ContextResolver<T>> candidates) {
@@ -1125,6 +1269,17 @@ public final class ProviderFactory {
         
         public List<ContextResolver<T>> getResolvers() {
             return candidates;
+        }
+    }
+    
+    private static class NameKey { 
+        private String name;
+        public NameKey(String name) {
+            this.name = name;
+        }
+        
+        public String getName() {
+            return name;
         }
     }
 }
