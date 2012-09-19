@@ -21,6 +21,7 @@ package org.apache.cxf.jaxrs.utils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -82,6 +83,10 @@ import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Providers;
+import javax.ws.rs.ext.ReaderInterceptor;
+import javax.ws.rs.ext.ReaderInterceptorContext;
+import javax.ws.rs.ext.WriterInterceptor;
+import javax.ws.rs.ext.WriterInterceptorContext;
 import javax.xml.namespace.QName;
 
 import org.apache.cxf.common.i18n.BundleUtils;
@@ -102,10 +107,14 @@ import org.apache.cxf.jaxrs.impl.HttpServletResponseFilter;
 import org.apache.cxf.jaxrs.impl.MetadataMap;
 import org.apache.cxf.jaxrs.impl.PathSegmentImpl;
 import org.apache.cxf.jaxrs.impl.ProvidersImpl;
+import org.apache.cxf.jaxrs.impl.ReaderInterceptorContextImpl;
+import org.apache.cxf.jaxrs.impl.ReaderInterceptorMBR;
 import org.apache.cxf.jaxrs.impl.RequestImpl;
 import org.apache.cxf.jaxrs.impl.SecurityContextImpl;
 import org.apache.cxf.jaxrs.impl.UriInfoImpl;
 import org.apache.cxf.jaxrs.impl.WebApplicationExceptionMapper;
+import org.apache.cxf.jaxrs.impl.WriterInterceptorContextImpl;
+import org.apache.cxf.jaxrs.impl.WriterInterceptorMBW;
 import org.apache.cxf.jaxrs.model.ClassResourceInfo;
 import org.apache.cxf.jaxrs.model.ClassResourceInfoComparator;
 import org.apache.cxf.jaxrs.model.OperationResourceInfo;
@@ -1047,7 +1056,7 @@ public final class JAXRSUtils {
         }
     }
 
-    private static <T> T readFromMessageBody(Class<T> targetTypeClass,
+    private static Object readFromMessageBody(Class<?> targetTypeClass,
                                                   Type parameterType,
                                                   Annotation[] parameterAnnotations,
                                                   InputStream is, 
@@ -1057,20 +1066,23 @@ public final class JAXRSUtils {
         
         List<MediaType> types = JAXRSUtils.intersectMimeTypes(consumeTypes, contentType);
         
-        MessageBodyReader<T> provider = null;
+        final ProviderFactory pf = ProviderFactory.getInstance(m);
         for (MediaType type : types) { 
-            provider = ProviderFactory.getInstance(m)
-                .createMessageBodyReader(targetTypeClass,
+            List<ReaderInterceptor> readers = pf.createMessageBodyReaderInterceptor(
+                                         targetTypeClass,
                                          parameterType,
                                          parameterAnnotations,
                                          type,
                                          m);
-            if (provider != null) {
+            if (readers != null) {
                 try {
-                    HttpHeaders headers = new HttpHeadersImpl(m);
-                    return provider.readFrom(
-                              targetTypeClass, parameterType, parameterAnnotations, contentType,
-                              headers.getRequestHeaders(), is);
+                    return readFromMessageBodyReader(readers, 
+                                                     targetTypeClass, 
+                                                     parameterType, 
+                                                     parameterAnnotations, 
+                                                     is, 
+                                                     type,
+                                                     m);    
                 } catch (IOException e) {
                     throw e;
                 } catch (WebApplicationException ex) {
@@ -1090,7 +1102,69 @@ public final class JAXRSUtils {
 
         return null;
     }
+    
+    @SuppressWarnings("unchecked")
+    public static Object readFromMessageBodyReader(List<ReaderInterceptor> readers,
+                                                   Class<?> targetTypeClass,
+                                                   Type parameterType,
+                                                   Annotation[] parameterAnnotations,
+                                                   InputStream is, 
+                                                   MediaType mediaType, 
+                                                   Message m) throws IOException, WebApplicationException {
+        
+        // Verbose but avoids an extra context instantiation for the typical path
+        if (readers.size() > 1) {
+            ReaderInterceptor first = readers.remove(0);
+            ReaderInterceptorContext context = new ReaderInterceptorContextImpl(targetTypeClass, 
+                                                                            parameterType, 
+                                                                            parameterAnnotations, 
+                                                                            mediaType,
+                                                                            is,
+                                                                            m,
+                                                                            readers);
+            
+            return first.aroundReadFrom(context);
+        } else {
+            MessageBodyReader<?> provider = ((ReaderInterceptorMBR)readers.get(0)).getMBR();
+            @SuppressWarnings("rawtypes")
+            Class cls = (Class)targetTypeClass;
+            return provider.readFrom(
+                      cls, parameterType, parameterAnnotations, mediaType,
+                      new HttpHeadersImpl(m).getRequestHeaders(), is);
+        }
+    }
 
+    
+    //CHECKSTYLE:OFF
+    public static void writeMessageBody(List<WriterInterceptor> writers, 
+                                Object entity,
+                                Class<?> type, Type genericType,
+                                Annotation[] annotations, 
+                                MediaType mediaType,
+                                MultivaluedMap<String, Object> httpHeaders,
+                                Message message) 
+        throws WebApplicationException, IOException {
+        
+        OutputStream entityStream = message.getContent(OutputStream.class);
+        if (writers.size() > 1) {
+            WriterInterceptor first = writers.remove(0);
+            WriterInterceptorContext context = new WriterInterceptorContextImpl(entity,
+                                                                                type, 
+                                                                            genericType, 
+                                                                            annotations, 
+                                                                            mediaType,
+                                                                            entityStream,
+                                                                            message,
+                                                                            writers);
+            
+            first.aroundWriteTo(context);
+        } else {
+            MessageBodyWriter<Object> writer = ((WriterInterceptorMBW)writers.get(0)).getMBW();
+            writer.writeTo(entity, type, genericType, annotations, mediaType,
+                           httpHeaders, entityStream);
+        }
+    }
+    //CHECKSTYLE:ON
     
 
     public static boolean matchConsumeTypes(MediaType requestContentType, 
