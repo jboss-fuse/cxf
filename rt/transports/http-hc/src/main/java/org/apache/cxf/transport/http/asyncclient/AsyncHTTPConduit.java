@@ -51,7 +51,9 @@ import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.configuration.jsse.SSLUtils;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.helpers.HttpHeaderHelper;
+import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.io.CacheAndWriteOutputStream;
+import org.apache.cxf.io.CopyingOutputStream;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageUtils;
 import org.apache.cxf.service.model.EndpointInfo;
@@ -184,7 +186,7 @@ public class AsyncHTTPConduit extends URLConnectionHTTPConduit {
     }
     
     
-    public class AsyncWrappedOutputStream extends WrappedOutputStream {
+    public class AsyncWrappedOutputStream extends WrappedOutputStream implements CopyingOutputStream {
         final HTTPClientPolicy csPolicy;
 
         CXFHttpRequest entity;
@@ -260,6 +262,39 @@ public class AsyncHTTPConduit extends URLConnectionHTTPConduit {
         protected void handleNoOutput() throws IOException {
             connect(false);
             outbuf.writeCompleted();
+        }
+        
+        
+        public int copyFrom(InputStream in) throws IOException {
+            int count = 0;
+            if (buffer != null) {
+                while (buffer != null) {
+                    int pos = buffer.size();
+                    int i = in.read(buffer.getRawBytes(), pos,
+                                    this.threshold - pos);
+                    if (i > 0) {
+                        buffer.setSize(pos + i);
+                        if (buffer.size() >= threshold) {
+                            thresholdReached();
+                            unBuffer();
+                        }
+                        count += i;
+                    } else {
+                        return count;
+                    }
+                }
+            }
+            if (cachingForRetransmission) {
+                count += IOUtils.copy(in, wrappedStream);
+            } else {
+                count += outbuf.copy(in);
+            }
+            return count;
+        }
+        
+        @Override
+        public void close() throws IOException {
+            super.close();
         }
         protected void setupWrappedStream() throws IOException {
             connect(true);
@@ -378,10 +413,12 @@ public class AsyncHTTPConduit extends URLConnectionHTTPConduit {
 
         protected synchronized HttpResponse getHttpResponse() throws IOException {
             while (httpResponse == null) {
-                try {
-                    wait(csPolicy.getReceiveTimeout());
-                } catch (InterruptedException e) {
-                    throw new IOException(e);
+                if (exception == null) { //already have an exception, skip waiting
+                    try {
+                        wait(csPolicy.getReceiveTimeout());
+                    } catch (InterruptedException e) {
+                        throw new IOException(e);
+                    }
                 }
                 if (httpResponse == null) {
                     outbuf.shutdown();
@@ -489,7 +526,7 @@ public class AsyncHTTPConduit extends URLConnectionHTTPConduit {
             return new HttpsURLConnectionInfo(url, method, cipherSuite, localCerts, principal, serverCerts, peer);
         }
         
-        protected synchronized int getResponseCode() throws IOException {
+        protected int getResponseCode() throws IOException {
             return getHttpResponse().getStatusLine().getStatusCode();
         }
         

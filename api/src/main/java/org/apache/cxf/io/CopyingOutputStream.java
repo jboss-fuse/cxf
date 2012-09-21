@@ -16,39 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.systest.jaxrs;
 
-import javax.xml.bind.annotation.XmlRootElement;
+package org.apache.cxf.io;
 
-@XmlRootElement
-public class OrderBean {
-    
-    private Long id;
-    private int weight;
-    private Title customerTitle; 
-    
-    public void setId(Long id) {
-        this.id = id;
-    }
-    public Long getId() {
-        return id;
-    }
-    public void setWeight(int w) {
-        this.weight = w;
-    }
-    public int getWeight() {
-        return weight;
-    }
-    
-    public Title getCustomerTitle() {
-        return customerTitle;
-    }
-    public void setCustomerTitle(Title customerTitle) {
-        this.customerTitle = customerTitle;
-    }
+import java.io.IOException;
+import java.io.InputStream;
 
-    public static enum Title {
-        MR,
-        MS;
-    } 
+/**
+ * Marker interface for OutputStreams that can directly support 
+ * copying from an input stream.  OutputStreams that maintain their
+ * own byte buffer or similar may be able to optimize the copy
+ * instead of using the read/write into a temporary buffer that
+ * the normal IOUtils.copy method requires.
+ */
+public interface CopyingOutputStream {
+
+    int copyFrom(InputStream in) throws IOException;
+    
 }
