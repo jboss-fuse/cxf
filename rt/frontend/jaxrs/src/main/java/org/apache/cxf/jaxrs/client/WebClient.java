@@ -80,9 +80,8 @@ public class WebClient extends AbstractClient {
         this(URI.create(baseAddress));
     }
     
-    protected WebClient(URI baseAddress) {
-        super(baseAddress);
-        cfg.getInInterceptors().add(new ClientAsyncResponseInterceptor());
+    protected WebClient(URI baseURI) {
+        this(new LocalClientState(baseURI));
     }
     
     protected WebClient(ClientState state) {
@@ -383,6 +382,16 @@ public class WebClient extends AbstractClient {
     }
     
     /**
+     * Does HTTP Async POST invocation and returns Future.
+     * Shortcut for async().post(Entity, InvocationCallback)
+     * @param callback invocation callback 
+     * @return the future
+     */
+    public <T> Future<T> post(Object body, InvocationCallback<T> callback) {
+        return doInvokeAsyncCallback("POST", body, body.getClass(), getClass(), callback);
+    }
+    
+    /**
      * Does HTTP invocation and returns a collection of typed objects 
      * @param httpMethod HTTP method 
      * @param body request body, can be null
@@ -488,7 +497,7 @@ public class WebClient extends AbstractClient {
      * @return the future
      */
     public <T> Future<T> get(InvocationCallback<T> callback) {
-        return doInvokeAsync("GET", null, null, null, callback);
+        return doInvokeAsyncCallback("GET", null, null, null, callback);
     }
     
     /**
@@ -747,20 +756,7 @@ public class WebClient extends AbstractClient {
                                 Class<?> responseClass, 
                                 Type outGenericType) {
         
-        MultivaluedMap<String, String> headers = getHeaders();
-        boolean contentTypeNotSet = headers.getFirst(HttpHeaders.CONTENT_TYPE) == null;
-        if (contentTypeNotSet) {
-            String ct = "*/*";
-            if (body != null) { 
-                ct = body instanceof Form ? MediaType.APPLICATION_FORM_URLENCODED 
-                                          : MediaType.APPLICATION_XML;
-            }
-            headers.putSingle(HttpHeaders.CONTENT_TYPE, ct);
-        }
-        if (responseClass != null && responseClass != Response.class 
-            && headers.getFirst(HttpHeaders.ACCEPT) == null) {
-            headers.putSingle(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML_TYPE.toString());
-        }
+        MultivaluedMap<String, String> headers = prepareHeaders(responseClass, body);
         resetResponse();
         Response r = doChainedInvocation(httpMethod, headers, body, requestClass, inGenericType, 
                                          responseClass, outGenericType, null, null);
@@ -793,11 +789,43 @@ public class WebClient extends AbstractClient {
         return null;
     }
     
+    protected <T> Future<T> doInvokeAsyncCallback(String httpMethod, 
+                                                  Object body, 
+                                                  Class<?> requestClass,
+                                                  Type inType,
+                                                  InvocationCallback<T> callback) {
+        
+        Type outType = getCallbackType(callback);
+        Class<?> respClass = outType instanceof Class ? (Class<?>) outType : null;
+        
+        return doInvokeAsync(httpMethod, body, requestClass, inType, respClass, outType, callback);
+    }
+    
     protected <T> Future<T> doInvokeAsync(String httpMethod, 
                                           Object body, 
                                           Class<?> requestClass,
-                                          Type inGenericType,
+                                          Type inType,
+                                          Class<?> respClass,
+                                          Type outType,
                                           InvocationCallback<T> callback) {
+        
+        MultivaluedMap<String, String> headers = prepareHeaders(respClass, body);
+        resetResponse();
+
+        Message m = finalizeMessage(httpMethod, headers, body, requestClass, inType, 
+                                    respClass, outType, null, null);
+        
+        m.getExchange().setSynchronous(false);
+        JaxrsClientCallback<T> cb = new JaxrsClientCallback<T>(callback, respClass, outType);
+        m.getExchange().put(JaxrsClientCallback.class, cb);
+        
+        doRunInterceptorChain(m);
+        
+        return cb.createFuture();
+    }
+
+    
+    private MultivaluedMap<String, String> prepareHeaders(Class<?> responseClass, Object body) {
         MultivaluedMap<String, String> headers = getHeaders();
         boolean contentTypeNotSet = headers.getFirst(HttpHeaders.CONTENT_TYPE) == null;
         if (contentTypeNotSet) {
@@ -808,45 +836,14 @@ public class WebClient extends AbstractClient {
             }
             headers.putSingle(HttpHeaders.CONTENT_TYPE, ct);
         }
-        Type outGenericType = getCallbackType(callback);
-        Class<?> responseClass = outGenericType instanceof Class ? (Class<?>) outGenericType : null;
+        
         if (responseClass != null && responseClass != Response.class 
             && headers.getFirst(HttpHeaders.ACCEPT) == null) {
             headers.putSingle(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML_TYPE.toString());
         }
-        resetResponse();
-        URI uri = getCurrentURI();
-        Exchange exchange = null;
-        Map<String, Object> invContext = null;
-        
-        Message m = createMessage(body, httpMethod, headers, uri, exchange, 
-                invContext, false);
-        
-        m.getExchange().setSynchronous(false);
-        
-        Map<String, Object> reqContext = getRequestContext(m);
-        reqContext.put(Message.HTTP_REQUEST_METHOD, httpMethod);
-        reqContext.put(REQUEST_CLASS, requestClass);
-        reqContext.put(REQUEST_TYPE, inGenericType);
-        reqContext.put(RESPONSE_CLASS, responseClass);
-        reqContext.put(RESPONSE_TYPE, outGenericType);
-        
-        if (body != null) {
-            m.getInterceptorChain().add(new BodyWriter());
-        }
-        setPlainOperationNameProperty(m, httpMethod + ":" + uri.toString());
-        
-        JaxrsClientCallback<T> cb = new JaxrsClientCallback<T>(callback, responseClass, outGenericType);
-        m.getExchange().put(JaxrsClientCallback.class, cb);
-        try {
-            m.getInterceptorChain().doIntercept(m);
-        } catch (Exception ex) {
-            m.setContent(Exception.class, ex);
-        }
-        
-        return cb.createFuture();
+        return headers;
     }
-
+    
     private void handleAsyncResponse(Message message) {
         JaxrsClientCallback<?> cb = message.getExchange().get(JaxrsClientCallback.class);
         Response r = handleResponse(message.getExchange().getOutMessage(),
@@ -859,11 +856,11 @@ public class WebClient extends AbstractClient {
             cb.handleResponse(message, new Object[] {r.getEntity()});
         }
     }
-    public void handleAsyncFault(Message message) {
+    private void handleAsyncFault(Message message) {
     }
 
 
-    
+    //TODO: retry invocation will not work in case of async request failures for the moment
     @Override
     protected Object retryInvoke(URI newRequestURI, 
                                  MultivaluedMap<String, String> headers,
@@ -885,12 +882,29 @@ public class WebClient extends AbstractClient {
                                            MultivaluedMap<String, String> headers, 
                                            Object body, 
                                            Class<?> requestClass,
-                                           Type inGenericType,
-                                           Class<?> responseClass, 
-                                           Type outGenericType,
+                                           Type inType,
+                                           Class<?> respClass, 
+                                           Type outType,
                                            Exchange exchange,
                                            Map<String, Object> invContext) {
     //CHECKSTYLE:ON    
+        Message m = finalizeMessage(httpMethod, headers, body, requestClass, inType, 
+                                    respClass, outType, exchange, invContext);
+        doRunInterceptorChain(m);
+        return doResponse(m, respClass, outType);
+    }
+    
+    //CHECKSTYLE:OFF
+    private Message finalizeMessage(String httpMethod, 
+                                   MultivaluedMap<String, String> headers, 
+                                   Object body, 
+                                   Class<?> requestClass,
+                                   Type inGenericType,
+                                   Class<?> responseClass, 
+                                   Type outGenericType,
+                                   Exchange exchange,
+                                   Map<String, Object> invContext) {
+   //CHECKSTYLE:ON    
         URI uri = getCurrentURI();
         Message m = createMessage(body, httpMethod, headers, uri, exchange, 
                 invContext, false);
@@ -906,14 +920,9 @@ public class WebClient extends AbstractClient {
             m.getInterceptorChain().add(new BodyWriter());
         }
         setPlainOperationNameProperty(m, httpMethod + ":" + uri.toString());
-        
-        try {
-            m.getInterceptorChain().doIntercept(m);
-        } catch (Exception ex) {
-            m.setContent(Exception.class, ex);
-        }
-        return doResponse(m, responseClass, outGenericType);
+        return m;
     }
+    
     protected Response doResponse(Message m, 
                                   Class<?> responseClass, 
                                   Type outGenericType) {
@@ -1070,206 +1079,178 @@ public class WebClient extends AbstractClient {
 
         @Override
         public Future<Response> get() {
-            // TODO Auto-generated method stub
-            return null;
+            return get(Response.class);
         }
 
         @Override
         public <T> Future<T> get(Class<T> responseType) {
-            // TODO Auto-generated method stub
-            return null;
+            return method("GET", responseType);
         }
 
         @Override
         public <T> Future<T> get(GenericType<T> responseType) {
-            // TODO Auto-generated method stub
-            return null;
+            return method("GET", responseType);
         }
 
         @Override
         public <T> Future<T> get(InvocationCallback<T> callback) {
-            return doInvokeAsync("GET", null, null, null, callback);
+            return method("GET", callback);
         }
 
         @Override
         public Future<Response> put(Entity<?> entity) {
-            // TODO Auto-generated method stub
-            return null;
+            return put(entity, Response.class);
         }
 
         @Override
         public <T> Future<T> put(Entity<?> entity, Class<T> responseType) {
-            // TODO Auto-generated method stub
-            return null;
+            return method("PUT", entity, responseType);
         }
 
         @Override
         public <T> Future<T> put(Entity<?> entity, GenericType<T> responseType) {
-            // TODO Auto-generated method stub
-            return null;
+            return method("PUT", entity, responseType);
         }
 
         @Override
         public <T> Future<T> put(Entity<?> entity, InvocationCallback<T> callback) {
-            // TODO Auto-generated method stub
-            return null;
+            return method("PUT", entity, callback);
         }
 
         @Override
         public Future<Response> post(Entity<?> entity) {
-            // TODO Auto-generated method stub
-            return null;
+            return post(entity, Response.class);
         }
 
         @Override
         public <T> Future<T> post(Entity<?> entity, Class<T> responseType) {
-            // TODO Auto-generated method stub
-            return null;
+            return method("POST", entity, responseType);
         }
 
         @Override
         public <T> Future<T> post(Entity<?> entity, GenericType<T> responseType) {
-            // TODO Auto-generated method stub
-            return null;
+            return method("POST", entity, responseType);
         }
 
         @Override
         public <T> Future<T> post(Entity<?> entity, InvocationCallback<T> callback) {
-            // TODO Auto-generated method stub
-            return null;
+            return method("POST", entity, callback);
         }
 
         @Override
         public Future<Response> delete() {
-            // TODO Auto-generated method stub
-            return null;
+            return delete(Response.class);
         }
 
         @Override
         public <T> Future<T> delete(Class<T> responseType) {
-            // TODO Auto-generated method stub
-            return null;
+            return method("DELETE", responseType);
         }
 
         @Override
         public <T> Future<T> delete(GenericType<T> responseType) {
-            // TODO Auto-generated method stub
-            return null;
+            return method("DELETE", responseType);
         }
 
         @Override
         public <T> Future<T> delete(InvocationCallback<T> callback) {
-            // TODO Auto-generated method stub
-            return null;
+            return method("DELETE", callback);
         }
 
         @Override
         public Future<Response> head() {
-            // TODO Auto-generated method stub
-            return null;
+            return method("HEAD");
         }
 
         @Override
         public Future<Response> head(InvocationCallback<Response> callback) {
-            // TODO Auto-generated method stub
-            return null;
+            return method("HEAD", callback);
         }
 
         @Override
         public Future<Response> options() {
-            // TODO Auto-generated method stub
-            return null;
+            return options(Response.class);
         }
 
         @Override
         public <T> Future<T> options(Class<T> responseType) {
-            // TODO Auto-generated method stub
-            return null;
+            return method("OPTIONS", responseType);
         }
 
         @Override
         public <T> Future<T> options(GenericType<T> responseType) {
-            // TODO Auto-generated method stub
-            return null;
+            return method("OPTIONS", responseType);
         }
 
         @Override
         public <T> Future<T> options(InvocationCallback<T> callback) {
-            // TODO Auto-generated method stub
-            return null;
+            return method("OPTIONS", callback);
         }
 
         @Override
         public Future<Response> trace() {
-            // TODO Auto-generated method stub
-            return null;
+            return trace(Response.class);
         }
 
         @Override
         public <T> Future<T> trace(Class<T> responseType) {
-            // TODO Auto-generated method stub
-            return null;
+            return method("TRACE", responseType);
         }
 
         @Override
         public <T> Future<T> trace(GenericType<T> responseType) {
-            // TODO Auto-generated method stub
-            return null;
+            return method("TRACE", responseType);
         }
 
         @Override
         public <T> Future<T> trace(InvocationCallback<T> callback) {
-            // TODO Auto-generated method stub
-            return null;
+            return method("TRACE", callback);
         }
 
         @Override
         public Future<Response> method(String name) {
-            // TODO Auto-generated method stub
-            return null;
+            return method(name, Response.class);
         }
 
         @Override
         public <T> Future<T> method(String name, Class<T> responseType) {
-            // TODO Auto-generated method stub
-            return null;
+            return doInvokeAsync(name, null, null, null, responseType, responseType, null);
         }
 
         @Override
         public <T> Future<T> method(String name, GenericType<T> responseType) {
-            // TODO Auto-generated method stub
-            return null;
+            return doInvokeAsync(name, null, null, null, responseType.getRawType(),
+                                 responseType.getType(), null);
         }
 
         @Override
         public <T> Future<T> method(String name, InvocationCallback<T> callback) {
-            // TODO Auto-generated method stub
-            return null;
+            return doInvokeAsyncCallback(name, null, null, null, callback);
         }
 
         @Override
         public Future<Response> method(String name, Entity<?> entity) {
-            // TODO Auto-generated method stub
-            return null;
+            return method(name, entity, Response.class);
         }
 
         @Override
         public <T> Future<T> method(String name, Entity<?> entity, Class<T> responseType) {
-            // TODO Auto-generated method stub
-            return null;
+            return doInvokeAsync(name, entity.getEntity(), entity.getClass(), entity.getClass(), 
+                                 responseType, responseType, null);
         }
 
         @Override
         public <T> Future<T> method(String name, Entity<?> entity, GenericType<T> responseType) {
-            // TODO Auto-generated method stub
-            return null;
+            return doInvokeAsync(name, entity.getEntity(), entity.getClass(), entity.getClass(), 
+                                 responseType.getRawType(), responseType.getType(), null);
         }
 
         @Override
         public <T> Future<T> method(String name, Entity<?> entity, InvocationCallback<T> callback) {
-            // TODO Auto-generated method stub
-            return null;
+            return doInvokeAsync(name, entity.getEntity(), entity.getClass(), entity.getClass(), 
+                                 Response.class, Response.class, callback);
         }
         
     }
+    
 }

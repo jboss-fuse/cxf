@@ -103,14 +103,9 @@ public abstract class AbstractClient implements Client, Retryable {
     protected ClientConfiguration cfg = new ClientConfiguration();
     private ClientState state;
     
-    protected AbstractClient(URI baseURI) {
-        this.state = new LocalClientState(baseURI);
-    }
-    
     protected AbstractClient(ClientState initialState) {
         this.state = initialState;
     }
-    
     /**
      * {@inheritDoc}
      */
@@ -574,6 +569,14 @@ public abstract class AbstractClient implements Client, Retryable {
         resetCurrentBuilder(current);
         
         return newRequestURI;
+    }
+    
+    protected void doRunInterceptorChain(Message m) {
+        try {
+            m.getInterceptorChain().doIntercept(m);
+        } catch (Exception ex) {
+            m.setContent(Exception.class, ex);
+        }
     }
     
     @SuppressWarnings("unchecked")
