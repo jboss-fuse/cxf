@@ -31,6 +31,7 @@ import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.saml.ext.bean.AttributeBean;
 import org.apache.ws.security.saml.ext.bean.AttributeStatementBean;
 
+@Deprecated
 public class ClaimsAttributeStatementProvider implements AttributeStatementProvider {
 
     public AttributeStatementBean getStatement(TokenProviderParameters providerParameters) {

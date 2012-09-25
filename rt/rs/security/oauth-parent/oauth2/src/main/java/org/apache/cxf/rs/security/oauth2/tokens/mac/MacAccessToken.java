@@ -23,7 +23,14 @@ import org.apache.cxf.rs.security.oauth2.common.ServerAccessToken;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthUtils;
 
+//See http://tools.ietf.org/html/draft-ietf-oauth-v2-http-mac-01
 public class MacAccessToken extends ServerAccessToken {
+    
+    public MacAccessToken(Client client, 
+                          long lifetime) {
+        this(client, HmacAlgorithm.HmacSHA256, lifetime);
+    }
+    
     public MacAccessToken(Client client, 
                           String macAuthAlgo,
                           long lifetime) {
@@ -45,22 +52,33 @@ public class MacAccessToken extends ServerAccessToken {
                           long lifetime, 
                           long issuedAt) {
         super(client, OAuthConstants.MAC_TOKEN_TYPE, tokenKey, lifetime, issuedAt);
-        this.setExtraParameters(algo);
+        this.setExtraParameters(algo, null);
     }
     
-    private void setExtraParameters(HmacAlgorithm algo) {
-        super.getParameters().put(OAuthConstants.MAC_TOKEN_SECRET,
-                                  HmacUtils.generateSecret(algo));
+    public MacAccessToken(Client client,
+                          HmacAlgorithm algo,
+                          String tokenKey,
+                          String macKey,
+                          long lifetime, 
+                          long issuedAt) {
+        super(client, OAuthConstants.MAC_TOKEN_TYPE, tokenKey, lifetime, issuedAt);
+        this.setExtraParameters(algo, macKey);
+    }
+    
+    private void setExtraParameters(HmacAlgorithm algo, String macKey) {
+        String theKey = macKey == null ? HmacUtils.generateSecret(algo) : macKey; 
+        super.getParameters().put(OAuthConstants.MAC_TOKEN_KEY,
+                                  theKey);
         super.getParameters().put(OAuthConstants.MAC_TOKEN_ALGORITHM,
                                   algo.getOAuthName());
     }
     
-    public String getMacKey() {
+    public String getMacId() {
         return super.getTokenKey();
     }
     
-    public String getMacSecret() {
-        return super.getParameters().get(OAuthConstants.MAC_TOKEN_SECRET);
+    public String getMacKey() {
+        return super.getParameters().get(OAuthConstants.MAC_TOKEN_KEY);
     }
     
     public String getMacAlgorithm() {

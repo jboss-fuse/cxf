@@ -149,9 +149,8 @@ public class JAXRSContainer extends AbstractCXFToolContainer {
         sg.setSchemaTypeMap(getSchemaTypeMap());
         sg.setMediaTypeMap(getMediaTypeMap());
 
-        if (context.optionSet(WadlToolConstants.CFG_GENERATE_ENUMS)) {
-            sg.setGenerateEnums(true);
-        }
+        sg.setGenerateEnums(context.optionSet(WadlToolConstants.CFG_GENERATE_ENUMS));
+        sg.setInheritResourceParams(context.optionSet(WadlToolConstants.CFG_INHERIT_PARAMS));
         sg.setSkipSchemaGeneration(context.optionSet(WadlToolConstants.CFG_NO_TYPES));
         
         // generate
@@ -247,6 +246,9 @@ public class JAXRSContainer extends AbstractCXFToolContainer {
             int pos = typeToClasses[i].indexOf("=");
             if (pos != -1) {
                 String type = typeToClasses[i].substring(0, pos);
+                if (type.contains("%3D")) {
+                    type = type.replace("%3D", "=");
+                }
                 String clsName = typeToClasses[i].substring(pos + 1);
                 typeMap.put(type, clsName);
             }

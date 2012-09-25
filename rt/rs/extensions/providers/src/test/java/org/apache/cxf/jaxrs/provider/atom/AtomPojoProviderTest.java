@@ -39,6 +39,7 @@ import org.junit.Test;
 
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+
 public class AtomPojoProviderTest extends Assert {
 
     private ClassPathXmlApplicationContext ctx;
@@ -52,8 +53,7 @@ public class AtomPojoProviderTest extends Assert {
     
     @Test
     public void testWriteFeedWithBuilders() throws Exception {
-        @SuppressWarnings("unchecked")
-        AtomPojoProvider<Books> provider = (AtomPojoProvider<Books>)ctx.getBean("atom");
+        AtomPojoProvider provider = (AtomPojoProvider)ctx.getBean("atom");
         assertNotNull(provider);
         provider.setFormattedOutput(true);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -75,9 +75,41 @@ public class AtomPojoProviderTest extends Assert {
     }
     
     @Test
+    public void testWriteFeedWithBuildersNoJaxb() throws Exception {
+        AtomPojoProvider provider = (AtomPojoProvider)ctx.getBean("atomNoJaxb");
+        assertNotNull(provider);
+        provider.setFormattedOutput(true);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        
+        Books books = new Books();
+        List<Book> bs = new ArrayList<Book>();
+        bs.add(new Book("a"));
+        bs.add(new Book("b"));
+        books.setBooks(bs);
+        provider.writeTo(books, Books.class, Books.class, new Annotation[]{},
+                         MediaType.valueOf("application/atom+xml"), null, bos);
+        ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+        Feed feed = new AtomFeedProvider().readFrom(Feed.class, null, null, null, null, bis);
+        assertEquals("Books", feed.getTitle()); 
+        List<Entry> entries = feed.getEntries();
+        assertEquals(2, entries.size());
+        
+        Entry entryA = getEntry(entries, "a");
+        verifyEntry(entryA, "a");
+        String entryAContent = entryA.getContent();
+        assertTrue("<a/>".equals(entryAContent) || "<a><a/>".equals(entryAContent)
+                   || "<a xmlns=\"\"/>".equals(entryAContent));
+        
+        Entry entryB = getEntry(entries, "b");
+        verifyEntry(entryB, "b");
+        String entryBContent = entryB.getContent();
+        assertTrue("<b/>".equals(entryBContent) || "<b><b/>".equals(entryBContent)
+                   || "<b xmlns=\"\"/>".equals(entryBContent));
+    }
+    
+    @Test
     public void testWriteEntryWithBuilders() throws Exception {
-        @SuppressWarnings("unchecked")
-        AtomPojoProvider<Book> provider = (AtomPojoProvider<Book>)ctx.getBean("atom2");
+        AtomPojoProvider provider = (AtomPojoProvider)ctx.getBean("atom2");
         assertNotNull(provider);
         provider.setFormattedOutput(true);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -91,25 +123,24 @@ public class AtomPojoProviderTest extends Assert {
     
     @Test
     public void testReadEntryWithBuilders() throws Exception {
-        @SuppressWarnings("unchecked")
-        AtomPojoProvider<Book> provider = (AtomPojoProvider<Book>)ctx.getBean("atom3");
+        AtomPojoProvider provider = (AtomPojoProvider)ctx.getBean("atom3");
         assertNotNull(provider);
         doTestReadEntry(provider);
     }
     
     @Test
     public void testReadEntryWithoutBuilders() throws Exception {
-        doTestReadEntry(new AtomPojoProvider<Book>());
+        doTestReadEntry(new AtomPojoProvider());
     }
     
-    private void doTestReadEntry(AtomPojoProvider<Book> provider) throws Exception {
+    private void doTestReadEntry(AtomPojoProvider provider) throws Exception {
         provider.setFormattedOutput(true);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         MediaType mt = MediaType.valueOf("application/atom+xml;type=entry");
         provider.writeTo(new Book("a"), Book.class, Book.class, new Annotation[]{}, mt, null, bos);
-        //System.out.println(bos.toString());
         ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
-        Book book = (Book)provider.readFrom(Book.class, Book.class, 
+        @SuppressWarnings({"unchecked", "rawtypes" })
+        Book book = (Book)provider.readFrom((Class)Book.class, Book.class, 
                                             new Annotation[]{}, mt, null, bis);
         assertEquals("a", book.getName());
     }
@@ -117,19 +148,18 @@ public class AtomPojoProviderTest extends Assert {
     
     @Test
     public void testReadFeedWithBuilders() throws Exception {
-        @SuppressWarnings("unchecked")
-        AtomPojoProvider<Books> provider = (AtomPojoProvider<Books>)ctx.getBean("atom4");
+        AtomPojoProvider provider = (AtomPojoProvider)ctx.getBean("atom4");
         assertNotNull(provider);
         doTestReadFeed(provider);
     }
     
     @Test
     public void testReadFeedWithoutBuilders() throws Exception {
-        AtomPojoProvider<Books> provider = new AtomPojoProvider<Books>();
+        AtomPojoProvider provider = new AtomPojoProvider();
         doTestReadFeed(provider);
     }
 
-    private void doTestReadFeed(AtomPojoProvider<Books> provider) throws Exception {
+    private void doTestReadFeed(AtomPojoProvider provider) throws Exception {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         MediaType mt = MediaType.valueOf("application/atom+xml;type=feed");
         Books books = new Books();
@@ -139,7 +169,8 @@ public class AtomPojoProviderTest extends Assert {
         books.setBooks(bs);
         provider.writeTo(books, Books.class, Books.class, new Annotation[]{}, mt, null, bos);
         ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
-        Books books2 = provider.readFrom(Books.class, Books.class, 
+        @SuppressWarnings({"unchecked", "rawtypes" })
+        Books books2 = (Books)provider.readFrom((Class)Books.class, Books.class, 
                                             new Annotation[]{}, mt, null, bis);
         List<Book> list = books2.getBooks();
         assertEquals(2, list.size());
@@ -160,7 +191,7 @@ public class AtomPojoProviderTest extends Assert {
         assertNotNull(e);
         assertEquals(title, e.getTitle());
     }
- 
+    
     public static class CustomFeedWriter implements AtomElementWriter<Feed, Books> {
 
         public void writeTo(Feed feed, Books pojoFeed) {
@@ -245,6 +276,9 @@ public class AtomPojoProviderTest extends Assert {
             return name;
         }
         
+        public String getXMLContent() {
+            return "<" + name + "/>";
+        }
         
     }
     
