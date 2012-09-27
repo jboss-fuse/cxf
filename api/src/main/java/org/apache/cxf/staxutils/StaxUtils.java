@@ -25,7 +25,10 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URL;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -70,7 +73,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.ProcessingInstruction;
 import org.w3c.dom.Text;
 import org.w3c.dom.UserDataHandler;
-
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
@@ -140,16 +142,23 @@ public final class StaxUtils {
             innerElementCountThreshold = -1;
         }
         XMLInputFactory xif = createXMLInputFactory(true);
-        if (!xif.getClass().getName().contains("ctc.wstx")) {
-            xif = null;
+        String xifClassName = xif.getClass().getName();
+        if (xifClassName.contains("ctc.wstx") || xifClassName.contains("xml.xlxp")
+                || xifClassName.contains("xml.xlxp2") || xifClassName.contains("bea.core")) {
+            SAFE_INPUT_FACTORY = xif;
+        } else {
+            SAFE_INPUT_FACTORY = null;
         }
-        SAFE_INPUT_FACTORY = xif;
         
         XMLOutputFactory xof = XMLOutputFactory.newInstance();
-        if (!xof.getClass().getName().contains("ctc.wstx")) {
-            xof = null;
+        String xofClassName = xof.getClass().getName();
+        if (xofClassName.contains("ctc.wstx") || xofClassName.contains("xml.xlxp")
+                || xofClassName.contains("xml.xlxp2") || xofClassName.contains("bea.core")) {
+            SAFE_OUTPUT_FACTORY = xof;
+        } else {
+            SAFE_OUTPUT_FACTORY = null;
         }
-        SAFE_OUTPUT_FACTORY = xof;
+        
     }
     
     private StaxUtils() {
@@ -780,10 +789,8 @@ public final class StaxUtils {
         } else {
             writer.writeStartElement(prefix, localName, ns);
         }
-
-        NamedNodeMap attrs = e.getAttributes();
-        for (int i = 0; i < attrs.getLength(); i++) {
-            Node attr = attrs.item(i);
+        
+        for (Node attr : sortElementAttributes(e.getAttributes())) {          
 
             String name = attr.getLocalName();
             String attrPrefix = attr.getPrefix();
@@ -818,7 +825,7 @@ public final class StaxUtils {
                     } else if (attrPrefix.length() == 0) {
                         writer.writeAttribute(attns, name, value);
                     } else {
-                        if (repairing && DOMUtils.getNamespace(e, attrPrefix) == null) {
+                        if (repairing && writer.getNamespaceContext().getNamespaceURI(attrPrefix) == null) {
                             writer.writeNamespace(attrPrefix, attns);
                         }
                         writer.writeAttribute(attrPrefix, attns, name, value);
@@ -846,6 +853,27 @@ public final class StaxUtils {
         if (endElement) {
             writer.writeEndElement();
         }
+    }
+
+    private static List<Node> sortElementAttributes(NamedNodeMap attrs) {
+        if (attrs.getLength() == 0) {
+            return Collections.<Node> emptyList();
+        }
+        List<Node> sortedAttrs = new LinkedList<Node>();
+        for (int i = 0; i < attrs.getLength(); i++) {
+            Node attr = attrs.item(i);
+            String name = attr.getLocalName();          
+            if (name == null) {
+                name = attr.getNodeName();
+            }
+            if ("xmlns".equals(attr.getPrefix()) || "xmlns".equals(name)) {
+                sortedAttrs.add(0, attr);
+            } else {
+                sortedAttrs.add(attr);
+            }
+        }
+
+        return sortedAttrs;
     }
 
     public static void writeNode(Node n, XMLStreamWriter writer, boolean repairing) 
