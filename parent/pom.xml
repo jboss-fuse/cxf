@@ -47,7 +47,7 @@
         <cxf.eclipse.outputDirectory>${basedir}/target/classes</cxf.eclipse.outputDirectory>
         <cxf.saaj.impl.groupId>com.sun.xml.messaging.saaj</cxf.saaj.impl.groupId>
         <cxf.saaj.impl.artifactId>saaj-impl</cxf.saaj.impl.artifactId>
-        <cxf.saaj.impl.version>1.3.12</cxf.saaj.impl.version>
+        <cxf.saaj.impl.version>1.3.19</cxf.saaj.impl.version>
 
         <extra.saaj.dep.groupId>${cxf.saaj.impl.groupId}</extra.saaj.dep.groupId>
         <extra.saaj.dep.artifactId>${cxf.saaj.impl.artifactId}</extra.saaj.dep.artifactId>
@@ -143,8 +143,8 @@
         <cxf.servicemix.specs.version>2.0.0-fuse-SNAPSHOT</cxf.servicemix.specs.version>
         <cxf.javax.mail.version>1.4.4</cxf.javax.mail.version>
         <cxf.jaxb.bundle.version>2.2.1.1_2</cxf.jaxb.bundle.version>
-        <cxf.saaj-impl.bundle.version>1.3.18_1</cxf.saaj-impl.bundle.version>
-        <cxf.asm.bundle.version>3.3_2</cxf.asm.bundle.version>
+        <cxf.saaj-impl.bundle.version>1.3.19_1</cxf.saaj-impl.bundle.version>
+        <cxf.asm.bundle.version>3.3.1_1</cxf.asm.bundle.version>
         <cxf.wsdl4j.bundle.version>1.6.2_6</cxf.wsdl4j.bundle.version>
         <cxf.xmlsec.bundle.version>1.5.2</cxf.xmlsec.bundle.version>
         <cxf.rhino.bundle.version>1.7R2_3</cxf.rhino.bundle.version>
@@ -446,11 +446,15 @@
             <dependency>
                 <groupId>com.sun.xml.fastinfoset</groupId>
                 <artifactId>FastInfoset</artifactId>
-                <version>1.2.9</version>
+                <version>1.2.12</version>
                 <exclusions>
                     <exclusion>
                         <groupId>javax.xml</groupId>
                         <artifactId>jsr173</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>javax.xml.bind</groupId>
+                        <artifactId>jsr173_api</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -459,7 +463,7 @@
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
-                <version>4.8.2</version>
+                <version>4.10</version>
                 <scope>test</scope>
             </dependency>
 
@@ -546,7 +550,7 @@
             <dependency>
                 <groupId>com.sun.xml.parsers</groupId>
                 <artifactId>jaxp-ri</artifactId>
-                <version>1.4.2</version>
+                <version>1.4.5</version>
             </dependency>
             <dependency>
                 <groupId>antlr</groupId>
@@ -1357,7 +1361,7 @@
             <dependency>
                 <groupId>jaxen</groupId>
                 <artifactId>jaxen</artifactId>
-                <version>1.1.1</version>
+                <version>1.1.4</version>
                 <exclusions>
                     <exclusion>
                         <artifactId>jdom</artifactId>
