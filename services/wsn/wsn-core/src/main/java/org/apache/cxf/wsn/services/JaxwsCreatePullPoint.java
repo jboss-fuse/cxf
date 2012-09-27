@@ -24,7 +24,6 @@ import javax.jws.WebService;
 import javax.xml.ws.BindingType;
 
 import org.apache.cxf.wsn.AbstractPullPoint;
-import org.apache.cxf.wsn.EndpointManager;
 import org.apache.cxf.wsn.jms.JmsCreatePullPoint;
 
 @WebService(endpointInterface = "org.oasis_open.docs.wsn.bw_2.CreatePullPoint",
@@ -36,21 +35,13 @@ public class JaxwsCreatePullPoint extends JmsCreatePullPoint
     implements JaxwsCreatePullPointMBean {
 
     public JaxwsCreatePullPoint(String name) {
-        this(name, null, null);
-    }
-    public JaxwsCreatePullPoint(String name, ConnectionFactory connectionFactory) {
-        this(name, connectionFactory, null);
+        super(name);
+        manager = new JaxwsEndpointManager();
     }
 
-    public JaxwsCreatePullPoint(String name, 
-                                ConnectionFactory connectionFactory,
-                                EndpointManager epManager) {
+    public JaxwsCreatePullPoint(String name, ConnectionFactory connectionFactory) {
         super(name, connectionFactory);
-        if (epManager == null) {
-            manager = new JaxwsEndpointManager();
-        } else {
-            manager = epManager;
-        }
+        manager = new JaxwsEndpointManager();
     }
 
     @Override

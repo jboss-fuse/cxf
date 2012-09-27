@@ -32,7 +32,6 @@ import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebResult;
 import javax.jws.WebService;
-import javax.management.ObjectName;
 import javax.xml.namespace.QName;
 import javax.xml.ws.wsaddressing.W3CEndpointReference;
 
@@ -104,15 +103,6 @@ public abstract class AbstractNotificationBroker extends AbstractEndpoint
         subscriptions = new ConcurrentHashMap<String, AbstractSubscription>();
         publishers = new ConcurrentHashMap<String, AbstractPublisher>();
         nonContactPublishers = new CopyOnWriteArrayList<AbstractPublisher>();
-    }
-    
-    @Override
-    public ObjectName getMBeanName() {
-        try {
-            return new ObjectName("org.apache.cxf.service.wsn:type=WSNotificationBroker");
-        } catch (Exception e) {
-            return null;
-        }
     }
 
     public void init() throws Exception {

@@ -32,14 +32,7 @@ import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.wsn.wsdl.WSNWSDLLocator;
 
 public abstract class WSNHelper {
-    private static boolean setClassLoader = true;
-    public static boolean setClassLoader() {
-        return setClassLoader;
-    }
-    public static void setClassLoader(boolean cl) {
-        setClassLoader = cl;
-    }
-    
+
     public static <T> T getPort(EndpointReference ref, Class<T> serviceInterface) {
         if (!(ref instanceof W3CEndpointReference)) {
             throw new IllegalArgumentException("Unsupported endpoint reference: " 
@@ -53,9 +46,7 @@ public abstract class WSNHelper {
     public static <T> T getPort(String address, Class<T> serviceInterface) {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         try {
-            if (setClassLoader) {
-                Thread.currentThread().setContextClassLoader(WSNHelper.class.getClassLoader());
-            }
+            Thread.currentThread().setContextClassLoader(WSNHelper.class.getClassLoader());
             
             Service service = Service.create(WSNWSDLLocator.getWSDLUrl(),
                                              new QName("http://cxf.apache.org/wsn/jaxws", 
@@ -69,9 +60,7 @@ public abstract class WSNHelper {
     public static W3CEndpointReference createWSA(String address) {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         try {
-            if (setClassLoader) {
-                Thread.currentThread().setContextClassLoader(WSNHelper.class.getClassLoader());
-            }
+            Thread.currentThread().setContextClassLoader(WSNHelper.class.getClassLoader());
             
             return new W3CEndpointReferenceBuilder().address(address).build();
         } finally {

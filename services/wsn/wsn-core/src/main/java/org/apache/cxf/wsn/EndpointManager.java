@@ -18,14 +18,13 @@
  */
 package org.apache.cxf.wsn;
 
-import javax.xml.ws.Endpoint;
 import javax.xml.ws.wsaddressing.W3CEndpointReference;
 
 public interface EndpointManager {
 
-    Endpoint register(String address, Object service) throws EndpointRegistrationException;
+    Object register(String address, Object service) throws EndpointRegistrationException;
 
-    void unregister(Endpoint endpoint, Object service) throws EndpointRegistrationException;
+    void unregister(Object endpoint) throws EndpointRegistrationException;
 
-    W3CEndpointReference getEpr(Endpoint endpoint);
+    W3CEndpointReference getEpr(Object endpoint);
 }

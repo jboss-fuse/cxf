@@ -18,8 +18,6 @@
  */
 package org.apache.cxf.wsn;
 
-import javax.management.ObjectName;
-import javax.xml.ws.Endpoint;
 import javax.xml.ws.wsaddressing.W3CEndpointReference;
 
 public abstract class AbstractEndpoint implements EndpointMBean {
@@ -30,16 +28,12 @@ public abstract class AbstractEndpoint implements EndpointMBean {
 
     protected EndpointManager manager;
 
-    protected Endpoint endpoint;
+    protected Object endpoint;
 
     public AbstractEndpoint(String name) {
         this.name = name;
     }
 
-    public ObjectName getMBeanName() {
-        return null;
-    }
-    
     public String getName() {
         return name;
     }
@@ -58,7 +52,7 @@ public abstract class AbstractEndpoint implements EndpointMBean {
 
     public void unregister() throws EndpointRegistrationException {
         if (endpoint != null) {
-            manager.unregister(endpoint, this);
+            manager.unregister(endpoint);
         }
     }
 
