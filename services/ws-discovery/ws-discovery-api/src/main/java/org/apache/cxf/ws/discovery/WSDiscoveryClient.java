@@ -21,6 +21,9 @@ package org.apache.cxf.ws.discovery;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -71,7 +74,6 @@ public class WSDiscoveryClient implements Closeable {
     public static final QName SERVICE_QNAME 
         = new QName("http://docs.oasis-open.org/ws-dd/ns/discovery/2009/01", "DiscoveryProxy");
     
-    
     String address = "soap.udp://239.255.255.250:3702";
     boolean adHoc = true;
     AtomicInteger msgId = new AtomicInteger(1);
@@ -81,6 +83,7 @@ public class WSDiscoveryClient implements Closeable {
     Dispatch<Object> dispatch;
     ObjectFactory factory = new ObjectFactory();
     Bus bus;
+    int defaultProbeTimeout = 1000;
     
     public WSDiscoveryClient() {
     }
@@ -88,13 +91,25 @@ public class WSDiscoveryClient implements Closeable {
         this.bus = bus;
     }
     public WSDiscoveryClient(String address) {
-        this.address = address;
-        adHoc = false;
+        resetDispatch(address);
+    }
+    
+    public void setDefaultProbeTimeout(int i) {
+        defaultProbeTimeout = i;
+    }
+    public int getDefaultProbeTimeout() {
+        return defaultProbeTimeout;
     }
     
     public String getAddress() {
         return address;
     }
+    public void setAddress(String a) {
+        if (!address.equals(a)) {
+            resetDispatch(a);
+        }
+    }
+    
     
     private synchronized JAXBContext getJAXBContext() {
         if (jaxbContext == null) {
@@ -123,6 +138,20 @@ public class WSDiscoveryClient implements Closeable {
         service = null;
         dispatch = null;
         adHoc = false;
+        try {
+            URI uri = new URI(address);
+            if (StringUtils.isEmpty(uri.getHost())) {
+                adHoc = true;
+            } else {
+                InetSocketAddress isa = null;
+                isa = new InetSocketAddress(uri.getHost(), uri.getPort());
+                if (isa.getAddress().isMulticastAddress()) {
+                    adHoc = true;
+                }
+            }        
+        } catch (URISyntaxException e) {
+            //ignore
+        }
     }
     
     private synchronized Dispatch<Object> getDispatchInternal(boolean addSeq) {
@@ -215,10 +244,15 @@ public class WSDiscoveryClient implements Closeable {
         unregister(bt);
     }
     
+    public List<EndpointReference> probe() {
+        return probe((QName)null);
+    }
     public List<EndpointReference> probe(QName type) {
         ProbeType p = new ProbeType();
-        p.getTypes().add(type);
-        ProbeMatchesType pmt = probe(p, 1000);
+        if (type != null) {
+            p.getTypes().add(type);
+        }
+        ProbeMatchesType pmt = probe(p, defaultProbeTimeout);
         List<EndpointReference> er = new ArrayList<EndpointReference>();
         for (ProbeMatchType pm : pmt.getProbeMatch()) {
             for (String add : pm.getXAddrs()) {
@@ -236,7 +270,7 @@ public class WSDiscoveryClient implements Closeable {
     
     
     public ProbeMatchesType probe(ProbeType params) {
-        return probe(params, 1000);
+        return probe(params, defaultProbeTimeout);
     }    
     public ProbeMatchesType probe(ProbeType params, int timeout) {
         Dispatch<Object> disp = this.getDispatchInternal(false);
@@ -261,11 +295,9 @@ public class WSDiscoveryClient implements Closeable {
                             }
                         }
                     } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
+                        // ?
                     } catch (ExecutionException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
+                        // ?
                     }
                 }
             };
@@ -303,8 +335,7 @@ public class WSDiscoveryClient implements Closeable {
             xAddrs.add(add);
         }
     }
-
-    
-
-    
+    public boolean isAdHoc() {
+        return adHoc;
+    }
 }

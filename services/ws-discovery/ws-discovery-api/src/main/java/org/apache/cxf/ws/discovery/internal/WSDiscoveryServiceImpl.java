@@ -72,12 +72,28 @@ public class WSDiscoveryServiceImpl implements WSDiscoveryService {
     public WSDiscoveryServiceImpl(Bus b) {
         bus = b;
         client = new WSDiscoveryClient();
+        update(bus.getProperties());
     }
     public WSDiscoveryServiceImpl() {
         bus = BusFactory.newInstance().createBus();
         client = new WSDiscoveryClient();
+        update(bus.getProperties());
+    }
+    public WSDiscoveryServiceImpl(Bus b, Map<String, Object> props) {
+        bus = b;
+        client = new WSDiscoveryClient();
+        update(props);
     }
     
+    public final synchronized void update(Map<String, Object> props) {
+        String address = (String)props.get("org.apache.cxf.service.ws-discovery.address");
+        client.setAddress(address);
+        if (udpEndpoint != null && !client.isAdHoc()) {
+            udpEndpoint.stop();
+            udpEndpoint = null;
+            started = false;
+        }
+    }
     public WSDiscoveryClient getClient() {
         return client;
     }
@@ -163,13 +179,20 @@ public class WSDiscoveryServiceImpl implements WSDiscoveryService {
     
     
     public synchronized void startup() {
-        if (!started) {
-            udpEndpoint = Endpoint.create(new WSDiscoveryProvider());
-            Map<String, Object> props = new HashMap<String, Object>();
-            props.put("jaxws.provider.interpretNullAsOneway", "true");
-            udpEndpoint.setProperties(props);
-            udpEndpoint.publish("soap.udp://239.255.255.250:3702");
-            started = true;
+        if (!started && client.isAdHoc()) {
+            Bus b = BusFactory.getAndSetThreadDefaultBus(bus);
+            try {
+                udpEndpoint = Endpoint.create(new WSDiscoveryProvider());
+                Map<String, Object> props = new HashMap<String, Object>();
+                props.put("jaxws.provider.interpretNullAsOneway", "true");
+                udpEndpoint.setProperties(props);
+                udpEndpoint.publish("soap.udp://239.255.255.250:3702");
+                started = true;
+            } finally {
+                if (b != bus) {
+                    BusFactory.setThreadDefaultBus(b);
+                }
+            }
         }
     }
     
