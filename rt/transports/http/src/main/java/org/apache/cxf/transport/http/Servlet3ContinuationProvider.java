@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.cxf.continuations.Continuation;
+import org.apache.cxf.continuations.ContinuationCallback;
 import org.apache.cxf.continuations.ContinuationProvider;
 import org.apache.cxf.message.Message;
 
@@ -66,7 +67,7 @@ public class Servlet3ContinuationProvider implements ContinuationProvider {
         volatile boolean isResumed;
         volatile boolean isPending;
         volatile Object obj;
-        
+        private ContinuationCallback callback;
         public Servlet3Continuation() {
             // It looks current Servlet3 implementation request doesn't pass the isAsyncStart 
             // status to the redispatched request, so we use the attribute to check the statues
@@ -74,6 +75,7 @@ public class Servlet3ContinuationProvider implements ContinuationProvider {
             if (isNew) {
                 req.setAttribute(AbstractHTTPDestination.CXF_CONTINUATION_MESSAGE,
                                  inMessage.getExchange().getInMessage());
+                callback = inMessage.getExchange().get(ContinuationCallback.class);
                 context = req.startAsync(req, resp);
                 req.setAttribute(AbstractHTTPDestination.CXF_ASYNC_CONTEXT, context);
                 context.addListener(this);
@@ -99,6 +101,7 @@ public class Servlet3ContinuationProvider implements ContinuationProvider {
         }
         public void resume() {
             isResumed = true;
+            isPending = false;
             redispatch();
         }
 
@@ -131,13 +134,21 @@ public class Servlet3ContinuationProvider implements ContinuationProvider {
             inMessage.getExchange().getInMessage()
                 .remove(AbstractHTTPDestination.CXF_CONTINUATION_MESSAGE);
             isPending = false;
+            //REVISIT: isResumed = false;
+            if (callback != null) {
+                callback.onComplete();
+            }
         }
         public void onError(AsyncEvent event) throws IOException {
+            if (callback != null) {
+                callback.onError(event.getThrowable());
+            }
         }
         public void onStartAsync(AsyncEvent event) throws IOException {
         }
         public void onTimeout(AsyncEvent event) throws IOException {
             isPending = false;
+            //REVISIT: isResumed = true;
             redispatch();
         }
         

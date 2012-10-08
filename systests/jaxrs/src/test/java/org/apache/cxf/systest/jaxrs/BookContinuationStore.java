@@ -31,6 +31,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.CompletionCallback;
+import javax.ws.rs.container.TimeoutHandler;
 
 @Path("/bookstore")
 public class BookContinuationStore {
@@ -41,6 +43,20 @@ public class BookContinuationStore {
     
     public BookContinuationStore() {
         init();
+    }
+    
+    @GET
+    @Path("/books/defaulttimeout")
+    public void getBookDescriptionWithHandler(AsyncResponse async) {
+        async.register(new CompletionCallbackImpl());
+        async.setTimeout(2000, TimeUnit.MILLISECONDS);
+    }
+    
+    @GET
+    @Path("/books/timeouthandler/{id}")
+    public void getBookDescriptionWithHandler(@PathParam("id") String id, AsyncResponse async) {
+        async.setTimeout(2000, TimeUnit.MILLISECONDS);
+        async.setTimeoutHandler(new TimeoutHandlerImpl(id));
     }
     
     @GET
@@ -87,6 +103,36 @@ public class BookContinuationStore {
         books.put("5", "CXF in Action5");
     }
      
+    private class TimeoutHandlerImpl implements TimeoutHandler {
+
+        private String id;
+        
+        public TimeoutHandlerImpl(String id) {
+            this.id = id;
+        }
+        
+        @Override
+        public void handleTimeout(AsyncResponse asyncResponse) {
+            asyncResponse.resume(books.get(id));
+        }
+        
+    }
+    
+    private class CompletionCallbackImpl implements CompletionCallback {
+
+        @Override
+        public void onComplete() {
+            System.out.println("CompletionCallbackImpl: onComplete");
+            
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            // TODO Auto-generated method stub
+            
+        }
+        
+    }
 }
 
 

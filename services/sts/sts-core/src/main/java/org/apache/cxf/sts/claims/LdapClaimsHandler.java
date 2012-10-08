@@ -178,7 +178,7 @@ public class LdapClaimsHandler implements ClaimsHandler {
         }
 
         String[] searchAttributes = null;
-        searchAttributes = searchAttributeList.toArray(new String[] {});
+        searchAttributes = searchAttributeList.toArray(new String[searchAttributeList.size()]);
 
         AttributesMapper mapper = 
             new AttributesMapper() {
@@ -247,7 +247,7 @@ public class LdapClaimsHandler implements ClaimsHandler {
                     LOG.warning("Failed to read value of LDAP attribute '" + ldapAttribute + "'");
                 }
                 
-                c.setValue(claimValue.toString());
+                c.addValue(claimValue.toString());
                 // c.setIssuer(issuer);
                 // c.setOriginalIssuer(originalIssuer);
                 // c.setNamespace(namespace);

@@ -22,6 +22,8 @@ package org.apache.cxf.sts.claims;
 import java.io.Serializable;
 import java.net.URI;
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This represents a Claim that has been processed by a ClaimsHandler instance.
@@ -36,7 +38,7 @@ public class Claim implements Serializable {
     private String issuer;
     private String originalIssuer;
     private transient Principal principal;
-    private String value;
+    private List<String> values = new ArrayList<String>(1);
 
     public String getIssuer() {
         return issuer;
@@ -70,12 +72,34 @@ public class Claim implements Serializable {
         this.principal = principal;
     }
 
-    public void setValue(String value) {
-        this.value = value;
+    public void setValues(List<String> values) {
+        this.values.clear();
+        this.values.addAll(values);
     }
 
+    public void addValue(String s) {
+        this.values.add(s);
+    }
+    
+    public List<String> getValues() {
+        return values;
+    }
+
+    @Deprecated
+    public void setValue(String value) {
+        this.values.clear();
+        if (value != null) {
+            this.values.add(value);
+        }
+    }
+    @Deprecated
     public String getValue() {
-        return value;
+        if (this.values.size() == 0) {
+            return null;
+        } else if (this.values.size() == 1) {
+            return this.values.get(0);
+        }
+        throw new IllegalStateException("Claim has multiple values");
     }
 
 }
