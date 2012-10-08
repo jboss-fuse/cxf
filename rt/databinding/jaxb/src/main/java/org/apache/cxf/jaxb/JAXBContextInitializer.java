@@ -30,6 +30,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -41,6 +42,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapters;
 import javax.xml.namespace.QName;
 
 import org.apache.cxf.common.classloader.ClassLoaderUtils;
@@ -60,6 +62,7 @@ class JAXBContextInitializer extends ServiceModelVisitor {
 
     private Set<Class<?>> classes;
     private Collection<Object> typeReferences;
+    private Set<Class<?>> globalAdapters = new HashSet<Class<?>>();
 
     public JAXBContextInitializer(ServiceInfo serviceInfo,
                                   Set<Class<?>> classes,
@@ -197,15 +200,34 @@ class JAXBContextInitializer extends ServiceModelVisitor {
         if (anns != null) {
             for (Annotation a : anns) {
                 if (XmlJavaTypeAdapter.class.isAssignableFrom(a.annotationType())) {
-                    inspectTypeAdapter(((XmlJavaTypeAdapter)a).value());
+                    Type t = getTypeFromXmlAdapter((XmlJavaTypeAdapter)a);
+                    if (t != null) {
+                        addType(t);
+                    }
                 }
             }
         }
         XmlJavaTypeAdapter xjta = clazz.getAnnotation(XmlJavaTypeAdapter.class);
         if (xjta != null) {
-            inspectTypeAdapter(xjta.value());
+            Type t = getTypeFromXmlAdapter(xjta);
+            if (t != null) {
+                addType(t);
+            }
         }
-        
+        if (clazz.getPackage() != null) {
+            XmlJavaTypeAdapters adapt = clazz.getPackage().getAnnotation(XmlJavaTypeAdapters.class);
+            if (adapt != null) {
+                for (XmlJavaTypeAdapter a: adapt.value()) {
+                    globalAdapters.add(a.type());
+                }
+                for (XmlJavaTypeAdapter a: adapt.value()) {
+                    Type t = getTypeFromXmlAdapter(a);
+                    if (t != null) {
+                        addType(t);
+                    }
+                }
+            }
+        }
     }
 
     private void addType(Type cls) {
@@ -213,6 +235,9 @@ class JAXBContextInitializer extends ServiceModelVisitor {
     }
     private void addType(Type cls, boolean allowArray) {
         if (cls instanceof Class) {
+            if (globalAdapters.contains(cls)) {
+                return;
+            }
             if (((Class<?>)cls).isArray() && !allowArray) {
                 addClass(((Class<?>)cls).getComponentType());
             } else {
@@ -289,9 +314,10 @@ class JAXBContextInitializer extends ServiceModelVisitor {
                     //has an adapter.   We need to inspect the adapter and then
                     //return as the adapter will handle the superclass
                     //and interfaces and such
-                    @SuppressWarnings("rawtypes")
-                    Class<? extends XmlAdapter> c2 = xjta.value();
-                    inspectTypeAdapter(c2);
+                    Type t = getTypeFromXmlAdapter(xjta);
+                    if (t != null) {
+                        addType(t);
+                    }
                     return;
                 }
                 
@@ -306,17 +332,64 @@ class JAXBContextInitializer extends ServiceModelVisitor {
             }
         }
     }
+    
+    static XmlJavaTypeAdapter getFieldXJTA(final Field f) {
+        XmlJavaTypeAdapter adapter = f.getAnnotation(XmlJavaTypeAdapter.class);
+        if (adapter == null) {
+            adapter = f.getType().getAnnotation(XmlJavaTypeAdapter.class);
+        }
+        if (adapter == null) {
+            XmlJavaTypeAdapters adapters = f.getDeclaringClass().getPackage().getAnnotation(XmlJavaTypeAdapters.class);
+            if (adapters != null) {
+                for (XmlJavaTypeAdapter candidate : adapters.value()) {
+                    if (candidate != null && candidate.type().equals(f.getType())) {
+                        adapter = candidate;
+                        break;
+                    }
+                }
+            }
+        }
+        return adapter;
+    }
 
-    private void inspectTypeAdapter(Class<? extends XmlAdapter> aclass) {
-        Class<?> c2 = aclass;
-        Type sp = c2.getGenericSuperclass();
-        while (!XmlAdapter.class.equals(c2) && c2 != null) {
-            sp = c2.getGenericSuperclass();
-            c2 = c2.getSuperclass();
+    static XmlJavaTypeAdapter getMethodXJTA(final Method m) {
+        XmlJavaTypeAdapter adapter = m.getAnnotation(XmlJavaTypeAdapter.class);
+        if (adapter == null) {
+            adapter = m.getReturnType().getAnnotation(XmlJavaTypeAdapter.class);
         }
-        if (sp instanceof ParameterizedType) {
-            addType(((ParameterizedType)sp).getActualTypeArguments()[0]);
+        if (adapter == null) {
+            XmlJavaTypeAdapters adapters = m.getDeclaringClass().getPackage().getAnnotation(XmlJavaTypeAdapters.class);
+            if (adapters != null) {
+                for (XmlJavaTypeAdapter candidate : adapters.value()) {
+                    if (candidate != null && candidate.type().equals(m.getGenericReturnType())) {
+                        adapter = candidate;
+                        break;
+                    }
+                }
+            }
         }
+        return adapter;
+    }
+
+    static Class<?> getTypeFromXmlAdapter(XmlJavaTypeAdapter xjta) {
+        if (xjta != null) {
+            Class<?> c2 = xjta.value();
+            Type sp = c2.getGenericSuperclass();
+            while (!XmlAdapter.class.equals(c2) && c2 != null) {
+                sp = c2.getGenericSuperclass();
+                c2 = c2.getSuperclass();
+            }
+            if (sp instanceof ParameterizedType) {
+                return (Class<?>)((ParameterizedType)sp).getActualTypeArguments()[0];
+            }
+        }
+        return null;
+    }
+
+    @SuppressWarnings("rawtypes") 
+    static XmlAdapter getXmlAdapter(XmlJavaTypeAdapter adapterAnnotation)
+        throws InstantiationException, IllegalAccessException {
+        return adapterAnnotation != null ? adapterAnnotation.value().newInstance() : null;
     }
 
     private void walkReferences(Class<?> cls) {
@@ -376,9 +449,6 @@ class JAXBContextInitializer extends ServiceModelVisitor {
             && !Modifier.isPublic(field.getModifiers())) {
             return false;
         }
-        if (field.getAnnotation(XmlJavaTypeAdapter.class) != null) {
-            return false;
-        }
         if (accessType == XmlAccessType.NONE
             || accessType == XmlAccessType.PROPERTY) {
             return checkJaxbAnnotation(field.getAnnotations());
@@ -405,12 +475,6 @@ class JAXBContextInitializer extends ServiceModelVisitor {
             return false;
         }
 
-        boolean isPropGetter = method.getName().startsWith("get") || method.getName().startsWith("is");
-
-        if (!isPropGetter 
-            || method.getAnnotation(XmlJavaTypeAdapter.class) != null) {
-            return false;
-        }
         int beginIndex = 3;
         if (method.getName().startsWith("is")) {
             beginIndex = 2;
