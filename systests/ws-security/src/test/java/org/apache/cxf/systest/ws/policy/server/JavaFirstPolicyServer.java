@@ -16,34 +16,35 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.systest.ws.wssec11.server;
+
+package org.apache.cxf.systest.ws.policy.server;
+
+import java.net.URL;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.bus.spring.SpringBusFactory;
+import org.apache.cxf.testutil.common.AbstractBusTestServerBase;
 
-public class Server12Restricted extends AbstractServerRestricted {
-    static final String PORT = allocatePort(Server12.class);
+import org.junit.Assert;
 
-    public Server12Restricted() throws Exception {
-        super("http://localhost:" + PORT);
+public class JavaFirstPolicyServer extends AbstractBusTestServerBase {
+
+    public JavaFirstPolicyServer() {
+
     }
-    
-    public Server12Restricted(String baseUrl) throws Exception {
-        super(baseUrl);
-    }
-    
+
     protected void run()  {
-        Bus busLocal = new SpringBusFactory().createBus(
-            "org/apache/cxf/systest/ws/wssec11/server/server.xml");
+        URL busFile = JavaFirstPolicyServer.class.getResource("javafirstserver.xml");
+        Bus busLocal = new SpringBusFactory().createBus(busFile);
         BusFactory.setDefaultBus(busLocal);
+        Assert.assertNotNull(busLocal);
         setBus(busLocal);
 
         try {
-            new Server12Restricted("http://localhost:" + PORT);
+            new JavaFirstPolicyServer();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    
 }
