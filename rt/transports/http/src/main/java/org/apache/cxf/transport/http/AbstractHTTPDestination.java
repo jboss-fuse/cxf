@@ -149,7 +149,7 @@ public abstract class AbstractHTTPDestination
         return bus;
     }
 
-    private AuthorizationPolicy getAuthorizationPolicyFromMessage(String credentials) {
+    private AuthorizationPolicy getAuthorizationPolicyFromMessage(String credentials, Principal pp) {
         if (credentials == null || StringUtils.isEmpty(credentials.trim())) {
             return null;
         }
@@ -158,20 +158,45 @@ public abstract class AbstractHTTPDestination
             String authEncoded = credentials.split(" ")[1];
             try {
                 String authDecoded = new String(Base64Utility.decode(authEncoded));
-                String authInfo[] = authDecoded.split(":");
-                String username = (authInfo.length > 0) ? authInfo[0] : "";
-                // Below line for systems that blank out password after authentication;
-                // see CXF-1495 for more info
-                String password = (authInfo.length > 1) ? authInfo[1] : "";
-                AuthorizationPolicy policy = new AuthorizationPolicy();
+                int idx = authDecoded.indexOf(':');
+                String username = null;
+                String password = null;
+                if (idx == -1) {
+                    username = authDecoded;
+                } else {
+                    username = authDecoded.substring(0, idx);
+                    if (idx < (authDecoded.length() - 1)) {
+                        password = authDecoded.substring(idx + 1);
+                    }
+                }
+                
+                AuthorizationPolicy policy = pp == null 
+                    ? new AuthorizationPolicy() : new PrincipalAuthorizationPolicy(pp);
                 policy.setUserName(username);
                 policy.setPassword(password);
+                policy.setAuthorizationType(authType);
                 return policy;
             } catch (Base64Exception ex) {
-                // Invalid authentication => treat as not authenticated
+                // Invalid authentication => treat as not authenticated or use the Principal
             }
+        } 
+        if (pp != null) {
+            AuthorizationPolicy policy = new PrincipalAuthorizationPolicy(pp);
+            policy.setUserName(pp.getName());
+            policy.setAuthorization(credentials);
+            policy.setAuthorizationType(authType);
+            return policy;
         }
         return null;
+    }
+    public static final class PrincipalAuthorizationPolicy extends AuthorizationPolicy {
+        final Principal principal;
+        public PrincipalAuthorizationPolicy(Principal p) {
+            principal = p;
+        }
+        public Principal getPrincipal() {
+            return principal;
+        }
     }
     
     /** 
@@ -250,6 +275,7 @@ public abstract class AbstractHTTPDestination
                 super.cacheInput();
             }
         };
+        
         inMessage.setContent(DelegatingInputStream.class, in);
         inMessage.setContent(InputStream.class, in);
         inMessage.put(HTTP_REQUEST, req);
@@ -303,8 +329,8 @@ public abstract class AbstractHTTPDestination
         }
         inMessage.put(Message.FIXED_PARAMETER_ORDER, isFixedParameterOrder());
         inMessage.put(Message.ASYNC_POST_RESPONSE_DISPATCH, Boolean.TRUE);
+        final Principal pp = req.getUserPrincipal(); 
         inMessage.put(SecurityContext.class, new SecurityContext() {
-            private Principal pp = req.getUserPrincipal(); 
             public Principal getUserPrincipal() {
                 return pp;
             }
@@ -313,10 +339,11 @@ public abstract class AbstractHTTPDestination
             }
         });
         
+        
         Headers headers = new Headers(inMessage);
         headers.copyFromRequest(req);
         String credentials = headers.getAuthorization();
-        AuthorizationPolicy authPolicy = getAuthorizationPolicyFromMessage(credentials);
+        AuthorizationPolicy authPolicy = getAuthorizationPolicyFromMessage(credentials, pp);
         inMessage.put(AuthorizationPolicy.class, authPolicy);
         
         propogateSecureSession(req, inMessage);

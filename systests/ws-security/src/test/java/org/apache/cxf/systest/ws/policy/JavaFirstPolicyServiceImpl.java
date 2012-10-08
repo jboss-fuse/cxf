@@ -16,28 +16,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.systest.ws.wssec10.server;
 
-import org.apache.cxf.Bus;
-import org.apache.cxf.BusFactory;
-import org.apache.cxf.bus.spring.SpringBusFactory;
-import org.apache.cxf.testutil.common.AbstractBusTestServerBase;
+package org.apache.cxf.systest.ws.policy;
 
-public class AuthorizedServer extends AbstractBusTestServerBase {
-    static final String PORT = allocatePort(AuthorizedServer.class);
+import javax.jws.WebService;
 
-    private static String configFileName =
-        "org/apache/cxf/systest/ws/wssec10/server/server_restricted_authorized.xml";
-    
-    public AuthorizedServer() throws Exception {
-        
-    }
-    
-    protected void run()  {
-        Bus busLocal = new SpringBusFactory().createBus(configFileName);
-        BusFactory.setDefaultBus(busLocal);
-        setBus(busLocal);
+@WebService(endpointInterface = "org.apache.cxf.systest.ws.policy.JavaFirstPolicyService", 
+serviceName = "JavaFirstPolicyService", 
+targetNamespace = "http://www.example.org/contract/JavaFirstPolicyService")
+public class JavaFirstPolicyServiceImpl implements JavaFirstPolicyService {
+    public void doOperationOne() {
     }
 
+    public void doOperationTwo() {
+    }
+
+    public void doOperationThree() {
+    }
+
+    public void doOperationFour() {
+    }
+
+    public void doPing() {
+    }
 }
-
