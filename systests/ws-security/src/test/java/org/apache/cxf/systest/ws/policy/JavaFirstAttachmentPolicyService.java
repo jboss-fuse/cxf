@@ -16,31 +16,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jaxrs.ext.search.jpa;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
+package org.apache.cxf.systest.ws.policy;
 
-@Entity(name = "Book")
-public class Book {
-    @Id
-    private int id;
-    private String name;
+import javax.jws.WebMethod;
+import javax.jws.WebService;
+
+@WebService(name = "JavaFirstAttachmentPolicyService", 
+targetNamespace = "http://www.example.org/contract/JavaFirstAttachmentPolicyService")
+public interface JavaFirstAttachmentPolicyService {
+    @WebMethod(operationName = "doOperationLevelPolicy")
+    void doOperationLevelPolicy();
+
+    @WebMethod(operationName = "doInputMessagePolicy")
+    void doInputMessagePolicy();
+
+    @WebMethod(operationName = "doOutputMessagePolicy")
+    void doOutputMessagePolicy();
     
+    @WebMethod(operationName = "doNoPolicy")
+    void doNoPolicy();
     
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 }

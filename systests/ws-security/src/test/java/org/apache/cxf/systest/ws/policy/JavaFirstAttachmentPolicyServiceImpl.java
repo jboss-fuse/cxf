@@ -17,37 +17,23 @@
  * under the License.
  */
 
-package org.apache.cxf.tools.corba.common.idltypes;
+package org.apache.cxf.systest.ws.policy;
 
-import java.io.PrintWriter;
+import javax.jws.WebService;
 
-public final class IdlConst extends IdlDefnImplBase implements IdlType {
-    private IdlType base;
-    private String value;
-
-    private IdlConst(IdlScopeBase parent, String name, IdlType basetype, String val) {
-        super(parent, name);
-        this.base = basetype;
-        this.value = val;
-    }
-    
-    public static IdlConst create(IdlScopeBase parent, String name, IdlType base, String value) {
-        return new IdlConst(parent, name, base, value);
+@WebService(endpointInterface = "org.apache.cxf.systest.ws.policy.JavaFirstAttachmentPolicyService", 
+serviceName = "JavaFirstAttachmentPolicyService", 
+targetNamespace = "http://www.example.org/contract/JavaFirstAttachmentPolicyService")
+public class JavaFirstAttachmentPolicyServiceImpl implements JavaFirstAttachmentPolicyService {
+    public void doOperationLevelPolicy() {
     }
 
-
-    IdlType baseType() {
-        return base;
-    }
-    
-    String valueType() {
-        return value;
+    public void doInputMessagePolicy() {
     }
 
-
-    public void write(PrintWriter pw) {
-        pw.println(indent() + "const " + base.fullName(scopeName()) + " " 
-                   + localName() + " = "  + value + ";");
+    public void doOutputMessagePolicy() {
     }
-    
+
+    public void doNoPolicy() {
+    }
 }
