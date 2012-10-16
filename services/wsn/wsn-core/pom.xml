@@ -146,7 +146,7 @@
                             org.apache.activemq.activemq-core,org.apache.cxf.services.wsn.cxf-services-wsn-api,org.apache.cxf.bundle
                         </Require-Bundle>
                         <Import-Package>
-                            org.apache.cxf.wsn.util.*;version=${project.version},
+                            org.apache.cxf.wsn.util.*;version="[2.5,3)",
                             !org.apache.cxf.wsn*,
                             !org.apache.activemq*,
                             javax.xml.bind*;version="[0.0,3)",
