@@ -286,6 +286,21 @@ public class OutTransformWriterTest extends Assert {
     }
 
     @Test
+    @org.junit.Ignore
+    public void testRemoveOneNamespace() throws Exception {
+        Map<String, String> inMap = new HashMap<String, String>();
+        inMap.put("{http://cxf.apache.org/vgop/serviceorder/v1_0}result", "result"); 
+        XMLStreamReader reader = 
+            TransformTestUtils.createOutTransformedStreamReader("../resources/complexReqIn5.xml", 
+                                                                inMap, null, null, null, false, null);
+        
+        XMLStreamReader reader2 = 
+            StaxUtils.createXMLStreamReader(
+                InTransformReader.class.getResourceAsStream("../resources/complexReq5.xml"));
+        TransformTestUtils.verifyReaders(reader2, reader, true, true);
+    }
+    
+    @Test
     public void testReadWithReplaceAppend() throws Exception {
         Map<String, String> transformElements = new HashMap<String, String>();
         transformElements.put("requestValue",
