@@ -23,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URL;
@@ -64,6 +65,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.XMLFilterImpl;
 
 import com.sun.codemodel.ClassType;
@@ -78,6 +80,7 @@ import com.sun.tools.xjc.Driver;
 import com.sun.tools.xjc.ErrorReceiver;
 import com.sun.tools.xjc.Options;
 import com.sun.tools.xjc.Plugin;
+import com.sun.tools.xjc.XJCListener;
 import com.sun.tools.xjc.api.Mapping;
 import com.sun.tools.xjc.api.Property;
 import com.sun.tools.xjc.api.S2JJAXBModel;
@@ -86,6 +89,7 @@ import com.sun.tools.xjc.api.TypeAndAnnotation;
 import com.sun.tools.xjc.api.XJC;
 import com.sun.tools.xjc.reader.internalizer.AbstractReferenceFinderImpl;
 import com.sun.tools.xjc.reader.internalizer.DOMForest;
+import com.sun.tools.xjc.reader.internalizer.InternalizationLogic;
 import com.sun.tools.xjc.reader.xmlschema.parser.LSInputSAXWrapper;
 import com.sun.tools.xjc.reader.xmlschema.parser.XMLSchemaInternalizationLogic;
 
@@ -122,9 +126,47 @@ import org.apache.ws.commons.schema.XmlSchemaSerializer;
 import org.apache.ws.commons.schema.XmlSchemaSerializer.XmlSchemaSerializerException;
 
 public class JAXBDataBinding implements DataBindingProfile {
+    static final String XJCVERSION;
+    static {
+        
+        VersionDetectListener listener = new VersionDetectListener();
+        try {
+            Driver.run(new String[] {"-version"}, listener);
+        } catch (BadCommandLineException e) {
+            //
+        }
+        XJCVERSION = listener.getVersion();
+    }
+    
+    static final class VersionDetectListener extends XJCListener {
+        private String s = "2.1";
+        VersionDetectListener() {
+        }
+        public String getVersion() {
+            return s;
+        }
+        public void error(SAXParseException exception) {
+        }
 
+        public void fatalError(SAXParseException exception) {
+        }
 
-    public class LocationFilterReader extends StreamReaderDelegate implements XMLStreamReader {
+        public void warning(SAXParseException exception) {
+        }
+
+        public void info(SAXParseException exception) {
+        }
+
+        public void message(String msg) {
+            if (msg.contains(" ")) {
+                msg = msg.substring(msg.indexOf(' ')).trim();
+            }
+            if (!StringUtils.isEmpty(msg)) {
+                s = msg;
+            }
+        }
+    }
+    public class LocationFilterReader extends StreamReaderDelegate {
         boolean isImport;
         boolean isInclude;
         int locIdx = -1;
@@ -195,6 +237,11 @@ public class JAXBDataBinding implements DataBindingProfile {
         }
 
         private String mapSchemaLocation(String target) {
+            //See http://java.net/jira/browse/JAXB-925
+            if (this.getLocation().getSystemId().startsWith("jar:") 
+                && XJCVERSION.startsWith("2.2")) {
+                return target;
+            }
             return JAXBDataBinding.mapSchemaLocation(target, this.getLocation().getSystemId(), catalog);
         }
 
@@ -303,7 +350,10 @@ public class JAXBDataBinding implements DataBindingProfile {
         SchemaCompiler schemaCompiler = XJC.createSchemaCompiler();
         Bus bus = context.get(Bus.class);
         OASISCatalogManager catalog = bus.getExtension(OASISCatalogManager.class);
-        hackInNewInternalizationLogic(schemaCompiler, catalog);
+
+        Options opts = null;
+        opts = getOptions(schemaCompiler);
+        hackInNewInternalizationLogic(schemaCompiler, catalog, opts);
 
         ClassCollector classCollector = context.get(ClassCollector.class);
 
@@ -319,8 +369,6 @@ public class JAXBDataBinding implements DataBindingProfile {
         List<InputSource> jaxbBindings = context.getJaxbBindingFile();
         SchemaCollection schemas = (SchemaCollection) context.get(ToolConstants.XML_SCHEMA_COLLECTION);
 
-        Options opts = null;
-        opts = getOptions(schemaCompiler);
 
         List<String> args = new ArrayList<String>();
 
@@ -455,6 +503,11 @@ public class JAXBDataBinding implements DataBindingProfile {
                     || "include".equals(localName))) {
                 String s = atts.getValue("schemaLocation");
                 if (!StringUtils.isEmpty(s)) {
+                    //See http://java.net/jira/browse/JAXB-925
+                    if (locator.getSystemId().startsWith("jar:") 
+                        && XJCVERSION.startsWith("2.2")) {
+                        return s;
+                    }
                     s = JAXBDataBinding.mapSchemaLocation(s, locator.getSystemId(), catalog);
                 }
                 return s;
@@ -463,16 +516,27 @@ public class JAXBDataBinding implements DataBindingProfile {
         }
     }
     private void hackInNewInternalizationLogic(SchemaCompiler schemaCompiler,
-                                               final OASISCatalogManager catalog) {
+                                               final OASISCatalogManager catalog,
+                                               Options opts) {
         try {
             Field f = schemaCompiler.getClass().getDeclaredField("forest");
             f.setAccessible(true);
-            DOMForest forest = new DOMForest(new XMLSchemaInternalizationLogic() {
+            XMLSchemaInternalizationLogic logic = new XMLSchemaInternalizationLogic() {
                 public XMLFilterImpl createExternalReferenceFinder(DOMForest parent) {
                     return new ReferenceFinder(parent, catalog);
                 }
+            };
+            
+            Constructor<DOMForest> c = null;
+            DOMForest forest = null;
 
-            });
+            try {
+                c = DOMForest.class.getConstructor(InternalizationLogic.class, Options.class);
+                forest = c.newInstance(logic, opts);
+            } catch (Throwable t) {
+                c = DOMForest.class.getConstructor(InternalizationLogic.class);
+                forest = c.newInstance(logic);
+            }
             forest.setErrorHandler((ErrorReceiver)schemaCompiler);
             f.set(schemaCompiler, forest);
         } catch (Throwable ex)  {
