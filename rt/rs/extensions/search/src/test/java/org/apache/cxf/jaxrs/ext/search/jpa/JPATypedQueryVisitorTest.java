@@ -20,7 +20,10 @@ package org.apache.cxf.jaxrs.ext.search.jpa;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,10 +31,14 @@ import java.util.Map;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.persistence.Tuple;
 import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.metamodel.SingularAttribute;
 
 import org.apache.cxf.jaxrs.ext.search.SearchCondition;
 import org.apache.cxf.jaxrs.ext.search.SearchConditionVisitor;
+import org.apache.cxf.jaxrs.ext.search.SearchUtils;
 import org.apache.cxf.jaxrs.ext.search.fiql.FiqlParser;
 
 import org.junit.After;
@@ -65,21 +72,30 @@ public class JPATypedQueryVisitorTest extends Assert {
             b1.setId(9);
             b1.setTitle("num9");
             b1.setAddress(new OwnerAddress("Street1"));
-            b1.setOwnerName(new OwnerName(new Name("Fred")));
+            OwnerInfo info1 = new OwnerInfo();
+            info1.setName(new Name("Fred"));
+            info1.setDateOfBirth(parseDate("2000-01-01"));
+            b1.setOwnerInfo(info1);
             em.persist(b1);
             assertTrue(em.contains(b1));
             Book b2 = new Book();
             b2.setId(10);
             b2.setTitle("num10");
             b2.setAddress(new OwnerAddress("Street2"));
-            b2.setOwnerName(new OwnerName(new Name("Barry")));
+            OwnerInfo info2 = new OwnerInfo();
+            info2.setName(new Name("Barry"));
+            info2.setDateOfBirth(parseDate("2001-01-01"));
+            b2.setOwnerInfo(info2);
             em.persist(b2);
             assertTrue(em.contains(b2));
             Book b3 = new Book();
             b3.setId(11);
             b3.setTitle("num11");
             b3.setAddress(new OwnerAddress("Street3"));
-            b3.setOwnerName(new OwnerName(new Name("Bill")));
+            OwnerInfo info3 = new OwnerInfo();
+            info3.setName(new Name("Bill"));
+            info3.setDateOfBirth(parseDate("2002-01-01"));
+            b3.setOwnerInfo(info3);
             em.persist(b3);
             assertTrue(em.contains(b3));
             
@@ -100,10 +116,12 @@ public class JPATypedQueryVisitorTest extends Assert {
             if (emFactory != null) {
                 emFactory.close();
             }
+        } catch (Throwable ex) {
+            ex.printStackTrace();    
         } finally {    
             try {
                 connection.createStatement().execute("SHUTDOWN");
-            } catch (Exception ex) {
+            } catch (Throwable ex) {
                 ex.printStackTrace();
             }
         }
@@ -141,6 +159,15 @@ public class JPATypedQueryVisitorTest extends Assert {
         List<Book> books = queryBooks("id==10");
         assertEquals(1, books.size());
         assertTrue(10 == books.get(0).getId());
+    }
+    
+    @Test
+    public void testEqualsCriteriaQueryTuple() throws Exception {
+        List<Tuple> books = criteriaQueryBooks("id==10");
+        assertEquals(1, books.size());
+        Tuple tuple = books.get(0);
+        int tupleId = tuple.get("id", Integer.class);
+        assertEquals(10, tupleId);
     }
     
     @Test
@@ -195,27 +222,45 @@ public class JPATypedQueryVisitorTest extends Assert {
 
     @Test
     public void testEqualsOwnerNameQuery() throws Exception {
-        List<Book> books = queryBooks("ownerName.name.name==Fred");
+        List<Book> books = queryBooks("ownerInfo.name.name==Fred");
         assertEquals(1, books.size());
         Book book = books.get(0);
-        assertEquals("Fred", book.getOwnerName().getName().getName());
+        assertEquals("Fred", book.getOwnerInfo().getName().getName());
     }
     
     @Test
     public void testEqualsOwnerNameQuery2() throws Exception {
-        List<Book> books = queryBooks("ownerName.name==Fred");
+        List<Book> books = queryBooks("ownerInfo.name==Fred");
         assertEquals(1, books.size());
         Book book = books.get(0);
-        assertEquals("Fred", book.getOwnerName().getName().getName());
+        assertEquals("Fred", book.getOwnerInfo().getName().getName());
     }
     
     @Test
     public void testEqualsOwnerNameQuery3() throws Exception {
         List<Book> books = queryBooks("ownerName==Fred", null,
-            Collections.singletonMap("ownerName", "ownerName.name.name"));
+            Collections.singletonMap("ownerName", "ownerInfo.name.name"));
         assertEquals(1, books.size());
         Book book = books.get(0);
-        assertEquals("Fred", book.getOwnerName().getName().getName());
+        assertEquals("Fred", book.getOwnerInfo().getName().getName());
+    }
+    
+    @Test
+    public void testEqualsOwnerBirthDate() throws Exception {
+        List<Book> books = queryBooks("ownerbdate==2000-01-01", null,
+            Collections.singletonMap("ownerbdate", "ownerInfo.dateOfBirth"));
+        assertEquals(1, books.size());
+        Book book = books.get(0);
+        assertEquals("Fred", book.getOwnerInfo().getName().getName());
+        
+        Date d = parseDate("2000-01-01");
+        
+        assertEquals("Fred", book.getOwnerInfo().getName().getName());
+        assertEquals(d, book.getOwnerInfo().getDateOfBirth());
+    }
+    
+    private Date parseDate(String value) throws Exception {
+        return new SimpleDateFormat(SearchUtils.DEFAULT_DATE_FORMAT).parse(value);
     }
     
     @Test
@@ -278,5 +323,22 @@ public class JPATypedQueryVisitorTest extends Assert {
         filter.accept(jpa);
         TypedQuery<Book> query = jpa.getQuery();
         return query.getResultList();
+    }
+    
+    private List<Tuple> criteriaQueryBooks(String expression) throws Exception {
+        SearchCondition<Book> filter = 
+            new FiqlParser<Book>(Book.class).parse(expression);
+        JPACriteriaQueryVisitor<Book, Tuple> jpa = 
+            new JPACriteriaQueryVisitor<Book, Tuple>(em, Book.class, Tuple.class);
+        filter.accept(jpa);
+        
+        List<SingularAttribute<Book, ?>> selections = 
+            new ArrayList<SingularAttribute<Book, ?>>();
+        selections.add(Book_.id);
+        
+        jpa.selectTuple(selections);
+        
+        CriteriaQuery<Tuple> cquery = jpa.getQuery();
+        return em.createQuery(cquery).getResultList();
     }
 }

@@ -18,28 +18,15 @@
  */
 package org.apache.cxf.jaxrs.ext.search.jpa;
 
-import javax.persistence.Embeddable;
-import javax.persistence.Embedded;
+import javax.persistence.metamodel.SingularAttribute;
 
-@Embeddable
-public class OwnerName {
-
-    private Name name;
-
-    public OwnerName() {
+@javax.persistence.metamodel.StaticMetamodel(Book.class)
+//CHECKSTYLE:OFF
+public final class Book_ {
+    private Book_() {
         
     }
-    
-    public OwnerName(Name name) {
-        this.name = name;
-    }
-    
-    @Embedded
-    public Name getName() {
-        return name;
-    }
-
-    public void setName(Name name) {
-        this.name = name;
-    }
+    public static volatile SingularAttribute<Book, Integer> id;
+    public static volatile SingularAttribute<Book, String> title;
 }
+//CHECKSTYLE:ON

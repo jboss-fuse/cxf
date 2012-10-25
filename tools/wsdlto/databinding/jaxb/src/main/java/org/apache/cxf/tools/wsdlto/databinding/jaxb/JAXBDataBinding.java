@@ -22,6 +22,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -65,6 +67,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.XMLFilterImpl;
 
 import com.sun.codemodel.ClassType;
@@ -79,6 +82,7 @@ import com.sun.tools.xjc.Driver;
 import com.sun.tools.xjc.ErrorReceiver;
 import com.sun.tools.xjc.Options;
 import com.sun.tools.xjc.Plugin;
+import com.sun.tools.xjc.XJCListener;
 import com.sun.tools.xjc.api.Mapping;
 import com.sun.tools.xjc.api.Property;
 import com.sun.tools.xjc.api.S2JJAXBModel;
@@ -125,8 +129,46 @@ import org.apache.ws.commons.schema.XmlSchemaSerializer;
 import org.apache.ws.commons.schema.XmlSchemaSerializer.XmlSchemaSerializerException;
 
 public class JAXBDataBinding implements DataBindingProfile {
+    static final String XJCVERSION;
+    static {
+        
+        VersionDetectListener listener = new VersionDetectListener();
+        try {
+            Driver.run(new String[] {"-version"}, listener);
+        } catch (BadCommandLineException e) {
+            //
+        }
+        XJCVERSION = listener.getVersion();
+    }
+    
+    static final class VersionDetectListener extends XJCListener {
+        private String s = "2.1";
+        VersionDetectListener() {
+        }
+        public String getVersion() {
+            return s;
+        }
+        public void error(SAXParseException exception) {
+        }
 
+        public void fatalError(SAXParseException exception) {
+        }
 
+        public void warning(SAXParseException exception) {
+        }
+
+        public void info(SAXParseException exception) {
+        }
+
+        public void message(String msg) {
+            if (msg.contains(" ")) {
+                msg = msg.substring(msg.indexOf(' ')).trim();
+            }
+            if (!StringUtils.isEmpty(msg)) {
+                s = msg;
+            }
+        }
+    }
     public class LocationFilterReader extends StreamReaderDelegate {
         boolean isImport;
         boolean isInclude;
@@ -198,6 +240,11 @@ public class JAXBDataBinding implements DataBindingProfile {
         }
 
         private String mapSchemaLocation(String target) {
+            //See http://java.net/jira/browse/JAXB-925
+            if (this.getLocation().getSystemId().startsWith("jar:") 
+                && XJCVERSION.startsWith("2.2")) {
+                return target;
+            }
             return JAXBDataBinding.mapSchemaLocation(target, this.getLocation().getSystemId(), catalog);
         }
 
@@ -459,6 +506,11 @@ public class JAXBDataBinding implements DataBindingProfile {
                     || "include".equals(localName))) {
                 String s = atts.getValue("schemaLocation");
                 if (!StringUtils.isEmpty(s)) {
+                    //See http://java.net/jira/browse/JAXB-925
+                    if (locator.getSystemId().startsWith("jar:") 
+                        && XJCVERSION.startsWith("2.2")) {
+                        return s;
+                    }
                     s = JAXBDataBinding.mapSchemaLocation(s, locator.getSystemId(), catalog);
                 }
                 return s;
@@ -590,7 +642,6 @@ public class JAXBDataBinding implements DataBindingProfile {
                     throw new RuntimeException(e);
                 }
                 Element ele = docs[0].getDocumentElement();
-                ele = removeImportElement(ele, key, catalog);
                 if (context.fullValidateWSDL()) {
                     String uri = null;
                     try {
@@ -598,8 +649,9 @@ public class JAXBDataBinding implements DataBindingProfile {
                     } catch (Throwable ex) {
                         //ignore - DOM level 3
                     }
-                    validateSchema(ele, uri, catalog);
+                    validateSchema(ele, uri, catalog, schemaCollection);
                 }
+                ele = removeImportElement(ele, key, catalog);
                 try {
                     docs[0].setDocumentURI(key);
                 } catch (Throwable t) {
@@ -665,10 +717,10 @@ public class JAXBDataBinding implements DataBindingProfile {
                 }
                 ids.add(key);
                 Element ele = sci.getElement();
-                ele = removeImportElement(ele, key, catalog);
                 if (context.fullValidateWSDL()) {
-                    validateSchema(ele, sci.getSystemId(), catalog);
+                    validateSchema(ele, sci.getSystemId(), catalog, schemaCollection);
                 }
+                ele = removeImportElement(ele, key, catalog);
                 InputSource is = new InputSource((InputStream)null);
                 //key = key.replaceFirst("#types[0-9]+$", "");
                 is.setSystemId(key);
@@ -906,8 +958,10 @@ public class JAXBDataBinding implements DataBindingProfile {
     }
 
 
-    public void validateSchema(Element ele, String uri,
-                               final OASISCatalogManager catalog) throws ToolException {
+    public void validateSchema(Element ele, 
+                               String uri,
+                               final OASISCatalogManager catalog,
+                               final SchemaCollection schemaCollection) throws ToolException {
         SchemaFactory schemaFact = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         schemaFact.setResourceResolver(new LSResourceResolver() {
             public LSInput resolveResource(String type,
@@ -916,6 +970,15 @@ public class JAXBDataBinding implements DataBindingProfile {
                                            String systemId,
                                            String baseURI) {
                 String s = JAXBDataBinding.mapSchemaLocation(systemId, baseURI, catalog);
+                //System.out.println(namespaceURI + " " + systemId + " " + baseURI + " " + s);
+                if (s == null) {
+                    XmlSchema sc = schemaCollection.getSchemaByTargetNamespace(namespaceURI);
+                    StringWriter writer = new StringWriter();
+                    sc.write(writer);
+                    InputSource src = new InputSource(new StringReader(writer.toString()));
+                    src.setSystemId(sc.getSourceURI());
+                    return new LSInputSAXWrapper(src);
+                }
                 return new LSInputSAXWrapper(new InputSource(s));
             }
         });
@@ -926,6 +989,7 @@ public class JAXBDataBinding implements DataBindingProfile {
             if (e.getLocalizedMessage().indexOf("src-resolve.4.2") > -1)  {
                 //Ignore schema resolve error and do nothing
             } else {
+                //e.printStackTrace();
                 throw new ToolException("Schema Error : " + e.getLocalizedMessage(), e);
             }
         }
