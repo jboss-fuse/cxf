@@ -47,6 +47,9 @@ public class RMInInterceptor extends AbstractRMInterceptor<Message> {
     @Override
     public void handleFault(Message message) {
         message.put(MAPAggregator.class.getName(), true);
+        if (null == message.get(RMMessageConstants.RM_PROTOCOL_VARIATION)) {
+            return;
+        }
         if (MessageUtils.isTrue(message.get(RMMessageConstants.DELIVERING_ROBUST_ONEWAY))) {
             // revert the delivering entry from the destination sequence
             try {
@@ -106,6 +109,7 @@ public class RMInInterceptor extends AbstractRMInterceptor<Message> {
             LOG.log(Level.INFO, msg.toString());
             throw new RMException(msg);
         }
+        message.put(RMMessageConstants.RM_PROTOCOL_VARIATION, protocol);
         
         // Destination destination = getManager().getDestination(message);
         // RMEndpoint rme = getManager().getReliableEndpoint(message);
