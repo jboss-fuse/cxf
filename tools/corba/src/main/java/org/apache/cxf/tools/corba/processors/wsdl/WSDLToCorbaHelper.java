@@ -297,7 +297,6 @@ public class WSDLToCorbaHelper {
 
     private CorbaTypeImpl processLocalElement(XmlSchemaElement element, String uri) throws Exception {
         CorbaTypeImpl membertype = new CorbaTypeImpl();
-        CorbaTypeImpl memtype = new CorbaTypeImpl();
 
         XmlSchemaType schemaType = element.getSchemaType();
         QName schemaName = element.getQName();
@@ -327,7 +326,7 @@ public class WSDLToCorbaHelper {
             if (elName ==  null) {
                 elName = createQNameTargetNamespace(elemName.getLocalPart());
             }
-            memtype = createNillableUnion(elName,
+            CorbaTypeImpl memtype = createNillableUnion(elName,
                                           name,
                                           elemtype.getQName(),
                                           elementQualified);
@@ -363,13 +362,14 @@ public class WSDLToCorbaHelper {
                                         element.getMaxOccurs(), element.getMinOccurs(), false);
             }
 
-            membertype.setName(arraytype.getName());
-            membertype.setQName(arraytype.getQName());
-            membertype.setType(arraytype.getType());
+            if (arraytype != null) {
+                membertype.setName(arraytype.getName());
+                membertype.setQName(arraytype.getQName());
+                membertype.setType(arraytype.getType());
 
-            if (arraytype != null
-                && !isDuplicate(arraytype)) {
-                typeMappingType.getStructOrExceptionOrUnion().add(arraytype);
+                if (!isDuplicate(arraytype)) {
+                    typeMappingType.getStructOrExceptionOrUnion().add(arraytype);
+                }
             }
         }
         membertype.setQualified(elementQualified);
@@ -1220,16 +1220,18 @@ public class WSDLToCorbaHelper {
         Union choiceunion = createUnion(choicename, choice,
                                         defaultName, schematypeName);
 
-        String repoId = REPO_STRING + choiceunion.getQName().getLocalPart().replace('.', '/')
-            + IDL_VERSION;
-        choiceunion.setRepositoryID(repoId);
-
         MemberType choicemem = new MemberType();
-        choicemem.setName(choiceunion.getQName().getLocalPart() + "_f");
-        choicemem.setIdltype(createQNameCorbaNamespace(choiceunion.getQName().getLocalPart()));
+        if (choiceunion != null) {
+            String repoId = REPO_STRING + choiceunion.getQName().getLocalPart().replace('.', '/')
+                + IDL_VERSION;
+            choiceunion.setRepositoryID(repoId);
 
-        if ((choiceunion != null) && (!isDuplicate(choiceunion))) {
-            typeMappingType.getStructOrExceptionOrUnion().add(choiceunion);
+            choicemem.setName(choiceunion.getQName().getLocalPart() + "_f");
+            choicemem.setIdltype(createQNameCorbaNamespace(choiceunion.getQName().getLocalPart()));
+
+            if (!isDuplicate(choiceunion)) {
+                typeMappingType.getStructOrExceptionOrUnion().add(choiceunion);
+            }
         }
 
         return choicemem;
@@ -1320,24 +1322,23 @@ public class WSDLToCorbaHelper {
             }
         }
 
-
-        if (arrayEl.isNillable()) {
-            QName nilunionname = createQNameTargetNamespace(arrayType.getQName().getLocalPart() + "_nil");
-            boolean isQualified = arrayType.isSetQualified() && arrayType.isQualified();
-            arrayType = createNillableUnion(nilunionname,
-                                            elName,
-                                            arrayType.getQName(),
-                                            isQualified);
-            typeName = createQNameCorbaNamespace(arrayType.getQName().getLocalPart());
-            if (arrayType != null
-                && !isDuplicate(arrayType)) {
-                typeMappingType.getStructOrExceptionOrUnion().add(arrayType);
-            }
-        }
-
         Long maxOccurs = null;
         Long minOccurs = null;
         if (arrayEl != null) {
+            if (arrayEl.isNillable()) {
+                QName nilunionname = createQNameTargetNamespace(arrayType.getQName().getLocalPart() + "_nil");
+                boolean isQualified = arrayType.isSetQualified() && arrayType.isQualified();
+                arrayType = createNillableUnion(nilunionname,
+                                            elName,
+                                            arrayType.getQName(),
+                                            isQualified);
+                typeName = createQNameCorbaNamespace(arrayType.getQName().getLocalPart());
+                if (arrayType != null
+                    && !isDuplicate(arrayType)) {
+                    typeMappingType.getStructOrExceptionOrUnion().add(arrayType);
+                }
+            }
+
             maxOccurs = arrayEl.getMaxOccurs();
             minOccurs = arrayEl.getMinOccurs();
         }
