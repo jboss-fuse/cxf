@@ -16,25 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jaxrs.ext.search.jpa;
 
-import java.util.Map;
+package org.apache.cxf.jaxrs.provider;
 
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
+import java.util.Collections;
 
-public class JPATypedQueryVisitor<T> extends AbstractJPATypedQueryVisitor<T, T, TypedQuery<T>> {
+import org.junit.Assert;
+import org.junit.Test;
 
-    public JPATypedQueryVisitor(EntityManager em, Class<T> tClass) {
-        this(em, tClass, null);
-    }
+public class RequestDispatcherProviderTest extends Assert {
     
-    public JPATypedQueryVisitor(EntityManager em, Class<T> tClass, Map<String, String> fieldMap) {
-        super(em, tClass, fieldMap);
-    }
-    
-    public TypedQuery<T> getQuery() {
-        return getTypedQuery();
-    }
+    @Test
+    public void testIsWriteableEnum() {
         
+        RequestDispatcherProvider p = new RequestDispatcherProvider();
+        p.setClassResources(
+            Collections.singletonMap(TestEnum.class.getName() + "." + TestEnum.ONE, "/test.jsp"));
+        assertTrue(p.isWriteable(TestEnum.ONE.getClass(), null, null, null));
+        assertEquals("/test.jsp", p.getResourcePath(TestEnum.ONE.getClass(), TestEnum.ONE));
+    }
+    
+    private static enum TestEnum {
+        ONE,
+        TWO
+    }
 }

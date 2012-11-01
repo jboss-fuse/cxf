@@ -18,23 +18,28 @@
  */
 package org.apache.cxf.jaxrs.ext.search.jpa;
 
-import java.util.Map;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
-
-public class JPATypedQueryVisitor<T> extends AbstractJPATypedQueryVisitor<T, T, TypedQuery<T>> {
-
-    public JPATypedQueryVisitor(EntityManager em, Class<T> tClass) {
-        this(em, tClass, null);
+@Entity
+public class Library {
+    @Id
+    private int id;
+    private String address;
+    
+    public int getId() {
+        return id;
     }
     
-    public JPATypedQueryVisitor(EntityManager em, Class<T> tClass, Map<String, String> fieldMap) {
-        super(em, tClass, fieldMap);
+    public void setId(int id) {
+        this.id = id;
     }
-    
-    public TypedQuery<T> getQuery() {
-        return getTypedQuery();
+
+    public String getAddress() {
+        return address;
     }
-        
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
 }
