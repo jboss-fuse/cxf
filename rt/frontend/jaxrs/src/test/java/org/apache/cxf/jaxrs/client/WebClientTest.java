@@ -97,6 +97,13 @@ public class WebClientTest extends Assert {
     }
     
     @Test 
+    public void testEmptyQuery() {
+        WebClient wc = WebClient.create("http://foo");
+        wc.query("_wadl");
+        assertEquals("http://foo?_wadl", wc.getCurrentURI().toString());
+    }
+    
+    @Test 
     public void testForward() {
         WebClient wc = WebClient.create("http://foo");
         wc.to("http://foo/bar", true);
@@ -254,12 +261,12 @@ public class WebClientTest extends Assert {
     }
     
     @Test
-    public void testWebClientPathParamConverter() {
+    public void testWebClientParamConverter() {
         WebClient wc = WebClient.create("http://foo",
                                         Collections.singletonList(new ParamConverterProviderImpl()));
         wc.path(new ComplexObject());
-        wc.query("param", new ComplexObject());
-        assertEquals("http://foo/complex?param=complex", wc.getCurrentURI().toString());
+        wc.query("param", new ComplexObject(), new ComplexObject());
+        assertEquals("http://foo/complex?param=complex&param=complex", wc.getCurrentURI().toString());
         
     }
     
