@@ -228,37 +228,35 @@ public final class LogUtils {
     protected static Logger createLogger(Class<?> cls, 
                                          String name, 
                                          String loggerName) {
-<<<<<<< HEAD:common/common/src/main/java/org/apache/cxf/common/logging/LogUtils.java
-        if (loggerClass != null) {
-            try {
-                Constructor cns = loggerClass.getConstructor(String.class, String.class);
-                if (name == null) {
-                    try {
-                        return (Logger) cns.newInstance(loggerName, BundleUtils.getBundleName(cls));
-                    } catch (InvocationTargetException ite) {
-                        if (ite.getTargetException() instanceof MissingResourceException) {
-                            return (Logger) cns.newInstance(loggerName, null);
-                        } else {
-                            throw ite;
-                        }
-                    } 
-                } else {
-                    try {
-                        return (Logger) cns.newInstance(loggerName, BundleUtils.getBundleName(cls, name));
-                    } catch (InvocationTargetException ite) {
-                        if (ite.getTargetException() instanceof MissingResourceException) {
-                            throw (MissingResourceException)ite.getTargetException();
-                        } else {
-                            throw ite;
-                        }
-                    } 
-=======
         ClassLoader orig = Thread.currentThread().getContextClassLoader();
         ClassLoader n = cls.getClassLoader();
         if (n != null) {
             Thread.currentThread().setContextClassLoader(n);
         }
         try {
+            Logger logger = null;
+            ResourceBundle b = null;
+            if (name == null) {
+                //grab the bundle prior to the call to Logger.getLogger(...) so the 
+                //ResourceBundle can be loaded outside the big sync block that getLogger really is
+                name = BundleUtils.getBundleName(cls);
+                try {
+                    b = BundleUtils.getBundle(cls);
+                } catch (MissingResourceException rex) {
+                    //ignore
+                }
+            } else {
+                name = BundleUtils.getBundleName(cls, name);
+                try {
+                    b = BundleUtils.getBundle(cls, name);
+                } catch (MissingResourceException rex) {
+                    //ignore
+                }
+            }
+            if (b != null) {
+                b.getLocale();
+            }
+            
             if (loggerClass != null) {
                 try {
                     Constructor<?> cns = loggerClass.getConstructor(String.class, String.class);
@@ -285,25 +283,20 @@ public final class LogUtils {
                     }
                 } catch (Exception e) {
                     throw new RuntimeException(e);
->>>>>>> bb4cfa6... Merged revisions 1402160 via  git cherry-pick from:api/src/main/java/org/apache/cxf/common/logging/LogUtils.java
                 }
             }
-            if (name == null) {
-                ResourceBundle b = null;
-                try {
-                    //grab the bundle prior to the call to Logger.getLogger(...) so the 
-                    //ResourceBundle can be loaded outside the big sync block that getLogger really is
-                    b = BundleUtils.getBundle(cls);
-                    b.getLocale();
-                    return Logger.getLogger(loggerName, BundleUtils.getBundleName(cls)); //NOPMD
-                } catch (MissingResourceException rex) {
-                    return Logger.getLogger(loggerName); //NOPMD
-                } finally {
-                    b = null;
-                }
-            } else {
-                return Logger.getLogger(loggerName, BundleUtils.getBundleName(cls, name)); //NOPMD
+                
+            try {
+                logger = Logger.getLogger(loggerName, name); //NOPMD
+            } catch (IllegalArgumentException iae) {
+                //likely a mismatch on the bundle name, just return the default
+                logger = Logger.getLogger(loggerName); //NOPMD
+            } catch (MissingResourceException rex) {
+                logger = Logger.getLogger(loggerName); //NOPMD
+            } finally {
+                b = null;
             }
+            return logger;
         } finally {
             if (n != orig) {
                 Thread.currentThread().setContextClassLoader(orig);
