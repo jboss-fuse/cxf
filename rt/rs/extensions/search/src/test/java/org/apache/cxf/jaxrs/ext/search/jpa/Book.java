@@ -18,19 +18,59 @@
  */
 package org.apache.cxf.jaxrs.ext.search.jpa;
 
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 
 @Entity(name = "Book")
 public class Book {
-    @Id
     private int id;
-
+    private String title;
+    private OwnerAddress address;
+    private OwnerInfo ownerInfo;
+    private Library library;
+    
+    @Id
     public int getId() {
         return id;
     }
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String name) {
+        this.title = name;
+    }
+
+    @Embedded
+    public OwnerAddress getAddress() {
+        return address;
+    }
+
+    public void setAddress(OwnerAddress address) {
+        this.address = address;
+    }
+
+    public OwnerInfo getOwnerInfo() {
+        return ownerInfo;
+    }
+
+    public void setOwnerInfo(OwnerInfo ownerInfo) {
+        this.ownerInfo = ownerInfo;
+    }
+
+    @ManyToOne
+    public Library getLibrary() {
+        return library;
+    }
+
+    public void setLibrary(Library library) {
+        this.library = library;
     }
 }
