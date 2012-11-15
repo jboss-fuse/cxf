@@ -16,29 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.jaxws.service;
 
-package org.apache.cxf.systest.jaxrs;
+import javax.xml.ws.WebFault;
 
-import org.apache.cxf.jaxrs.model.AbstractResourceInfo;
+@WebFault
+public class AddNumbersException extends Exception {
+    private String info;
 
-import org.junit.BeforeClass;
-
-
-public class JAXRSContinuationsTest extends AbstractJAXRSContinuationsTest {
-    public static final String PORT = BookContinuationServer.PORT;
-    @BeforeClass
-    public static void startServers() throws Exception {
-        AbstractResourceInfo.clearAllMaps();
-        createStaticBus();
-        assertTrue("server did not launch correctly",
-                   launchServer(BookContinuationServer.class));
-                   
-                   
+    public AddNumbersException() {
     }
-    
-    
-    protected String getPort() {
-        return PORT;
+
+    public AddNumbersException(String info) { 
+        this.info = info; 
     }
-    
+
+    public String getInfo() { 
+        return info; 
+    }
 }

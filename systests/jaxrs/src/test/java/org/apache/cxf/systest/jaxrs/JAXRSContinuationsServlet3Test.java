@@ -24,21 +24,19 @@ import org.apache.cxf.jaxrs.model.AbstractResourceInfo;
 import org.junit.BeforeClass;
 
 
-public class JAXRSContinuationsTest extends AbstractJAXRSContinuationsTest {
-    public static final String PORT = BookContinuationServer.PORT;
+public class JAXRSContinuationsServlet3Test extends AbstractJAXRSContinuationsTest {
+    public static final String PORT = BookContinuationServlet3Server.PORT;
     @BeforeClass
     public static void startServers() throws Exception {
         AbstractResourceInfo.clearAllMaps();
         createStaticBus();
         assertTrue("server did not launch correctly",
-                   launchServer(BookContinuationServer.class));
+                   launchServer(BookContinuationServlet3Server.class));
                    
                    
     }
-    
     
     protected String getPort() {
         return PORT;
     }
-    
 }

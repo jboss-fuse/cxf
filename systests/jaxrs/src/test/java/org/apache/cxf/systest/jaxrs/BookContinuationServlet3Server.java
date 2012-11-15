@@ -19,26 +19,23 @@
 
 package org.apache.cxf.systest.jaxrs;
 
-import org.apache.cxf.jaxrs.model.AbstractResourceInfo;
+    
+public class BookContinuationServlet3Server extends AbstractSpringServer {
+    public static final String PORT = allocatePort(BookContinuationServlet3Server.class);
 
-import org.junit.BeforeClass;
-
-
-public class JAXRSContinuationsTest extends AbstractJAXRSContinuationsTest {
-    public static final String PORT = BookContinuationServer.PORT;
-    @BeforeClass
-    public static void startServers() throws Exception {
-        AbstractResourceInfo.clearAllMaps();
-        createStaticBus();
-        assertTrue("server did not launch correctly",
-                   launchServer(BookContinuationServer.class));
-                   
-                   
+    public BookContinuationServlet3Server() {
+        super("/jaxrs_async", Integer.valueOf(PORT));
     }
     
-    
-    protected String getPort() {
-        return PORT;
+    public static void main(String args[]) {
+        try {
+            BookContinuationServlet3Server s = new BookContinuationServlet3Server();
+            s.start();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            System.exit(-1);
+        } finally {
+            System.out.println("done!");
+        }
     }
-    
 }
