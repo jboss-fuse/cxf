@@ -62,8 +62,6 @@ public class ClientServiceConfigTest extends AbstractAegisTest {
         JaxWsProxyFactoryBean factory = new JaxWsProxyFactoryBean();
         factory.setDataBinding(new AegisDatabinding());
         factory.setAddress("local://JaxWsEcho");
-        factory.setBus(getBus());
-
         Echo client = factory.create(Echo.class);
         Holder<String> sholder = new Holder<String>();
         client.echo("Channa Doll", sholder);

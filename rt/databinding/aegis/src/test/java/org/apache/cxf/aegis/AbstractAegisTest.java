@@ -219,7 +219,7 @@ public abstract class AbstractAegisTest extends AbstractCXFTest {
             }
             binding = new AegisDatabinding();
             // perhaps the data binding needs to do this for itself?
-            binding.setBus(BusFactory.getThreadDefaultBus());
+            binding.setBus(BusFactory.getDefaultBus());
             if (enableJDOM) { // this preserves pre-2.1 behavior.
                 binding.setAegisContext(context);
             }

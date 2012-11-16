@@ -673,13 +673,10 @@ public class WSDLToIDLGenerationTest extends Assert {
             idlgen.generateIDL(null);
 
             InputStream origstream;
-            if ("IBM Corporation".equals(System.getProperty("java.vendor")) 
-                && System.getProperty("java.version").startsWith("1.6")) {
-                // The ibm jdk 1.6  outputs the idl modules in a different order
+            if ("IBM Corporation".equals(System.getProperty("java.vendor"))) {
+                // The ibm jdk outputs the idl modules in a different order
                 // (still valid idl).
                 origstream = getClass().getResourceAsStream("/idlgen/expected_multiplebinding_ibmjdk.idl");
-                // just return to skip the test
-                return;
             } else {
                 origstream = getClass().getResourceAsStream("/idlgen/expected_multiplebinding.idl");
             }
