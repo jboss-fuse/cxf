@@ -16,25 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.jaxws.service;
 
-package org.apache.cxf.systest.aegis.mtom.fortest;
+import javax.xml.ws.WebFault;
 
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.xml.ws.soap.MTOM;
+@WebFault
+public class AddNumbersException extends Exception {
+    private static final long serialVersionUID = 1L;
+    private String info;
 
-import org.apache.cxf.aegis.type.java5.XmlParamType;
-import org.apache.cxf.aegis.type.java5.XmlReturnType;
+    public AddNumbersException() {
+    }
 
-/**
- *
- */
-@WebService(name = "MtomTestService", serviceName = "MtomTestService")
-@MTOM
-public interface MtomTestService {
-    void acceptDataHandler(@WebParam(name = "inputDhBean")
-                           @XmlParamType(name = "inputDhBean")
-                           DataHandlerBean dhBean);
-    @XmlReturnType(name = "inputDhBean")
-    DataHandlerBean produceDataHandlerBean();
+    public AddNumbersException(String info) { 
+        this.info = info; 
+    }
+
+    public String getInfo() { 
+        return info; 
+    }
 }
