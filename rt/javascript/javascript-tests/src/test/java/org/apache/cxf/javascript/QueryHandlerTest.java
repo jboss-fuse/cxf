@@ -59,6 +59,7 @@ public class QueryHandlerTest extends AbstractCXFSpringTest {
     /** {@inheritDoc}*/
     @Override
     protected String[] getConfigLocations() {
+        TestUtil.getNewPortNumber("TestPort");
         return new String[] {"classpath:HelloWorldDocLitBeans.xml",
                              "classpath:DocLitBareClientTestBeans.xml",
                              "classpath:HelloWorldGreeterBeans.xml"};
