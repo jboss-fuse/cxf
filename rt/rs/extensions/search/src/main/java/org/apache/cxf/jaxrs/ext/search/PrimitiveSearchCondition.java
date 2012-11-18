@@ -19,6 +19,7 @@
 package org.apache.cxf.jaxrs.ext.search;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -29,6 +30,7 @@ public class PrimitiveSearchCondition<T> implements SearchCondition<T> {
     
     private String propertyName;
     private Object propertyValue;
+    private Type propertyType;
     private T condition;
     private ConditionType cType;
     private Beanspector<T> beanspector;
@@ -37,8 +39,17 @@ public class PrimitiveSearchCondition<T> implements SearchCondition<T> {
                                     Object propertyValue,
                                     ConditionType ct,
                                     T condition) {
+        this(propertyName, propertyValue, propertyValue.getClass(), ct, condition);    
+    }
+    
+    public PrimitiveSearchCondition(String propertyName, 
+                                    Object propertyValue,
+                                    Type propertyType,
+                                    ConditionType ct,
+                                    T condition) {
         this.propertyName = propertyName;
         this.propertyValue = propertyValue;
+        this.propertyType = propertyType;
         this.condition = condition;
         this.cType = ct;
         if (propertyName != null) {
@@ -70,7 +81,7 @@ public class PrimitiveSearchCondition<T> implements SearchCondition<T> {
     }
 
     public PrimitiveStatement getStatement() {
-        return new PrimitiveStatement(propertyName, propertyValue, cType);
+        return new PrimitiveStatement(propertyName, propertyValue, propertyType, cType);
     }
 
     public boolean isMet(T pojo) {
@@ -113,7 +124,6 @@ public class PrimitiveSearchCondition<T> implements SearchCondition<T> {
         visitor.visit(this);    
     }
    
-
     private boolean isPrimitive(T pojo) {
         return pojo.getClass().getName().startsWith("java.lang");
     }
