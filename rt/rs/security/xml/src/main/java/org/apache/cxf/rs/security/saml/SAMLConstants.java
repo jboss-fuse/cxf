@@ -16,23 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jaxrs.ext.search.jpa;
+package org.apache.cxf.rs.security.saml;
 
-import javax.persistence.metamodel.ListAttribute;
-import javax.persistence.metamodel.SingularAttribute;
-
-@javax.persistence.metamodel.StaticMetamodel(Book.class)
-//CHECKSTYLE:OFF
-public final class Book_ {
-    private Book_() {
-        
+/**
+ * Some constant configuration options
+ */
+public final class SAMLConstants {
+    
+    /**
+     * This tag refers to a DOM Element representation of a SAML Token. If a SAML Token
+     * is stored on the Message Context, then the SamlFormOutInterceptor and 
+     * SamlHeaderOutInterceptor will use this token instead of creating a new SAML Token.
+     */
+    public static final String SAML_TOKEN_ELEMENT = "rs-security.saml.token.element";
+    
+    private SAMLConstants() {
+        // complete
     }
-    public static volatile SingularAttribute<Book, Integer> id;
-    public static volatile SingularAttribute<Book, String> title;
-    public static volatile SingularAttribute<Book, Library> library;
-    public static volatile SingularAttribute<Book, OwnerInfo> ownerInfo;
-    public static volatile SingularAttribute<Book, OwnerAddress> address;
-    public static volatile ListAttribute<Book, BookReview> reviews;
-    public static volatile ListAttribute<Book, String> authors;
 }
-//CHECKSTYLE:ON
