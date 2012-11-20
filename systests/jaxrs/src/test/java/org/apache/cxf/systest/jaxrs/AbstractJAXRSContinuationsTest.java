@@ -49,6 +49,15 @@ public abstract class AbstractJAXRSContinuationsTest extends AbstractBusClientSe
     }
     
     @Test
+    public void testImmediateResume() throws Exception {
+        WebClient wc = WebClient.create("http://localhost:" + getPort() + "/bookstore/books/resume");
+        WebClient.getConfig(wc).getHttpConduit().getClient().setReceiveTimeout(1000000L);
+        wc.accept("text/plain");
+        String str = wc.get(String.class);
+        assertEquals("immediateResume", str);
+    }
+    
+    @Test
     public void testTimeoutAndCancel() throws Exception {
         WebClient wc = WebClient.create("http://localhost:" + getPort() + "/bookstore/books/cancel");
         WebClient.getConfig(wc).getHttpConduit().getClient().setReceiveTimeout(1000000L);
@@ -63,6 +72,12 @@ public abstract class AbstractJAXRSContinuationsTest extends AbstractBusClientSe
     public void testContinuationWithTimeHandler() throws Exception {
         
         doTestContinuation("books/timeouthandler");
+    }
+    
+    @Test
+    public void testContinuationWithTimeHandlerResumeOnly() throws Exception {
+        
+        doTestContinuation("books/timeouthandlerresume");
     }
     
     @Test
