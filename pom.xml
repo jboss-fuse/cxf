@@ -50,8 +50,8 @@
         <release-repo-url>http://repo.fusesource.com/nexus/service/local/staging/deploy/maven2</release-repo-url>
         <snapshot-repo-url>http://repo.fusesource.com/nexus/content/repositories/snapshots</snapshot-repo-url>
         <cxf.compiler.fork>false</cxf.compiler.fork>
-        <cxf.build-utils.version>2.4.1</cxf.build-utils.version>
-        <cxf.xjc-utils.version>2.6.0</cxf.xjc-utils.version>
+        <cxf.build-utils.version>2.5.0-SNAPSHOT</cxf.build-utils.version>
+        <cxf.xjc-utils.version>2.6.1-SNAPSHOT</cxf.xjc-utils.version>
         <cxf.jdk.version>1.6</cxf.jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <site.deploy.url>scp://people.apache.org/www/cxf.apache.org/maven-site</site.deploy.url>
@@ -226,7 +226,7 @@
                         <plugin>
                             <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-compiler-plugin</artifactId>
-                            <version>3.0</version>
+                            <version>2.5.1</version>
                             <configuration>
                                 <source>${cxf.jdk.version}</source>
                                 <target>${cxf.jdk.version}</target>
@@ -529,7 +529,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.0</version>
+                    <version>2.5.1</version>
                     <configuration>
                         <source>1.6</source>
                         <target>1.6</target>
@@ -574,7 +574,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>2.5</version>
+                    <version>2.6</version>
                     <configuration>
                         <encoding>UTF-8</encoding>
                     </configuration>
