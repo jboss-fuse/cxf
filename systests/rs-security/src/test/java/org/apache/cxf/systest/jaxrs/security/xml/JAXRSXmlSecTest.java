@@ -296,6 +296,7 @@ public class JAXRSXmlSecTest extends AbstractBusClientServerTestBase {
             if (propagateException) {
                 throw ex;
             } else {
+                System.out.println("Get the exception from server, due to" + ex);
                 fail(ex.getMessage());
             }
         } catch (ClientWebApplicationException ex) {
