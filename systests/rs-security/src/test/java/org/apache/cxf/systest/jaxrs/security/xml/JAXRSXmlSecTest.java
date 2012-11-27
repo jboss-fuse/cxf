@@ -159,6 +159,14 @@ public class JAXRSXmlSecTest extends AbstractBusClientServerTestBase {
     
     @Test
     public void testPostEncryptedBookGCM() throws Exception {
+        //
+        // This test fails with the IBM JDK 7
+        //
+        if ("IBM Corporation".equals(System.getProperty("java.vendor"))
+            && System.getProperty("java.version") != null
+            &&  System.getProperty("java.version").startsWith("1.7")) {
+            return;
+        }
         String address = "https://localhost:" + PORT + "/xmlenc/bookstore/books";
         Map<String, Object> properties = new HashMap<String, Object>();
         properties.put("ws-security.callback-handler", 
@@ -296,7 +304,6 @@ public class JAXRSXmlSecTest extends AbstractBusClientServerTestBase {
             if (propagateException) {
                 throw ex;
             } else {
-                System.out.println("Get the exception from server, due to" + ex);
                 fail(ex.getMessage());
             }
         } catch (ClientWebApplicationException ex) {
