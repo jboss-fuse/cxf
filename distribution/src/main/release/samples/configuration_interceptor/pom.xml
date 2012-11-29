@@ -52,32 +52,15 @@
                         <configuration>
                             <wsdlOptions>
                                 <wsdlOption>
-                                    <wsdl>${basedir}/wsdl/hello_world.wsdl</wsdl>
+                                    <wsdl>${basedir}/src/main/resources/wsdl/hello_world.wsdl</wsdl>
+                                    <frontEnd>jaxws21</frontEnd>
+                                    <faultSerialVersionUID>1</faultSerialVersionUID>
                                 </wsdlOption>
                             </wsdlOptions>
                         </configuration>
                         <goals>
                             <goal>wsdl2java</goal>
                         </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copyxmlfiles</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <tasks>
-                                <copy file="${basedir}/client.xml" todir="${basedir}/target/classes/demo/stream/client" />
-                                <copy file="${basedir}/server.xml" todir="${basedir}/target/classes/demo/stream/server" />
-                                <copy file="${basedir}/wsdl/hello_world.wsdl" todir="${basedir}/target/classes/demo/stream/client" />
-                            </tasks>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -101,7 +84,7 @@
                                 <configuration>
                                     <executable>java</executable>
                                     <arguments>
-                                        <argument>-Dcxf.config.file=${project.build.directory}/classes/demo/stream/server/server.xml</argument>
+                                        <argument>-Dcxf.config.file=${project.build.directory}/classes/server.xml</argument>
                                         <argument>-classpath</argument>
                                         <classpath />
                                         <argument>demo.stream.server.Server</argument>
@@ -130,7 +113,7 @@
                                 <configuration>
                                     <executable>java</executable>
                                     <arguments>
-                                        <argument>-Dcxf.config.file=${project.build.directory}/classes/demo/stream/client/client.xml</argument>
+                                        <argument>-Dcxf.config.file=${project.build.directory}/classes/client.xml</argument>
                                         <argument>-classpath</argument>
                                         <classpath />
                                         <argument>demo.stream.client.Client</argument>
