@@ -65,7 +65,7 @@ public class Servlet3ContinuationProvider implements ContinuationProvider {
     
     public class Servlet3Continuation implements Continuation, AsyncListener {
         AsyncContext context;
-        volatile boolean isNew;
+        volatile boolean isNew = true;
         volatile boolean isResumed;
         volatile boolean isPending;
         volatile Object obj;
@@ -79,7 +79,13 @@ public class Servlet3ContinuationProvider implements ContinuationProvider {
         }
         
         void startAsyncAgain() {
-            context = req.startAsync();
+            
+            AsyncContext old = context;
+            try {
+                context = req.startAsync();
+            } catch (IllegalStateException ex) { 
+                context = old;
+            }
             context.addListener(this);
         }
         

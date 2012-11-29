@@ -50,7 +50,7 @@
         <release-repo-url>http://repo.fusesource.com/nexus/service/local/staging/deploy/maven2</release-repo-url>
         <snapshot-repo-url>http://repo.fusesource.com/nexus/content/repositories/snapshots</snapshot-repo-url>
         <cxf.compiler.fork>false</cxf.compiler.fork>
-        <cxf.build-utils.version>2.5.0-SNAPSHOT</cxf.build-utils.version>
+        <cxf.build-utils.version>2.5.1-SNAPSHOT</cxf.build-utils.version>
         <cxf.xjc-utils.version>2.6.1-SNAPSHOT</cxf.xjc-utils.version>
         <cxf.jdk.version>1.6</cxf.jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -482,6 +482,11 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-clean-plugin</artifactId>
                     <version>2.5</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <version>2.2</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
