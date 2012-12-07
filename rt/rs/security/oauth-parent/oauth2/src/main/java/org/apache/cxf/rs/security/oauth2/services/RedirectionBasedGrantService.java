@@ -42,6 +42,7 @@ import org.apache.cxf.rs.security.oauth2.common.ServerAccessToken;
 import org.apache.cxf.rs.security.oauth2.common.UserSubject;
 import org.apache.cxf.rs.security.oauth2.provider.OAuthServiceException;
 import org.apache.cxf.rs.security.oauth2.provider.SessionAuthenticityTokenProvider;
+import org.apache.cxf.rs.security.oauth2.provider.SubjectCreator;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthUtils;
 import org.apache.cxf.security.SecurityContext;
@@ -55,6 +56,7 @@ public abstract class RedirectionBasedGrantService extends AbstractOAuthService 
     private String supportedGrantType;
     private boolean isClientConfidential;
     private SessionAuthenticityTokenProvider sessionAuthenticityTokenProvider;
+    private SubjectCreator subjectCreator;
     
     protected RedirectionBasedGrantService(String supportedResponseType,
                                            String supportedGrantType,
@@ -131,7 +133,7 @@ public abstract class RedirectionBasedGrantService extends AbstractOAuthService 
         
         // Request a new grant only if no pre-authorized token is available
         ServerAccessToken preauthorizedToken = getDataProvider().getPreauthorizedToken(
-            client, userSubject, supportedGrantType);
+            client, requestedScope, userSubject, supportedGrantType);
         if (preauthorizedToken != null) {
             return createGrant(params,
                                client, 
@@ -241,8 +243,20 @@ public abstract class RedirectionBasedGrantService extends AbstractOAuthService 
         this.sessionAuthenticityTokenProvider = sessionAuthenticityTokenProvider;
     }
     
+    public void setSubjectCreator(SubjectCreator creator) {
+        this.subjectCreator = creator;
+    }
+    
     protected UserSubject createUserSubject(SecurityContext securityContext) {
-        UserSubject subject = getMessageContext().getContent(UserSubject.class);
+        UserSubject subject = null;
+        if (subjectCreator != null) {
+            subject = subjectCreator.createUserSubject(getMessageContext());
+            if (subject != null) {
+                return subject; 
+            }
+        }
+        
+        subject = getMessageContext().getContent(UserSubject.class);
         if (subject != null) {
             return subject;
         } else {
