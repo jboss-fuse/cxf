@@ -35,11 +35,11 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
-import org.apache.cxf.jaxrs.ext.search.AbstractSearchConditionVisitor;
 import org.apache.cxf.jaxrs.ext.search.ConditionType;
 import org.apache.cxf.jaxrs.ext.search.OrSearchCondition;
 import org.apache.cxf.jaxrs.ext.search.PrimitiveStatement;
 import org.apache.cxf.jaxrs.ext.search.SearchCondition;
+import org.apache.cxf.jaxrs.ext.search.visitor.AbstractSearchConditionVisitor;
 
 public abstract class AbstractJPATypedQueryVisitor<T, T1, E> 
     extends AbstractSearchConditionVisitor<T, E> {
@@ -176,9 +176,6 @@ public abstract class AbstractJPATypedQueryVisitor<T, T1, E>
         value = cv.getValue();    
         
         Path<?> path = getPath(root, name, cv);
-        if (tClass != queryClass) {
-            path.alias(name);
-        }
         
         Predicate pred = null;
         switch (ct) {
@@ -241,6 +238,5 @@ public abstract class AbstractJPATypedQueryVisitor<T, T1, E>
     private boolean isJoinProperty(String prop) {
         return joinProperties == null ? false : joinProperties.contains(prop);
     }
-    
     
 }
