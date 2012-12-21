@@ -67,6 +67,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
+import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Cookie;
@@ -113,6 +114,7 @@ import org.apache.cxf.jaxrs.impl.ProvidersImpl;
 import org.apache.cxf.jaxrs.impl.ReaderInterceptorContextImpl;
 import org.apache.cxf.jaxrs.impl.ReaderInterceptorMBR;
 import org.apache.cxf.jaxrs.impl.RequestImpl;
+import org.apache.cxf.jaxrs.impl.ResourceContextImpl;
 import org.apache.cxf.jaxrs.impl.ResourceInfoImpl;
 import org.apache.cxf.jaxrs.impl.SecurityContextImpl;
 import org.apache.cxf.jaxrs.impl.UriInfoImpl;
@@ -172,7 +174,7 @@ public final class JAXRSUtils {
     
     public static List<PathSegment> getPathSegments(String thePath, boolean decode, 
                                                     boolean ignoreLastSlash) {
-        String[] segments = thePath.split("/");
+        String[] segments = StringUtils.split(thePath, "/");
         List<PathSegment> theList = new ArrayList<PathSegment>();
         for (String path : segments) {
             if (!StringUtils.isEmpty(path)) {
@@ -935,6 +937,8 @@ public final class JAXRSUtils {
             o = new MessageContextImpl(m);
         } else if (ResourceInfo.class.isAssignableFrom(clazz)) {
             o = new ResourceInfoImpl(contextMessage);
+        } else if (ResourceContext.class.isAssignableFrom(clazz)) {
+            o = new ResourceContextImpl(contextMessage.getExchange().get(OperationResourceInfo.class));
         } else if (Request.class.isAssignableFrom(clazz)) {
             o = new RequestImpl(contextMessage);
         } else if (Providers.class.isAssignableFrom(clazz)) {
@@ -1089,7 +1093,7 @@ public final class JAXRSUtils {
                                            boolean decode,
                                            boolean decodePlus) {
         if (!StringUtils.isEmpty(query)) {            
-            List<String> parts = Arrays.asList(query.split(sep));
+            List<String> parts = Arrays.asList(StringUtils.split(query, sep));
             for (String part : parts) {
                 int index = part.indexOf('=');
                 String name = null;
