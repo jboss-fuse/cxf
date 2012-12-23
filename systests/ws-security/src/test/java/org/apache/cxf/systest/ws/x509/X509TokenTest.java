@@ -20,6 +20,8 @@
 package org.apache.cxf.systest.ws.x509;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.namespace.QName;
 import javax.xml.ws.BindingProvider;
@@ -29,6 +31,8 @@ import org.apache.cxf.Bus;
 import org.apache.cxf.bus.spring.SpringBusFactory;
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.frontend.ClientProxy;
+import org.apache.cxf.headers.Header;
+import org.apache.cxf.jaxb.JAXBDataBinding;
 import org.apache.cxf.systest.ws.common.SecurityTestUtil;
 import org.apache.cxf.systest.ws.ut.SecurityHeaderCacheInterceptor;
 import org.apache.cxf.systest.ws.x509.server.Intermediary;
@@ -36,6 +40,7 @@ import org.apache.cxf.systest.ws.x509.server.Server;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.example.contract.doubleit.DoubleItPortType;
+import org.example.contract.doubleit.DoubleItPortType2;
 import org.junit.BeforeClass;
 
 /**
@@ -586,6 +591,39 @@ public class X509TokenTest extends AbstractBusClientServerTestBase {
                 service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(x509Port, PORT2);
         x509Port.doubleIt(25);
+        
+        ((java.io.Closeable)x509Port).close();
+        bus.shutdown(true);
+    }
+    
+    @org.junit.Test
+    public void testKeyIdentifier2() throws Exception {
+
+        SpringBusFactory bf = new SpringBusFactory();
+        URL busFile = X509TokenTest.class.getResource("client/client.xml");
+
+        Bus bus = bf.createBus(busFile.toString());
+        SpringBusFactory.setDefaultBus(bus);
+        SpringBusFactory.setThreadDefaultBus(bus);
+        
+        URL wsdl = X509TokenTest.class.getResource("DoubleItOperations.wsdl");
+        Service service = Service.create(wsdl, SERVICE_QNAME);
+        QName portQName = new QName(NAMESPACE, "DoubleItKeyIdentifierPort2");
+        DoubleItPortType2 x509Port = 
+                service.getPort(portQName, DoubleItPortType2.class);
+        updateAddressPort(x509Port, PORT);
+        
+        List<Header> headers = new ArrayList<Header>();
+        Header dummyHeader = new Header(new QName("uri:org.apache.cxf", "dummy"), "dummy-header",
+                                        new JAXBDataBinding(String.class));
+        headers.add(dummyHeader);
+        ((BindingProvider)x509Port).getRequestContext().put(Header.HEADER_LIST, headers);
+        
+        int response = x509Port.doubleIt(25);
+        assertEquals(50, response);
+        
+        int response2 = x509Port.doubleIt2(15);
+        assertEquals(30, response2);
         
         ((java.io.Closeable)x509Port).close();
         bus.shutdown(true);
