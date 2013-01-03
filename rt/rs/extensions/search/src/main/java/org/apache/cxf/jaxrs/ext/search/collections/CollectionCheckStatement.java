@@ -16,26 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jaxrs.ext.search.client;
+package org.apache.cxf.jaxrs.ext.search.collections;
 
-import java.util.List;
+import java.lang.reflect.Type;
 
-/**
- * Part of fluent interface of {@link SearchConditionBuilder}.
- */
-public interface PartialCondition {
-    /** Get property of inspected entity type */
-    Property is(String property);
+import org.apache.cxf.jaxrs.ext.search.ConditionType;
+import org.apache.cxf.jaxrs.ext.search.PrimitiveStatement;
 
-    /** Conjunct multiple expressions */
-    CompleteCondition and(CompleteCondition c1, CompleteCondition c2, CompleteCondition... cn);
-
-    /** Disjunct multiple expressions */
-    CompleteCondition or(CompleteCondition c1, CompleteCondition c2, CompleteCondition... cn);
+public class CollectionCheckStatement extends PrimitiveStatement {
+    private CollectionCheckInfo checkInfo;
     
-    /** Conjunct multiple expressions */
-    CompleteCondition and(List<CompleteCondition> conditions);
-    
-    /** Disjunct multiple expressions */
-    CompleteCondition or(List<CompleteCondition> conditions);
+    public CollectionCheckStatement(String property, Object value, Type type, ConditionType condition,
+                                    CollectionCheckInfo checkInfo) {
+        super(property, value, type, condition);
+        this.checkInfo = checkInfo;
+    }
+    public CollectionCheckInfo getCollectionCheckInfo() {
+        return checkInfo;
+    }
 }
