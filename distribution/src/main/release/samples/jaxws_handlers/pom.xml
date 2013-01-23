@@ -23,6 +23,7 @@
     <name>JAX-WS Handler Demo</name>
     <version>2.8.x-fuse-SNAPSHOT</version>
     <description>JAX-WS Handler Demo</description>
+
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
         <artifactId>cxf-samples</artifactId>

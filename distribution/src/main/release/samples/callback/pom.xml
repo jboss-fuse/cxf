@@ -20,9 +20,9 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.cxf.samples</groupId>
     <artifactId>callback</artifactId>
-    <name>CXF sample using a callbak object</name>
+    <name>CXF sample using a callback object</name>
+    <description>CXF sample using a callback object</description>
     <version>2.8.x-fuse-SNAPSHOT</version>
-    <description>CXF sample using a callbak object</description>
 
     <parent>
         <groupId>org.apache.cxf.samples</groupId>

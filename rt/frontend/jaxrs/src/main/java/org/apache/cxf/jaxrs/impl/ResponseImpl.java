@@ -124,7 +124,7 @@ public final class ResponseImpl extends Response {
     }
 
     public boolean hasEntity() {
-        return getEntity() != null;
+        return entity != null;
     }
     
     public MultivaluedMap<String, Object> getMetadata() {
@@ -305,6 +305,9 @@ public final class ResponseImpl extends Response {
         
         if (responseMessage != null && entity instanceof InputStream) {
             MediaType mediaType = getMediaType();
+            if (mediaType == null) {
+                mediaType = MediaType.WILDCARD_TYPE;
+            }
             
             List<ReaderInterceptor> readers = ProviderFactory.getInstance(responseMessage)
                 .createMessageBodyReaderInterceptor(cls, t, anns, mediaType, 

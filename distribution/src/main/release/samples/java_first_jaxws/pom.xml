@@ -23,8 +23,8 @@
     <artifactId>java_first_jaxws</artifactId>
     <packaging>war</packaging>
     <name>Java First demo using JAX-WS APIs</name>
-    <version>2.8.x-fuse-SNAPSHOT</version>
     <description>Java First demo using JAX-WS APIs</description>
+    <version>2.8.x-fuse-SNAPSHOT</version>
 
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
