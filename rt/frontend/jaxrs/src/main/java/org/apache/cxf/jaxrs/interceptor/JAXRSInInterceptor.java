@@ -59,7 +59,8 @@ public class JAXRSInInterceptor extends AbstractPhaseInterceptor<Message> {
 
     private static final Logger LOG = LogUtils.getL7dLogger(JAXRSInInterceptor.class);
     private static final ResourceBundle BUNDLE = BundleUtils.getBundle(JAXRSInInterceptor.class);
-    
+    private static final String RESOURCE_METHOD = "org.apache.cxf.resource.method";
+    private static final String RESOURCE_OPERATION_NAME = "org.apache.cxf.resource.operation.name";
     public JAXRSInInterceptor() {
         super(Phase.UNMARSHAL);
     }
@@ -222,6 +223,15 @@ public class JAXRSInInterceptor extends AbstractPhaseInterceptor<Message> {
         
         setExchangeProperties(message, ori, values, resources.size());
         
+        // Global and name-bound post-match request filters
+        if (JAXRSUtils.runContainerRequestFilters(providerFactory,
+                                                  message,
+                                                  false, 
+                                                  ori.getNameBindings())) {
+            return;
+        }
+        
+        
         //Process parameters
         try {
             List<Object> params = JAXRSUtils.processParameters(ori, values, message);
@@ -240,8 +250,9 @@ public class JAXRSInInterceptor extends AbstractPhaseInterceptor<Message> {
     private void setExchangeProperties(Message message, OperationResourceInfo ori, 
                                       MultivaluedMap<String, String> values,
                                       int numberOfResources) {
+        message.put(Message.REST_MESSAGE, Boolean.TRUE);
         message.getExchange().put(OperationResourceInfo.class, ori);
-        message.put("org.apache.cxf.resource.method", ori.getMethodToInvoke());
+        message.put(RESOURCE_METHOD, ori.getMethodToInvoke());
         message.put(URITemplate.TEMPLATE_PARAMETERS, values);
         
         String plainOperationName = ori.getMethodToInvoke().getName();
@@ -249,7 +260,7 @@ public class JAXRSInInterceptor extends AbstractPhaseInterceptor<Message> {
             plainOperationName = ori.getClassResourceInfo().getServiceClass().getSimpleName()
                 + "#" + plainOperationName;
         }
-        message.getExchange().put("org.apache.cxf.resource.operation.name", plainOperationName);
+        message.getExchange().put(RESOURCE_OPERATION_NAME, plainOperationName);
         
         boolean oneway = ori.isOneway() 
             || MessageUtils.isTrue(HttpUtils.getProtocolHeader(message, Message.ONE_WAY_REQUEST, null));

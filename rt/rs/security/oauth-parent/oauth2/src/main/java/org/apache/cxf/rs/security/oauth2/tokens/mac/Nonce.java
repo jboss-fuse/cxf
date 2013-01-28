@@ -16,24 +16,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.rs.security.oauth2.tokens.mac;
 
-package org.apache.cxf.systest.ws.policy;
+import java.io.Serializable;
 
-import javax.jws.WebMethod;
-import javax.jws.WebService;
+public class Nonce implements Serializable {
 
-@WebService(name = "JavaFirstAttachmentPolicyService", 
-targetNamespace = "http://www.example.org/contract/JavaFirstAttachmentPolicyService")
-public interface JavaFirstAttachmentPolicyService {
-    @WebMethod(operationName = "doOperationLevelPolicy")
-    void doOperationLevelPolicy();
+    private static final long serialVersionUID = -6164115071533503490L;
 
-    @WebMethod(operationName = "doInputMessagePolicy")
-    void doInputMessagePolicy();
+    private String nonceString;
+    private long ts;
 
-    @WebMethod(operationName = "doOutputMessagePolicy")
-    void doOutputMessagePolicy();
-    
-    @WebMethod(operationName = "doNoPolicy")
-    void doNoPolicy();    
+    public Nonce(String nonce, long ts) {
+        this.nonceString = nonce;
+        this.ts = ts;
+    }
+
+    public String getNonceString() {
+        return nonceString;
+    }
+
+    public long getTs() {
+        return ts;
+    }
 }

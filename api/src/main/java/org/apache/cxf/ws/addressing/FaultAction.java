@@ -17,23 +17,23 @@
  * under the License.
  */
 
-package org.apache.cxf.systest.ws.policy;
+package org.apache.cxf.ws.addressing;
 
-import javax.jws.WebMethod;
-import javax.jws.WebService;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-@WebService(name = "JavaFirstAttachmentPolicyService", 
-targetNamespace = "http://www.example.org/contract/JavaFirstAttachmentPolicyService")
-public interface JavaFirstAttachmentPolicyService {
-    @WebMethod(operationName = "doOperationLevelPolicy")
-    void doOperationLevelPolicy();
-
-    @WebMethod(operationName = "doInputMessagePolicy")
-    void doInputMessagePolicy();
-
-    @WebMethod(operationName = "doOutputMessagePolicy")
-    void doOutputMessagePolicy();
-    
-    @WebMethod(operationName = "doNoPolicy")
-    void doNoPolicy();    
+/**
+ * If applied on an exception type, the value specifies the WS-Addressing Action
+ * which will be applied if this exception is thrown from a WSA-enabled service.
+ * This setting overrides any other settings, for example from @javax.xml.ws.Action.
+ * If the value is null, this annotation is ignored.
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Inherited
+@Target(ElementType.TYPE)
+public @interface FaultAction {
+    String value();
 }
