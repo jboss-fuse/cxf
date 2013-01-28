@@ -16,24 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.rs.security.oauth2.tokens.mac;
 
-package org.apache.cxf.systest.ws.policy;
+public interface NonceStore {
 
-import javax.jws.WebMethod;
-import javax.jws.WebService;
+    void storeNonce(String tokenKey, Nonce nonce, long requestTimeDelta);
 
-@WebService(name = "JavaFirstAttachmentPolicyService", 
-targetNamespace = "http://www.example.org/contract/JavaFirstAttachmentPolicyService")
-public interface JavaFirstAttachmentPolicyService {
-    @WebMethod(operationName = "doOperationLevelPolicy")
-    void doOperationLevelPolicy();
-
-    @WebMethod(operationName = "doInputMessagePolicy")
-    void doInputMessagePolicy();
-
-    @WebMethod(operationName = "doOutputMessagePolicy")
-    void doOutputMessagePolicy();
-    
-    @WebMethod(operationName = "doNoPolicy")
-    void doNoPolicy();    
+    NonceHistory getNonceHistory(String tokenKey);
 }

@@ -16,24 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.rs.security.oauth2.provider;
 
-package org.apache.cxf.systest.ws.policy;
+import org.apache.cxf.rs.security.oauth2.common.UserSubject;
 
-import javax.jws.WebMethod;
-import javax.jws.WebService;
-
-@WebService(name = "JavaFirstAttachmentPolicyService", 
-targetNamespace = "http://www.example.org/contract/JavaFirstAttachmentPolicyService")
-public interface JavaFirstAttachmentPolicyService {
-    @WebMethod(operationName = "doOperationLevelPolicy")
-    void doOperationLevelPolicy();
-
-    @WebMethod(operationName = "doInputMessagePolicy")
-    void doInputMessagePolicy();
-
-    @WebMethod(operationName = "doOutputMessagePolicy")
-    void doOutputMessagePolicy();
-    
-    @WebMethod(operationName = "doNoPolicy")
-    void doNoPolicy();    
+public interface ResourceOwnerNameProvider {
+    String getName(UserSubject subject);
 }
