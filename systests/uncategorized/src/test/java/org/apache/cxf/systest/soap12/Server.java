@@ -29,7 +29,8 @@ public class Server extends AbstractBusTestServerBase {
     public static final String PORT = allocatePort(Server.class);
 
     Endpoint ep;
-
+    Endpoint ep11;
+    
     @SuppressWarnings("deprecation")
     protected void run()  {    
         Object implementor = new GreeterImpl();
@@ -37,10 +38,15 @@ public class Server extends AbstractBusTestServerBase {
         ep = Endpoint.publish(address, implementor);
         EndpointImpl epi = (EndpointImpl)ep;
         epi.getService().getInInterceptors().add(new URIMappingInterceptor());
+        
+        implementor = new org.apache.hello_world_soap_http.GreeterImpl();
+        address = "http://localhost:" + PORT + "/SoapContext/Soap11Port";
+        ep11 = Endpoint.publish(address, implementor);
     }
 
     public void tearDown() throws Exception {
         ep.stop();
+        ep11.stop();
     }
 
     public static void main(String[] args) {
