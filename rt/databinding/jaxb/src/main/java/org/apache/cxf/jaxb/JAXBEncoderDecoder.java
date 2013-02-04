@@ -552,13 +552,13 @@ public final class JAXBEncoderDecoder {
 
     private static Class<?> getFieldType(final Field f) {
         XmlJavaTypeAdapter adapter = JAXBContextInitializer.getFieldXJTA(f);
-        Class<?> adapterType = JAXBContextInitializer.getTypeFromXmlAdapter(adapter);
+        Class<?> adapterType = (Class<?>) JAXBContextInitializer.getTypeFromXmlAdapter(adapter);
         return adapterType != null ? adapterType : f.getType();
     }
 
     private static Class<?> getMethodReturnType(final Method m) {
         XmlJavaTypeAdapter adapter = JAXBContextInitializer.getMethodXJTA(m);
-        Class<?> adapterType = JAXBContextInitializer.getTypeFromXmlAdapter(adapter);
+        Class<?> adapterType = (Class<?>) JAXBContextInitializer.getTypeFromXmlAdapter(adapter);
         return adapterType != null ? adapterType : m.getReturnType(); 
     }
 
