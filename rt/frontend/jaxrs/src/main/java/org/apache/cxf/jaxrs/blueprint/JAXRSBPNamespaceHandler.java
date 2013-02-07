@@ -49,9 +49,7 @@ public class JAXRSBPNamespaceHandler implements NamespaceHandler {
         String s = element.getLocalName();
         if ("server".equals(s)) {
             return new JAXRSServerFactoryBeanDefinitionParser().parse(element, context);
-        } else if ("client".equals(s)) {
-            return new JAXRSClientFactoryBeanDefinitionParser().parse(element, context);
-        }
+        } 
         return null;
     }
 
