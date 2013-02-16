@@ -58,16 +58,13 @@ import org.apache.cxf.ws.policy.AssertionInfoMap;
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.cxf.ws.security.policy.SP11Constants;
 import org.apache.cxf.ws.security.policy.SP12Constants;
-import org.apache.cxf.ws.security.policy.SPConstants;
-import org.apache.cxf.ws.security.policy.model.Binding;
 import org.apache.cxf.ws.security.policy.model.ContentEncryptedElements;
 import org.apache.cxf.ws.security.policy.model.Header;
 import org.apache.cxf.ws.security.policy.model.RequiredElements;
 import org.apache.cxf.ws.security.policy.model.RequiredParts;
-import org.apache.cxf.ws.security.policy.model.SamlToken;
 import org.apache.cxf.ws.security.policy.model.SignedEncryptedElements;
 import org.apache.cxf.ws.security.policy.model.SignedEncryptedParts;
-import org.apache.cxf.ws.security.policy.model.SupportingToken;
+import org.apache.cxf.ws.security.policy.model.UsernameToken;
 import org.apache.cxf.ws.security.policy.model.Wss11;
 import org.apache.cxf.ws.security.wss4j.CryptoCoverageUtil.CoverageScope;
 import org.apache.cxf.ws.security.wss4j.CryptoCoverageUtil.CoverageType;
@@ -94,7 +91,6 @@ import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSDataRef;
 import org.apache.ws.security.WSSecurityEngineResult;
 import org.apache.ws.security.WSSecurityException;
-import org.apache.ws.security.components.crypto.AlgorithmSuite;
 import org.apache.ws.security.components.crypto.Crypto;
 import org.apache.ws.security.components.crypto.CryptoFactory;
 import org.apache.ws.security.handler.RequestData;
@@ -117,7 +113,7 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
         super(true);
     }
     
-    private static Properties getProps(Object o, String propsKey, URL propsURL, SoapMessage message) {
+    private static Properties getProps(Object o, URL propsURL, SoapMessage message) {
         Properties properties = null;
         if (o instanceof Properties) {
             properties = (Properties)o;
@@ -280,6 +276,21 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
         return action;
     }
     
+    private void checkUsernameToken(
+        AssertionInfoMap aim, SoapMessage message
+    ) throws WSSecurityException {
+        Collection<AssertionInfo> ais = aim.get(SP12Constants.USERNAME_TOKEN);
+        
+        if (ais != null && !ais.isEmpty()) {
+            for (AssertionInfo ai : ais) {
+                UsernameToken policy = (UsernameToken)ai.getAssertion();
+                if (policy.isNoPassword()) {
+                    message.put(WSHandlerConstants.ALLOW_USERNAMETOKEN_NOPASSWORD, "true");
+                }
+            }
+        }
+    }
+    
     private String checkSymmetricBinding(
         AssertionInfoMap aim, String action, SoapMessage message
     ) throws WSSecurityException {
@@ -354,13 +365,14 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
             encrCrypto = (Crypto)e;
         } else if (e != null) {
             URL propsURL = getPropertiesFileURL(e, message);
-            String propsKey = e.toString();
-            if (propsURL != null) {
-                propsKey = propsURL.getPath();
+            Properties props = getProps(e, propsURL, message);
+            if (props == null) {
+                LOG.fine("Cannot find Crypto Encryption properties: " + e);
+                throw new WSSecurityException("Cannot find Crypto Encryption properties: " + e);
             }
-            Properties props = getProps(e, propsKey, propsURL, message);
-            encrCrypto = CryptoFactory.getInstance(props);
             
+            encrCrypto = CryptoFactory.getInstance(props);
+
             EndpointInfo info = message.getExchange().get(Endpoint.class).getEndpointInfo();
             synchronized (info) {
                 info.setProperty(SecurityConstants.ENCRYPT_CRYPTO, encrCrypto);
@@ -375,13 +387,14 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
             signCrypto = (Crypto)s;
         } else if (s != null) {
             URL propsURL = getPropertiesFileURL(s, message);
-            String propsKey = s.toString();
-            if (propsURL != null) {
-                propsKey = propsURL.getPath();
+            Properties props = getProps(s, propsURL, message);
+            if (props == null) {
+                LOG.fine("Cannot find Crypto Signature properties: " + s);
+                throw new WSSecurityException("Cannot find Crypto Signature properties: " + s);
             }
-            Properties props = getProps(s, propsKey, propsURL, message);
-            signCrypto = CryptoFactory.getInstance(props);
             
+            signCrypto = CryptoFactory.getInstance(props);
+
             EndpointInfo info = message.getExchange().get(Endpoint.class).getEndpointInfo();
             synchronized (info) {
                 info.setProperty(SecurityConstants.SIGNATURE_CRYPTO, signCrypto);
@@ -482,97 +495,10 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
      * algorithms that are allowed for encryption, signature, etc.
      */
     protected void setAlgorithmSuites(SoapMessage message, RequestData data) throws WSSecurityException {
-        Binding binding = getBinding(message);
-        if (binding != null && binding.getAlgorithmSuite() != null) {
-            // Translate into WSS4J's AlgorithmSuite class
-            AlgorithmSuite algorithmSuite = translateAlgorithmSuite(binding.getAlgorithmSuite());
-            data.setAlgorithmSuite(algorithmSuite);
-        }
-
-        // Now look for an AlgorithmSuite for a SAML Assertion
-        AssertionInfoMap aim = message.get(AssertionInfoMap.class);
-        if (aim != null) {
-            Collection<AssertionInfo> ais = aim.get(SP12Constants.SAML_TOKEN);
-            if (ais != null && !ais.isEmpty()) {
-                for (AssertionInfo ai : ais) {
-                    SamlToken samlToken = (SamlToken)ai.getAssertion();
-                    SupportingToken supportingToken = samlToken.getSupportingToken();
-                    if (supportingToken != null && supportingToken.getAlgorithmSuite() != null) {
-                        AlgorithmSuite algorithmSuite = 
-                            translateAlgorithmSuite(supportingToken.getAlgorithmSuite());
-                        data.setSamlAlgorithmSuite(algorithmSuite);
-                        break;
-                    }
-                }
-            }
-        }
+        AlgorithmSuiteTranslater translater = new AlgorithmSuiteTranslater();
+        translater.translateAlgorithmSuites(message.get(AssertionInfoMap.class), data);
     }
 
-    /**
-     * Translate a CXF AlgorithmSuite object into WSS4J's AlgorithmSuite object
-     */
-    private AlgorithmSuite translateAlgorithmSuite(
-        org.apache.cxf.ws.security.policy.model.AlgorithmSuite cxfAlgorithmSuite
-    ) {
-        // Translate into WSS4J's AlgorithmSuite class
-        AlgorithmSuite algorithmSuite = new AlgorithmSuite();
-        algorithmSuite.setEncryptionDerivedKeyLength(
-            cxfAlgorithmSuite.getEncryptionDerivedKeyLength());
-        algorithmSuite.setSignatureDerivedKeyLength(
-            cxfAlgorithmSuite.getSignatureDerivedKeyLength());
-        algorithmSuite.setMaximumAsymmetricKeyLength(
-            cxfAlgorithmSuite.getMaximumAsymmetricKeyLength());
-        algorithmSuite.setMinimumAsymmetricKeyLength(
-            cxfAlgorithmSuite.getMinimumAsymmetricKeyLength());
-        algorithmSuite.setMaximumSymmetricKeyLength(
-            cxfAlgorithmSuite.getMaximumSymmetricKeyLength());
-        algorithmSuite.setMinimumSymmetricKeyLength(
-            cxfAlgorithmSuite.getMinimumSymmetricKeyLength());
-
-        algorithmSuite.addEncryptionMethod(cxfAlgorithmSuite.getEncryption());
-        algorithmSuite.addKeyWrapAlgorithm(cxfAlgorithmSuite.getSymmetricKeyWrap());
-        algorithmSuite.addKeyWrapAlgorithm(cxfAlgorithmSuite.getAsymmetricKeyWrap());
-
-        algorithmSuite.addSignatureMethod(cxfAlgorithmSuite.getAsymmetricSignature());
-        algorithmSuite.addSignatureMethod(cxfAlgorithmSuite.getSymmetricSignature());
-        algorithmSuite.addDigestAlgorithm(cxfAlgorithmSuite.getDigest());
-        algorithmSuite.addC14nAlgorithm(cxfAlgorithmSuite.getInclusiveC14n());
-
-        algorithmSuite.addTransformAlgorithm(cxfAlgorithmSuite.getInclusiveC14n());
-        algorithmSuite.addTransformAlgorithm(SPConstants.STRT10);
-        algorithmSuite.addTransformAlgorithm(WSConstants.NS_XMLDSIG_ENVELOPED_SIGNATURE);
-
-        algorithmSuite.addDerivedKeyAlgorithm(SPConstants.P_SHA1);
-        algorithmSuite.addDerivedKeyAlgorithm(SPConstants.P_SHA1_L128);
-
-        return algorithmSuite;
-    }
-
-    /**
-     * Get the WS-SecurityPolicy Binding that is in operation
-     */
-    private Binding getBinding(SoapMessage message) {
-        AssertionInfoMap aim = message.get(AssertionInfoMap.class);
-        if (aim != null) {
-            Collection<AssertionInfo> ais = aim.get(SP12Constants.TRANSPORT_BINDING);
-            if (ais != null && !ais.isEmpty()) {     
-                AssertionInfo ai = ais.iterator().next();
-                return (Binding)ai.getAssertion();
-            }
-            ais = aim.get(SP12Constants.ASYMMETRIC_BINDING);
-            if (ais != null && !ais.isEmpty()) {     
-                AssertionInfo ai = ais.iterator().next();
-                return (Binding)ai.getAssertion();
-            }
-            ais = aim.get(SP12Constants.SYMMETRIC_BINDING);
-            if (ais != null && !ais.isEmpty()) {     
-                AssertionInfo ai = ais.iterator().next();
-                return (Binding)ai.getAssertion();
-            }
-        }
-        return null;
-    }
-    
     protected void computeAction(SoapMessage message, RequestData data) throws WSSecurityException {
         String action = getString(WSHandlerConstants.ACTION, message);
         if (action == null) {
@@ -585,6 +511,7 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
             action = checkAsymmetricBinding(aim, action, message);
             action = checkSymmetricBinding(aim, action, message);
             action = checkTransportBinding(aim, action, message);
+            checkUsernameToken(aim, message);
             
             // stuff we can default to asserted and un-assert if a condition isn't met
             assertPolicy(aim, SP12Constants.KEYVALUE_TOKEN);
