@@ -17,17 +17,32 @@
  * under the License.
  */
 
-package org.apache.cxf.systest.ws.policy.javafirst;
+package org.apache.cxf.jaxrs.resources;
 
-import javax.jws.WebMethod;
-import javax.jws.WebService;
+import javax.xml.bind.annotation.XmlRootElement;
 
-@WebService(name = "OperationSimpleService", 
-targetNamespace = "http://www.example.org/contract/OperationSimpleService")
-public interface OperationSimpleServiceClient {
-    @WebMethod(operationName = "doStuff")
-    void doStuff();
 
-    @WebMethod(operationName = "ping")
-    void ping();
+@XmlRootElement(name = "Chapter")
+public class Chapter {
+    private String title;
+    private long id;
+    
+    public Chapter() {
+    }
+    
+    public void setTitle(String n) {
+        title = n;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+    
+    public void setId(long i) {
+        id = i;
+    }
+    public long getId() {
+        return id;
+    }
+    
 }

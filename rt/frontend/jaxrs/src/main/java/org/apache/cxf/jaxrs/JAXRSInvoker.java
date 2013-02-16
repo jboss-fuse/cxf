@@ -85,7 +85,7 @@ public class JAXRSInvoker extends AbstractInvoker {
                 AsyncResponseImpl asyncImpl = (AsyncResponseImpl)asyncResp;
                 asyncImpl.prepareContinuation();
                 asyncImpl.handleTimeout();
-                return handleAsyncResponse(exchange, asyncImpl.getResponseObject());
+                return handleAsyncResponse(exchange, asyncImpl);
             }
         }
         if (response != null) {
@@ -118,10 +118,16 @@ public class JAXRSInvoker extends AbstractInvoker {
         }
     }
 
-    private Object handleAsyncResponse(Exchange exchange, Object asyncObj) {
+    private Object handleAsyncResponse(Exchange exchange, AsyncResponseImpl ar) {
+        Object asyncObj = ar.getResponseObject();
         if (asyncObj instanceof Throwable) {
-            return handleFault(new Fault((Throwable)asyncObj), 
-                               exchange.getInMessage(), null, null);    
+            try {
+                return handleFault(new Fault((Throwable)asyncObj), 
+                                   exchange.getInMessage(), null, null);
+            } catch (Fault ex) {
+                ar.setUnmappedThrowable(ex.getCause());
+                return new MessageContentsList(Response.serverError().build());
+            }
         } else {
             return new MessageContentsList(asyncObj);
         }
@@ -192,7 +198,7 @@ public class JAXRSInvoker extends AbstractInvoker {
             }
             result = invoke(exchange, resourceObject, methodToInvoke, params);
             if (asyncResponse != null && !asyncResponse.suspendContinuationIfNeeded()) {
-                result = handleAsyncResponse(exchange, asyncResponse.getResponseObject());
+                result = handleAsyncResponse(exchange, asyncResponse);
             }
         } catch (Fault ex) {
             return handleFault(ex, inMessage, cri, methodToInvoke);
@@ -228,7 +234,8 @@ public class JAXRSInvoker extends AbstractInvoker {
                     throw new NotFoundException();
                 }
 
-                OperationResourceInfo subOri = JAXRSUtils.findTargetMethod(subCri,
+                OperationResourceInfo subOri = JAXRSUtils.findTargetMethod(
+                                                         Collections.singletonMap(subCri, values),
                                                          inMessage,
                                                          httpMethod,
                                                          values,
@@ -260,7 +267,8 @@ public class JAXRSInvoker extends AbstractInvoker {
                 Response excResponse;
                 if (JAXRSUtils.noResourceMethodForOptions(ex.getResponse(), 
                         (String)exchange.getInMessage().get(Message.HTTP_REQUEST_METHOD))) {
-                    excResponse = JAXRSUtils.createResponse(subCri, null, null, 200, true);
+                    excResponse = JAXRSUtils.createResponse(Collections.singletonList(subCri), 
+                                                            null, null, 200, true);
                 } else {
                     excResponse = JAXRSUtils.convertFaultToResponse(ex, exchange.getInMessage());
                 }

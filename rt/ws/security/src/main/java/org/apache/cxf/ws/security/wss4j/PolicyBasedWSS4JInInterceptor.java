@@ -64,6 +64,7 @@ import org.apache.cxf.ws.security.policy.model.RequiredElements;
 import org.apache.cxf.ws.security.policy.model.RequiredParts;
 import org.apache.cxf.ws.security.policy.model.SignedEncryptedElements;
 import org.apache.cxf.ws.security.policy.model.SignedEncryptedParts;
+import org.apache.cxf.ws.security.policy.model.UsernameToken;
 import org.apache.cxf.ws.security.policy.model.Wss11;
 import org.apache.cxf.ws.security.wss4j.CryptoCoverageUtil.CoverageScope;
 import org.apache.cxf.ws.security.wss4j.CryptoCoverageUtil.CoverageType;
@@ -112,7 +113,7 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
         super(true);
     }
     
-    private static Properties getProps(Object o, String propsKey, URL propsURL, SoapMessage message) {
+    private static Properties getProps(Object o, URL propsURL, SoapMessage message) {
         Properties properties = null;
         if (o instanceof Properties) {
             properties = (Properties)o;
@@ -275,6 +276,21 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
         return action;
     }
     
+    private void checkUsernameToken(
+        AssertionInfoMap aim, SoapMessage message
+    ) throws WSSecurityException {
+        Collection<AssertionInfo> ais = aim.get(SP12Constants.USERNAME_TOKEN);
+        
+        if (ais != null && !ais.isEmpty()) {
+            for (AssertionInfo ai : ais) {
+                UsernameToken policy = (UsernameToken)ai.getAssertion();
+                if (policy.isNoPassword()) {
+                    message.put(WSHandlerConstants.ALLOW_USERNAMETOKEN_NOPASSWORD, "true");
+                }
+            }
+        }
+    }
+    
     private String checkSymmetricBinding(
         AssertionInfoMap aim, String action, SoapMessage message
     ) throws WSSecurityException {
@@ -349,13 +365,14 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
             encrCrypto = (Crypto)e;
         } else if (e != null) {
             URL propsURL = getPropertiesFileURL(e, message);
-            String propsKey = e.toString();
-            if (propsURL != null) {
-                propsKey = propsURL.getPath();
+            Properties props = getProps(e, propsURL, message);
+            if (props == null) {
+                LOG.fine("Cannot find Crypto Encryption properties: " + e);
+                throw new WSSecurityException("Cannot find Crypto Encryption properties: " + e);
             }
-            Properties props = getProps(e, propsKey, propsURL, message);
-            encrCrypto = CryptoFactory.getInstance(props);
             
+            encrCrypto = CryptoFactory.getInstance(props);
+
             EndpointInfo info = message.getExchange().get(Endpoint.class).getEndpointInfo();
             synchronized (info) {
                 info.setProperty(SecurityConstants.ENCRYPT_CRYPTO, encrCrypto);
@@ -370,13 +387,14 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
             signCrypto = (Crypto)s;
         } else if (s != null) {
             URL propsURL = getPropertiesFileURL(s, message);
-            String propsKey = s.toString();
-            if (propsURL != null) {
-                propsKey = propsURL.getPath();
+            Properties props = getProps(s, propsURL, message);
+            if (props == null) {
+                LOG.fine("Cannot find Crypto Signature properties: " + s);
+                throw new WSSecurityException("Cannot find Crypto Signature properties: " + s);
             }
-            Properties props = getProps(s, propsKey, propsURL, message);
-            signCrypto = CryptoFactory.getInstance(props);
             
+            signCrypto = CryptoFactory.getInstance(props);
+
             EndpointInfo info = message.getExchange().get(Endpoint.class).getEndpointInfo();
             synchronized (info) {
                 info.setProperty(SecurityConstants.SIGNATURE_CRYPTO, signCrypto);
@@ -493,6 +511,7 @@ public class PolicyBasedWSS4JInInterceptor extends WSS4JInInterceptor {
             action = checkAsymmetricBinding(aim, action, message);
             action = checkSymmetricBinding(aim, action, message);
             action = checkTransportBinding(aim, action, message);
+            checkUsernameToken(aim, message);
             
             // stuff we can default to asserted and un-assert if a condition isn't met
             assertPolicy(aim, SP12Constants.KEYVALUE_TOKEN);

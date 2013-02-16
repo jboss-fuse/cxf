@@ -37,8 +37,8 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.logging.Logger;
 
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.ClientException;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -275,9 +275,6 @@ public class ClientProxyImpl extends AbstractClient implements
         int status = r.getStatus();
         
         if (status >= 300) {
-            if (m.getReturnType() == Response.class && m.getExceptionTypes().length == 0) {
-                return;
-            }            
             ResponseExceptionMapper<?> mapper = findExceptionMapper(m, inMessage);
             if (mapper != null) {
                 t = mapper.fromResponse(r);
@@ -285,7 +282,11 @@ public class ClientProxyImpl extends AbstractClient implements
                     throw t;
                 }
             } 
-                        
+                 
+            if ((t == null) && (m.getReturnType() == Response.class) && (m.getExceptionTypes().length == 0)) {
+                return;
+            }
+
             t = convertToWebApplicationException(r);
             
             if (inMessage.getExchange().get(Message.RESPONSE_CODE) == null) {
@@ -609,7 +610,7 @@ public class ClientProxyImpl extends AbstractClient implements
                                                    m.getDeclaringClass().getName(), 
                                                    m.getName());
         LOG.severe(errorMsg.toString());
-        throw new ClientException(errorMsg.toString());
+        throw new ProcessingException(errorMsg.toString());
     }
     
     private class BodyWriter extends AbstractBodyWriter {

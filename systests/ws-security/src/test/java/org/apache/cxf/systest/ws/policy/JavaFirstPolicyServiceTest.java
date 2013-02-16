@@ -37,9 +37,9 @@ import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.service.model.MessageInfo.Type;
 import org.apache.cxf.systest.ws.common.SecurityTestUtil;
-import org.apache.cxf.systest.ws.policy.javafirst.BindingSimpleServiceClient;
-import org.apache.cxf.systest.ws.policy.javafirst.NoAlternativesOperationSimpleServiceClient;
-import org.apache.cxf.systest.ws.policy.javafirst.OperationSimpleServiceClient;
+import org.apache.cxf.systest.ws.policy.javafirst.BindingSimpleService;
+import org.apache.cxf.systest.ws.policy.javafirst.NoAlternativesOperationSimpleService;
+import org.apache.cxf.systest.ws.policy.javafirst.OperationSimpleService;
 import org.apache.cxf.systest.ws.policy.server.JavaFirstPolicyServer;
 import org.apache.cxf.systest.ws.wssec11.client.UTPasswordCallback;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
@@ -50,16 +50,14 @@ import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.handler.WSHandlerConstants;
 
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
-
 
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class JavaFirstPolicyServiceTest extends AbstractBusClientServerTestBase {
-    static final String PORT = allocatePort(JavaFirstPolicyServer.class);
-    static final String PORT2 = allocatePort(JavaFirstPolicyServer.class, 2);
-    static final String PORT3 = allocatePort(JavaFirstPolicyServer.class, 3);
+    static final String PORT = JavaFirstPolicyServer.PORT;
+    static final String PORT2 = JavaFirstPolicyServer.PORT2;
+    static final String PORT3 = JavaFirstPolicyServer.PORT3;
 
     private static final String WSDL_NAMESPACE = "http://schemas.xmlsoap.org/wsdl/";
 
@@ -153,8 +151,8 @@ public class JavaFirstPolicyServiceTest extends AbstractBusClientServerTestBase 
             "org/apache/cxf/systest/ws/policy/client/sslnocertclient.xml"
         });
 
-        BindingSimpleServiceClient simpleService = clientContext.getBean("BindingSimpleServiceClient",
-                                                                         BindingSimpleServiceClient.class);
+        BindingSimpleService simpleService = clientContext.getBean("BindingSimpleServiceClient",
+                                                                         BindingSimpleService.class);
 
         try {
             simpleService.doStuff();
@@ -185,8 +183,8 @@ public class JavaFirstPolicyServiceTest extends AbstractBusClientServerTestBase 
             "org/apache/cxf/systest/ws/policy/client/sslcertclient.xml"
         });
 
-        BindingSimpleServiceClient simpleService = clientContext.getBean("BindingSimpleServiceClient",
-                                                                         BindingSimpleServiceClient.class);
+        BindingSimpleService simpleService = clientContext.getBean("BindingSimpleServiceClient",
+                                                                         BindingSimpleService.class);
 
         try {
             simpleService.doStuff();
@@ -207,16 +205,16 @@ public class JavaFirstPolicyServiceTest extends AbstractBusClientServerTestBase 
     }
 
     @Test
-    public void testNoAltOperationNoClientCertAlternativePolicy() {
+    public void testNoAltOperationNoClientCertPolicy() {
         System.setProperty("testutil.ports.JavaFirstPolicyServer.3", PORT3);
 
         ClassPathXmlApplicationContext clientContext = new ClassPathXmlApplicationContext(new String[] {
             "org/apache/cxf/systest/ws/policy/client/sslnocertclient.xml"
         });
 
-        NoAlternativesOperationSimpleServiceClient simpleService = clientContext
+        NoAlternativesOperationSimpleService simpleService = clientContext
             .getBean("NoAlternativesOperationSimpleServiceClient",
-                     NoAlternativesOperationSimpleServiceClient.class);
+                     NoAlternativesOperationSimpleService.class);
 
         try {
             simpleService.doStuff();
@@ -256,16 +254,16 @@ public class JavaFirstPolicyServiceTest extends AbstractBusClientServerTestBase 
     }
 
     @Test
-    public void testNoAltOperationClientCertAlternativePolicy() {
+    public void testNoAltOperationClientCertPolicy() {
         System.setProperty("testutil.ports.JavaFirstPolicyServer.3", PORT3);
 
         ClassPathXmlApplicationContext clientContext = new ClassPathXmlApplicationContext(new String[] {
             "org/apache/cxf/systest/ws/policy/client/sslcertclient.xml"
         });
 
-        NoAlternativesOperationSimpleServiceClient simpleService = clientContext
+        NoAlternativesOperationSimpleService simpleService = clientContext
             .getBean("NoAlternativesOperationSimpleServiceClient",
-                     NoAlternativesOperationSimpleServiceClient.class);
+                     NoAlternativesOperationSimpleService.class);
 
         try {
             simpleService.doStuff();
@@ -300,7 +298,6 @@ public class JavaFirstPolicyServiceTest extends AbstractBusClientServerTestBase 
     }
 
     @Test
-    @Ignore
     public void testOperationNoClientCertAlternativePolicy() {
         System.setProperty("testutil.ports.JavaFirstPolicyServer.3", PORT3);
 
@@ -308,9 +305,12 @@ public class JavaFirstPolicyServiceTest extends AbstractBusClientServerTestBase 
             "org/apache/cxf/systest/ws/policy/client/sslnocertclient.xml"
         });
 
-        OperationSimpleServiceClient simpleService = clientContext
-            .getBean("OperationSimpleServiceClient", OperationSimpleServiceClient.class);
+        OperationSimpleService simpleService = clientContext
+            .getBean("OperationSimpleServiceClient", OperationSimpleService.class);
 
+        // no security on ping!
+        simpleService.ping();
+        
         try {
             simpleService.doStuff();
             fail("Expected exception as no credentials");
@@ -328,12 +328,12 @@ public class JavaFirstPolicyServiceTest extends AbstractBusClientServerTestBase 
             assertTrue(true);
         }
 
+        // this is successful because the alternative policy allows a password to be specified.
         wssOut.setProperties(getPasswordProperties("alice", "password"));
         simpleService.doStuff();
     }
 
     @Test
-    @Ignore
     public void testOperationClientCertAlternativePolicy() {
         System.setProperty("testutil.ports.JavaFirstPolicyServer.3", PORT3);
 
@@ -341,9 +341,12 @@ public class JavaFirstPolicyServiceTest extends AbstractBusClientServerTestBase 
             "org/apache/cxf/systest/ws/policy/client/sslcertclient.xml"
         });
 
-        OperationSimpleServiceClient simpleService = clientContext
-            .getBean("OperationSimpleServiceClient", OperationSimpleServiceClient.class);
+        OperationSimpleService simpleService = clientContext
+            .getBean("OperationSimpleServiceClient", OperationSimpleService.class);
 
+        // no security on ping!
+        simpleService.ping();
+        
         try {
             simpleService.doStuff();
             fail("Expected exception as no credentials");
@@ -356,20 +359,16 @@ public class JavaFirstPolicyServiceTest extends AbstractBusClientServerTestBase 
         wssOut.setProperties(getNoPasswordProperties("alice"));
         simpleService.doStuff();
 
+        // this is successful because the alternative policy allows a password to be specified.
         wssOut.setProperties(getPasswordProperties("alice", "password"));
-
-        try {
-            simpleService.doStuff();
-            fail("Expected exception password is not supported");
-        } catch (SOAPFaultException e) {
-            assertTrue(true);
-        }
+        simpleService.doStuff();
     }
 
     private WSS4JOutInterceptor addToClient(Object svc) {
         Client client = ClientProxy.getClient(svc);
         WSS4JOutInterceptor wssOut = new WSS4JOutInterceptor();
         client.getEndpoint().getOutInterceptors().add(wssOut);
+        client.getOutInterceptors().add(wssOut);
         return wssOut;
     }
 
@@ -529,3 +528,4 @@ public class JavaFirstPolicyServiceTest extends AbstractBusClientServerTestBase 
         }
     }
 }
+

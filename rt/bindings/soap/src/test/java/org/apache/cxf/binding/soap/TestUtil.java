@@ -34,6 +34,7 @@ import org.apache.cxf.interceptor.InterceptorChain;
 import org.apache.cxf.message.Attachment;
 import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.ExchangeImpl;
+import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageImpl;
 
 public final class TestUtil {
@@ -90,6 +91,7 @@ public final class TestUtil {
         messageImpl.setExchange(exchange);
         SoapMessage soapMessage = new SoapMessage(messageImpl);
         soapMessage.setVersion(soapVersion);
-        return soapMessage;        
+        soapMessage.put(Message.HTTP_REQUEST_METHOD, "POST");
+        return soapMessage;
     }
 }

@@ -17,17 +17,24 @@
  * under the License.
  */
 
-package org.apache.cxf.systest.ws.policy.javafirst;
+package org.apache.cxf.jaxrs.resources;
 
-import javax.jws.WebMethod;
-import javax.jws.WebService;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 
-@WebService(name = "NoAlternativesOperationSimpleService", 
-targetNamespace = "http://www.example.org/contract/NoAlternativesOperationSimpleService")
-public interface NoAlternativesOperationSimpleServiceClient {
-    @WebMethod(operationName = "doStuff")
-    void doStuff();
 
-    @WebMethod(operationName = "ping")
-    void ping();
+public abstract class BookSuperClass {
+
+    @GET
+    @Path("/path")
+    @Produces("text/bar")
+    @Consumes("text/foo")
+    public abstract String getDescription();
+    
+    @Path("/books/{bookId}/{new}")
+    public abstract  Book getNewBook(@PathParam("bookId") String id,
+                                     @PathParam("new") Boolean isNew);
 }

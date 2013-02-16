@@ -17,16 +17,25 @@
  * under the License.
  */
 
-package org.apache.cxf.systest.ws.policy.javafirst;
+package org.apache.cxf.jaxrs.resources;
 
-import javax.jws.WebMethod;
-import javax.jws.WebService;
+import java.util.HashMap;
+import java.util.Map;
 
-@WebService(name = "BindingSimpleService", targetNamespace = "http://www.example.org/contract/BindingSimpleService")
-public interface BindingSimpleServiceClient {
-    @WebMethod(operationName = "doStuff")
-    void doStuff();
 
-    @WebMethod(operationName = "ping")
-    void ping();
+public class BookStoreNoAnnotations {
+    
+    private Map<Long, Book> books = new HashMap<Long, Book>();
+    
+    public BookStoreNoAnnotations() {
+        Book b = new Book();
+        b.setId(123L);
+        b.setName("CXF in Action");
+        books.put(b.getId(), b);
+    }
+    
+    public Book getBook(Long id) {
+        return books.get(id);
+    }
+
 }
