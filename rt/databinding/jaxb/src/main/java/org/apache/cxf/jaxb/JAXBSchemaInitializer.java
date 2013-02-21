@@ -563,13 +563,13 @@ class JAXBSchemaInitializer extends ServiceModelVisitor {
     
     private static Type getFieldType(final Field f) {
         XmlJavaTypeAdapter adapter = JAXBContextInitializer.getFieldXJTA(f);
-        Class<?> adapterType = JAXBContextInitializer.getTypeFromXmlAdapter(adapter);
+        Type adapterType = JAXBContextInitializer.getTypeFromXmlAdapter(adapter);
         return adapterType != null ? adapterType : f.getGenericType();
     }
 
     private static Type getMethodReturnType(final Method m) {
         XmlJavaTypeAdapter adapter = JAXBContextInitializer.getMethodXJTA(m);
-        Class<?> adapterType = JAXBContextInitializer.getTypeFromXmlAdapter(adapter);
+        Type adapterType = JAXBContextInitializer.getTypeFromXmlAdapter(adapter);
         return adapterType != null ? adapterType : m.getGenericReturnType(); 
     }
 

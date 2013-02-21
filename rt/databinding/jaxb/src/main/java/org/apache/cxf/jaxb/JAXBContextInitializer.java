@@ -352,7 +352,7 @@ class JAXBContextInitializer extends ServiceModelVisitor {
         return adapter;
     }
 
-    static Class<?> getTypeFromXmlAdapter(XmlJavaTypeAdapter xjta) {
+    static Type getTypeFromXmlAdapter(XmlJavaTypeAdapter xjta) {
         if (xjta != null) {
             Class<?> c2 = xjta.value();
             Type sp = c2.getGenericSuperclass();
@@ -361,7 +361,7 @@ class JAXBContextInitializer extends ServiceModelVisitor {
                 c2 = c2.getSuperclass();
             }
             if (sp instanceof ParameterizedType) {
-                return (Class<?>)((ParameterizedType)sp).getActualTypeArguments()[0];
+                return ((ParameterizedType)sp).getActualTypeArguments()[0];
             }
         }
         return null;
