@@ -91,6 +91,7 @@ import org.apache.cxf.ws.policy.PolicyConstants;
 import org.apache.cxf.ws.policy.PolicyEngine;
 import org.apache.cxf.ws.policy.builder.primitive.PrimitiveAssertion;
 import org.apache.cxf.ws.security.SecurityConstants;
+import org.apache.cxf.ws.security.policy.SPConstants;
 import org.apache.cxf.ws.security.policy.model.AlgorithmSuite;
 import org.apache.cxf.ws.security.policy.model.Binding;
 import org.apache.cxf.ws.security.policy.model.Header;
@@ -155,7 +156,8 @@ public abstract class AbstractSTSClient implements Configurable, InterceptorProv
     protected Element claims;
     protected AlgorithmSuite algorithmSuite;
     protected String namespace = STSUtils.WST_NS_05_12;
-    protected String addressingNamespace;
+    protected String addressingNamespace = "http://www.w3.org/2005/08/addressing";
+    protected String wspNamespace = SPConstants.P_NS;
     protected Object onBehalfOf;
     protected boolean enableAppliesTo = true;
 
@@ -974,10 +976,6 @@ public abstract class AbstractSTSClient implements Configurable, InterceptorProv
             tokentype = namespace + "/RSTR/Status";
         }
 
-        if (addressingNamespace == null) {
-            addressingNamespace = "http://www.w3.org/2005/08/addressing";
-        }
-
         Policy validatePolicy = new Policy();
         ExactlyOne one = new ExactlyOne();
         validatePolicy.addPolicyComponent(one);
@@ -1028,10 +1026,6 @@ public abstract class AbstractSTSClient implements Configurable, InterceptorProv
     protected STSResponse cancel(SecurityToken token) throws Exception {
         createClient();
 
-        if (addressingNamespace == null) {
-            addressingNamespace = "http://www.w3.org/2005/08/addressing";
-        }
-
         client.getRequestContext().clear();
         client.getRequestContext().putAll(ctx);
         client.getRequestContext().put(SecurityConstants.TOKEN, token);
@@ -1067,13 +1061,19 @@ public abstract class AbstractSTSClient implements Configurable, InterceptorProv
             SignedEncryptedParts parts = new SignedEncryptedParts(true);
             parts.setOptional(true);
             parts.setBody(true);
-            parts.addHeader(new Header("To", addressingNamespace));
-            parts.addHeader(new Header("From", addressingNamespace));
-            parts.addHeader(new Header("FaultTo", addressingNamespace));
-            parts.addHeader(new Header("ReplyTo", addressingNamespace));
-            parts.addHeader(new Header("Action", addressingNamespace));
-            parts.addHeader(new Header("MessageID", addressingNamespace));
-            parts.addHeader(new Header("RelatesTo", addressingNamespace));
+            
+            String addrNamespace = addressingNamespace;
+            if (addrNamespace == null) {
+                addrNamespace = "http://www.w3.org/2005/08/addressing";
+            }
+            
+            parts.addHeader(new Header("To", addrNamespace));
+            parts.addHeader(new Header("From", addrNamespace));
+            parts.addHeader(new Header("FaultTo", addrNamespace));
+            parts.addHeader(new Header("ReplyTo", addrNamespace));
+            parts.addHeader(new Header("Action", addrNamespace));
+            parts.addHeader(new Header("MessageID", addrNamespace));
+            parts.addHeader(new Header("RelatesTo", addrNamespace));
             all.addPolicyComponent(parts);
             
             client.getRequestContext().put(PolicyConstants.POLICY_OVERRIDE, cancelPolicy);
@@ -1177,8 +1177,12 @@ public abstract class AbstractSTSClient implements Configurable, InterceptorProv
 
     protected void addAppliesTo(XMLStreamWriter writer, String appliesTo) throws XMLStreamException {
         if (appliesTo != null && addressingNamespace != null) {
-            writer.writeStartElement("wsp", "AppliesTo", "http://schemas.xmlsoap.org/ws/2004/09/policy");
-            writer.writeNamespace("wsp", "http://schemas.xmlsoap.org/ws/2004/09/policy");
+            String policyNS = wspNamespace;
+            if (policyNS == null) {
+                policyNS = "http://schemas.xmlsoap.org/ws/2004/09/policy";
+            }
+            writer.writeStartElement("wsp", "AppliesTo", policyNS);
+            writer.writeNamespace("wsp", policyNS);
             writer.writeStartElement("wsa", "EndpointReference", addressingNamespace);
             writer.writeNamespace("wsa", addressingNamespace);
             writer.writeStartElement("wsa", "Address", addressingNamespace);
@@ -1565,5 +1569,13 @@ public abstract class AbstractSTSClient implements Configurable, InterceptorProv
         public Crypto getCrypto() {
             return crypto;
         }
+    }
+
+    public String getWspNamespace() {
+        return wspNamespace;
+    }
+
+    public void setWspNamespace(String wspNamespace) {
+        this.wspNamespace = wspNamespace;
     }
 }
