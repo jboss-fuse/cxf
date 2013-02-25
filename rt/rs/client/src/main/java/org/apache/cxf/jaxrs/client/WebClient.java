@@ -38,6 +38,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.InvocationCallback;
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -57,6 +58,7 @@ import org.apache.cxf.jaxrs.impl.ResponseImpl;
 import org.apache.cxf.jaxrs.model.ParameterType;
 import org.apache.cxf.jaxrs.model.URITemplate;
 import org.apache.cxf.jaxrs.utils.HttpUtils;
+import org.apache.cxf.jaxrs.utils.InjectionUtils;
 import org.apache.cxf.jaxrs.utils.JAXRSUtils;
 import org.apache.cxf.jaxrs.utils.ParameterizedCollectionType;
 import org.apache.cxf.message.Exchange;
@@ -346,6 +348,21 @@ public class WebClient extends AbstractClient {
      * Does HTTP invocation and returns types response object 
      * @param httpMethod HTTP method 
      * @param body request body, can be null
+     * @param responseType generic response type
+     * @return typed object, can be null. Response status code and headers 
+     *         can be obtained too, see Client.getResponse()
+     */
+    public <T> T invoke(String httpMethod, Object body, GenericType<T> responseType) {
+        @SuppressWarnings("unchecked")
+        Class<T> responseClass = (Class<T>)responseType.getRawType();
+        Response r = doInvoke(httpMethod, body, null, responseClass, responseType.getType());
+        return responseClass.cast(responseClass == Response.class ? r : r.getEntity());
+    }
+    
+    /**
+     * Does HTTP invocation and returns types response object 
+     * @param httpMethod HTTP method 
+     * @param body request body, can be null
      * @param responseClass expected type of response object
      * @return typed object, can be null. Response status code and headers 
      *         can be obtained too, see Client.getResponse()
@@ -381,13 +398,24 @@ public class WebClient extends AbstractClient {
     }
     
     /**
+     * Does HTTP POST invocation and returns typed response object
+     * @param body request body, can be null
+     * @param responseType generic response type
+     * @return typed object, can be null. Response status code and headers 
+     *         can be obtained too, see Client.getResponse()
+     */
+    public <T> T post(Object body, GenericType<T> responseType) {
+        return invoke("POST", body, responseType);
+    }
+    
+    /**
      * Does HTTP Async POST invocation and returns Future.
      * Shortcut for async().post(Entity, InvocationCallback)
      * @param callback invocation callback 
      * @return the future
      */
     public <T> Future<T> post(Object body, InvocationCallback<T> callback) {
-        return doInvokeAsyncCallback("POST", body, body.getClass(), getClass(), callback);
+        return doInvokeAsyncCallback("POST", body, body.getClass(), null, callback);
     }
     
     /**
@@ -401,6 +429,18 @@ public class WebClient extends AbstractClient {
         return invoke("PUT", body, responseClass);
     }
     
+
+    /**
+     * Does HTTP PUT invocation and returns typed response object
+     * @param body request body, can be null
+     * @param responseType generic response type
+     * @return typed object, can be null. Response status code and headers 
+     *         can be obtained too, see Client.getResponse()
+     */
+    public <T> T put(Object body, GenericType<T> responseType) {
+        return invoke("PUT", body, responseType);
+    }
+    
     /**
      * Does HTTP Async PUT invocation and returns Future.
      * Shortcut for async().put(Entity, InvocationCallback)
@@ -408,7 +448,7 @@ public class WebClient extends AbstractClient {
      * @return the future
      */
     public <T> Future<T> put(Object body, InvocationCallback<T> callback) {
-        return doInvokeAsyncCallback("PUT", body, body.getClass(), getClass(), callback);
+        return doInvokeAsyncCallback("PUT", body, body.getClass(), null, callback);
     }
     
     /**
@@ -508,6 +548,17 @@ public class WebClient extends AbstractClient {
      */
     public <T> T get(Class<T> responseClass) {
         return invoke("GET", null, responseClass);
+    }
+    
+
+    /**
+     * Does HTTP GET invocation and returns typed response object
+     * @param responseType generic response type
+     * @return typed object, can be null. Response status code and headers 
+     *         can be obtained too, see Client.getResponse()
+     */
+    public <T> T get(GenericType<T> responseType) {
+        return invoke("GET", null, responseType);
     }
     
     /**
@@ -759,13 +810,25 @@ public class WebClient extends AbstractClient {
             responseClass, outGenericType);
     }
     
+    private static Type getGenericEntityType(GenericEntity<?> genericEntity, Type inGenericType) {
+        if (inGenericType != null && genericEntity.getType() != inGenericType) {
+            throw new IllegalArgumentException("Illegal type");    
+        }
+        return genericEntity.getType();
+    }
+    
     protected Response doInvoke(String httpMethod, 
                                 Object body, 
                                 Class<?> requestClass,
                                 Type inGenericType,
                                 Class<?> responseClass, 
                                 Type outGenericType) {
-        
+        if (body instanceof GenericEntity) {
+            GenericEntity<?> genericEntity = (GenericEntity<?>)body;
+            body = genericEntity.getEntity();
+            requestClass = genericEntity.getRawType();
+            inGenericType = getGenericEntityType(genericEntity, inGenericType);
+        }
         MultivaluedMap<String, String> headers = prepareHeaders(responseClass, body);
         resetResponse();
         Response r = doChainedInvocation(httpMethod, headers, body, requestClass, inGenericType, 
@@ -792,8 +855,8 @@ public class WebClient extends AbstractClient {
     }
     private Type getCallbackType(InvocationCallback<?> callback) {
         Class<?> cls = callback.getClass();
-        ParameterizedType t = findCallbackType(cls);
-        for (Type tp : t.getActualTypeArguments()) {
+        ParameterizedType pt = findCallbackType(cls);
+        for (Type tp : pt.getActualTypeArguments()) {
             return tp;
         }
         return null;
@@ -806,7 +869,16 @@ public class WebClient extends AbstractClient {
                                                   InvocationCallback<T> callback) {
         
         Type outType = getCallbackType(callback);
-        Class<?> respClass = outType instanceof Class ? (Class<?>) outType : null;
+        Class<?> respClass = null;
+        if (outType instanceof Class) {
+            respClass = (Class<?>)outType;
+        } else if (outType instanceof ParameterizedType) { 
+            ParameterizedType pt = (ParameterizedType)outType;
+            if (pt.getRawType() instanceof Class) {
+                respClass = (Class<?>)pt.getRawType();
+                outType = InjectionUtils.getActualType(pt);
+            }
+        } 
         
         return doInvokeAsync(httpMethod, body, requestClass, inType, respClass, outType, callback);
     }
@@ -818,6 +890,13 @@ public class WebClient extends AbstractClient {
                                           Class<?> respClass,
                                           Type outType,
                                           InvocationCallback<T> callback) {
+        
+        if (body instanceof GenericEntity) {
+            GenericEntity<?> genericEntity = (GenericEntity<?>)body;
+            body = genericEntity.getEntity();
+            requestClass = genericEntity.getRawType();
+            inType = getGenericEntityType(genericEntity, inType);
+        }
         
         MultivaluedMap<String, String> headers = prepareHeaders(respClass, body);
         resetResponse();
@@ -856,9 +935,23 @@ public class WebClient extends AbstractClient {
     
     private void handleAsyncResponse(Message message) {
         JaxrsClientCallback<?> cb = message.getExchange().get(JaxrsClientCallback.class);
-        Response r = handleResponse(message.getExchange().getOutMessage(),
-                                    cb.getResponseClass(),
-                                    cb.getOutGenericType());
+        Response r = null;
+        try {
+            Object[] results = preProcessResult(message);
+            if (results != null && results.length == 1) {
+                r = (Response)results[0];
+            }
+        } catch (Exception ex) {
+            throw ex instanceof WebApplicationException 
+                ? (WebApplicationException)ex 
+                : ex instanceof ProcessingException 
+                ? (ProcessingException)ex : new ProcessingException(ex); 
+        }
+        if (r == null) {
+            r = handleResponse(message.getExchange().getOutMessage(),
+                                        cb.getResponseClass(),
+                                        cb.getOutGenericType());
+        }
         
         if (cb.getResponseClass() == null || Response.class.equals(cb.getResponseClass())) {
             cb.handleResponse(message, new Object[] {r});
@@ -1245,22 +1338,33 @@ public class WebClient extends AbstractClient {
 
         @Override
         public <T> Future<T> method(String name, Entity<?> entity, Class<T> responseType) {
-            return doInvokeAsync(name, entity.getEntity(), entity.getClass(), entity.getClass(), 
+            setEntityHeaders(entity);
+            return doInvokeAsync(name, entity.getEntity(), entity.getEntity().getClass(), null, 
                                  responseType, responseType, null);
         }
 
         @Override
         public <T> Future<T> method(String name, Entity<?> entity, GenericType<T> responseType) {
-            return doInvokeAsync(name, entity.getEntity(), entity.getClass(), entity.getClass(), 
+            setEntityHeaders(entity);
+            return doInvokeAsync(name, entity.getEntity(), entity.getEntity().getClass(), null, 
                                  responseType.getRawType(), responseType.getType(), null);
         }
 
         @Override
         public <T> Future<T> method(String name, Entity<?> entity, InvocationCallback<T> callback) {
-            return doInvokeAsync(name, entity.getEntity(), entity.getClass(), entity.getClass(), 
-                                 Response.class, Response.class, callback);
+            setEntityHeaders(entity);
+            return doInvokeAsyncCallback(name, entity.getEntity(), entity.getEntity().getClass(), null, 
+                callback);
         }
-        
+        private void setEntityHeaders(Entity<?> entity) {
+            WebClient.this.type(entity.getMediaType());
+            if (entity.getLanguage() != null) {
+                WebClient.this.language(entity.getLanguage().toString());
+            }
+            if (entity.getEncoding() != null) {
+                WebClient.this.encoding(entity.getEncoding());
+            }
+        }
     }
     
 }
