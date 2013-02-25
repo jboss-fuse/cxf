@@ -27,10 +27,16 @@ import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 public class ResourceOwnerGrant implements AccessTokenGrant {
     private String ownerName;
     private String ownerPassword;
+    private String scope;
     
     public ResourceOwnerGrant(String name, String password) {
+        this(name, password, null);
+    }
+    
+    public ResourceOwnerGrant(String name, String password, String scope) {
         this.ownerName = name;
         this.ownerPassword = password;
+        this.scope = scope;
     }
     
     public String getType() {
@@ -42,6 +48,9 @@ public class ResourceOwnerGrant implements AccessTokenGrant {
         map.putSingle(OAuthConstants.GRANT_TYPE, OAuthConstants.RESOURCE_OWNER_GRANT);
         map.putSingle(OAuthConstants.RESOURCE_OWNER_NAME, ownerName);
         map.putSingle(OAuthConstants.RESOURCE_OWNER_PASSWORD, ownerPassword);
+        if (scope != null) {
+            map.putSingle(OAuthConstants.SCOPE, scope);
+        }
         return map;
     }
 

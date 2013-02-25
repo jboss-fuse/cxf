@@ -343,12 +343,14 @@ public class IssuedTokenInterceptorProvider extends AbstractPolicyInterceptorPro
             client.setTrust(getTrust10(aim));
             client.setTrust(getTrust13(aim));
             client.setTemplate(itok.getRstTemplate());
-            if (maps == null) {
-                return client.requestSecurityToken();
-            } else {
-                client.setAddressingNamespace(maps.getNamespaceURI());
-                return client.requestSecurityToken(appliesTo);
+            Element policy = itok.getPolicy();
+            if (policy != null && policy.getNamespaceURI() != null) {
+                client.setWspNamespace(policy.getNamespaceURI());
             }
+            if (maps != null && maps.getNamespaceURI() != null) {
+                client.setAddressingNamespace(maps.getNamespaceURI());
+            }
+            return client.requestSecurityToken(appliesTo);
         }
         
         private SecurityToken renewToken(
