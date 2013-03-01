@@ -28,6 +28,7 @@ import java.net.HttpRetryException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.Proxy;
+import java.net.SocketException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Arrays;
@@ -1092,15 +1093,7 @@ public class HTTPConduit
             return connection;
         }
         try {
-            //try and consume any content so that the connection might be reusable
-            InputStream ins = connection.getErrorStream();
-            if (ins == null) {
-                ins = connection.getInputStream();
-            }
-            if (ins != null) {
-                IOUtils.consume(ins);
-                ins.close();
-            }
+            closeInputStream(connection);
         } catch (Throwable t) {
             //ignore
         }
@@ -1404,12 +1397,23 @@ public class HTTPConduit
             
             // If we need to cache for retransmission, store data in a
             // CacheAndWriteOutputStream. Otherwise write directly to the output stream.
+            OutputStream cout = null;
+            try {
+                cout = connection.getOutputStream();
+            } catch (SocketException e) {
+                if ("Socket Closed".equals(e.getMessage())) {
+                    connection.connect();
+                    cout = connection.getOutputStream();
+                } else {
+                    throw e;
+                }
+            }
             if (cachingForRetransmission) {
                 cachedStream =
-                    new CacheAndWriteOutputStream(connection.getOutputStream());
+                    new CacheAndWriteOutputStream(cout);
                 wrappedStream = cachedStream;
             } else {
-                wrappedStream = connection.getOutputStream();
+                wrappedStream = cout;
             }
             
         }
@@ -1630,7 +1634,10 @@ public class HTTPConduit
                 if ((in == null) || (!doProcessResponse(outMessage))) {
                     // oneway operation or decoupled MEP without 
                     // partial response
-                    connection.getInputStream().close();
+                    closeInputStream(connection);
+                    if (isOneway(exchange) && responseCode > 300) {
+                        throw new HTTPException(responseCode, connection.getResponseMessage(), connection.getURL());
+                    }
                     ClientCallback cc = exchange.get(ClientCallback.class);
                     if (null != cc) {
                         //REVISIT move the decoupled destination property name into api
@@ -1764,6 +1771,18 @@ public class HTTPConduit
         policyDataEngine.assertMessage(message, getClient(), new ClientPolicyCalculator());
     }
     
+    protected void closeInputStream(HttpURLConnection connection) throws IOException {
+        //try and consume any content so that the connection might be reusable
+        InputStream ins = connection.getErrorStream();
+        if (ins == null) {
+            ins = connection.getInputStream();
+        }
+        if (ins != null) {
+            IOUtils.consume(ins);
+            ins.close();
+        }
+    }
+
     public boolean canAssert(QName type) {
         return new ClientPolicyCalculator().equals(type);  
     }
