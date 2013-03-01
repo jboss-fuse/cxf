@@ -39,6 +39,7 @@ import org.apache.cxf.binding.soap.interceptor.ReadHeadersInterceptor;
 import org.apache.cxf.binding.soap.interceptor.StartBodyInterceptor;
 import org.apache.cxf.headers.Header;
 import org.apache.cxf.helpers.DOMUtils;
+import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.interceptor.StaxInInterceptor;
 import org.apache.cxf.message.Attachment;
 import org.apache.cxf.message.Message;
@@ -62,6 +63,19 @@ public class ReadHeaderInterceptorTest extends TestBase {
         sbi = new StartBodyInterceptor("phase1");
         chain.add(sbi);
         chain.add(new CheckFaultInterceptor("phase2"));
+    }
+
+    @Test
+    public void testBadHttpVerb() throws Exception {
+        prepareSoapMessage("test-soap-header.xml");
+        soapMessage.put(Message.HTTP_REQUEST_METHOD, "OPTIONS");
+        ReadHeadersInterceptor r = new ReadHeadersInterceptor(BusFactory.getDefaultBus());
+        try {
+            r.handleMessage(soapMessage);
+            fail("Did not throw exception");
+        } catch (Fault f) {
+            assertEquals(405, f.getStatusCode());
+        }
     }
 
     @Test
