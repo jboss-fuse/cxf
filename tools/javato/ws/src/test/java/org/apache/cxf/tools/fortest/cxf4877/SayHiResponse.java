@@ -16,21 +16,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.tools.fortest.cxf4877;
 
-package org.apache.cxf.jaxrs.ext;
+public class SayHiResponse {
 
-import javax.ws.rs.core.Response;
+    /**
+     * Describe msg here.
+     */
+    private String msg;
 
-import org.apache.cxf.jaxrs.model.OperationResourceInfo;
-import org.apache.cxf.message.Message;
+    /**
+     * Get the <code>Msg</code> value.
+     *
+     * @return a <code>String</code> value
+     */
+    public final String getMsg() {
+        return msg;
+    }
 
-/**
- * ResponseHandler is capable of postprocessing requests 
- * ex., they can update the response status code, etc
- *
- */
-public interface ResponseHandler {
-    Response handleResponse(Message m,
-                            OperationResourceInfo ori,
-                            Response response);
+    /**
+     * Set the <code>Msg</code> value.
+     *
+     * @param newMsg The new Msg value.
+     */
+    public final void setMsg(final String newMsg) {
+        this.msg = newMsg;
+    }
 }

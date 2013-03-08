@@ -17,22 +17,26 @@
  * under the License.
  */
 
-package org.apache.cxf.rs.security.xml;
+package org.apache.cxf.tools.fortest.cxf4877;
 
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.container.PreMatching;
+import javax.jws.WebMethod;
+import javax.jws.WebParam;
+import javax.jws.WebResult;
+import javax.jws.WebService;
+import javax.jws.soap.SOAPBinding;
+import javax.xml.ws.Action;
 
-import org.apache.cxf.jaxrs.utils.JAXRSUtils;
-import org.apache.cxf.message.Message;
+@WebService(targetNamespace = "http://foo.com/HelloWorld", name = "HelloWorld")
+@SOAPBinding(style = SOAPBinding.Style.RPC)
+public interface Hello {
 
-@PreMatching
-public class XmlEncInHandler extends AbstractXmlEncInHandler implements ContainerRequestFilter {
-    
-    public void filter(ContainerRequestContext context) {
-        Message message = JAXRSUtils.getCurrentMessage();
-        
-        decryptContent(message);
-    }
-    
-}
+    @WebResult(partName = "out", name = "out")
+    @WebMethod
+    @Action
+    String echoFoo(@WebParam(partName = "in", name = "in") String s);
+
+    @WebResult
+    @WebMethod
+    @Action
+    SayHiResponse sayHi(SayHi s);
+} 

@@ -21,13 +21,15 @@ package org.apache.cxf.rs.security.saml;
 
 import java.net.URI;
 
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Form;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
-import org.apache.cxf.jaxrs.ext.form.Form;
 import org.apache.cxf.jaxrs.impl.UriInfoImpl;
-import org.apache.cxf.jaxrs.model.ClassResourceInfo;
 import org.apache.cxf.jaxrs.provider.FormEncodingProvider;
 import org.apache.cxf.jaxrs.utils.FormUtils;
+import org.apache.cxf.jaxrs.utils.JAXRSUtils;
 import org.apache.cxf.message.Message;
 
 public class SamlFormInHandler extends AbstractSamlBase64InHandler {
@@ -40,26 +42,29 @@ public class SamlFormInHandler extends AbstractSamlBase64InHandler {
     public SamlFormInHandler() {
     }
     
-    public Response handleRequest(Message message, ClassResourceInfo resourceClass) {
+    public void filter(ContainerRequestContext context) {
+        Message message = JAXRSUtils.getCurrentMessage();
         
         Form form = readFormData(message);    
-        String assertion = form.getData().getFirst(SAML_ELEMENT);
+        MultivaluedMap<String, String> formData = form.asMap();
+        String assertion = formData.getFirst(SAML_ELEMENT);
         
         handleToken(message, assertion);         
 
         // redirect if needed
-        String samlRequestURI = form.getData().getFirst(SAML_RELAY_STATE);
+        String samlRequestURI = formData.getFirst(SAML_RELAY_STATE);
         if (samlRequestURI != null) {
             // RelayState may actually represent a reference to a transient local state
             // containing the actual REQUEST URI client was using before being redirected 
             // back to IDP - at the moment assume it's URI
             UriInfoImpl ui = new UriInfoImpl(message); 
             if (!samlRequestURI.startsWith(ui.getBaseUri().toString())) {
-                return Response.status(302).location(URI.create(samlRequestURI)).build();
+                context.abortWith(Response.status(302).location(URI.create(samlRequestURI)).build());
+                return;
             }
         }
-        form.getData().remove(SAML_ELEMENT);
-        form.getData().remove(SAML_RELAY_STATE);
+        formData.remove(SAML_ELEMENT);
+        formData.remove(SAML_RELAY_STATE);
         
         // restore input stream
         try {
@@ -67,7 +72,6 @@ public class SamlFormInHandler extends AbstractSamlBase64InHandler {
         } catch (Exception ex) {
             throwFault(ex.getMessage(), ex);
         }
-        return null;
     }
     
     private Form readFormData(Message message) {

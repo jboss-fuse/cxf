@@ -16,23 +16,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.tools.fortest.cxf4877;
 
-package org.apache.cxf.jaxrs.ext;
+public class SayHi {
 
-import javax.ws.rs.core.Response;
+    /**
+     * Describe msg here.
+     */
+    private String msg;
 
-import org.apache.cxf.jaxrs.model.ClassResourceInfo;
-import org.apache.cxf.message.Message;
+    /**
+     * Get the <code>Msg</code> value.
+     *
+     * @return a <code>String</code> value
+     */
+    public final String getMsg() {
+        return msg;
+    }
 
-/**
- * RequestHandler is capable of preprocessing requests 
- * ex., they can handle query extensions starting from _type
- *
- */
-    
-public interface RequestHandler {
-    
-    Response handleRequest(Message m, 
-                           ClassResourceInfo resourceClass);
-
+    /**
+     * Set the <code>Msg</code> value.
+     *
+     * @param newMsg The new Msg value.
+     */
+    public final void setMsg(final String newMsg) {
+        this.msg = newMsg;
+    }
 }

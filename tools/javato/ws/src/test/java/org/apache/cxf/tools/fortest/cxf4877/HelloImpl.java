@@ -16,23 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.tools.fortest.cxf4877;
 
-package org.apache.cxf.rs.security.xml;
+import javax.jws.WebService;
 
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.container.PreMatching;
-
-import org.apache.cxf.jaxrs.utils.JAXRSUtils;
-import org.apache.cxf.message.Message;
-
-@PreMatching
-public class XmlEncInHandler extends AbstractXmlEncInHandler implements ContainerRequestFilter {
-    
-    public void filter(ContainerRequestContext context) {
-        Message message = JAXRSUtils.getCurrentMessage();
-        
-        decryptContent(message);
+@WebService(serviceName = "HelloService",
+            portName = "HelloPort",
+            endpointInterface = "org.apache.cxf.tools.fortest.cxf4877.Hello",
+            targetNamespace = "http://foo.com/MyImpl")
+public class HelloImpl {
+    public String echoFoo(String s) {
+        return s;
     }
-    
+
+    public SayHiResponse sayHi(SayHi s) {
+        return new SayHiResponse();
+    }
 }
