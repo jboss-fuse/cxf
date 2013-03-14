@@ -531,6 +531,12 @@ class JAXBSchemaInitializer extends ServiceModelVisitor {
         for (Field f : Utils.getFields(cls, accessType)) {
             //map field
             Type type = Utils.getFieldType(f);
+            //we want to return the right type for collections so if we get null
+            //from the return type we check if it's ParameterizedType and get the
+            //generic return type.
+            if ((type == null) && (f.getGenericType() instanceof ParameterizedType)) {
+                type = f.getGenericType();
+            }
             JAXBBeanInfo beanInfo = getBeanInfo(type);
             if (beanInfo != null) {
                 addElement(schema, seq, beanInfo, new QName(namespace, f.getName()), isArray(type));
@@ -539,6 +545,12 @@ class JAXBSchemaInitializer extends ServiceModelVisitor {
         for (Method m : Utils.getGetters(cls, accessType)) {
             //map method
             Type type = Utils.getMethodReturnType(m);
+            // we want to return the right type for collections so if we get null
+            // from the return type we check if it's ParameterizedType and get the
+            // generic return type.
+            if ((type == null) && (m.getGenericReturnType() instanceof ParameterizedType)) {
+                type = m.getGenericReturnType();
+            }
             JAXBBeanInfo beanInfo = getBeanInfo(type);
             if (beanInfo != null) {
                 int idx = m.getName().startsWith("get") ? 3 : 2;
