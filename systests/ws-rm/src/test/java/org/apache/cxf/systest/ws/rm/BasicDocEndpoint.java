@@ -16,22 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.tools.fortest.exception;
+package org.apache.cxf.systest.ws.rm;
 
-import java.util.List;
+import javax.jws.WebMethod;
+import javax.jws.WebService;
 
-import javax.xml.ws.WebFault;
+@WebService(name = "RMEndpoint", targetNamespace = "http://cxf.apache.org/wsrm")
+public interface BasicDocEndpoint {
+    @WebMethod
+    String echo(String arg0);
 
-@WebFault
-public class ListException extends Exception {
-
-    private static final long serialVersionUID = 1L;
-    private List<MyData> names;
-    public List<MyData> getNames() {
-        return names;
-    }
-
-    public void setNames(List<MyData> names) {
-        this.names = names;
-    }
 }
