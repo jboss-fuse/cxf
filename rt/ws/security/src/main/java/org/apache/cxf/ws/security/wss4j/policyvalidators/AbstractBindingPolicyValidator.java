@@ -118,11 +118,22 @@ public abstract class AbstractBindingPolicyValidator implements BindingPolicyVal
                 if (xpath != null) {
                     String[] nodes = StringUtils.split(xpath, "/");
                     // envelope/Body || envelope/Header/header || envelope/Header/wsse:Security/header
-                    if (nodes.length == 5 && nodes[3].contains("Security")) {
-                        continue;
-                    } else if (nodes.length < 3 || nodes.length > 4) {
+                    if (nodes.length < 3 || nodes.length > 5) {
                         return false;
                     }
+                    
+                    if (!(nodes[2].contains("Header") || nodes[2].contains("Body"))) {
+                        return false;
+                    }
+                    
+                    if (nodes.length == 5 && !nodes[3].contains("Security")) {
+                        return false;
+                    }
+                    
+                    if (nodes.length == 4 && nodes[2].contains("Body")) {
+                        return false;
+                    }
+                    
                 }
             }
         }
@@ -141,7 +152,7 @@ public abstract class AbstractBindingPolicyValidator implements BindingPolicyVal
             if (results.isEmpty()) {
                 return false;
             }
-            Integer firstAction = (Integer)results.get(0).get(WSSecurityEngineResult.TAG_ACTION);
+            Integer firstAction = (Integer)results.get(results.size() - 1).get(WSSecurityEngineResult.TAG_ACTION);
             if (firstAction.intValue() != WSConstants.TS) {
                 return false;
             }
@@ -150,7 +161,7 @@ public abstract class AbstractBindingPolicyValidator implements BindingPolicyVal
                 return false;
             }
             Integer lastAction = 
-                (Integer)results.get(results.size() - 1).get(WSSecurityEngineResult.TAG_ACTION);
+                (Integer)results.get(0).get(WSSecurityEngineResult.TAG_ACTION);
             if (lastAction.intValue() != WSConstants.TS) {
                 return false;
             }
@@ -187,8 +198,8 @@ public abstract class AbstractBindingPolicyValidator implements BindingPolicyVal
         
         // Check the Layout
         Layout layout = binding.getLayout();
-        boolean timestampFirst = layout.getValue() == SPConstants.Layout.LaxTimestampFirst;
-        boolean timestampLast = layout.getValue() == SPConstants.Layout.LaxTimestampLast;
+        boolean timestampFirst = layout.getValue() == SPConstants.Layout.LaxTsFirst;
+        boolean timestampLast = layout.getValue() == SPConstants.Layout.LaxTsLast;
         if (!validateLayout(timestampFirst, timestampLast, results)) {
             String error = "Layout does not match the requirements";
             notAssertPolicy(aim, layout, error);

@@ -88,25 +88,43 @@ public class SpringBeanLocator implements ConfiguredBeanLocator {
                 ((ExtensionManagerImpl)orig).removeBeansOfNames(names);
             }
         }
-        
         loadOSGIContext(bus);
     }
 
     private void loadOSGIContext(Bus b) {
+        bundleContext = findBundleContext(context, b);
+        if (bundleContext == null) {
+            osgi = false;
+        }
+    }
+    
+    private Object findBundleContext(ApplicationContext applicationContext, Bus b) {
+        Object answer = null;
+        ApplicationContext aContext = applicationContext;
+        // try to find out the bundleContext by going through the parent context
+        while (aContext != null && answer != null) {
+            answer = getBundleContext(aContext, b);
+            aContext = aContext.getParent();
+        }
+        return answer;
+    }
+    
+    private Object getBundleContext(ApplicationContext applicationContext, Bus b) {
         try {
             //use a little reflection to allow this to work without the spring-dm jars
             //for the non-osgi cases
-            Method m = context.getClass().getMethod("getBundleContext");
-            bundleContext = m.invoke(context);
-            if (b != null) {
+            Method m = applicationContext.getClass().getMethod("getBundleContext");
+            Object o = m.invoke(applicationContext);
+            if (o != null && b != null) {
                 @SuppressWarnings("unchecked")
                 Class<Object> cls = (Class<Object>)m.getReturnType();
-                b.setExtension(bundleContext, cls);
+                b.setExtension(o, cls);
             }
+            return o;
         } catch (Throwable t) {
-            //ignore
-            osgi = false;
+            // do nothing here
         }
+        return null;
     }
     
     public <T> T getBeanOfType(String name, Class<T> type) {
