@@ -396,7 +396,6 @@ public class IssuedTokenInterceptorProvider extends AbstractPolicyInterceptorPro
                 return client.requestSecurityToken(appliesTo);
             }
         }
-        
     }
     
     static class IssuedTokenInInterceptor extends AbstractPhaseInterceptor<Message> {
