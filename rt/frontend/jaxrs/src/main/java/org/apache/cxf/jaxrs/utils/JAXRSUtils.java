@@ -51,6 +51,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.HttpMethod;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotAcceptableException;
 import javax.ws.rs.NotAllowedException;
@@ -133,6 +134,7 @@ import org.apache.cxf.jaxrs.model.URITemplate;
 import org.apache.cxf.jaxrs.provider.AbstractConfigurableProvider;
 import org.apache.cxf.jaxrs.provider.ProviderFactory;
 import org.apache.cxf.jaxrs.utils.multipart.AttachmentUtils;
+import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageUtils;
 import org.apache.cxf.transport.http.AbstractHTTPDestination;
@@ -403,14 +405,15 @@ public final class JAXRSUtils {
                             pathMatched++;
                             boolean mMatched = matchHttpMethod(ori.getHttpMethod(), httpMethod);
                             boolean cMatched = matchConsumeTypes(requestType, ori);
-                            boolean pMatched = matchProduceTypes(acceptType, ori);
-                            if (mMatched && cMatched && pMatched) {
+                            MediaType pMediaType = matchProduceTypes(acceptType, ori);
+                            if (mMatched && cMatched && pMediaType != null) {
                                 subresourcesOnly = false;
+                                map.putSingle(Message.CONTENT_TYPE, pMediaType.toString());
                                 candidateList.put(ori, map);
                                 added = true;
                             } else {
                                 methodMatched = mMatched ? methodMatched + 1 : methodMatched;
-                                produceMatched = pMatched ? produceMatched + 1 : produceMatched;
+                                produceMatched = pMediaType != null ? produceMatched + 1 : produceMatched;
                                 consumeMatched = cMatched ? consumeMatched + 1 : consumeMatched;
                                 logNoMatchMessage(ori, path, httpMethod, requestType, acceptContentTypes);
                             }
@@ -446,6 +449,12 @@ public final class JAXRSUtils {
                 LOG.fine(new org.apache.cxf.common.i18n.Message("OPER_SELECTED", 
                                BUNDLE, ori.getMethodToInvoke().getName(), 
                                resource.getServiceClass().getName()).toString());
+            }
+            if (!ori.isSubResourceLocator()) {
+                List<String> responseContentType = values.remove(Message.CONTENT_TYPE);
+                if (responseContentType != null) {
+                    message.getExchange().put(Message.CONTENT_TYPE, responseContentType.get(0));
+                }
             }
             return ori;
         }
@@ -538,7 +547,7 @@ public final class JAXRSUtils {
     }
     
     public static boolean headMethodPossible(String expectedMethod, String httpMethod) {
-        return "HEAD".equalsIgnoreCase(httpMethod) && "GET".equals(expectedMethod);        
+        return HttpMethod.HEAD.equalsIgnoreCase(httpMethod) && HttpMethod.GET.equals(expectedMethod);        
     }
     
     private static String convertTypesToString(List<MediaType> types) {
@@ -1235,10 +1244,13 @@ public final class JAXRSUtils {
         return intersectMimeTypes(ori.getConsumeTypes(), requestContentType).size() != 0;
     }
     
-    public static boolean matchProduceTypes(MediaType acceptContentType, 
+    public static MediaType matchProduceTypes(MediaType acceptContentType, 
                                             OperationResourceInfo ori) {
         
-        return intersectMimeTypes(ori.getProduceTypes(), acceptContentType).size() != 0;
+        List<MediaType> intersected = intersectMimeTypes(ori.getProduceTypes(), 
+                                                         Collections.singletonList(acceptContentType), 
+                                                         true);
+        return intersected.isEmpty() ? null : intersected.get(0);
     }
     
     public static boolean matchMimeTypes(MediaType requestContentType, 
@@ -1400,28 +1412,46 @@ public final class JAXRSUtils {
         return cls == null ? defaultExceptionType : cls;
     }
     
-    public static <T extends Throwable> Response convertFaultToResponse(T ex, Message inMessage) {
-        
+    public static <T extends Throwable> Response convertFaultToResponse(T ex, Message currentMessage) {
+        Message inMessage = currentMessage.getExchange().getInMessage();
+        Response response = null;
         if (ex.getClass() == WebApplicationException.class) {
             WebApplicationException webEx = (WebApplicationException)ex;
             if (webEx.getResponse().hasEntity() 
                 && webEx.getCause() == null
                 && MessageUtils.isTrue(inMessage.getContextualProperty(SUPPORT_WAE_SPEC_OPTIMIZATION))) {
-                return webEx.getResponse();
+                response = webEx.getResponse();
+                
             }
         }
-        
-        ExceptionMapper<T>  mapper =
-            ProviderFactory.getInstance(inMessage).createExceptionMapper(ex.getClass(), inMessage);
-        if (mapper != null) {
-            try {
-                return mapper.toResponse(ex);
-            } catch (Exception mapperEx) {
-                mapperEx.printStackTrace();
-                return Response.serverError().build();
+        if (response == null) {
+            ExceptionMapper<T>  mapper =
+                ProviderFactory.getInstance(inMessage).createExceptionMapper(ex.getClass(), inMessage);
+            if (mapper != null) {
+                try {
+                    response = mapper.toResponse(ex);
+                } catch (Exception mapperEx) {
+                    mapperEx.printStackTrace();
+                    return Response.serverError().build();
+                }
             }
         }
-        return null;
+        setMessageContentType(currentMessage, response);
+        return response;
+    }
+    
+    public static void setMessageContentType(Message message, Response response) {
+        if (response != null) {
+            Object ct = response.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE);
+            if (ct != null) {
+                Exchange ex = message.getExchange();
+                if (ex.getInMessage() == message) {
+                    ex.put(Message.CONTENT_TYPE, ct.toString());
+                } else {
+                    message.put(Message.CONTENT_TYPE, ct.toString());
+                }
+            }
+        }
         
     }
     
@@ -1478,7 +1508,9 @@ public final class JAXRSUtils {
                 } catch (IOException ex) {
                     throw new InternalServerErrorException(ex);
                 }
-                if (m.getExchange().get(Response.class) != null) {
+                Response response = m.getExchange().get(Response.class);
+                if (response != null) {
+                    setMessageContentType(m, response);
                     return true;
                 }
             }
@@ -1489,7 +1521,7 @@ public final class JAXRSUtils {
     public static void runContainerResponseFilters(ProviderFactory pf,
                                                    Response r,
                                                    Message m, 
-                                                   OperationResourceInfo ori) {
+                                                   OperationResourceInfo ori) throws IOException, Throwable {
         List<ProviderInfo<ContainerResponseFilter>> containerFilters =  
             pf.getContainerResponseFilters(ori == null ? null : ori.getNameBindings());
         if (!containerFilters.isEmpty()) {
@@ -1500,12 +1532,8 @@ public final class JAXRSUtils {
             ContainerResponseContext responseContext = 
                 new ContainerResponseContextImpl(r, m, ori);
             for (ProviderInfo<ContainerResponseFilter> filter : containerFilters) {
-                try {
-                    InjectionUtils.injectContexts(filter.getProvider(), filter, m);
-                    filter.getProvider().filter(requestContext, responseContext);
-                } catch (IOException ex) {
-                    throw new WebApplicationException(ex);
-                }
+                InjectionUtils.injectContexts(filter.getProvider(), filter, m);
+                filter.getProvider().filter(requestContext, responseContext);
             }
         }
     }

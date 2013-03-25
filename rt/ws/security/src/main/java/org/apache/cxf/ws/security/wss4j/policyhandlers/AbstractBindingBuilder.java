@@ -100,6 +100,7 @@ import org.apache.cxf.ws.security.policy.model.X509Token;
 import org.apache.cxf.ws.security.tokenstore.SecurityToken;
 import org.apache.cxf.ws.security.tokenstore.TokenStore;
 import org.apache.cxf.ws.security.tokenstore.TokenStoreFactory;
+import org.apache.cxf.ws.security.wss4j.WSS4JUtils;
 import org.apache.neethi.Assertion;
 import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSEncryptionPart;
@@ -420,9 +421,9 @@ public abstract class AbstractBindingBuilder {
             for (AssertionInfo ai : ais) {
                 Layout layout = (Layout)ai.getAssertion();
                 ai.setAsserted(true);
-                if (SPConstants.Layout.LaxTimestampLast == layout.getValue()) {
+                if (SPConstants.Layout.LaxTsLast == layout.getValue()) {
                     if (timestamp == null) {
-                        ai.setNotAsserted(SPConstants.Layout.LaxTimestampLast + " requires a timestamp");
+                        ai.setNotAsserted(SPConstants.Layout.LaxTsLast + " requires a timestamp");
                     } else {
                         ai.setAsserted(true);
                         Element el = timestamp.getElement();
@@ -431,9 +432,9 @@ public abstract class AbstractBindingBuilder {
                             bottomUpElement = el;
                         }
                     }
-                } else if (SPConstants.Layout.LaxTimestampFirst == layout.getValue()) {
+                } else if (SPConstants.Layout.LaxTsFirst == layout.getValue()) {
                     if (timestamp == null) {
-                        ai.setNotAsserted(SPConstants.Layout.LaxTimestampFirst + " requires a timestamp");
+                        ai.setNotAsserted(SPConstants.Layout.LaxTsFirst + " requires a timestamp");
                     } else {
                         addTopDownElement(timestampEl.getElement());
                     }
@@ -1051,7 +1052,7 @@ public abstract class AbstractBindingBuilder {
         String id;
         
         //first try to get the Id attr
-        Attr idAttr = elem.getAttributeNode("Id");
+        Attr idAttr = elem.getAttributeNodeNS(null, "Id");
         if (idAttr == null) {
             //then try the wsu:Id value
             idAttr = elem.getAttributeNodeNS(PolicyConstants.WSU_NAMESPACE_URI, "Id");
@@ -1398,7 +1399,7 @@ public abstract class AbstractBindingBuilder {
                         } else {
                             //not forcing an ID on this.  Use one if there is one 
                             //there already, but don't force one
-                            Attr idAttr = el.getAttributeNode("Id");
+                            Attr idAttr = el.getAttributeNodeNS(null, "Id");
                             if (idAttr == null) {
                                 //then try the wsu:Id value
                                 idAttr = el.getAttributeNodeNS(PolicyConstants.WSU_NAMESPACE_URI, "Id");
@@ -2191,11 +2192,13 @@ public abstract class AbstractBindingBuilder {
          * signature results in the signatureActions list
          */
         List<WSSecurityEngineResult> signatureActions = new ArrayList<WSSecurityEngineResult>();
+        final List<Integer> signedActions = new ArrayList<Integer>(2);
+        signedActions.add(WSConstants.SIGN);
+        signedActions.add(WSConstants.UT_SIGN);
         for (WSHandlerResult wshResult : results) {
-            WSSecurityUtil.fetchAllActionResults(wshResult.getResults(),
-                    WSConstants.SIGN, signatureActions);
-            WSSecurityUtil.fetchAllActionResults(wshResult.getResults(),
-                    WSConstants.UT_SIGN, signatureActions);
+            signatureActions.addAll(
+                WSS4JUtils.fetchAllActionResults(wshResult.getResults(), signedActions)
+            );
         }
         
         sigConfList = new ArrayList<WSEncryptionPart>();
