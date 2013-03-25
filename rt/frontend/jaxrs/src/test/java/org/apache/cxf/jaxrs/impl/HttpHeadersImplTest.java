@@ -21,6 +21,7 @@ package org.apache.cxf.jaxrs.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -189,6 +190,17 @@ public class HttpHeadersImplTest extends Assert {
     }
     
     @Test
+    public void testGetContentTypeLowCase() throws Exception {
+        
+        Message m = new MessageImpl();
+        m.put(Message.PROTOCOL_HEADERS, 
+              Collections.singletonMap("content-type", 
+                  Collections.singletonList("text/plain")));
+        HttpHeaders h = new HttpHeadersImpl(m);
+        assertEquals("text/plain", h.getRequestHeaders().getFirst("Content-Type"));
+    }
+    
+    @Test
     public void testGetDate() throws Exception {
         
         Message m = new MessageImpl();
@@ -240,6 +252,32 @@ public class HttpHeadersImplTest extends Assert {
         assertEquals("text/*;q=1", acceptValues.get(0).toString());
         assertEquals("application/xml", acceptValues.get(1).toString());
         assertEquals("text/bar;q=0.6", acceptValues.get(2).toString());
+    }
+    
+    @Test
+    public void testGetNoMediaTypes() throws Exception {
+        
+        Message m = control.createMock(Message.class);
+        m.get(Message.PROTOCOL_HEADERS);
+        EasyMock.expectLastCall().andReturn(Collections.emptyMap());
+        control.replay();
+        HttpHeaders h = new HttpHeadersImpl(m);
+        List<MediaType> acceptValues = h.getAcceptableMediaTypes();
+        assertEquals(1, acceptValues.size());
+        assertEquals("*/*", acceptValues.get(0).toString());
+    }
+    
+    @Test
+    public void testGetNoLanguages() throws Exception {
+        
+        Message m = control.createMock(Message.class);
+        m.get(Message.PROTOCOL_HEADERS);
+        EasyMock.expectLastCall().andReturn(Collections.emptyMap());
+        control.replay();
+        HttpHeaders h = new HttpHeadersImpl(m);
+        List<Locale> locales = h.getAcceptableLanguages();
+        assertEquals(1, locales.size());
+        assertEquals("*", locales.get(0).toString());
     }
     
     @Test
