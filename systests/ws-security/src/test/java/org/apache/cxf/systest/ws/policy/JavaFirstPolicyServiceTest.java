@@ -217,7 +217,7 @@ public class JavaFirstPolicyServiceTest extends AbstractBusClientServerTestBase 
     private Element getOperationElement(String operationName, List<Element> operationMessages) {
         Element operationElement = null;
         for (Element operation : operationMessages) {
-            if (operationName.equals(operation.getAttribute("name"))) {
+            if (operationName.equals(operation.getAttributeNS(null, "name"))) {
                 operationElement = operation;
                 break;
             }
@@ -233,9 +233,10 @@ public class JavaFirstPolicyServiceTest extends AbstractBusClientServerTestBase 
         Element policyReference = DOMUtils.getFirstChildWithName(messageElement, policyNamespace, 
                                                                  "PolicyReference");
         if (policyReference != null) {
-            return policyReference.getAttribute("URI");
+            return policyReference.getAttributeNS(null, "URI");
         } else {
             return null;
         }
     }
+
 }
