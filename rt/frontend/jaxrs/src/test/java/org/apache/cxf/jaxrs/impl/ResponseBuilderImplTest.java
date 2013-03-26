@@ -19,26 +19,100 @@
 
 package org.apache.cxf.jaxrs.impl;
 
+import java.lang.annotation.Annotation;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Variant;
 
 import org.apache.cxf.jaxrs.utils.HttpUtils;
-
 import org.junit.Assert;
 import org.junit.Test;
 
 
 public class ResponseBuilderImplTest extends Assert {
+
+    @Test
+    public void testAllow() throws Exception {
+        MetadataMap<String, Object> m = new MetadataMap<String, Object>();
+        m.add("Allow", "HEAD");
+        m.add("Allow", "GET");
+        checkBuild(Response.ok().allow("HEAD").allow("GET").build(), 200, null, m);
+    }
+    
+    @Test
+    public void testEncoding() throws Exception {
+        MetadataMap<String, Object> m = new MetadataMap<String, Object>();
+        m.add("Content-Encoding", "gzip");
+        checkBuild(Response.ok().encoding("gzip").build(), 200, null, m);
+    }
+
+    @Test
+    public void testEntity() throws Exception {
+        MetadataMap<String, Object> m = new MetadataMap<String, Object>();
+        checkBuild(Response.ok().entity("Hello").build(), 200, "Hello", m);
+    }
+
+    @Test
+    public void testEntityAnnotations() throws Exception {
+        MetadataMap<String, Object> m = new MetadataMap<String, Object>();
+        Annotation[] annotations = new Annotation[1];
+        Annotation produces = new Produces() {
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return Produces.class;
+            }
+            @Override
+            public String[] value() {
+                return new String[] {
+                    "text/turtle"
+                };
+            }
+        };
+        annotations[0] = produces;
+        Response response = Response.ok().entity("<> a <#test>", annotations).build();
+        checkBuild(response, 200, "<> a <#test>", m);
+        assertArrayEquals(annotations, ((ResponseImpl)response).getEntityAnnotations());
+    }
+
+    @Test
+    public void testReplaceAll() throws Exception {
+        MetadataMap<String, Object> m = new MetadataMap<String, Object>();
+        m.add("Content-Type", "text/plain");
+        checkBuild(Response.ok().type("image/png").tag("removeme").replaceAll(m).build(), 200, null, m);
+
+    }
+
+    @Test
+    public void testAllowReset() throws Exception {
+        MetadataMap<String, Object> m = new MetadataMap<String, Object>();
+        m.add("Allow", "POST");
+        checkBuild(Response.ok().allow("HEAD").allow("GET").allow().allow("POST").build(), 200, null, m);
+    }
+
+    @Test
+    public void testAllowSet() throws Exception {
+        MetadataMap<String, Object> m = new MetadataMap<String, Object>();
+        m.add("Allow", "HEAD");
+        m.add("Allow", "GET");
+        // LinkedHashSet so we get a predictable order
+        Set<String> methods = new LinkedHashSet<String>();
+        methods.add("HEAD");
+        methods.add("GET");
+        checkBuild(Response.ok().allow(methods).build(), 200, null, m);
+    }
 
     @Test
     public void testValidStatus() {
@@ -79,6 +153,81 @@ public class ResponseBuilderImplTest extends Assert {
         m.putSingle("Content-Language", "en");
         checkBuild(Response.ok().language("de").language((Locale)null)
                    .language("en").build(), 200, null, m);
+    }
+    
+    @Test
+    public void testLinkStr() {
+        MetadataMap<String, Object> m = new MetadataMap<String, Object>();
+        m.putSingle("Link", "<http://example.com/page3>;rel=\"next\"");
+        checkBuild(Response.ok().link("http://example.com/page3", "next").build(), 200, null, m);
+    }
+
+    @Test
+    public void testLinkStrMultiple() {
+        MetadataMap<String, Object> m = new MetadataMap<String, Object>();
+        m.add("Link", "<http://example.com/page1>;rel=\"previous\"");
+        m.add("Link", "<http://example.com/page3>;rel=\"next\"");
+        checkBuild(Response.ok().link("http://example.com/page1", "previous")
+                       .link("http://example.com/page3", "next").build(), 200, null, m);
+    }
+    
+    @Test
+    public void testLinkStrMultipleSameRel() {
+        MetadataMap<String, Object> m = new MetadataMap<String, Object>();
+        m.add("Link", "<http://example.com/page2.pdf>;rel=\"alternate\"");
+        m.add("Link", "<http://example.com/page2.txt>;rel=\"alternate\"");
+        checkBuild(Response.ok().link("http://example.com/page2.pdf", "alternate")
+                       .link("http://example.com/page2.txt", "alternate").build(), 200, null, m);
+    }
+    
+    @Test
+    public void testLinkURI() {
+        MetadataMap<String, Object> m = new MetadataMap<String, Object>();
+        URI uri = URI.create("http://example.com/page3");
+        m.putSingle("Link", "<http://example.com/page3>;rel=\"next\"");
+        checkBuild(Response.ok().link(uri, "next").build(), 200, null, m);
+    }
+
+    @Test
+    public void testLinks() {
+        MetadataMap<String, Object> m = new MetadataMap<String, Object>();
+        m.add("Link", "<http://example.com/page1>;rel=\"previous\"");
+        m.add("Link", "<http://example.com/page3>;rel=\"next\"");
+        RuntimeDelegateImpl delegate = new RuntimeDelegateImpl();
+        Link.Builder linkBuilder = delegate.createLinkBuilder();
+        Link prevLink = linkBuilder.uri("http://example.com/page1").rel("previous").build();
+        // Reset linkbuilder
+        linkBuilder = delegate.createLinkBuilder();
+        Link nextLink = linkBuilder.uri("http://example.com/page3").rel("next").build();
+        checkBuild(Response.ok().links(prevLink, nextLink).build(), 200, null, m);
+    }
+
+    @Test
+    public void testLinksNoReset() {
+        MetadataMap<String, Object> m = new MetadataMap<String, Object>();
+        m.add("Link", "<http://example.com/page1>;rel=\"previous\"");
+        m.add("Link", "<http://example.com/page3>;rel=\"next\"");
+        RuntimeDelegateImpl delegate = new RuntimeDelegateImpl();
+        Link.Builder linkBuilder = delegate.createLinkBuilder();
+        Link prevLink = linkBuilder.uri("http://example.com/page1").rel("previous").build();
+        linkBuilder = delegate.createLinkBuilder();
+        Link nextLink = linkBuilder.uri("http://example.com/page3").rel("next").build();
+        checkBuild(Response.ok().links(prevLink).links(nextLink).build(), 200, null, m);
+    }
+
+    @Test
+    public void testLinksWithReset() {
+        MetadataMap<String, Object> m = new MetadataMap<String, Object>();
+        m.add("Link", "<http://example.com/page3>;rel=\"next\"");
+        RuntimeDelegateImpl delegate = new RuntimeDelegateImpl();
+        Link.Builder linkBuilder = delegate.createLinkBuilder();
+        Link prevLink = linkBuilder.uri("http://example.com/page1").rel("previous").build();
+        linkBuilder = delegate.createLinkBuilder();
+        Link nextLink = linkBuilder.uri("http://example.com/page3").rel("next").build();
+        // CHECK: Should .links() do a reset? Undocumented feature; so we'll
+        // test with the awkward <code>(Link[])null</code> instead..
+        // Note: .cookie() has same behavior.
+        checkBuild(Response.ok().links(prevLink).links((Link[])null).links(nextLink).build(), 200, null, m);
     }
     
     @Test
@@ -179,14 +328,27 @@ public class ResponseBuilderImplTest extends Assert {
     private void checkBuild(Response r, int status, Object entity, 
                             MetadataMap<String, Object> meta) {
         ResponseImpl ri = (ResponseImpl)r;
-        assertEquals("Wrong status", ri.getStatus(), status);
-        assertSame("Wrong entity", ri.getEntity(), entity);
-        assertEquals("Wrong meta", ri.getMetadata(), meta);
+        assertEquals("Wrong status", status, ri.getStatus());
+        assertSame("Wrong entity", entity, ri.getEntity());
+        assertEquals("Wrong meta", meta, ri.getMetadata());
     }
     
     @Test
-    public void testVariants() throws Exception {
+    public void testVariantsArray() throws Exception {
         
+        MetadataMap<String, Object> m = new MetadataMap<String, Object>();
+        m.add("Accept", "application/json");
+        m.add("Accept", "application/xml");
+        m.add("Vary", "Accept");
+
+        Variant json = new Variant(MediaType.APPLICATION_JSON_TYPE, (String)null, null);
+        Variant xml = new Variant(MediaType.APPLICATION_XML_TYPE, (String)null, null);
+
+        checkBuild(Response.ok().variants(json, xml).build(), 200, null, m);
+    }
+
+    @Test
+    public void testVariantsList() throws Exception {
         MetadataMap<String, Object> m = new MetadataMap<String, Object>();
         m.add("Accept", "text/xml");
         m.add("Accept", "application/xml");
@@ -205,6 +367,5 @@ public class ResponseBuilderImplTest extends Assert {
         checkBuild(Response.ok().variants(vts).build(),
                    200, null, m);
     }
-    
     
 }

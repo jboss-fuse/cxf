@@ -110,7 +110,7 @@
         <cxf.geronimo.servlet.version>1.0</cxf.geronimo.servlet.version>
         <cxf.geronimo.servlet25.version>1.1.2</cxf.geronimo.servlet25.version>
         <cxf.geronimo.transaction.version>1.1.1</cxf.geronimo.transaction.version>
-        <cxf.javax.ws.rs.version>2.0-rc2</cxf.javax.ws.rs.version>
+        <cxf.javax.ws.rs.version>2.0-rc3</cxf.javax.ws.rs.version>
         <cxf.jaxb21.version>2.1</cxf.jaxb21.version>
         <cxf.jaxb21.impl.version>2.1.13</cxf.jaxb21.impl.version>
         <cxf.jaxb21.xjc.version>2.1.13</cxf.jaxb21.xjc.version>
@@ -149,14 +149,11 @@
         <cxf.spring.osgi.version>1.2.1</cxf.spring.osgi.version>
         <cxf.spring.ldap.version>1.3.1.RELEASE</cxf.spring.ldap.version>
         <cxf.spring.mock>spring-test</cxf.spring.mock>
-        <cxf.stax.impl.groupId>org.codehaus.woodstox</cxf.stax.impl.groupId>
-        <cxf.stax.impl.artifactId>woodstox-core-asl</cxf.stax.impl.artifactId>
-        <cxf.stax.impl.version>${cxf.woodstox.core.version}</cxf.stax.impl.version>
         <cxf.velocity.version>1.7</cxf.velocity.version>
         <cxf.woodstox.core.version>4.2.0</cxf.woodstox.core.version>
         <cxf.woodstox.stax2-api.version>3.1.1</cxf.woodstox.stax2-api.version>
         <cxf.wsdl4j.version>1.6.3</cxf.wsdl4j.version>
-        <cxf.wss4j.version>1.6.10-SNAPSHOT</cxf.wss4j.version>
+        <cxf.wss4j.version>1.6.10</cxf.wss4j.version>
         <cxf.xmlbeans.version>2.6.0</cxf.xmlbeans.version>
         <cxf.xmlschema.version>2.0.3</cxf.xmlschema.version>
         <cxf.xpp3.bundle.version>1.1.4c_6</cxf.xpp3.bundle.version>
@@ -740,23 +737,6 @@
                 <exclusions>
                     <exclusion>
                         <groupId>stax</groupId>
-                        <artifactId>stax-api</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>${cxf.stax.impl.groupId}</groupId>
-                <artifactId>${cxf.stax.impl.artifactId}</artifactId>
-                <version>${cxf.stax.impl.version}</version>
-                <!-- these are motivated by Woodstox, but they can't hurt with others. -->
-                <exclusions>
-                    <exclusion>
-                        <groupId>stax</groupId>
-                        <artifactId>stax-api</artifactId>
-                    </exclusion>
-                    <!-- this one comes from sjsxp -->
-                    <exclusion>
-                        <groupId>javax.xml.stream</groupId>
                         <artifactId>stax-api</artifactId>
                     </exclusion>
                 </exclusions>
@@ -1559,6 +1539,17 @@
                 <groupId>org.codehaus.woodstox</groupId>
                 <artifactId>woodstox-core-asl</artifactId>
                 <version>${cxf.woodstox.core.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>stax</groupId>
+                        <artifactId>stax-api</artifactId>
+                    </exclusion>
+                    <!-- this one comes from sjsxp -->
+                    <exclusion>
+                        <groupId>javax.xml.stream</groupId>
+                        <artifactId>stax-api</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>net.java.dev.msv</groupId>
@@ -1605,27 +1596,6 @@
             <id>validateServices</id>
             <properties>
                 <cxf.validateServices>true</cxf.validateServices>
-            </properties>
-        </profile>
-        <profile>
-            <!-- sjsxp is really the precursor to the jaxp-ri jars.   However, getting the jaxp-ri  jar to work on 
-            Java 5 requires endorsing it which is non-trivial in maven  :-(.
-            -->
-            <id>sjsxp</id>
-            <properties>
-                <cxf.stax.impl.groupId>com.sun.xml.stream</cxf.stax.impl.groupId>
-                <cxf.stax.impl.artifactId>sjsxp</cxf.stax.impl.artifactId>
-                <cxf.stax.impl.version>1.0.1</cxf.stax.impl.version>
-            </properties>
-        </profile>
-        <profile>
-            <!-- This really only works with Java 6 as the classes are identically named with the same classes in the Java 5 JDK
-            and the Java 5 versions get picked up instead -->
-            <id>jaxpri</id>
-            <properties>
-                <cxf.stax.impl.groupId>com.sun.xml.parsers</cxf.stax.impl.groupId>
-                <cxf.stax.impl.artifactId>jaxp-ri</cxf.stax.impl.artifactId>
-                <cxf.stax.impl.version>1.4.2</cxf.stax.impl.version>
             </properties>
         </profile>
         <profile>
