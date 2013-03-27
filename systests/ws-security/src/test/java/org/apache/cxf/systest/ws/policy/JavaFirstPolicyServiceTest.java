@@ -148,4 +148,5 @@ public class JavaFirstPolicyServiceTest extends AbstractBusClientServerTestBase 
         outProps.put(WSHandlerConstants.USER, username);
         return outProps;
     }
+
 }
