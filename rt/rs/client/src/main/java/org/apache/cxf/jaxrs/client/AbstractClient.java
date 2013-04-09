@@ -143,7 +143,7 @@ public abstract class AbstractClient implements Client, Retryable {
      */
     public Client accept(MediaType... types) {
         for (MediaType mt : types) {
-            possiblyAddHeader(HttpHeaders.ACCEPT, mt.toString());
+            possiblyAddHeader(HttpHeaders.ACCEPT, JAXRSUtils.mediaTypeToString(mt));
         }
         return this;
     }
@@ -152,7 +152,7 @@ public abstract class AbstractClient implements Client, Retryable {
      * {@inheritDoc}
      */
     public Client type(MediaType ct) {
-        return type(ct.toString());
+        return type(JAXRSUtils.mediaTypeToString(ct));
     }
     
     /**
@@ -324,11 +324,11 @@ public abstract class AbstractClient implements Client, Retryable {
     protected ResponseBuilder setResponseBuilder(Message outMessage, Exchange exchange) throws Exception {
         Response response = exchange.get(Response.class);
         if (response != null) {
-            return Response.fromResponse(response);
+            return JAXRSUtils.fromResponse(JAXRSUtils.copyResponseIfNeeded(response));
         }
         
         Integer status = getResponseCode(exchange);
-        ResponseBuilder currentResponseBuilder = Response.status(status);
+        ResponseBuilder currentResponseBuilder = JAXRSUtils.toResponseBuilder(status);
         
         Message responseMessage = exchange.getInMessage() != null 
             ? exchange.getInMessage() : exchange.getInFaultMessage();
@@ -395,7 +395,7 @@ public abstract class AbstractClient implements Client, Retryable {
         @SuppressWarnings("unchecked")
         Class<T> theClass = (Class<T>)cls;
         
-        MediaType contentType = MediaType.valueOf(headers.getFirst("Content-Type").toString()); 
+        MediaType contentType = JAXRSUtils.toMediaType(headers.getFirst("Content-Type").toString()); 
         
         List<WriterInterceptor> writers = ClientProviderFactory.getInstance(outMessage)
             .createMessageBodyWriterInterceptor(theClass, type, anns, contentType, outMessage);
@@ -709,7 +709,7 @@ public abstract class AbstractClient implements Client, Retryable {
             new org.apache.cxf.common.i18n.Message(name, 
                                                    BUNDLE,
                                                    cls,
-                                                   ct.toString());
+                                                   JAXRSUtils.mediaTypeToString(ct));
         LOG.severe(errorMsg.toString());
         if (response == null) {
             throw new ProcessingException(errorMsg.toString(), cause);
@@ -721,7 +721,7 @@ public abstract class AbstractClient implements Client, Retryable {
     private static MediaType getResponseContentType(Response r) {
         MultivaluedMap<String, Object> map = r.getMetadata();
         if (map.containsKey(HttpHeaders.CONTENT_TYPE)) {
-            return MediaType.valueOf(map.getFirst(HttpHeaders.CONTENT_TYPE).toString());
+            return JAXRSUtils.toMediaType(map.getFirst(HttpHeaders.CONTENT_TYPE).toString());
         }
         return MediaType.WILDCARD_TYPE;
     }
@@ -983,10 +983,15 @@ public abstract class AbstractClient implements Client, Retryable {
             }
             
             Object body = objs.get(0);
-            
-            doWriteBody(outMessage, body, os);
+            Annotation[] customAnns = (Annotation[])outMessage.get(Annotation.class.getName());
+            Type t = outMessage.get(Type.class);
+            doWriteBody(outMessage, body, t, customAnns, os);
         }
         
-        protected abstract void doWriteBody(Message outMessage, Object body, OutputStream os) throws Fault;
+        protected abstract void doWriteBody(Message outMessage, 
+                                            Object body,
+                                            Type bodyType,
+                                            Annotation[] customAnns,
+                                            OutputStream os) throws Fault;
     }
 }

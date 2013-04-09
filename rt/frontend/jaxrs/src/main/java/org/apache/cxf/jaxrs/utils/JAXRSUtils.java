@@ -77,6 +77,7 @@ import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.NoContentException;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -98,6 +99,7 @@ import org.apache.cxf.common.classloader.ClassLoaderUtils;
 import org.apache.cxf.common.i18n.BundleUtils;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.PackageUtils;
+import org.apache.cxf.common.util.ReflectionUtil;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.helpers.XMLUtils;
 import org.apache.cxf.jaxrs.JAXRSServiceImpl;
@@ -112,6 +114,7 @@ import org.apache.cxf.jaxrs.impl.ContainerRequestContextImpl;
 import org.apache.cxf.jaxrs.impl.ContainerResponseContextImpl;
 import org.apache.cxf.jaxrs.impl.HttpHeadersImpl;
 import org.apache.cxf.jaxrs.impl.HttpServletResponseFilter;
+import org.apache.cxf.jaxrs.impl.MediaTypeHeaderProvider;
 import org.apache.cxf.jaxrs.impl.MetadataMap;
 import org.apache.cxf.jaxrs.impl.PathSegmentImpl;
 import org.apache.cxf.jaxrs.impl.ProvidersImpl;
@@ -120,6 +123,8 @@ import org.apache.cxf.jaxrs.impl.ReaderInterceptorMBR;
 import org.apache.cxf.jaxrs.impl.RequestImpl;
 import org.apache.cxf.jaxrs.impl.ResourceContextImpl;
 import org.apache.cxf.jaxrs.impl.ResourceInfoImpl;
+import org.apache.cxf.jaxrs.impl.ResponseBuilderImpl;
+import org.apache.cxf.jaxrs.impl.ResponseImpl;
 import org.apache.cxf.jaxrs.impl.SecurityContextImpl;
 import org.apache.cxf.jaxrs.impl.UriInfoImpl;
 import org.apache.cxf.jaxrs.impl.WriterInterceptorContextImpl;
@@ -157,6 +162,7 @@ public final class JAXRSUtils {
     
     private static final Logger LOG = LogUtils.getL7dLogger(JAXRSUtils.class);
     private static final ResourceBundle BUNDLE = BundleUtils.getBundle(JAXRSUtils.class);
+    private static final String PATH_SEGMENT_SEP = "/";
     private static final String PROPAGATE_EXCEPTION = "org.apache.cxf.propagate.exception";
     private static final String REPORT_FAULT_MESSAGE_PROPERTY = "org.apache.cxf.jaxrs.report-fault-message";
     private static final String  SUPPORT_WAE_SPEC_OPTIMIZATION = "support.wae.spec.optimization";
@@ -238,7 +244,7 @@ public final class JAXRSUtils {
     public static List<MediaType> getMediaTypes(String[] values) {
         List<MediaType> supportedMimeTypes = new ArrayList<MediaType>(values.length);
         for (int i = 0; i < values.length; i++) {
-            supportedMimeTypes.add(MediaType.valueOf(values[i]));    
+            supportedMimeTypes.add(toMediaType(values[i]));    
         }
         return supportedMimeTypes;
     }
@@ -390,7 +396,7 @@ public final class JAXRSUtils {
         MediaType requestType;
         try {
             requestType = requestContentType == null
-                                ? ALL_TYPES : MediaType.valueOf(requestContentType);
+                                ? ALL_TYPES : toMediaType(requestContentType);
         } catch (IllegalArgumentException ex) {
             throw new NotSupportedException(ex);
         }
@@ -402,7 +408,6 @@ public final class JAXRSUtils {
         int pathMatched = 0;
         int methodMatched = 0;
         int consumeMatched = 0;
-        int produceMatched = 0;
         
         for (Map.Entry<ClassResourceInfo, MultivaluedMap<String, String>> rEntry : matchedResources.entrySet()) {
             ClassResourceInfo resource = rEntry.getKey();
@@ -421,43 +426,45 @@ public final class JAXRSUtils {
             boolean subresourcesOnly = true;
             for (MediaType acceptType : acceptContentTypes) {
                 for (OperationResourceInfo ori : resource.getMethodDispatcher().getOperationResourceInfos()) {
+                    boolean added = false;
+                    
                     URITemplate uriTemplate = ori.getURITemplate();
                     MultivaluedMap<String, String> map = new MetadataMap<String, String>(values);
                     if (uriTemplate != null && uriTemplate.match(path, map)) {
-                        boolean added = false;
                         if (ori.isSubResourceLocator()) {
                             candidateList.put(ori, map);
                             added = true;
                         } else {
                             String finalGroup = map.getFirst(URITemplate.FINAL_MATCH_GROUP);
-                            if (finalGroup == null || StringUtils.isEmpty(finalGroup)
-                                || finalGroup.equals("/")) {
+                            //CHECKSTYLE:OFF
+                            if (StringUtils.isEmpty(finalGroup) || PATH_SEGMENT_SEP.equals(finalGroup)) {
                                 pathMatched++;
-                                boolean mMatched = matchHttpMethod(ori.getHttpMethod(), httpMethod);
-                                boolean cMatched = matchConsumeTypes(requestType, ori);
-                                MediaType pMediaType = matchProduceTypes(acceptType, ori);
-                                if (mMatched && cMatched && pMediaType != null) {
-                                    subresourcesOnly = false;
-                                    map.putSingle(Message.CONTENT_TYPE, pMediaType.toString());
-                                    candidateList.put(ori, map);
-                                    added = true;
-                                } else {
-                                    methodMatched = mMatched ? methodMatched + 1 : methodMatched;
-                                    produceMatched = pMediaType != null ? produceMatched + 1 : produceMatched;
-                                    consumeMatched = cMatched ? consumeMatched + 1 : consumeMatched;
-                                    logNoMatchMessage(ori, path, httpMethod, requestType, acceptContentTypes);
+                                if (matchHttpMethod(ori.getHttpMethod(), httpMethod)) {
+                                    methodMatched++;
+                                    if (matchConsumeTypes(requestType, ori)) {
+                                        consumeMatched++;
+                                        MediaType pMediaType = matchProduceTypes(acceptType, ori);
+                                        if (pMediaType != null) {
+                                            map.putSingle(Message.CONTENT_TYPE, mediaTypeToString(pMediaType));
+                                            
+                                            subresourcesOnly = false;
+                                            candidateList.put(ori, map);
+                                            added = true;
+                                        }
+                                    }
                                 }
-                            } else {
-                                logNoMatchMessage(ori, path, httpMethod, requestType, acceptContentTypes);
                             }
+                            //CHECKSTYLE:ON
                         }
-                        if (added && isFineLevelLoggable) {
+                    } 
+                    if (isFineLevelLoggable) {
+                        if (added) {
                             LOG.fine(new org.apache.cxf.common.i18n.Message("OPER_SELECTED_POSSIBLY", 
                                       BUNDLE, 
                                       ori.getMethodToInvoke().getName()).toString());
+                        } else {
+                            logNoMatchMessage(ori, path, httpMethod, requestType, acceptContentTypes);
                         }
-                    } else {
-                        logNoMatchMessage(ori, path, httpMethod, requestType, acceptContentTypes);
                     }
                 }
                 if (!candidateList.isEmpty() && !subresourcesOnly) {
@@ -502,9 +509,10 @@ public final class JAXRSUtils {
             status = 404;
         } else if (methodMatched == 0) {
             status = 405;
-        } else if (consumeMatched <= produceMatched) {
+        } else if (consumeMatched == 0) {
             status = 415;
         } else {
+            // Not a single Produces match
             status = 406;
         }
         Map.Entry<ClassResourceInfo, MultivaluedMap<String, String>> firstCri = 
@@ -516,7 +524,7 @@ public final class JAXRSUtils {
                                                    message.get(Message.REQUEST_URI),
                                                    getCurrentPath(firstCri.getValue()),
                                                    httpMethod,
-                                                   requestType.toString(),
+                                                   mediaTypeToString(requestType),
                                                    convertTypesToString(acceptContentTypes));
         if (!"OPTIONS".equalsIgnoreCase(httpMethod)) {
             LOG.warning(errorMsg.toString());
@@ -544,9 +552,6 @@ public final class JAXRSUtils {
     
     private static void logNoMatchMessage(OperationResourceInfo ori, 
         String path, String httpMethod, MediaType requestType, List<MediaType> acceptContentTypes) {
-        if (!LOG.isLoggable(Level.FINE)) {
-            return;
-        }
         org.apache.cxf.common.i18n.Message errorMsg = 
             new org.apache.cxf.common.i18n.Message("OPER_NO_MATCH", 
                                                    BUNDLE,
@@ -603,7 +608,7 @@ public final class JAXRSUtils {
     private static String convertTypesToString(List<MediaType> types) {
         StringBuilder sb = new StringBuilder();
         for (MediaType type : types) {
-            sb.append(type.toString()).append(',');
+            sb.append(mediaTypeToString(type)).append(',');
         }
         return sb.toString();
     }
@@ -746,7 +751,7 @@ public final class JAXRSUtils {
                                        parameterType,
                                        parameterAnns,
                                        is, 
-                                       MediaType.valueOf(contentType),
+                                       toMediaType(contentType),
                                        ori.getConsumeTypes(),
                                        message);
         } else if (parameter.getType() == ParameterType.CONTEXT) {
@@ -1198,6 +1203,8 @@ public final class JAXRSUtils {
                                                      is, 
                                                      type,
                                                      m);    
+                } catch (NoContentException e) {
+                    throw new BadRequestException(e);
                 } catch (IOException e) {
                     throw e;
                 } catch (WebApplicationException ex) {
@@ -1209,7 +1216,7 @@ public final class JAXRSUtils {
                 String errorMessage = new org.apache.cxf.common.i18n.Message("NO_MSG_READER",
                                                        BUNDLE,
                                                        targetTypeClass.getSimpleName(),
-                                                       contentType).toString();
+                                                       mediaTypeToString(contentType)).toString();
                 LOG.warning(errorMessage);
                 throw new WebApplicationException(Response.Status.UNSUPPORTED_MEDIA_TYPE);
             }
@@ -1291,16 +1298,16 @@ public final class JAXRSUtils {
     public static boolean matchConsumeTypes(MediaType requestContentType, 
                                             OperationResourceInfo ori) {
         
-        return intersectMimeTypes(ori.getConsumeTypes(), requestContentType).size() != 0;
+        return !intersectMimeTypes(ori.getConsumeTypes(), requestContentType).isEmpty();
     }
     
     public static MediaType matchProduceTypes(MediaType acceptContentType, 
-                                            OperationResourceInfo ori) {
+                                              OperationResourceInfo ori) {
         
-        List<MediaType> intersected = intersectMimeTypes(ori.getProduceTypes(), 
-                                                         Collections.singletonList(acceptContentType), 
-                                                         true);
-        return intersected.isEmpty() ? null : intersected.get(0);
+        List<MediaType> types = intersectMimeTypes(ori.getProduceTypes(), 
+                                                   Collections.singletonList(acceptContentType),
+                                                   true);
+        return types.isEmpty() ? null : types.get(0);
     }
     
     public static boolean matchMimeTypes(MediaType requestContentType, 
@@ -1327,7 +1334,7 @@ public final class JAXRSUtils {
                 } else {
                     types = "";
                 }
-                acceptValues.add(MediaType.valueOf(tp));
+                acceptValues.add(toMediaType(tp));
             }
         } else {
             acceptValues.add(ALL_TYPES);
@@ -1574,7 +1581,8 @@ public final class JAXRSUtils {
     public static void runContainerResponseFilters(ServerProviderFactory pf,
                                                    Response r,
                                                    Message m, 
-                                                   OperationResourceInfo ori) throws IOException, Throwable {
+                                                   OperationResourceInfo ori,
+                                                   Method invoked) throws IOException, Throwable {
         List<ProviderInfo<ContainerResponseFilter>> containerFilters =  
             pf.getContainerResponseFilters(ori == null ? null : ori.getNameBindings());
         if (!containerFilters.isEmpty()) {
@@ -1583,11 +1591,70 @@ public final class JAXRSUtils {
                                                false,
                                                true);
             ContainerResponseContext responseContext = 
-                new ContainerResponseContextImpl(r, m, ori);
+                new ContainerResponseContextImpl(r, m, invoked);
             for (ProviderInfo<ContainerResponseFilter> filter : containerFilters) {
                 InjectionUtils.injectContexts(filter.getProvider(), filter, m);
                 filter.getProvider().filter(requestContext, responseContext);
             }
+        }
+    }
+    
+    public static String mediaTypeToString(MediaType mt) {
+        return MediaTypeHeaderProvider.typeToString(mt);
+    }
+    
+    public static MediaType toMediaType(String value) {
+        return MediaTypeHeaderProvider.valueOf(value);
+    }
+    
+    public static Response toResponse(int status) {
+        return toResponseBuilder(status).build();
+    }
+    
+    public static Response toResponse(Response.Status status) {
+        return toResponse(status.getStatusCode());
+    }
+    
+    public static ResponseBuilder toResponseBuilder(int status) {
+        return new ResponseBuilderImpl().status(status);
+    }
+    
+    public static ResponseBuilder toResponseBuilder(Response.Status status) {
+        return toResponseBuilder(status.getStatusCode());
+    }
+    
+    public static ResponseBuilder fromResponse(Response response) {
+        ResponseBuilder rb = toResponseBuilder(response.getStatus());
+        rb.entity(response.getEntity());
+        for (Map.Entry<String, List<Object>> entry : response.getHeaders().entrySet()) {
+            List<Object> values = entry.getValue();
+            for (Object value : values) {
+                rb.header(entry.getKey(), value);
+            }
+        }
+        return rb;
+    }
+
+    public static Response copyResponseIfNeeded(Response response) {
+        if (!(response instanceof ResponseImpl)) {
+            Response r = fromResponse(response).build();
+            Field[] declaredFields = ReflectionUtil.getDeclaredFields(response.getClass());
+            for (Field f : declaredFields) {
+                Class<?> declClass = f.getType();
+                if (declClass == Annotation[].class) {
+                    try {
+                        Annotation[] fieldAnnotations = 
+                            ReflectionUtil.accessDeclaredField(f, response, Annotation[].class);
+                        ((ResponseImpl)r).setEntityAnnotations(fieldAnnotations);
+                    } catch (Throwable ex) {
+                        LOG.warning("Custom annotations if any may can not be copied");
+                    }
+                    break;
+                }
+            }
+            return r;
+        } else {
+            return response;
         }
     }
     

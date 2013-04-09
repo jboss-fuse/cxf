@@ -35,7 +35,6 @@ import java.util.logging.Logger;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -148,6 +147,8 @@ public class JAXRSOutInterceptor extends AbstractOutDatabindingInterceptor {
                                   OperationResourceInfo ori,
                                   boolean firstTry) {
         
+        response = JAXRSUtils.copyResponseIfNeeded(response);
+        
         final Exchange exchange = message.getExchange();
         
         Object entity = response.getEntity();
@@ -162,7 +163,16 @@ public class JAXRSOutInterceptor extends AbstractOutDatabindingInterceptor {
         Method invoked = ori == null ? null : ori.getAnnotatedMethod() != null
             ? ori.getAnnotatedMethod() : ori.getMethodToInvoke();
         
-        Annotation[] annotations = invoked != null ? invoked.getAnnotations() : new Annotation[]{};
+        Annotation[] annotations = null;
+        Annotation[] staticAnns = invoked != null ? invoked.getAnnotations() : new Annotation[]{};
+        Annotation[] responseAnns = ((ResponseImpl)response).getEntityAnnotations();
+        if (responseAnns != null) {
+            annotations = new Annotation[staticAnns.length + responseAnns.length];
+            System.arraycopy(staticAnns, 0, annotations, 0, staticAnns.length);
+            System.arraycopy(responseAnns, 0, annotations, staticAnns.length, responseAnns.length);
+        } else {
+            annotations = staticAnns;
+        }
         
         ((ResponseImpl)response).setStatus(
             getActualStatus(response.getStatus(), entity));
@@ -187,7 +197,7 @@ public class JAXRSOutInterceptor extends AbstractOutDatabindingInterceptor {
                
         // Run the filters
         try {
-            JAXRSUtils.runContainerResponseFilters(providerFactory, response, message, ori);
+            JAXRSUtils.runContainerResponseFilters(providerFactory, response, message, ori, invoked);
         } catch (IOException ex) {
             handleWriteException(providerFactory, message, ex, firstTry);
             return;
@@ -197,7 +207,7 @@ public class JAXRSOutInterceptor extends AbstractOutDatabindingInterceptor {
         }
    
         // Write the entity
-        entity = getEntity(response.getEntity());
+        entity = InjectionUtils.getEntity(response.getEntity());
         setResponseStatus(message, getActualStatus(response.getStatus(), entity));
         if (entity == null) {
             responseHeaders.putSingle(HttpHeaders.CONTENT_LENGTH, "0");
@@ -216,18 +226,18 @@ public class JAXRSOutInterceptor extends AbstractOutDatabindingInterceptor {
         
         responseContentType = (String)responseHeaders.getFirst(HttpHeaders.CONTENT_TYPE);
         MediaType responseMediaType = responseContentType == null ? MediaType.WILDCARD_TYPE 
-            : MediaType.valueOf(responseContentType);
+            : JAXRSUtils.toMediaType(responseContentType);
         
         Class<?> targetType = InjectionUtils.getRawResponseClass(entity);
         Type genericType = 
-            InjectionUtils.getGenericResponseType(invoked, response.getEntity(), targetType, ori, exchange);
+            InjectionUtils.getGenericResponseType(invoked, response.getEntity(), targetType, exchange);
         annotations = ((ResponseImpl)response).getEntityAnnotations();        
         
         List<WriterInterceptor> writers = providerFactory
             .createMessageBodyWriterInterceptor(targetType, genericType, annotations, responseMediaType, message);
         
         responseMediaType = checkFinalContentType(responseMediaType);
-        responseContentType = responseMediaType.toString();
+        responseContentType = JAXRSUtils.mediaTypeToString(responseMediaType);
         if (LOG.isLoggable(Level.FINE)) {
             LOG.fine("Response content type is: " + responseContentType);
         }
@@ -281,14 +291,6 @@ public class JAXRSOutInterceptor extends AbstractOutDatabindingInterceptor {
         }
     }
 
-    private Object getEntity(Object o) {
-        if (o != null) {
-            return GenericEntity.class.isAssignableFrom(o.getClass()) ? ((GenericEntity<?>)o).getEntity() : o;
-        } else {
-            return o;
-        }
-    }
-    
     private boolean checkBufferingMode(Message m, List<WriterInterceptor> writers, boolean firstTry) {
         if (!firstTry) {
             return false;
@@ -387,7 +389,7 @@ public class JAXRSOutInterceptor extends AbstractOutDatabindingInterceptor {
         if (mt.isWildcardType() || mt.isWildcardSubtype() && mt.getType().equals("application")) {
             return MediaType.APPLICATION_OCTET_STREAM_TYPE;
         } else if (mt.getParameters().containsKey("q")) {
-            return MediaType.valueOf(JAXRSUtils.removeMediaTypeParameter(mt, "q"));
+            return JAXRSUtils.toMediaType(JAXRSUtils.removeMediaTypeParameter(mt, "q"));
         } else {
             return mt;
         }

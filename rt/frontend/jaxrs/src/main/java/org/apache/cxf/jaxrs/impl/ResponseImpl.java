@@ -85,6 +85,10 @@ public final class ResponseImpl extends Response {
         this.entityAnnotations = anns;
     }
     
+    public void setEntityAnnotations(Annotation[] anns) { 
+        this.entityAnnotations = anns;
+    }
+    
     public Annotation[] getEntityAnnotations() {
         return entityAnnotations;
     }
@@ -144,8 +148,7 @@ public final class ResponseImpl extends Response {
         return headers;
     }
 
-    // TODO: Make this method private with the upgrade to the latest API snapshot
-    public String getHeader(String header) {
+    private String getHeader(String header) {
         Object value = metadata.getFirst(header);
         return value == null ? null : value.toString();
     }
@@ -229,7 +232,7 @@ public final class ResponseImpl extends Response {
 
     public MediaType getMediaType() {
         String header = getHeader(HttpHeaders.CONTENT_TYPE);
-        return header == null ? null : MediaType.valueOf(header);
+        return header == null ? null : JAXRSUtils.toMediaType(header);
     }
     
     public boolean hasLink(String relation) {

@@ -134,7 +134,7 @@ public class HttpHeadersImpl implements HttpHeaders {
 
     public MediaType getMediaType() {
         List<String> values = getListValues(HttpHeaders.CONTENT_TYPE);
-        return values.size() == 0 ? null : MediaType.valueOf(values.get(0));
+        return values.size() == 0 ? null : JAXRSUtils.toMediaType(values.get(0));
     }
 
     public MultivaluedMap<String, String> getRequestHeaders() {
@@ -187,16 +187,16 @@ public class HttpHeadersImpl implements HttpHeaders {
     }
 
     public List<String> getRequestHeader(String name) {
-        List<String> values = headers.get(name);
-        if (values == null || values.isEmpty() || values.get(0) == null) {
-            return Collections.emptyList();
-        }
         boolean splitIndividualValue 
             = MessageUtils.isTrue(message.getContextualProperty(HEADER_SPLIT_PROPERTY));
+        
+        List<String> values = headers.get(name);
         if (!splitIndividualValue
+            || values == null
             || HttpUtils.isDateRelatedHeader(name)) {
             return values;
         }
+        
         List<String> ls = new LinkedList<String>();
         for (String value : values) {
             if (value == null) {

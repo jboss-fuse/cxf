@@ -55,9 +55,14 @@ import org.apache.cxf.BusFactory;
 import org.apache.cxf.common.jaxb.JAXBContextCache;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.endpoint.Server;
+import org.apache.cxf.phase.PhaseInterceptorChain;
 import org.apache.cxf.service.model.ServiceModelUtil;
 import org.apache.cxf.staxutils.StaxUtils;
 import org.apache.cxf.staxutils.transform.InTransformReader;
+import org.apache.cxf.ws.addressing.AddressingProperties;
+import org.apache.cxf.ws.addressing.AttributedURIType;
+import org.apache.cxf.ws.addressing.ContextUtils;
+import org.apache.cxf.ws.addressing.impl.AddressingPropertiesImpl;
 import org.apache.cxf.ws.discovery.WSDiscoveryClient;
 import org.apache.cxf.ws.discovery.WSDiscoveryService;
 import org.apache.cxf.ws.discovery.wsdl.ByeType;
@@ -77,7 +82,7 @@ public class WSDiscoveryServiceImpl implements WSDiscoveryService {
     boolean started;
     
     public WSDiscoveryServiceImpl(Bus b) {
-        bus = b;
+        bus = b == null ? BusFactory.newInstance().createBus() : b;
         client = new WSDiscoveryClient();
         update(bus.getProperties());
     }
@@ -125,10 +130,28 @@ public class WSDiscoveryServiceImpl implements WSDiscoveryService {
         ht.setScopes(new ScopesType());
         ht.setMetadataVersion(1);
         
-        QName sn = ServiceModelUtil.getServiceQName(server.getEndpoint().getEndpointInfo());
-        ht.getTypes().add(sn);
+
+        Object o = server.getEndpoint().get("ws-discovery-types");
+        if (o instanceof QName) {
+            ht.getTypes().add((QName)o);
+        } else if (o instanceof List) {
+            for (Object o2: (List<?>)o) {
+                if (o2 instanceof QName) {
+                    ht.getTypes().add((QName)o2);
+                } else if (o2 instanceof String) {
+                    ht.getTypes().add(QName.valueOf((String)o2));
+                }
+            }
+        } else if (o instanceof String) {
+            ht.getTypes().add(QName.valueOf((String)o));
+        } 
+        if (ht.getTypes().isEmpty()) {
+            QName sn = ServiceModelUtil.getServiceQName(server.getEndpoint().getEndpointInfo());
+            ht.getTypes().add(sn);
+        }
+
         
-        Object o = server.getEndpoint().get("ws-discovery-scopes");
+        o = server.getEndpoint().get("ws-discovery-scopes");
         if (o != null) {
             setScopes(ht, o);
         }
@@ -412,6 +435,15 @@ public class WSDiscoveryServiceImpl implements WSDiscoveryService {
                     if (pmt == null) {
                         return null;
                     }
+                    AddressingProperties p = ContextUtils.retrieveMAPs(PhaseInterceptorChain.getCurrentMessage(),
+                                                                       false, false);
+                    AddressingProperties pout = new AddressingPropertiesImpl();
+                    AttributedURIType action = new AttributedURIType();
+                    action.setValue(p.getAction().getValue() + "Matches");
+                    pout.exposeAs(p.getNamespaceURI());
+                    pout.setAction(action);
+                    ContextUtils.storeMAPs(pout, PhaseInterceptorChain.getCurrentMessage(), true);
+                    
                     if (mapToOld) {
                         doc.removeChild(doc.getDocumentElement());
                         DOMResult result = new DOMResult(doc);
@@ -422,6 +454,9 @@ public class WSDiscoveryServiceImpl implements WSDiscoveryService {
                         Map<String, String> inMap = new HashMap<String, String>();
                         inMap.put("{http://docs.oasis-open.org/ws-dd/ns/discovery/2009/01}*",
                                   "{http://schemas.xmlsoap.org/ws/2005/04/discovery}*");
+                        
+                        
+                        
                         InTransformReader reader = new InTransformReader(domReader, inMap , null, false);
                         doc = StaxUtils.read(reader);
                         return new DOMSource(doc);
