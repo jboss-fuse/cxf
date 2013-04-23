@@ -23,6 +23,7 @@ package org.apache.cxf.systest.jaxrs;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -645,6 +646,14 @@ public class BookStore {
     }
     
     @GET
+    @Path("/genericbooks2/{bookId}/")
+    @Produces("application/xml")
+    public Response getGenericBook2(@PathParam("bookId") String id) 
+        throws BookNotFoundFault {
+        return Response.ok().entity(getGenericBook(id), getExtraAnnotations()).build();
+    }
+    
+    @GET
     @Path("/genericresponse/{bookId}/")
     @Produces("application/xml")
     public Response getGenericResponseBook(@PathParam("bookId") String id) 
@@ -983,6 +992,14 @@ public class BookStore {
         
         book.setId(bookId + 1);
         return Response.ok(book).build();
+    }
+    
+    @POST
+    @Path("/books2")
+    @Produces("text/xml")
+    @Consumes("application/xml")
+    public Book addBook2(Book book) {
+        return new Book("Book echo", book.getId() + 1);
     }
     
     @POST
@@ -1392,6 +1409,15 @@ public class BookStore {
             super(errorMessage);
         }
         
+    }
+    
+    private Annotation[] getExtraAnnotations() {
+        try {
+            Method m = BookBean.class.getMethod("setUriInfo", new Class[]{UriInfo.class});
+            return m.getAnnotations();
+        } catch (Throwable ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }
 
