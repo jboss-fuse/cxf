@@ -103,6 +103,8 @@ public class SequenceTest extends AbstractBusClientServerTestBase {
         = "http://cxf.apache.org/greeter_control/Greeter/greetMeRequest";
     private static final String GREETME_RESPONSE_ACTION
         = "http://cxf.apache.org/greeter_control/Greeter/greetMeResponse";
+    private static final String RM10_GENERIC_FAULT_ACTION 
+        = "http://schemas.xmlsoap.org/ws/2004/08/addressing/fault";
 
     private static String decoupledEndpoint;
     private static int decoupledCount = 1;
@@ -795,7 +797,7 @@ public class SequenceTest extends AbstractBusClientServerTestBase {
         mf.verifyMessages(3, false);
         expectedActions = new String[] {RM10Constants.CREATE_SEQUENCE_RESPONSE_ACTION,
                                         GREETME_RESPONSE_ACTION, 
-                                        null};
+                                        RM10_GENERIC_FAULT_ACTION};
         mf.verifyActions(expectedActions, false);
         mf.verifyMessageNumbers(new String[] {null, "1", null}, false);
         mf.verifyAcknowledgements(new boolean[3] , false);
@@ -836,6 +838,10 @@ public class SequenceTest extends AbstractBusClientServerTestBase {
         MessageFlow mf = new MessageFlow(outRecorder.getOutboundMessages(),
             inRecorder.getInboundMessages(), Names200408.WSA_NAMESPACE_NAME, RM10Constants.NAMESPACE_URI);
         mf.verifySequenceFault(RM10Constants.UNKNOWN_SEQUENCE_FAULT_QNAME, false, 1);
+        String[] expectedActions = new String[3];
+        expectedActions = new String[] {RM10Constants.CREATE_SEQUENCE_RESPONSE_ACTION,
+                                        RM10_GENERIC_FAULT_ACTION};
+        mf.verifyActions(expectedActions, false);
     }
     
     @Test
@@ -888,7 +894,7 @@ public class SequenceTest extends AbstractBusClientServerTestBase {
         mf.verifyMessages(3, false);
         expectedActions = new String[] {RM10Constants.CREATE_SEQUENCE_RESPONSE_ACTION,
                                         GREETME_RESPONSE_ACTION,
-                                        null};
+                                        RM10_GENERIC_FAULT_ACTION};
         mf.verifyActions(expectedActions, false);
         mf.verifyMessageNumbers(new String[] {null, "1", null}, false);
         mf.verifyAcknowledgements(new boolean[] {false, true, false} , false);
@@ -1410,6 +1416,37 @@ public class SequenceTest extends AbstractBusClientServerTestBase {
         mf.verifyAcknowledgements(new boolean[] {false, true}, false);
         
     }    
+
+    @Test
+    public void testCreateSequenceRefused() throws Exception {
+        init("org/apache/cxf/systest/ws/rm/limit-seqs.xml");
+
+        RMManager manager = greeterBus.getExtension(RMManager.class);
+        assertEquals("Unexpected maximum sequence count.", 1, manager.getDestinationPolicy().getMaxSequences());
+
+        greeter.greetMe("one");
+        // force greeter to be re-initialized so that a new sequence is created
+        ClientProxy.getClient(greeter).getConduit().close();
+        initProxy(false, null);
+
+        try {
+            greeter.greetMe("two");
+            fail("Expected fault.");
+        } catch (WebServiceException ex) {
+            // sequence creation refused
+        }   
+        
+        // the third inbound message has a SequenceFault header
+        MessageFlow mf = new MessageFlow(outRecorder.getOutboundMessages(),
+            inRecorder.getInboundMessages(), Names200408.WSA_NAMESPACE_NAME, RM10Constants.NAMESPACE_URI);
+        mf.verifySequenceFault(RM10Constants.CREATE_SEQUENCE_REFUSED_FAULT_QNAME, false, 2);
+        String[] expectedActions = new String[3];
+        expectedActions = new String[] {RM10Constants.CREATE_SEQUENCE_RESPONSE_ACTION,
+                                        GREETME_RESPONSE_ACTION,
+                                        RM10_GENERIC_FAULT_ACTION};
+        mf.verifyActions(expectedActions, false);
+    }
+
     // --- test utilities ---
 
     private void init(String cfgResource) {

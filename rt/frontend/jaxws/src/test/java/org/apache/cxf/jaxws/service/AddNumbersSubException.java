@@ -16,13 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.tools.fortest.inherit;
 
-import javax.jws.WebMethod;
+package org.apache.cxf.jaxws.service;
 
-public interface C {
-    String hello(String hello);
-    String bye(String bye);
-    @WebMethod(operationName = "anotherHello")
-    String hello();
+import javax.xml.ws.WebFault;
+
+
+@WebFault
+public class AddNumbersSubException extends AddNumbersException {
+       
+    private static final long serialVersionUID = 1L;
+    
+    private String subInfo;
+    public AddNumbersSubException(String info) {
+        this.subInfo = info;
+    }
+    
+    public String getSubInfo() {
+        return subInfo;
+    }
 }
