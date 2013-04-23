@@ -26,11 +26,14 @@ import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 
 import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.jaxrs.fortest.BookEntity;
@@ -52,7 +55,6 @@ import org.apache.cxf.message.ExchangeImpl;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageImpl;
 import org.easymock.EasyMock;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -83,6 +85,9 @@ public class SelectMethodCandidatesTest extends Assert {
         doTestGenericSuperType(GenericEntityImpl3.class, "POST");
     }
     
+    private static List<MediaType> sortMediaTypes(String mediaTypes) {
+        return JAXRSUtils.sortMediaTypes(mediaTypes, JAXRSUtils.MEDIA_TYPE_Q_PARAM);
+    }
     @Test
     public void testFindFromAbstractGenericImpl4() throws Exception {
         JAXRSServiceFactoryBean sf = new JAXRSServiceFactoryBean();
@@ -116,7 +121,7 @@ public class SelectMethodCandidatesTest extends Assert {
                                                             "/books",
                                                             "POST",
                                                             values, contentTypes, 
-                                                            JAXRSUtils.sortMediaTypes(acceptContentTypes));
+                                                            sortMediaTypes(acceptContentTypes));
         assertNotNull(ori);
         assertEquals("resourceMethod needs to be selected", "postEntity",
                      ori.getMethodToInvoke().getName());
@@ -166,7 +171,7 @@ public class SelectMethodCandidatesTest extends Assert {
                                                             "/books",
                                                             "PUT",
                                                             values, contentTypes, 
-                                                            JAXRSUtils.sortMediaTypes(acceptContentTypes));
+                                                            sortMediaTypes(acceptContentTypes));
         assertNotNull(ori);
         assertEquals("resourceMethod needs to be selected", "putEntity",
                      ori.getMethodToInvoke().getName());
@@ -179,6 +184,231 @@ public class SelectMethodCandidatesTest extends Assert {
         assertNotNull(c);
         assertEquals(2L, c.getId());
         assertEquals("The Book", c.getTitle());
+    }
+    
+    @Test
+    public void testConsumesResource1() throws Exception {
+        doTestConsumesResource(ConsumesResource1.class, "text/xml", "m2");
+    }
+    @Test
+    public void testConsumesResource2() throws Exception {
+        doTestConsumesResource(ConsumesResource2.class, "m1");
+    }
+    @Test
+    public void testConsumesResource3() throws Exception {
+        doTestConsumesResource(ConsumesResource3.class, "m1");
+    }
+    @Test
+    public void testConsumesResource4() throws Exception {
+        doTestConsumesResource(ConsumesResource4.class, "application/xml+bar", "m2");
+    }
+    
+    private void doTestConsumesResource(Class<?> resourceClass, String expectedMethodName) throws Exception {
+        doTestConsumesResource(resourceClass, null, expectedMethodName);
+    }
+    private void doTestConsumesResource(Class<?> resourceClass, String ct, 
+                                        String expectedMethodName) throws Exception {
+        JAXRSServiceFactoryBean sf = new JAXRSServiceFactoryBean();
+        sf.setResourceClasses(resourceClass);
+        sf.create();
+        List<ClassResourceInfo> resources = ((JAXRSServiceImpl)sf.getService()).getClassResourceInfos();
+        String contentType = ct == null ? "application/xml" : ct;
+        String acceptContentTypes = "*/*";
+        
+        Message m = new MessageImpl();
+        m.put(Message.CONTENT_TYPE, contentType);
+        Exchange ex = new ExchangeImpl();
+        ex.setInMessage(m);
+        m.setExchange(ex);
+        Endpoint e = EasyMock.createMock(Endpoint.class);
+        e.isEmpty();
+        EasyMock.expectLastCall().andReturn(true).anyTimes();
+        e.size();
+        EasyMock.expectLastCall().andReturn(0).anyTimes();
+        e.getEndpointInfo();
+        EasyMock.expectLastCall().andReturn(null).anyTimes();
+        e.get(ServerProviderFactory.class.getName());
+        EasyMock.expectLastCall().andReturn(ServerProviderFactory.getInstance()).times(2);
+        e.get("org.apache.cxf.jaxrs.comparator");
+        EasyMock.expectLastCall().andReturn(null);
+        EasyMock.replay(e);
+        ex.put(Endpoint.class, e);
+        
+        MetadataMap<String, String> values = new MetadataMap<String, String>();
+        OperationResourceInfo ori = findTargetResourceClass(resources, 
+                                                            m, 
+                                                            "/",
+                                                            "POST",
+                                                            values, 
+                                                            contentType, 
+                                                            sortMediaTypes(acceptContentTypes));
+        assertNotNull(ori);
+        assertEquals(expectedMethodName,  ori.getMethodToInvoke().getName());
+    }
+    
+    @Test
+    public void testResponseType1() throws Exception {
+        doTestProducesResource(ResponseMediaTypeResource.class, "/m1", 
+                               "application/xml", "application/xml", "m1");
+    }
+    
+    @Test
+    public void testResponseType2() throws Exception {
+        doTestProducesResource(ResponseMediaTypeResource.class, "/m1", 
+                               "application/*,application/json", 
+                               "application/json", "m1");
+    }
+    @Test
+    public void testResponseType3() throws Exception {
+        doTestProducesResource(ResponseMediaTypeResource.class, "/m1", 
+                               "text/xml, application/xml;q=0.8,application/json;q=0.4", 
+                               "application/xml", "m1");
+    }
+    
+    @Test
+    public void testResponseType4() throws Exception {
+        doTestProducesResource(ResponseMediaTypeResource.class, "/m1", 
+                               "text/xml, application/xml;q=0.8,application/json;q=0.4", 
+                               "application/xml", "m1");
+    }
+    
+    @Test
+    public void testResponseType5() throws Exception {
+        doTestProducesResource(ResponseMediaTypeResource.class, "/m2", 
+                               "text/xml, application/xml;q=0.3,application/json;q=0.4", 
+                               "application/json", "m2");
+    }
+    
+    @Test
+    public void testResponseType6() throws Exception {
+        doTestProducesResource(ResponseMediaTypeResource.class, "/m3", 
+                               "text/*,application/json;q=0.4", 
+                               "text/xml", "m3");
+    }
+    
+    @Test
+    public void testResponseType7() throws Exception {
+        doTestProducesResource(ResponseMediaTypeResource.class, "/m3", 
+                               "text/*,application/json", 
+                               "application/json", "m3");
+    }
+    
+    @Test
+    public void testResponseType8() throws Exception {
+        doTestProducesResource(ResponseMediaTypeResource.class, "/m4", 
+                               "application/*", "application/xml", "m4");
+    }
+    
+    @Test
+    public void testProducesResource1() throws Exception {
+        doTestProducesResource(ProducesResource1.class, "/", 
+                               "text/plain, application/xml", 
+                               "application/xml", "m2");
+    }
+    
+    @Test
+    public void testProducesResource2() throws Exception {
+        doTestProducesResource(ProducesResource1.class, "/", 
+                               "text/plain, application/xml;q=0.8", 
+                               "text/plain", "m1");
+    }
+    
+    @Test
+    public void testProducesResource3() throws Exception {
+        doTestProducesResource(ProducesResource2.class, "/", 
+                               "application/*", 
+                               "application/json", "m1");
+    }
+    
+    @Test
+    public void testProducesResource4() throws Exception {
+        doTestProducesResource(ProducesResource2.class, "/", 
+                               "application/xml,application/json;q=0.9", 
+                               "application/xml", "m2");
+    }
+    
+    @Test
+    public void testProducesResource5() throws Exception {
+        doTestProducesResource(ProducesResource2.class, "/", 
+                               "application/xml;q=0.3,application/json;q=0.5", 
+                               "application/json", "m1");
+    }
+
+    @Test
+    public void testProducesResource6() throws Exception {
+        doTestProducesResource(ProducesResource3.class, "/", 
+                               "application/xml,application/json", 
+                               "application/xml", "m2");
+    }
+
+    @Test
+    public void testProducesResource7() throws Exception {
+        doTestProducesResource(ProducesResource4.class, "/", 
+                               "application/xml,", 
+                               "application/xml", "m1");
+    }
+
+    @Test
+    public void testProducesResource8() throws Exception {
+        doTestProducesResource(ProducesResource5.class, "/", 
+                               "application/*,text/html", 
+                               "text/html", "m1");
+    }
+
+    @Test
+    public void testProducesResource9() throws Exception {
+        doTestProducesResource(ProducesResource5.class, "/", 
+                               "application/*,text/html;q=0.3", 
+                               "text/html", "m1");
+    }
+
+    @Test
+    public void testProducesResource10() throws Exception {
+        doTestProducesResource(ProducesResource6.class, "/", 
+                               "application/*,text/html", 
+                               "text/html", "m1");
+    }
+
+    private void doTestProducesResource(Class<?> resourceClass, 
+                                        String path,
+                                        String acceptContentTypes,
+                                        String expectedResponseType,
+                                        String expectedMethodName) throws Exception {
+        JAXRSServiceFactoryBean sf = new JAXRSServiceFactoryBean();
+        sf.setResourceClasses(resourceClass);
+        sf.create();
+        List<ClassResourceInfo> resources = ((JAXRSServiceImpl)sf.getService()).getClassResourceInfos();
+        String contentType = "*/*";
+        
+        Message m = new MessageImpl();
+        m.put(Message.CONTENT_TYPE, contentType);
+        Exchange ex = new ExchangeImpl();
+        ex.setInMessage(m);
+        m.setExchange(ex);
+        Endpoint e = EasyMock.createMock(Endpoint.class);
+        e.isEmpty();
+        EasyMock.expectLastCall().andReturn(true).anyTimes();
+        e.size();
+        EasyMock.expectLastCall().andReturn(0).anyTimes();
+        e.getEndpointInfo();
+        EasyMock.expectLastCall().andReturn(null).anyTimes();
+        e.get(ServerProviderFactory.class.getName());
+        EasyMock.expectLastCall().andReturn(ServerProviderFactory.getInstance()).times(2);
+        e.get("org.apache.cxf.jaxrs.comparator");
+        EasyMock.expectLastCall().andReturn(null);
+        EasyMock.replay(e);
+        ex.put(Endpoint.class, e);
+        
+        MetadataMap<String, String> values = new MetadataMap<String, String>();
+        Map<ClassResourceInfo, MultivaluedMap<String, String>> mResources 
+            = JAXRSUtils.selectResourceClass(resources, path, m);
+     
+        OperationResourceInfo ori = JAXRSUtils.findTargetMethod(mResources, m, "GET", 
+                                                values, contentType, 
+                                                sortMediaTypes(acceptContentTypes));
+        assertNotNull(ori);
+        assertEquals(expectedMethodName,  ori.getMethodToInvoke().getName());
+        assertEquals(expectedResponseType, m.getExchange().get(Message.CONTENT_TYPE));
     }
     
     @Test
@@ -212,7 +442,7 @@ public class SelectMethodCandidatesTest extends Assert {
                                                             path,
                                                             "PUT",
                                                             values, contentTypes, 
-                                                            JAXRSUtils.sortMediaTypes(acceptContentTypes));
+                                                            sortMediaTypes(acceptContentTypes));
         assertNotNull(ori);
         assertEquals("resourceMethod needs to be selected", methodName,
                      ori.getMethodToInvoke().getName());
@@ -274,7 +504,7 @@ public class SelectMethodCandidatesTest extends Assert {
                                                             "/books",
                                                             methodName,
                                                             values, contentTypes, 
-                                                            JAXRSUtils.sortMediaTypes(acceptContentTypes));
+                                                            sortMediaTypes(acceptContentTypes));
         assertNotNull(ori);
         assertEquals("resourceMethod needs to be selected", methodName.toLowerCase() + "Entity",
                      ori.getMethodToInvoke().getName());
@@ -322,7 +552,7 @@ public class SelectMethodCandidatesTest extends Assert {
                                                             path,
                                                             "GET",
                                                             values, contentTypes, 
-                                                            JAXRSUtils.sortMediaTypes(acceptContentTypes));
+                                                            sortMediaTypes(acceptContentTypes));
         assertNotNull(ori);
         assertEquals("resourceMethod needs to be selected", method,
                      ori.getMethodToInvoke().getName());
@@ -342,7 +572,7 @@ public class SelectMethodCandidatesTest extends Assert {
                                                             "/1/2/3/d/resource1",
                                                             "GET",
                                                             values, contentTypes, 
-                                                            JAXRSUtils.sortMediaTypes(acceptContentTypes));
+                                                            sortMediaTypes(acceptContentTypes));
         
         assertNotNull(ori);
         assertEquals("jsonResource needs to be selected", "jsonResource",
@@ -437,23 +667,23 @@ public class SelectMethodCandidatesTest extends Assert {
         List<ClassResourceInfo> resources = ((JAXRSServiceImpl)sf.getService()).getClassResourceInfos();
         
         String contentTypes = "*/*";
-        String acceptContentTypes = "application/bar,application/foo";
+        String acceptContentTypes = "application/bar,application/foo;q=0.8";
         
         MetadataMap<String, String> values = new MetadataMap<String, String>();
         OperationResourceInfo ori = findTargetResourceClass(resources, null, 
                                       "/1/2/3/d/custom",
                                       "GET",
                                       values, contentTypes, 
-                                      JAXRSUtils.sortMediaTypes(acceptContentTypes));
+                                      sortMediaTypes(acceptContentTypes));
         
         assertNotNull(ori);
         assertEquals("readBar", ori.getMethodToInvoke().getName());
-        acceptContentTypes = "application/foo,application/bar";
+        acceptContentTypes = "application/foo,application/bar;q=0.8";
         ori = findTargetResourceClass(resources, null, 
                                       "/1/2/3/d/custom",
                                       "GET",
                                       values, contentTypes, 
-                                      JAXRSUtils.sortMediaTypes(acceptContentTypes));
+                                      sortMediaTypes(acceptContentTypes));
         assertNotNull(ori);
         assertEquals("readFoo", ori.getMethodToInvoke().getName());
         
@@ -462,7 +692,7 @@ public class SelectMethodCandidatesTest extends Assert {
                                       "/1/2/3/d/custom",
                                       "GET",
                                       values, contentTypes, 
-                                      JAXRSUtils.sortMediaTypes(acceptContentTypes));
+                                      sortMediaTypes(acceptContentTypes));
         assertNotNull(ori);
         assertEquals("readBar", ori.getMethodToInvoke().getName());
         
@@ -471,7 +701,7 @@ public class SelectMethodCandidatesTest extends Assert {
                                       "/1/2/3/d/custom",
                                       "GET",
                                       values, contentTypes, 
-                                      JAXRSUtils.sortMediaTypes(acceptContentTypes));
+                                      sortMediaTypes(acceptContentTypes));
         assertNotNull(ori);
         assertEquals("readFoo", ori.getMethodToInvoke().getName());
         
@@ -557,6 +787,159 @@ public class SelectMethodCandidatesTest extends Assert {
         @Path("books")
         public void put() {
             
+        }
+    }
+    
+    public static class ConsumesResource1 {
+        @POST
+        @Consumes({"application/xml", "text/*" })
+        public void m1() {
+            
+        }
+        @POST
+        @Consumes({"application/xml", "text/xml" })
+        public void m2() {
+            
+        }
+    }
+    public static class ConsumesResource2 {
+        @POST
+        @Consumes({"application/*", "text/xml" })
+        public void m2() {
+            
+        }
+        @POST
+        @Consumes({"text/*", "application/xml" })
+        public void m1() {
+            
+        }
+    }
+    public static class ConsumesResource3 {
+        @POST
+        @Consumes({"application/*" })
+        public void m2() {
+            
+        }
+        @POST
+        @Consumes({"application/xml" })
+        public void m1() {
+            
+        }
+    }
+    public static class ConsumesResource4 {
+        @POST
+        @Consumes({"application/xml", "application/xml+*" })
+        public void m1() {
+            
+        }
+        @POST
+        @Consumes({"application/*", "application/xml+bar" })
+        public void m2() {
+            
+        }
+    }
+    
+    public static class ResponseMediaTypeResource {
+        @GET
+        @Path("m1")
+        @Produces({"application/json", "application/xml" })
+        public Response m1() {
+            return null;
+        }
+        @GET
+        @Path("m2")
+        @Produces({"application/*" })
+        public Response m2() {
+            return null;
+        }
+        @GET
+        @Path("m3")
+        @Produces({"application/json", "text/xml", "application/xml" })
+        public Response m3() {
+            return null;
+        }
+        @GET
+        @Path("m4")
+        @Produces({"application/json;qs=0.9", "application/xml" })
+        public Response m4() {
+            return null;
+        }
+    }
+    
+    public static class ProducesResource1 {
+        @GET
+        @Produces({"text/*" })
+        public Response m1() {
+            return null;
+        }
+        @GET
+        @Produces({"application/xml" })
+        public Response m2() {
+            return null;
+        }
+    }
+    public static class ProducesResource2 {
+        @GET
+        @Produces({"application/json" })
+        public Response m1() {
+            return null;
+        }
+        @GET
+        @Produces({"application/xml;qs=0.9" })
+        public Response m2() {
+            return null;
+        }
+    }
+
+    public static class ProducesResource3 {
+        @GET
+        @Produces({"application/json;qs=0.2" })
+        public Response m1() {
+            return null;
+        }
+        @GET
+        @Produces({"application/xml;qs=0.9" })
+        public Response m2() {
+            return null;
+        }
+    }
+
+    public static class ProducesResource4 {
+        @GET
+        @Produces({"application/*" })
+        public Response m1() {
+            return null;
+        }
+        @GET
+        @Produces({"application/xml;qs=0.9" })
+        public Response m2() {
+            return null;
+        }
+    }
+
+    public static class ProducesResource5 {
+        @GET
+        @Produces({"text/*" })
+        public Response m1() {
+            return null;
+        }
+        @GET
+        @Produces({"application/*" })
+        public Response m2() {
+            return null;
+        }
+    }
+
+    public static class ProducesResource6 {
+        @GET
+        @Produces({"text/*;qs=0.9" })
+        public Response m1() {
+            return null;
+        }
+        @GET
+        @Produces({"application/*" })
+        public Response m2() {
+            return null;
         }
     }
 }

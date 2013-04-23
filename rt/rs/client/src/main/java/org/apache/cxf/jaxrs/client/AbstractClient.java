@@ -18,6 +18,8 @@
  */
 package org.apache.cxf.jaxrs.client;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
@@ -58,6 +60,7 @@ import javax.xml.stream.XMLStreamWriter;
 import org.apache.cxf.Bus;
 import org.apache.cxf.common.i18n.BundleUtils;
 import org.apache.cxf.common.logging.LogUtils;
+import org.apache.cxf.endpoint.ClientLifeCycleManager;
 import org.apache.cxf.endpoint.ConduitSelector;
 import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.endpoint.Retryable;
@@ -93,7 +96,7 @@ import org.apache.cxf.transport.MessageObserver;
  * Common proxy and http-centric client implementation
  *
  */
-public abstract class AbstractClient implements Client, Retryable {
+public abstract class AbstractClient implements Client {
     protected static final String REQUEST_CONTEXT = "RequestContext";
     protected static final String RESPONSE_CONTEXT = "ResponseContext";
     protected static final String KEEP_CONDUIT_ALIVE = "KeepConduitAlive";
@@ -274,6 +277,29 @@ public abstract class AbstractClient implements Client, Retryable {
         return this;
     }
 
+    public void close() {
+        if (cfg.getBus() == null) {
+            return;
+        }
+        ClientLifeCycleManager mgr = cfg.getBus().getExtension(ClientLifeCycleManager.class);
+        if (null != mgr) {
+            mgr.clientDestroyed(new FrontendClientAdapter(getConfiguration()));
+        }
+
+        if (cfg.getConduitSelector() instanceof Closeable) {
+            try {
+                ((Closeable)cfg.getConduitSelector()).close();
+            } catch (IOException e) {
+                //ignore, we're destroying anyway
+            }
+        } else {
+            cfg.getConduit().close();
+        }
+        state.reset();
+        state = null;
+        cfg = null;
+    }
+    
     private void possiblyAddHeader(String name, String value) {
         if (!isDuplicate(name, value)) {
             state.getRequestHeaders().add(name, value);
@@ -590,8 +616,8 @@ public abstract class AbstractClient implements Client, Retryable {
     }
     
     @SuppressWarnings("unchecked")
-    public Object[] invoke(BindingOperationInfo oi, Object[] params, Map<String, Object> context,
-                           Exchange exchange) throws Exception {
+    protected Object[] retryInvoke(BindingOperationInfo oi, Object[] params, Map<String, Object> context,
+                              Exchange exchange) throws Exception {
         
         try {
             Object body = params.length == 0 ? null : params[0];
@@ -886,7 +912,7 @@ public abstract class AbstractClient implements Client, Retryable {
         exchange = createExchange(m, exchange);
         exchange.put(Message.REST_MESSAGE, Boolean.TRUE);
         exchange.setOneWay("true".equals(headers.getFirst(Message.ONE_WAY_REQUEST)));
-        exchange.put(Retryable.class, this);
+        exchange.put(Retryable.class, new RetryableImpl());
         
         // context
         setContexts(m, exchange, invocationContext, proxy);
@@ -993,5 +1019,14 @@ public abstract class AbstractClient implements Client, Retryable {
                                             Type bodyType,
                                             Annotation[] customAnns,
                                             OutputStream os) throws Fault;
+    }
+    
+    private class RetryableImpl implements Retryable {
+
+        public Object[] invoke(BindingOperationInfo oi, Object[] params, Map<String, Object> context,
+                               Exchange exchange) throws Exception {
+            return AbstractClient.this.retryInvoke(oi, params, context, exchange);
+        }
+        
     }
 }

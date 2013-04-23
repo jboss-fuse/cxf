@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -157,8 +158,13 @@ public final class JAXRSUtils {
     public static final String IGNORE_MESSAGE_WRITERS = "ignore.message.writers";
     public static final String ROOT_INSTANCE = "service.root.instance";
     public static final String ROOT_PROVIDER = "service.root.provider";
+    public static final String PARTIAL_HIERARCHICAL_MEDIA_SUBTYPE_CHECK = 
+        "media.subtype.partial.check"; 
     public static final String DOC_LOCATION = "wadl.location";
     public static final String DEFAULT_PROVIDERS_FOR_SIMPLE_TYPES = "defaultProviders.for.simpleTypes";
+    public static final String MEDIA_TYPE_Q_PARAM = "q";
+    public static final String MEDIA_TYPE_QS_PARAM = "qs";
+    private static final String MEDIA_TYPE_DISTANCE_PARAM = "d";
     
     private static final Logger LOG = LogUtils.getL7dLogger(JAXRSUtils.class);
     private static final ResourceBundle BUNDLE = BundleUtils.getBundle(JAXRSUtils.class);
@@ -284,7 +290,7 @@ public final class JAXRSUtils {
                                                 values,
                                                 ori);
             }
-            InjectionUtils.injectThroughMethod(requestObject, m, o);
+            InjectionUtils.injectThroughMethod(requestObject, m, o, message);
         }
         // Param fields
         for (Field f : bri.getParameterFields()) {
@@ -305,7 +311,6 @@ public final class JAXRSUtils {
             }
             InjectionUtils.injectFieldValue(f, requestObject, o);
         }
-        
     }
     
     public static Map<ClassResourceInfo, MultivaluedMap<String, String>> selectResourceClass(
@@ -392,18 +397,19 @@ public final class JAXRSUtils {
         boolean throwException) {
         
         final boolean isFineLevelLoggable = LOG.isLoggable(Level.FINE); 
-                
+        final boolean getMethod = HttpMethod.GET.equals(httpMethod);
+        
         MediaType requestType;
         try {
-            requestType = requestContentType == null
-                                ? ALL_TYPES : toMediaType(requestContentType);
+            requestType = getMethod ? MediaType.WILDCARD_TYPE : toMediaType(requestContentType);
         } catch (IllegalArgumentException ex) {
             throw new NotSupportedException(ex);
         }
         
         SortedMap<OperationResourceInfo, MultivaluedMap<String, String>> candidateList = 
             new TreeMap<OperationResourceInfo, MultivaluedMap<String, String>>(
-                new OperationResourceInfoComparator(message, httpMethod));
+                new OperationResourceInfoComparator(message, httpMethod, 
+                                                    getMethod, requestType, acceptContentTypes));
 
         int pathMatched = 0;
         int methodMatched = 0;
@@ -423,55 +429,49 @@ public final class JAXRSUtils {
                 
             }
             
-            boolean subresourcesOnly = true;
-            for (MediaType acceptType : acceptContentTypes) {
-                for (OperationResourceInfo ori : resource.getMethodDispatcher().getOperationResourceInfos()) {
-                    boolean added = false;
-                    
-                    URITemplate uriTemplate = ori.getURITemplate();
-                    MultivaluedMap<String, String> map = new MetadataMap<String, String>(values);
-                    if (uriTemplate != null && uriTemplate.match(path, map)) {
-                        if (ori.isSubResourceLocator()) {
-                            candidateList.put(ori, map);
-                            added = true;
-                        } else {
-                            String finalGroup = map.getFirst(URITemplate.FINAL_MATCH_GROUP);
-                            //CHECKSTYLE:OFF
-                            if (StringUtils.isEmpty(finalGroup) || PATH_SEGMENT_SEP.equals(finalGroup)) {
-                                pathMatched++;
-                                if (matchHttpMethod(ori.getHttpMethod(), httpMethod)) {
-                                    methodMatched++;
-                                    if (matchConsumeTypes(requestType, ori)) {
-                                        consumeMatched++;
-                                        MediaType pMediaType = matchProduceTypes(acceptType, ori);
-                                        if (pMediaType != null) {
-                                            map.putSingle(Message.CONTENT_TYPE, mediaTypeToString(pMediaType));
-                                            
-                                            subresourcesOnly = false;
+            for (OperationResourceInfo ori : resource.getMethodDispatcher().getOperationResourceInfos()) {
+                boolean added = false;
+                
+                URITemplate uriTemplate = ori.getURITemplate();
+                MultivaluedMap<String, String> map = new MetadataMap<String, String>(values);
+                if (uriTemplate != null && uriTemplate.match(path, map)) {
+                    if (ori.isSubResourceLocator()) {
+                        candidateList.put(ori, map);
+                        added = true;
+                    } else {
+                        String finalGroup = map.getFirst(URITemplate.FINAL_MATCH_GROUP);
+                        if (StringUtils.isEmpty(finalGroup) || PATH_SEGMENT_SEP.equals(finalGroup)) {
+                            pathMatched++;
+                            if (matchHttpMethod(ori.getHttpMethod(), httpMethod)) {
+                                methodMatched++;
+                                //CHECKSTYLE:OFF
+                                if (getMethod || matchConsumeTypes(requestType, ori)) {
+                                    consumeMatched++;
+                                    for (MediaType acceptType : acceptContentTypes) {
+                                        if (matchProduceTypes(acceptType, ori)) {
                                             candidateList.put(ori, map);
                                             added = true;
+                                            break;
                                         }
                                     }
                                 }
+                                //CHECKSTYLE:ON
                             }
-                            //CHECKSTYLE:ON
-                        }
-                    } 
-                    if (isFineLevelLoggable) {
-                        if (added) {
-                            LOG.fine(new org.apache.cxf.common.i18n.Message("OPER_SELECTED_POSSIBLY", 
-                                      BUNDLE, 
-                                      ori.getMethodToInvoke().getName()).toString());
-                        } else {
-                            logNoMatchMessage(ori, path, httpMethod, requestType, acceptContentTypes);
                         }
                     }
-                }
-                if (!candidateList.isEmpty() && !subresourcesOnly) {
-                    break;
+                } 
+                if (isFineLevelLoggable) {
+                    if (added) {
+                        LOG.fine(new org.apache.cxf.common.i18n.Message("OPER_SELECTED_POSSIBLY", 
+                                  BUNDLE, 
+                                  ori.getMethodToInvoke().getName()).toString());
+                    } else {
+                        logNoMatchMessage(ori, path, httpMethod, requestType, acceptContentTypes);
+                    }
                 }
             }
         }
+        
         if (!candidateList.isEmpty()) {
             Map.Entry<OperationResourceInfo, MultivaluedMap<String, String>> firstEntry = 
                 candidateList.entrySet().iterator().next();
@@ -489,10 +489,12 @@ public final class JAXRSUtils {
                                ori.getClassResourceInfo().getServiceClass().getName()).toString());
             }
             if (!ori.isSubResourceLocator()) {
-                List<String> responseContentType = matchedValues.remove(Message.CONTENT_TYPE);
-                if (responseContentType != null) {
-                    message.getExchange().put(Message.CONTENT_TYPE, responseContentType.get(0));
-                }
+                MediaType responseMediaType = intersectSortMediaTypes(acceptContentTypes,
+                                                                      ori.getProduceTypes(),
+                                                                      false).get(0);
+                message.getExchange().put(Message.CONTENT_TYPE, mediaTypeToString(responseMediaType, 
+                                                                                  MEDIA_TYPE_Q_PARAM, 
+                                                                                  MEDIA_TYPE_QS_PARAM));
             }
             return ori;
         }
@@ -535,6 +537,39 @@ public final class JAXRSUtils {
         
     }    
 
+    private static List<MediaType> intersectSortMediaTypes(List<MediaType> acceptTypes,
+                                                           List<MediaType> producesTypes,
+                                                           final boolean checkDistance) {
+        List<MediaType> all = intersectMimeTypes(acceptTypes, producesTypes, true, checkDistance);
+        if (all.size() > 1) {
+            Collections.sort(all, new Comparator<MediaType>() {
+
+                public int compare(MediaType mt1, MediaType mt2) {
+                    int result = compareMediaTypes(mt1, mt2, null);
+                    if (result == 0) {
+                        result = compareQualityAndDistance(mt1, mt2, checkDistance);
+                    }
+                    return result;
+                }
+                
+            });    
+        }
+        return all;
+    }
+    
+    private static int compareQualityAndDistance(MediaType mt1, MediaType mt2, boolean checkDistance) {
+        int result = compareMediaTypesQualityFactors(mt1, mt2, MEDIA_TYPE_Q_PARAM);
+        if (result == 0) {
+            result = compareMediaTypesQualityFactors(mt1, mt2, MEDIA_TYPE_QS_PARAM);
+        }
+        if (result == 0 && checkDistance) {
+            Integer dist1 = Integer.valueOf(mt1.getParameters().get(MEDIA_TYPE_DISTANCE_PARAM));
+            Integer dist2 = Integer.valueOf(mt2.getParameters().get(MEDIA_TYPE_DISTANCE_PARAM));
+            result = dist1.compareTo(dist2);
+        }
+        return result;
+    }
+    
     private static String getCurrentPath(MultivaluedMap<String, String> values) {
         String path = values.getFirst(URITemplate.FINAL_MATCH_GROUP);
         return path == null ?  "/" : path;
@@ -623,11 +658,23 @@ public final class JAXRSUtils {
                           : getMediaTypes(pm.value());
     }
     
-    public static int compareSortedMediaTypes(List<MediaType> mts1, List<MediaType> mts2) {
-        int size1 = mts1.size();
-        int size2 = mts2.size();
+    public static int compareSortedConsumesMediaTypes(List<MediaType> mts1, List<MediaType> mts2, MediaType ct) {
+        List<MediaType> actualMts1 = getCompatibleMediaTypes(mts1, ct);
+        List<MediaType> actualMts2 = getCompatibleMediaTypes(mts2, ct);
+        return compareSortedMediaTypes(actualMts1, actualMts2, null);
+    }
+    
+    public static int compareSortedAcceptMediaTypes(List<MediaType> mts1, List<MediaType> mts2, 
+                                                    List<MediaType> acceptTypes) {
+        List<MediaType> actualMts1 = intersectSortMediaTypes(mts1, acceptTypes, true);
+        List<MediaType> actualMts2 = intersectSortMediaTypes(mts2, acceptTypes, true);
+        int size1 = actualMts1.size();
+        int size2 = actualMts2.size();
         for (int i = 0; i < size1 && i < size2; i++) {
-            int result = compareMediaTypes(mts1.get(i), mts2.get(i));
+            int result = compareMediaTypes(actualMts1.get(i), actualMts2.get(i), null);
+            if (result == 0) {
+                result = compareQualityAndDistance(actualMts1.get(i), actualMts2.get(i), true);
+            }
             if (result != 0) {
                 return result;
             }
@@ -635,32 +682,69 @@ public final class JAXRSUtils {
         return size1 == size2 ? 0 : size1 < size2 ? -1 : 1;
     }
     
+    private static List<MediaType> getCompatibleMediaTypes(List<MediaType> mts, MediaType ct) {
+        List<MediaType> actualMts;
+        if (mts.size() == 1) {
+            actualMts = mts;
+        } else {
+            actualMts = new LinkedList<MediaType>();
+            for (MediaType mt : mts) {
+                if (isMediaTypeCompatible(mt, ct)) {
+                    actualMts.add(mt);    
+                }
+            }
+        }
+        return actualMts;
+    }
+    
+    public static int compareSortedMediaTypes(List<MediaType> mts1, List<MediaType> mts2, String qs) {
+        int size1 = mts1.size();
+        int size2 = mts2.size();
+        for (int i = 0; i < size1 && i < size2; i++) {
+            int result = compareMediaTypes(mts1.get(i), mts2.get(i), qs);
+            if (result != 0) {
+                return result;
+            }
+        }
+        return size1 == size2 ? 0 : size1 < size2 ? -1 : 1;
+    }
     public static int compareMediaTypes(MediaType mt1, MediaType mt2) {
+        return compareMediaTypes(mt1, mt2, MEDIA_TYPE_Q_PARAM);
+    }
+    public static int compareMediaTypes(MediaType mt1, MediaType mt2, String qs) {
         
-        if (mt1.isWildcardType() && !mt2.isWildcardType()) {
+        boolean mt1TypeWildcard = mt1.isWildcardType();
+        boolean mt2TypeWildcard = mt2.isWildcardType();
+        if (mt1TypeWildcard && !mt2TypeWildcard) {
             return 1;
         }
-        if (!mt1.isWildcardType() && mt2.isWildcardType()) {
+        if (!mt1TypeWildcard && mt2TypeWildcard) {
             return -1;
         }
          
-        
-        if (mt1.isWildcardSubtype() && !mt2.isWildcardSubtype()) {
+        boolean mt1SubTypeWildcard = mt1.getSubtype().contains(MediaType.MEDIA_TYPE_WILDCARD);
+        boolean mt2SubTypeWildcard = mt2.getSubtype().contains(MediaType.MEDIA_TYPE_WILDCARD);
+        if (mt1SubTypeWildcard && !mt2SubTypeWildcard) {
             return 1;
         }
-        if (!mt1.isWildcardSubtype() && mt2.isWildcardSubtype()) {
+        if (!mt1SubTypeWildcard && mt2SubTypeWildcard) {
             return -1;
         }       
         
-        return compareMediaTypesQualityFactors(mt1, mt2);
+        return qs != null ? compareMediaTypesQualityFactors(mt1, mt2, qs) : 0;
     }
     
     public static int compareMediaTypesQualityFactors(MediaType mt1, MediaType mt2) {
-        float q1 = getMediaTypeQualityFactor(mt1.getParameters().get("q"));
-        float q2 = getMediaTypeQualityFactor(mt2.getParameters().get("q"));
+        float q1 = getMediaTypeQualityFactor(mt1.getParameters().get(MEDIA_TYPE_Q_PARAM));
+        float q2 = getMediaTypeQualityFactor(mt2.getParameters().get(MEDIA_TYPE_Q_PARAM));
         return Float.compare(q1, q2) * -1;
     }
     
+    public static int compareMediaTypesQualityFactors(MediaType mt1, MediaType mt2, String qs) {
+        float q1 = getMediaTypeQualityFactor(mt1.getParameters().get(qs));
+        float q2 = getMediaTypeQualityFactor(mt2.getParameters().get(qs));
+        return Float.compare(q1, q2) * -1;
+    }
 
     public static float getMediaTypeQualityFactor(String q) {
         if (q == null) {
@@ -1301,13 +1385,10 @@ public final class JAXRSUtils {
         return !intersectMimeTypes(ori.getConsumeTypes(), requestContentType).isEmpty();
     }
     
-    public static MediaType matchProduceTypes(MediaType acceptContentType, 
+    public static boolean matchProduceTypes(MediaType acceptContentType, 
                                               OperationResourceInfo ori) {
         
-        List<MediaType> types = intersectMimeTypes(ori.getProduceTypes(), 
-                                                   Collections.singletonList(acceptContentType),
-                                                   true);
-        return types.isEmpty() ? null : types.get(0);
+        return !intersectMimeTypes(ori.getProduceTypes(), acceptContentType).isEmpty();
     }
     
     public static boolean matchMimeTypes(MediaType requestContentType, 
@@ -1353,35 +1434,17 @@ public final class JAXRSUtils {
     public static List<MediaType> intersectMimeTypes(List<MediaType> requiredMediaTypes, 
                                                      List<MediaType> userMediaTypes,
                                                      boolean addRequiredParamsIfPossible) {
+        return intersectMimeTypes(requiredMediaTypes, userMediaTypes, addRequiredParamsIfPossible, false);
+    }
+    public static List<MediaType> intersectMimeTypes(List<MediaType> requiredMediaTypes, 
+                                                     List<MediaType> userMediaTypes,
+                                                     boolean addRequiredParamsIfPossible,
+                                                     boolean addDistanceParameter) {
         Set<MediaType> supportedMimeTypeList = new LinkedHashSet<MediaType>();
 
         for (MediaType requiredType : requiredMediaTypes) {
             for (MediaType userType : userMediaTypes) {
-                boolean isCompatible = 
-                    requiredType.isCompatible(userType) || userType.isCompatible(requiredType);
-                if (!isCompatible && requiredType.getType().equalsIgnoreCase(userType.getType())) {
-                    // check if we have composite subtypes
-                    String subType1 = requiredType.getSubtype();
-                    String subType2 = userType.getSubtype();
-                    
-                    String subTypeAfterPlus1 = splitMediaSubType(subType1, true); 
-                    String subTypeAfterPlus2 = splitMediaSubType(subType2, true);
-                    
-                    if (subTypeAfterPlus1 != null && subTypeAfterPlus2 != null) {
-                    
-                        isCompatible = subTypeAfterPlus1.equalsIgnoreCase(subTypeAfterPlus2)
-                            && (subType1.charAt(0) == '*' || subType2.charAt(0) == '*');
-                        
-                        if (!isCompatible) {
-                            String subTypeBeforePlus1 = splitMediaSubType(subType1, false);
-                            String subTypeBeforePlus2 = splitMediaSubType(subType2, false);
-                            
-                            isCompatible = subTypeBeforePlus1.equalsIgnoreCase(subTypeBeforePlus2)
-                                && (subType1.charAt(subType1.length() - 1) == '*' 
-                                    || subType2.charAt(subType2.length() - 1) == '*');
-                        }
-                    }
-                }
+                boolean isCompatible = isMediaTypeCompatible(requiredType, userType);
                 if (isCompatible) {
                     boolean parametersMatched = true;
                     for (Map.Entry<String, String> entry : userType.getParameters().entrySet()) {
@@ -1394,11 +1457,12 @@ public final class JAXRSUtils {
                     if (!parametersMatched) {
                         continue;
                     }
-                   
-                    String type = requiredType.getType().equals(MediaType.MEDIA_TYPE_WILDCARD) 
-                                      ? userType.getType() : requiredType.getType();
-                    String subtype = requiredType.getSubtype().startsWith(MediaType.MEDIA_TYPE_WILDCARD) 
-                                      ? userType.getSubtype() : requiredType.getSubtype();
+                    boolean requiredTypeWildcard = requiredType.getType().equals(MediaType.MEDIA_TYPE_WILDCARD);
+                    boolean requiredSubTypeWildcard = requiredType.getSubtype().contains(MediaType.MEDIA_TYPE_WILDCARD);
+                    
+                    String type = requiredTypeWildcard ? userType.getType() : requiredType.getType();
+                    String subtype = requiredSubTypeWildcard ? userType.getSubtype() : requiredType.getSubtype();
+                    
                     Map<String, String> parameters = userType.getParameters();
                     if (addRequiredParamsIfPossible) {
                         parameters = new LinkedHashMap<String, String>(parameters);
@@ -1408,6 +1472,16 @@ public final class JAXRSUtils {
                             }
                         }
                     }
+                    if (addDistanceParameter) {
+                        int distance = 0;
+                        if (requiredTypeWildcard) {
+                            distance++;
+                        }
+                        if (requiredSubTypeWildcard) {
+                            distance++;
+                        }
+                        parameters.put(MEDIA_TYPE_DISTANCE_PARAM, Integer.toString(distance));
+                    }
                     supportedMimeTypeList.add(new MediaType(type, subtype, parameters));
                 }
             }
@@ -1415,6 +1489,72 @@ public final class JAXRSUtils {
 
         return new ArrayList<MediaType>(supportedMimeTypeList);
         
+    }
+    
+    private static boolean isMediaTypeCompatible(MediaType requiredType, MediaType userType) {
+        boolean isCompatible = requiredType.isCompatible(userType);
+        if (!requiredType.isCompatible(userType) && requiredType.getType().equalsIgnoreCase(userType.getType())) {
+            isCompatible = compareCompositeSubtypes(requiredType, userType,
+                                                    PhaseInterceptorChain.getCurrentMessage());
+        }
+        return isCompatible;
+    }
+    
+    static boolean compareCompositeSubtypes(String requiredType, String userType,
+                                            Message message) {
+        return compareCompositeSubtypes(toMediaType(requiredType), toMediaType(userType), message);
+    }
+    
+    private static boolean compareCompositeSubtypes(MediaType requiredType, MediaType userType,
+                                            Message message) {
+        boolean isCompatible = false;
+        // check if we have composite subtypes
+        String subType1 = requiredType.getSubtype();
+        String subType2 = userType.getSubtype();
+        
+        String subTypeAfterPlus1 = splitMediaSubType(subType1, true); 
+        String subTypeAfterPlus2 = splitMediaSubType(subType2, true);
+        if (message != null && MessageUtils.isTrue(
+            message.getContextualProperty(PARTIAL_HIERARCHICAL_MEDIA_SUBTYPE_CHECK))) {     
+            if (subTypeAfterPlus1 != null || subTypeAfterPlus2 != null) {
+                boolean nullPossible = subTypeAfterPlus1 == null || subTypeAfterPlus2 == null;
+                isCompatible = subTypeAfterPlus1 == null && subTypeAfterPlus2.equals(subType1)
+                    || subTypeAfterPlus2 == null && subTypeAfterPlus1.equals(subType2);
+                if (!isCompatible && !nullPossible) {
+                    isCompatible = subTypeAfterPlus1.equalsIgnoreCase(subTypeAfterPlus2)
+                        && (subType1.charAt(0) == '*' || subType2.charAt(0) == '*');
+                }
+                
+                if (!isCompatible) {
+                    String subTypeBeforePlus1 = splitMediaSubType(subType1, false);
+                    String subTypeBeforePlus2 = splitMediaSubType(subType2, false);
+                    nullPossible = subTypeBeforePlus1 == null || subTypeBeforePlus2 == null;
+                    isCompatible = subTypeBeforePlus1 == null && subTypeBeforePlus2.equals(subType1)
+                        || subTypeBeforePlus2 == null && subTypeBeforePlus1.equals(subType2);
+                    if (!isCompatible && !nullPossible) {
+                        isCompatible = subTypeBeforePlus1.equalsIgnoreCase(subTypeBeforePlus2)
+                            && (subType1.charAt(subType1.length() - 1) == '*' 
+                                || subType2.charAt(subType2.length() - 1) == '*');
+                    }
+                }
+            }
+        } else {
+            if (subTypeAfterPlus1 != null && subTypeAfterPlus2 != null) {
+                
+                isCompatible = subTypeAfterPlus1.equalsIgnoreCase(subTypeAfterPlus2)
+                    && (subType1.charAt(0) == '*' || subType2.charAt(0) == '*');
+                
+                if (!isCompatible) {
+                    String subTypeBeforePlus1 = splitMediaSubType(subType1, false);
+                    String subTypeBeforePlus2 = splitMediaSubType(subType2, false);
+                    
+                    isCompatible = subTypeBeforePlus1.equalsIgnoreCase(subTypeBeforePlus2)
+                        && (subType1.charAt(subType1.length() - 1) == '*' 
+                            || subType2.charAt(subType2.length() - 1) == '*');
+                }
+            }
+        }
+        return isCompatible;
     }
     
     private static String splitMediaSubType(String type, boolean after) {
@@ -1435,16 +1575,15 @@ public final class JAXRSUtils {
                                   false);
     }
     
-    public static List<MediaType> sortMediaTypes(String mediaTypes) {
-        return sortMediaTypes(JAXRSUtils.parseMediaTypes(mediaTypes));
+    public static List<MediaType> sortMediaTypes(String mediaTypes, String qs) {
+        return sortMediaTypes(JAXRSUtils.parseMediaTypes(mediaTypes), qs);
     }
-    
-    public static List<MediaType> sortMediaTypes(List<MediaType> types) {
+    public static List<MediaType> sortMediaTypes(List<MediaType> types, final String qs) {
         if (types.size() > 1) {
             Collections.sort(types, new Comparator<MediaType>() {
 
                 public int compare(MediaType mt1, MediaType mt2) {
-                    return JAXRSUtils.compareMediaTypes(mt1, mt2);
+                    return JAXRSUtils.compareMediaTypes(mt1, mt2, qs);
                 }
                 
             });
@@ -1470,6 +1609,9 @@ public final class JAXRSUtils {
     }
     
     public static <T extends Throwable> Response convertFaultToResponse(T ex, Message currentMessage) {
+        if (ex == null || currentMessage == null) {
+            return null;
+        }
         Message inMessage = currentMessage.getExchange().getInMessage();
         Response response = null;
         if (ex.getClass() == WebApplicationException.class) {
@@ -1512,19 +1654,6 @@ public final class JAXRSUtils {
         
     }
     
-    public static String removeMediaTypeParameter(MediaType mt, String paramName) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(mt.getType()).append('/').append(mt.getSubtype());
-        if (mt.getParameters().size() > 1) {
-            for (String key : mt.getParameters().keySet()) {
-                if (!paramName.equals(key)) {
-                    sb.append(';').append(key).append('=').append(mt.getParameters().get(key));
-                }
-            }
-        }    
-        return sb.toString();
-    }
-        
     public static boolean propogateException(Message m) {
         
         Object value = m.getContextualProperty(PROPAGATE_EXCEPTION);
@@ -1599,12 +1728,19 @@ public final class JAXRSUtils {
         }
     }
     
-    public static String mediaTypeToString(MediaType mt) {
-        return MediaTypeHeaderProvider.typeToString(mt);
+    public static String mediaTypeToString(MediaType mt, String... ignoreParams) {
+        List<String> list = ignoreParams == null || ignoreParams.length == 0 ? null 
+            : Arrays.asList(ignoreParams);
+            
+        return MediaTypeHeaderProvider.typeToString(mt, list);
     }
     
     public static MediaType toMediaType(String value) {
-        return MediaTypeHeaderProvider.valueOf(value);
+        if (value == null) {
+            return ALL_TYPES;
+        } else {
+            return MediaTypeHeaderProvider.valueOf(value);
+        }
     }
     
     public static Response toResponse(int status) {

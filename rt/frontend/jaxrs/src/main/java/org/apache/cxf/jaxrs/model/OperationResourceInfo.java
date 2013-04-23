@@ -182,25 +182,27 @@ public class OperationResourceInfo {
     private void checkMediaTypes(String consumeMediaTypes,
                                  String produceMediaTypes) {
         if (consumeMediaTypes != null) {
-            consumeMimes = JAXRSUtils.sortMediaTypes(consumeMediaTypes);
+            consumeMimes = JAXRSUtils.sortMediaTypes(consumeMediaTypes, null);
         } else {
             Consumes cm = 
                 AnnotationUtils.getMethodAnnotation(annotatedMethod, Consumes.class);
             if (cm != null) {
-                consumeMimes = JAXRSUtils.sortMediaTypes(JAXRSUtils.getMediaTypes(cm.value()));
+                consumeMimes = JAXRSUtils.sortMediaTypes(JAXRSUtils.getMediaTypes(cm.value()), null);
             } else if (classResourceInfo != null) {
-                consumeMimes = JAXRSUtils.sortMediaTypes(classResourceInfo.getConsumeMime());
+                consumeMimes = JAXRSUtils.sortMediaTypes(classResourceInfo.getConsumeMime(), null);
             }
         }
         if (produceMediaTypes != null) {
-            produceMimes = JAXRSUtils.sortMediaTypes(produceMediaTypes);
+            produceMimes = JAXRSUtils.sortMediaTypes(produceMediaTypes, JAXRSUtils.MEDIA_TYPE_QS_PARAM);
         } else {
             Produces pm = 
                 AnnotationUtils.getMethodAnnotation(annotatedMethod, Produces.class);
             if (pm != null) {
-                produceMimes = JAXRSUtils.sortMediaTypes(JAXRSUtils.getMediaTypes(pm.value()));
+                produceMimes = JAXRSUtils.sortMediaTypes(JAXRSUtils.getMediaTypes(pm.value()),
+                                                         JAXRSUtils.MEDIA_TYPE_QS_PARAM);
             } else if (classResourceInfo != null) {
-                produceMimes = JAXRSUtils.sortMediaTypes(classResourceInfo.getProduceMime());
+                produceMimes = JAXRSUtils.sortMediaTypes(classResourceInfo.getProduceMime(),
+                                                         JAXRSUtils.MEDIA_TYPE_QS_PARAM);
             }
         }
     }
