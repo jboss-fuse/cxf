@@ -475,14 +475,13 @@ public class SoapBindingFactory extends AbstractBindingFactory {
                 Map<String, String> nsMap = message.getEnvelopeNs();
                 if (nsMap == null) {
                     nsMap = new HashMap<String, String>();
-                    message.put("soap.env.ns.map", nsMap);
+                } else {
+                    nsMap = new HashMap<String, String>(nsMap);
                 }
-                if (!nsMap.containsValue(ns)) {
+                message.put("soap.env.ns.map", nsMap);
+                if (!nsMap.containsValue(ns)
+                    && !nsMap.containsKey("wsa")) {
                     nsMap.put("wsa", ns);
-                }
-                ns = message.getExchange().getBinding().getBindingInfo().getName().getNamespaceURI();
-                if (!nsMap.containsValue(ns)) {
-                    nsMap.put("tns", ns);
                 }
                 message.put(AbstractOutDatabindingInterceptor.DISABLE_OUTPUTSTREAM_OPTIMIZATION, Boolean.TRUE);
             }
@@ -883,79 +882,80 @@ public class SoapBindingFactory extends AbstractBindingFactory {
 
     @Override
     public synchronized void addListener(Destination d, Endpoint e) {
-        MessageObserver mo = d.getMessageObserver();
-        if (d.getAddress() != null 
-            && d.getAddress().getAddress() != null 
-            && d.getAddress().getAddress().getValue() != null 
-            && d.getAddress().getAddress().getValue().startsWith("soap.udp")) {
-            //soap.udp REQUIRES usage of WS-Addressing... we need to turn this on
-            setupUDP(e, e.getEndpointInfo());
-        }
-        if (mo == null) {
-            super.addListener(d, e);
-            return;
-        }
-
-        if (mo instanceof ChainInitiationObserver) {
-            ChainInitiationObserver cio = (ChainInitiationObserver) mo;
-            
-            Binding b = e.getBinding();
-            Binding b2 = cio.getEndpoint().getBinding();
-            if (b == b2) {
-                //re-registering the same endpoint?
+        synchronized (d) {
+            MessageObserver mo = d.getMessageObserver();
+            if (d.getAddress() != null 
+                && d.getAddress().getAddress() != null 
+                && d.getAddress().getAddress().getValue() != null 
+                && d.getAddress().getAddress().getValue().startsWith("soap.udp")) {
+                //soap.udp REQUIRES usage of WS-Addressing... we need to turn this on
+                setupUDP(e, e.getEndpointInfo());
+            }
+            if (mo == null) {
+                super.addListener(d, e);
                 return;
             }
-            Object o = cio.getEndpoint().get("allow-multiplex-endpoint");
-            if (o instanceof String) {
-                o = Boolean.parseBoolean((String)o);
-            } else if (o == null) {
-                o = Boolean.FALSE;
-            }
-            
-            if (b instanceof org.apache.cxf.binding.soap.SoapBinding 
-                && b2 instanceof org.apache.cxf.binding.soap.SoapBinding
-                && ((org.apache.cxf.binding.soap.SoapBinding)b).getSoapVersion()
-                    .equals(((org.apache.cxf.binding.soap.SoapBinding)b2).getSoapVersion())
-                && Boolean.FALSE.equals(o)) {
+
+            if (mo instanceof ChainInitiationObserver) {
+                ChainInitiationObserver cio = (ChainInitiationObserver) mo;
                 
-                throw new RuntimeException("Soap " 
-                                           + ((org.apache.cxf.binding.soap.SoapBinding)b)
-                                               .getSoapVersion().getVersion()
-                                           + " endpoint already registered on address "
-                                           + e.getEndpointInfo().getAddress());
-            }
-            
-            MultipleEndpointObserver newMO = new MultipleEndpointObserver(getBus()) {
-                @Override
-                protected Message createMessage(Message message) {
-                    return new SoapMessage(message);
+                Binding b = e.getBinding();
+                Binding b2 = cio.getEndpoint().getBinding();
+                if (b == b2) {
+                    //re-registering the same endpoint?
+                    return;
                 }
-            };
-
-            newMO.getBindingInterceptors().add(new AttachmentInInterceptor());
-            newMO.getBindingInterceptors().add(new StaxInInterceptor());
-
-            // This will not work if one of the endpoints disables message
-            // processing. But, if you've disabled message processing, you
-            // probably aren't going to use this feature.
-            
-            newMO.getBindingInterceptors().add(new ReadHeadersInterceptor(getBus(), (SoapVersion)null));
-            newMO.getBindingInterceptors().add(new StartBodyInterceptor());
-            newMO.getBindingInterceptors().add(new CheckFaultInterceptor());
-
-            // Add in a default selection interceptor
-            newMO.getRoutingInterceptors().add(new EndpointSelectionInterceptor());
-
-            newMO.getEndpoints().add(cio.getEndpoint());
-
-            mo = newMO;
+                Object o = cio.getEndpoint().get("allow-multiplex-endpoint");
+                if (o instanceof String) {
+                    o = Boolean.parseBoolean((String)o);
+                } else if (o == null) {
+                    o = Boolean.FALSE;
+                }
+                if (b instanceof org.apache.cxf.binding.soap.SoapBinding 
+                    && b2 instanceof org.apache.cxf.binding.soap.SoapBinding
+                    && ((org.apache.cxf.binding.soap.SoapBinding)b).getSoapVersion()
+                        .equals(((org.apache.cxf.binding.soap.SoapBinding)b2).getSoapVersion())
+                    && Boolean.FALSE.equals(o)) {
+                    
+                    throw new RuntimeException("Soap " 
+                                               + ((org.apache.cxf.binding.soap.SoapBinding)b)
+                                                   .getSoapVersion().getVersion()
+                                               + " endpoint already registered on address "
+                                               + e.getEndpointInfo().getAddress());
+                }
+                
+                MultipleEndpointObserver newMO = new MultipleEndpointObserver(getBus()) {
+                    @Override
+                    protected Message createMessage(Message message) {
+                        return new SoapMessage(message);
+                    }
+                };
+    
+                newMO.getBindingInterceptors().add(new AttachmentInInterceptor());
+                newMO.getBindingInterceptors().add(new StaxInInterceptor());
+    
+                // This will not work if one of the endpoints disables message
+                // processing. But, if you've disabled message processing, you
+                // probably aren't going to use this feature.
+                
+                newMO.getBindingInterceptors().add(new ReadHeadersInterceptor(getBus(), (SoapVersion)null));
+                newMO.getBindingInterceptors().add(new StartBodyInterceptor());
+                newMO.getBindingInterceptors().add(new CheckFaultInterceptor());
+    
+                // Add in a default selection interceptor
+                newMO.getRoutingInterceptors().add(new EndpointSelectionInterceptor());
+    
+                newMO.getEndpoints().add(cio.getEndpoint());
+    
+                mo = newMO;
+            }
+    
+            if (mo instanceof MultipleEndpointObserver) {
+                MultipleEndpointObserver meo = (MultipleEndpointObserver) mo;
+                meo.getEndpoints().add(e);
+            }
+    
+            d.setMessageObserver(mo);
         }
-
-        if (mo instanceof MultipleEndpointObserver) {
-            MultipleEndpointObserver meo = (MultipleEndpointObserver) mo;
-            meo.getEndpoints().add(e);
-        }
-
-        d.setMessageObserver(mo);
     }
 }

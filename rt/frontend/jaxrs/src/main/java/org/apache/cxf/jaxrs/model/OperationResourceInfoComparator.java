@@ -20,6 +20,10 @@
 package org.apache.cxf.jaxrs.model;
 
 import java.util.Comparator;
+import java.util.List;
+
+import javax.ws.rs.HttpMethod;
+import javax.ws.rs.core.MediaType;
 
 import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.jaxrs.ext.ResourceComparator;
@@ -28,12 +32,18 @@ import org.apache.cxf.message.Message;
 
 public class OperationResourceInfoComparator implements Comparator<OperationResourceInfo> {
     
-    private static final String HEAD_METHOD = "HEAD";
-    private boolean headMethod;
+    private String httpMethod;
+    private boolean getMethod;
     private Message message;
-    private ResourceComparator rc;    
+    private ResourceComparator rc;  
+    private MediaType contentType;
+    private List<MediaType> acceptTypes;
 
-    public OperationResourceInfoComparator(Message m, String method) {
+    public OperationResourceInfoComparator(Message m, 
+                                           String httpMethod,
+                                           boolean getMethod,
+                                           MediaType contentType,
+                                           List<MediaType> acceptTypes) {
         this.message = m;
         if (message != null) {
             Object o = m.getExchange().get(Endpoint.class).get("org.apache.cxf.jaxrs.comparator");
@@ -41,7 +51,10 @@ public class OperationResourceInfoComparator implements Comparator<OperationReso
                 rc = (ResourceComparator)o;
             }
         }
-        headMethod = HEAD_METHOD.equals(method);
+        this.contentType = contentType;
+        this.acceptTypes = acceptTypes;
+        this.httpMethod = httpMethod;
+        this.getMethod = getMethod;
     }
     
     public int compare(OperationResourceInfo e1, OperationResourceInfo e2) {
@@ -53,10 +66,10 @@ public class OperationResourceInfoComparator implements Comparator<OperationReso
             }
         }
         
-        if (headMethod) {
-            if (HEAD_METHOD.equals(e1.getHttpMethod())) {
+        if (!getMethod && HttpMethod.HEAD.equals(httpMethod)) {
+            if (HttpMethod.HEAD.equals(e1.getHttpMethod())) {
                 return -1;
-            } else if (HEAD_METHOD.equals(e2.getHttpMethod())) {
+            } else if (HttpMethod.HEAD.equals(e2.getHttpMethod())) {
                 return 1;
             }
         }
@@ -71,17 +84,19 @@ public class OperationResourceInfoComparator implements Comparator<OperationReso
             return e1.getHttpMethod() != null ? -1 : 1;
         }
         
-        if (result == 0) {
+        if (result == 0 && !getMethod) {
         
-            result = JAXRSUtils.compareSortedMediaTypes(
+            result = JAXRSUtils.compareSortedConsumesMediaTypes(
                           e1.getConsumeTypes(), 
-                          e2.getConsumeTypes());
+                          e2.getConsumeTypes(),
+                          contentType);
         }
         
         if (result == 0) {
             //use the media type of output data as the secondary key.
-            result = JAXRSUtils.compareSortedMediaTypes(e1.getProduceTypes(), 
-                                                        e2.getProduceTypes());
+            result = JAXRSUtils.compareSortedAcceptMediaTypes(e1.getProduceTypes(), 
+                                                              e2.getProduceTypes(),
+                                                              acceptTypes);
         }
         
         return result;

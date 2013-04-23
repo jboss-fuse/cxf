@@ -130,7 +130,7 @@ public class JAXRSInInterceptor extends AbstractPhaseInterceptor<Message> {
         
         String requestContentType = (String)message.get(Message.CONTENT_TYPE);
         if (requestContentType == null) {
-            requestContentType = "*/*";
+            requestContentType = MediaType.WILDCARD;
         }
         
         String rawPath = HttpUtils.getPathToMatch(message, true);
@@ -146,7 +146,7 @@ public class JAXRSInInterceptor extends AbstractPhaseInterceptor<Message> {
         }
         List<MediaType> acceptContentTypes = null;
         try {
-            acceptContentTypes = JAXRSUtils.sortMediaTypes(acceptTypes);
+            acceptContentTypes = JAXRSUtils.sortMediaTypes(acceptTypes, JAXRSUtils.MEDIA_TYPE_Q_PARAM);
         } catch (IllegalArgumentException ex) {
             throw new NotAcceptableException();
         }

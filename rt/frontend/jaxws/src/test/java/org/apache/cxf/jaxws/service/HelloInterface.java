@@ -34,5 +34,5 @@ public interface HelloInterface {
     @WebMethod
     List<String> getStringList(List<String> list);
     @WebMethod
-    String addNumbers(int arg0, int arg1) throws AddNumbersException;
+    String addNumbers(int arg0, int arg1) throws AddNumbersSubException, AddNumbersException;
 }

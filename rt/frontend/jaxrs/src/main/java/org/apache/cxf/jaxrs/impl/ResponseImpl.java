@@ -84,6 +84,10 @@ public final class ResponseImpl extends Response {
         this.entityAnnotations = anns;
     }
     
+    public void setEntityAnnotations(Annotation[] anns) { 
+        this.entityAnnotations = anns;
+    }
+    
     public Annotation[] getEntityAnnotations() {
         return entityAnnotations;
     }
@@ -227,7 +231,7 @@ public final class ResponseImpl extends Response {
 
     public MediaType getMediaType() {
         String header = getHeader(HttpHeaders.CONTENT_TYPE);
-        return header == null ? null : MediaType.valueOf(header);
+        return header == null ? null : JAXRSUtils.toMediaType(header);
     }
     
     public boolean hasLink(String relation) {

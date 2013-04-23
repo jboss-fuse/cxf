@@ -142,6 +142,14 @@ public class BookStore {
     }
     
     @GET
+    @Path("/dropjsonroot")
+    @Produces("application/json")
+    public Book getBookDropJsonRoot(@Context MessageContext mc) throws BookNotFoundFault {
+        mc.put("drop.json.root.element", "true");
+        return doGetBook("123");
+    }
+    
+    @GET
     @Path("/booknames/123")
     @Produces("application/bar")
     public byte[] getBookName123() {
@@ -887,7 +895,7 @@ public class BookStore {
     
     @GET
     @Path("/books/{bookId}/")
-    @Produces("application/json;q=0.9")
+    @Produces("application/json;qs=0.9")
     public Book getBookAsJSON() throws BookNotFoundFault {
         return doGetBook(currentBookId);
     }
@@ -1146,6 +1154,14 @@ public class BookStore {
     @Path("/bookstoresub")
     public BookStore echoThroughBookStoreSub() {
         return this;
+    }
+    
+    @Path("/customresponse")
+    @GET
+    @Produces("application/xml")
+    public Response getCustomBook() {
+        return new CustomResponse(
+            Response.ok().entity(new Book("Book", 222L)).header("customresponse", "OK").build());
     }
     
     @POST

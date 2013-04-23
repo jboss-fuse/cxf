@@ -90,6 +90,16 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
     }
     
 
+
+    @Test
+    public void testGetCustomBookResponse() {
+        String address = "http://localhost:" + PORT + "/bookstore/customresponse";
+        WebClient wc = WebClient.create(address);
+        Response r = wc.accept("application/xml").get(Response.class);
+        Book book = r.readEntity(Book.class);
+        assertEquals(222L, book.getId());
+        assertEquals("OK", r.getHeaderString("customresponse"));
+    }
     
     @Test
     public void testGetCustomBookText() {
@@ -1300,6 +1310,15 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
     }
     
     @Test
+    public void testDropJSONRootDynamically() {
+        WebClient wc = WebClient.create("http://localhost:" + PORT + "/bookstore/dropjsonroot");
+        wc.accept("application/json");
+        String response = wc.get(String.class);
+        // with root: {"Book":{"id":123,"name":"CXF in Action"}}
+        assertEquals("{\"id\":123,\"name\":\"CXF in Action\"}", response);
+    }
+    
+    @Test
     public void testFormattedJSON() {
         WebClient wc = WebClient.create("http://localhost:" + PORT + "/bookstore/books/123");
         wc.accept("application/json");
@@ -1346,7 +1365,7 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
         
         getAndCompareAsStrings("http://localhost:" + PORT + "/bookstore/books/123",
                                "resources/expected_get_book123json.txt",
-                               "application/json, application/xml", 
+                               "application/json, application/xml;q=0.9", 
                                "application/json", 200);
         
         getAndCompareAsStrings("http://localhost:" + PORT + "/bookstore/books/123",
@@ -1420,6 +1439,50 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
         getAndCompareAsStrings("http://localhost:" + PORT + "/bookstore2/bookheaders",
                                "resources/expected_get_book123.txt",
                                "application/xml;q=0.5,text/xml", "text/xml", 200);
+    }
+    
+    @Test
+    public void testGetBookByHeaderPerRequestInjected() throws Exception {
+        String address = "http://localhost:" + PORT + "/bookstore2/bookheaders/injected";
+        WebClient wc = WebClient.create(address);
+        wc.accept("application/xml");
+        wc.header("BOOK", "1", "2", "3");
+        Book b = wc.get(Book.class);
+        assertEquals(123L, b.getId());
+    }
+    
+    @Test
+    public void testGetBookByHeaderPerRequestInjectedFault() throws Exception {
+        String address = "http://localhost:" + PORT + "/bookstore2/bookheaders/injected";
+        WebClient wc = WebClient.create(address);
+        wc.accept("application/xml");
+        wc.header("BOOK", "2", "3");
+        Response r = wc.get();
+        assertEquals(400, r.getStatus());
+        assertEquals("Param setter: 3 header values are required", r.readEntity(String.class));
+    }
+    
+    @Test
+    public void testGetBookByHeaderPerRequestConstructorFault() throws Exception {
+        String address = "http://localhost:" + PORT + "/bookstore2/bookheaders";
+        WebClient wc = WebClient.create(address);
+        wc.accept("application/xml");
+        wc.header("BOOK", "1", "2", "4");
+        Response r = wc.get();
+        assertEquals(400, r.getStatus());
+        assertEquals("Constructor: Header value 3 is required", r.readEntity(String.class));
+    }
+    
+    @Test
+    public void testGetBookByHeaderPerRequestContextFault() throws Exception {
+        String address = "http://localhost:" + PORT + "/bookstore2/bookheaders";
+        WebClient wc = WebClient.create(address);
+        WebClient.getConfig(wc).getHttpConduit().getClient().setReceiveTimeout(1000000);
+        wc.accept("application/xml");
+        wc.header("BOOK", "1", "3", "4");
+        Response r = wc.get();
+        assertEquals(400, r.getStatus());
+        assertEquals("Context setter: unexpected header value", r.readEntity(String.class));
     }
     
     @Test

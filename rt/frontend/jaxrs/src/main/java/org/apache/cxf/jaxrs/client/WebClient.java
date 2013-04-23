@@ -236,13 +236,13 @@ public class WebClient extends AbstractClient {
     }
     
     /**
-     * Converts proxy to Client
-     * @param proxy the proxy
-     * @return proxy as a Client 
+     * Converts object to Client
+     * @param object the object
+     * @return Client object converted to Client 
      */
-    public static Client client(Object proxy) {
-        if (proxy instanceof Client) {
-            return (Client)proxy;
+    public static Client client(Object object) {
+        if (object instanceof Client) {
+            return (Client)object;
         }
         return null;
     }
@@ -930,7 +930,7 @@ public class WebClient extends AbstractClient {
         
         if (responseClass != null && responseClass != Response.class 
             && headers.getFirst(HttpHeaders.ACCEPT) == null) {
-            headers.putSingle(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML_TYPE.toString());
+            headers.putSingle(HttpHeaders.ACCEPT, JAXRSUtils.mediaTypeToString(MediaType.APPLICATION_XML_TYPE));
         }
         return headers;
     }
@@ -1071,7 +1071,7 @@ public class WebClient extends AbstractClient {
                     entity = currentResponse.getEntity();
                 }
             }
-            rb = Response.fromResponse(currentResponse);
+            rb = JAXRSUtils.fromResponse(currentResponse);
             
             rb.entity(entity instanceof Response 
                       ? ((Response)entity).getEntity() : entity);

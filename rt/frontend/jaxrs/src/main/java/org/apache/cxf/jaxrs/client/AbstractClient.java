@@ -18,6 +18,8 @@
  */
 package org.apache.cxf.jaxrs.client;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
@@ -57,6 +59,7 @@ import javax.xml.stream.XMLStreamWriter;
 import org.apache.cxf.Bus;
 import org.apache.cxf.common.i18n.BundleUtils;
 import org.apache.cxf.common.logging.LogUtils;
+import org.apache.cxf.endpoint.ClientLifeCycleManager;
 import org.apache.cxf.endpoint.ConduitSelector;
 import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.endpoint.Retryable;
@@ -142,7 +145,7 @@ public abstract class AbstractClient implements Client, Retryable {
      */
     public Client accept(MediaType... types) {
         for (MediaType mt : types) {
-            possiblyAddHeader(HttpHeaders.ACCEPT, mt.toString());
+            possiblyAddHeader(HttpHeaders.ACCEPT, JAXRSUtils.mediaTypeToString(mt));
         }
         return this;
     }
@@ -151,7 +154,7 @@ public abstract class AbstractClient implements Client, Retryable {
      * {@inheritDoc}
      */
     public Client type(MediaType ct) {
-        return type(ct.toString());
+        return type(JAXRSUtils.mediaTypeToString(ct));
     }
     
     /**
@@ -273,6 +276,29 @@ public abstract class AbstractClient implements Client, Retryable {
         return this;
     }
 
+    public void close() {
+        if (cfg.getBus() == null) {
+            return;
+        }
+        ClientLifeCycleManager mgr = cfg.getBus().getExtension(ClientLifeCycleManager.class);
+        if (null != mgr) {
+            mgr.clientDestroyed(new FrontendClientAdapter(getConfiguration()));
+        }
+
+        if (cfg.getConduitSelector() instanceof Closeable) {
+            try {
+                ((Closeable)cfg.getConduitSelector()).close();
+            } catch (IOException e) {
+                //ignore, we're destroying anyway
+            }
+        } else {
+            cfg.getConduit().close();
+        }
+        state.reset();
+        state = null;
+        cfg = null;
+    }
+
     private void possiblyAddHeader(String name, String value) {
         if (!isDuplicate(name, value)) {
             state.getRequestHeaders().add(name, value);
@@ -323,11 +349,11 @@ public abstract class AbstractClient implements Client, Retryable {
     protected ResponseBuilder setResponseBuilder(Message outMessage, Exchange exchange) throws Exception {
         Response response = exchange.get(Response.class);
         if (response != null) {
-            return Response.fromResponse(response);
+            return JAXRSUtils.fromResponse(JAXRSUtils.copyResponseIfNeeded(response));
         }
         
         Integer status = getResponseCode(exchange);
-        ResponseBuilder currentResponseBuilder = Response.status(status);
+        ResponseBuilder currentResponseBuilder = JAXRSUtils.toResponseBuilder(status);
         
         Message responseMessage = exchange.getInMessage() != null 
             ? exchange.getInMessage() : exchange.getInFaultMessage();
@@ -390,7 +416,7 @@ public abstract class AbstractClient implements Client, Retryable {
         @SuppressWarnings("unchecked")
         Class<T> theClass = (Class<T>)cls;
         
-        MediaType contentType = MediaType.valueOf(headers.getFirst("Content-Type").toString()); 
+        MediaType contentType = JAXRSUtils.toMediaType(headers.getFirst("Content-Type").toString()); 
         
         List<WriterInterceptor> writers = ProviderFactory.getInstance(outMessage)
             .createMessageBodyWriterInterceptor(theClass, type, anns, contentType, outMessage);
@@ -704,7 +730,7 @@ public abstract class AbstractClient implements Client, Retryable {
             new org.apache.cxf.common.i18n.Message(name, 
                                                    BUNDLE,
                                                    cls,
-                                                   ct.toString());
+                                                   JAXRSUtils.mediaTypeToString(ct));
         LOG.severe(errorMsg.toString());
         throw new ClientException(errorMsg.toString(), cause);
     }
@@ -712,7 +738,7 @@ public abstract class AbstractClient implements Client, Retryable {
     private static MediaType getResponseContentType(Response r) {
         MultivaluedMap<String, Object> map = r.getMetadata();
         if (map.containsKey(HttpHeaders.CONTENT_TYPE)) {
-            return MediaType.valueOf(map.getFirst(HttpHeaders.CONTENT_TYPE).toString());
+            return JAXRSUtils.toMediaType(map.getFirst(HttpHeaders.CONTENT_TYPE).toString());
         }
         return MediaType.WILDCARD_TYPE;
     }
