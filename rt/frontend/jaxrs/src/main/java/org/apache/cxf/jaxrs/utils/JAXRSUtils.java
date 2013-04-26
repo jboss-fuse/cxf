@@ -161,7 +161,6 @@ public final class JAXRSUtils {
     public static final String PARTIAL_HIERARCHICAL_MEDIA_SUBTYPE_CHECK = 
         "media.subtype.partial.check"; 
     public static final String DOC_LOCATION = "wadl.location";
-    public static final String DEFAULT_PROVIDERS_FOR_SIMPLE_TYPES = "defaultProviders.for.simpleTypes";
     public static final String MEDIA_TYPE_Q_PARAM = "q";
     public static final String MEDIA_TYPE_QS_PARAM = "qs";
     private static final String MEDIA_TYPE_DISTANCE_PARAM = "d";
@@ -401,7 +400,7 @@ public final class JAXRSUtils {
         
         MediaType requestType;
         try {
-            requestType = getMethod ? MediaType.WILDCARD_TYPE : toMediaType(requestContentType);
+            requestType = toMediaType(requestContentType);
         } catch (IllegalArgumentException ex) {
             throw new NotSupportedException(ex);
         }
@@ -823,11 +822,7 @@ public final class JAXRSUtils {
             String contentType = (String)message.get(Message.CONTENT_TYPE);
 
             if (contentType == null) {
-                org.apache.cxf.common.i18n.Message errorMsg = 
-                    new org.apache.cxf.common.i18n.Message("NO_CONTENT_TYPE_SPECIFIED", 
-                                                           BUNDLE, 
-                                                           ori.getHttpMethod());
-                LOG.fine(errorMsg.toString());
+                // for tests only
                 contentType = MediaType.WILDCARD;
             }
 
