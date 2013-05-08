@@ -16,25 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.systest.ws.common;
+package org.apache.cxf.systest.handlers;
 
-import javax.jws.WebService;
+import javax.xml.namespace.QName;
 
-import org.apache.cxf.feature.Features;
-import org.example.contract.doubleit.DoubleItFault;
-import org.example.contract.doubleit.DoubleItPortType;
+import org.apache.cxf.binding.soap.SoapFault;
 
-@WebService(targetNamespace = "http://www.example.org/contract/DoubleIt", 
-            serviceName = "DoubleItService", 
-            endpointInterface = "org.example.contract.doubleit.DoubleItPortType")
-@Features(features = "org.apache.cxf.feature.LoggingFeature")              
-public class DoubleItImpl implements DoubleItPortType {
-    
-    public int doubleIt(int numberToDouble) throws DoubleItFault {
-        if (numberToDouble == 0) {
-            throw new DoubleItFault("0 can't be doubled!");
-        }
-        return numberToDouble * 2;
+public class CustomSoapFault extends SoapFault {
+    private static final long serialVersionUID = 1L;
+
+    public CustomSoapFault() {
+        super("faultstring", new QName("http://cxf.apache.org/handler_test/types", "Provider", "cxf"));
     }
-    
 }

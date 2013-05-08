@@ -430,4 +430,69 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
         bus.shutdown(true);
     }
     
+    // Here the service is sending an secured message back to the client. For a server Fault 
+    // message it returns the original fault, as the CryptoCoverageChecker is configured not 
+    // to check a fault (see CXF-4954)
+    @org.junit.Test
+    public void testClientChecker() throws Exception {
+        SpringBusFactory bf = new SpringBusFactory();
+        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client/client.xml");
+
+        Bus bus = bf.createBus(busFile.toString());
+        SpringBusFactory.setDefaultBus(bus);
+        SpringBusFactory.setThreadDefaultBus(bus);
+        
+        URL wsdl = DefaultCryptoCoverageCheckerTest.class.getResource("DoubleItCoverageChecker.wsdl");
+        Service service = Service.create(wsdl, SERVICE_QNAME);
+        QName portQName = new QName(NAMESPACE, "DoubleItClientCheckerPort");
+        DoubleItPortType port = 
+                service.getPort(portQName, DoubleItPortType.class);
+        updateAddressPort(port, PORT);
+        
+        port.doubleIt(25);
+        
+        // Now try with a message that will create a Fault in the SEI
+        try {
+            port.doubleIt(0);
+            fail("Failure expected on trying to double 0");
+        } catch (Exception ex) {
+            assertTrue(ex.getMessage().contains("0 can't be doubled"));
+        }
+        
+        ((java.io.Closeable)port).close();
+        bus.shutdown(true);
+    }
+    
+    // Here the service is sending an secured message back to the client. For a server Fault 
+    // message it should return a secured Fault message as well
+    @org.junit.Test
+    public void testClientChecker2() throws Exception {
+        SpringBusFactory bf = new SpringBusFactory();
+        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client/client.xml");
+
+        Bus bus = bf.createBus(busFile.toString());
+        SpringBusFactory.setDefaultBus(bus);
+        SpringBusFactory.setThreadDefaultBus(bus);
+        
+        URL wsdl = DefaultCryptoCoverageCheckerTest.class.getResource("DoubleItCoverageChecker.wsdl");
+        Service service = Service.create(wsdl, SERVICE_QNAME);
+        QName portQName = new QName(NAMESPACE, "DoubleItClientCheckerPort2");
+        DoubleItPortType port = 
+                service.getPort(portQName, DoubleItPortType.class);
+        updateAddressPort(port, PORT);
+        
+        port.doubleIt(25);
+        
+        // Now try with a message that will create a Fault in the SEI
+        try {
+            port.doubleIt(0);
+            fail("Failure expected on trying to double 0");
+        } catch (Exception ex) {
+            assertTrue(ex.getMessage().contains("0 can't be doubled"));
+        }
+        
+        ((java.io.Closeable)port).close();
+        bus.shutdown(true);
+    }
+    
 }
