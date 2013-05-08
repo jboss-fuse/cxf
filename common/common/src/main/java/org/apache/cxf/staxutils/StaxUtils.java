@@ -77,8 +77,6 @@ import org.w3c.dom.UserDataHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
-import com.ctc.wstx.stax.WstxInputFactory;
-
 import org.apache.cxf.common.classloader.ClassLoaderUtils;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.StringUtils;
@@ -86,7 +84,6 @@ import org.apache.cxf.common.util.SystemPropertyAction;
 import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.helpers.XMLUtils;
-import org.codehaus.stax2.XMLStreamReader2;
 
 public final class StaxUtils {
     // System properies for defaults, but also contextual properties usable
@@ -136,8 +133,7 @@ public final class StaxUtils {
     private static long maxElementCount = Long.MAX_VALUE;
     private static long maxXMLCharacters = Long.MAX_VALUE;
     
-    //will change to false in the near future
-    private static boolean allowInsecureParser = true;
+    private static boolean allowInsecureParser;
     
     static {
         int i = getInteger("org.apache.cxf.staxutils.pool-size", 20);
@@ -146,8 +142,8 @@ public final class StaxUtils {
         OUTPUT_FACTORY_POOL = new ArrayBlockingQueue<XMLOutputFactory>(i);
         
         //old names
-        innerElementCountThreshold = getInteger(INNER_ELEMENT_LEVEL_SYSTEM_PROP, innerElementCountThreshold);
-        innerElementLevelThreshold = getInteger(INNER_ELEMENT_COUNT_SYSTEM_PROP, innerElementLevelThreshold);
+        innerElementCountThreshold = getInteger(INNER_ELEMENT_COUNT_SYSTEM_PROP, innerElementCountThreshold);
+        innerElementLevelThreshold = getInteger(INNER_ELEMENT_LEVEL_SYSTEM_PROP, innerElementLevelThreshold);
         //new names
         innerElementCountThreshold = getInteger(MAX_CHILD_ELEMENTS, innerElementCountThreshold);
         innerElementLevelThreshold = getInteger(MAX_ELEMENT_DEPTH, innerElementLevelThreshold);
@@ -320,7 +316,7 @@ public final class StaxUtils {
     }
     
     private static XMLInputFactory createWoodstoxFactory() {
-        return new WstxInputFactory();
+        return WoodstoxHelper.createInputFactory();
     }
     private static boolean setRestrictionProperties(XMLInputFactory factory) {
         //For now, we can only support Woodstox 4.2.x and newer as none of the other
@@ -743,6 +739,9 @@ public final class StaxUtils {
             String nsPrefix = reader.getNamespacePrefix(i);
             if (nsPrefix == null) {
                 nsPrefix = "";
+            }
+            if (nsURI == null) {
+                nsURI = "";
             }
             if (nsPrefix.length() == 0) {
                 writer.writeDefaultNamespace(nsURI);
@@ -1789,7 +1788,7 @@ public final class StaxUtils {
         return reader;
     }
     private static void setProperty(XMLStreamReader reader, String p, Object v) {
-        ((XMLStreamReader2)reader).setProperty(p, v);
+        WoodstoxHelper.setProperty(reader, p, v);
     }
 
 }

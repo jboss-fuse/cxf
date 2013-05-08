@@ -16,13 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.tools.fortest.inherit;
 
-import javax.jws.WebMethod;
+package org.apache.cxf.staxutils;
 
-public interface C {
-    String hello(String hello);
-    String bye(String bye);
-    @WebMethod(operationName = "anotherHello")
-    String hello();
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamReader;
+
+import org.codehaus.stax2.XMLStreamReader2;
+
+/**
+ * 
+ */
+final class WoodstoxHelper {
+
+    private WoodstoxHelper() {
+    }
+    
+    public static XMLInputFactory createInputFactory() {
+        return new com.ctc.wstx.stax.WstxInputFactory();
+    }
+
+    public static void setProperty(XMLStreamReader reader, String p, Object v) {
+        ((XMLStreamReader2)reader).setProperty(p, v);
+    }
+
 }

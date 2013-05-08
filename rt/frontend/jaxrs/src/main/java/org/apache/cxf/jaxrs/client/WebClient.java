@@ -193,6 +193,25 @@ public class WebClient extends AbstractClient {
     }
     
     /**
+     * Creates WebClient which will do basic authentication
+     * @param baseAddress baseAddress
+     * @param providers list of providers
+     * @param username username
+     * @param password password
+     * @param configLocation classpath location of the configuration resource, can be null  
+     * @return WebClient instance
+     */
+    public static WebClient create(String baseAddress, List<?> providers, 
+                                   String username, String password, String configLocation) {
+        JAXRSClientFactoryBean bean = getBean(baseAddress, configLocation);
+        
+        bean.setUsername(username);
+        bean.setPassword(password);
+        bean.setProviders(providers);
+        return bean.createWebClient();
+    }
+
+    /**
      * Creates WebClient, baseURI will be set to Client currentURI
      * @param client existing client
      */
@@ -751,7 +770,7 @@ public class WebClient extends AbstractClient {
         }
         if (responseClass != null && responseClass != Response.class 
             && headers.getFirst(HttpHeaders.ACCEPT) == null) {
-            headers.putSingle(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML_TYPE.toString());
+            headers.putSingle(HttpHeaders.ACCEPT, JAXRSUtils.mediaTypeToString(MediaType.APPLICATION_XML_TYPE));
         }
         resetResponse();
         Response r = doChainedInvocation(httpMethod, headers, body, requestClass, inGenericType, 
@@ -845,6 +864,7 @@ public class WebClient extends AbstractClient {
             
             Object entity = readBody(currentResponse, outMessage, responseClass, genericType,
                                      new Annotation[]{});
+            rb = JAXRSUtils.fromResponse(currentResponse);
             rb.entity(entity instanceof Response 
                       ? ((Response)entity).getEntity() : entity);
             
