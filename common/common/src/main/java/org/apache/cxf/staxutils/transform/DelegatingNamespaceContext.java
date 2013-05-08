@@ -80,7 +80,9 @@ class DelegatingNamespaceContext implements NamespaceContext {
             for (Map<String, String> nss : namespaces) {
                 String ns = nss.get(prefix);
                 if (ns != null) {
-                    cache.put(prefix, ns);
+                    if (cache != nss) {
+                        cache.put(prefix, ns);
+                    }
                     return ns;
                 }
             }
@@ -114,7 +116,9 @@ class DelegatingNamespaceContext implements NamespaceContext {
             for (Map<String, String> pfs : prefixes) {
                 String prefix = pfs.get(ns);
                 if (prefix != null && ns.equals(getNamespaceURI(prefix))) {
-                    cache.put(ns, prefix);
+                    if (pfs != cache) {
+                        cache.put(ns, prefix);
+                    }
                     return prefix;
                 }
             }
@@ -134,10 +138,11 @@ class DelegatingNamespaceContext implements NamespaceContext {
 
     public Iterator<String> getPrefixes(String ns) {
         List<String> pl = new LinkedList<String>();
-        for (Map<String, String> pfs : prefixes) {
-            String pf = pfs.get(ns);
-            if (pf != null && ns.equals(getNamespaceURI(pf))) {
-                pl.add(pf);
+        for (Map<String, String> nsp : namespaces) {
+            for (Map.Entry<String, String> nse : nsp.entrySet()) {
+                if (ns.equals(nse.getValue()) && ns.equals(getNamespaceURI(nse.getKey()))) {
+                    pl.add(nse.getKey());
+                }
             }
         }
         return pl.iterator();
