@@ -16,24 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.systest.jaxrs;
+package org.apache.cxf.systest.handlers;
 
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.ext.ExceptionMapper;
+import javax.xml.namespace.QName;
 
-public class RuntimeExceptionMapper implements ExceptionMapper<RuntimeException> {
+import org.apache.cxf.binding.soap.SoapFault;
 
-    @Context 
-    private UriInfo ui;
-    
-    public Response toResponse(RuntimeException exception) {
-        String path = ui.getPath();
-        if (path.endsWith("nonexistent")) {
-            return Response.status(405).type("text/plain").entity("Nonexistent method").build();
-        }
-        return null;
+public class CustomSoapFault extends SoapFault {
+    private static final long serialVersionUID = 1L;
+
+    public CustomSoapFault() {
+        super("faultstring", new QName("http://cxf.apache.org/handler_test/types", "Provider", "cxf"));
     }
-
 }

@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -100,8 +101,11 @@ public class JAXRSServerFactoryBean extends AbstractJAXRSFactoryBean {
      */
     public void setApplication(Application app) {
         appProvider = new ProviderInfo<Application>(app, getBus());
+        List<String> appNameBindings = AnnotationUtils.getNameBindings(app.getClass().getAnnotations());
         for (ClassResourceInfo cri : getServiceFactory().getClassResourceInfo()) {
-            cri.setNameBindings(AnnotationUtils.getNameBindings(app.getClass().getAnnotations()));
+            List<String> clsNameBindings = new LinkedList<String>(appNameBindings);
+            clsNameBindings.addAll(AnnotationUtils.getNameBindings(cri.getServiceClass().getAnnotations()));
+            cri.setNameBindings(clsNameBindings);
         }
     }
     
@@ -171,7 +175,6 @@ public class JAXRSServerFactoryBean extends AbstractJAXRSFactoryBean {
             
             ServerProviderFactory factory = setupFactory(ep);
             ep.put(Application.class.getName(), appProvider);
-            factory.setApplicationProvider(appProvider);
             factory.setRequestPreprocessor(
                 new RequestPreprocessor(languageMappings, extensionMappings));
             ep.put(Bus.class.getName(), getBus());
@@ -216,6 +219,7 @@ public class JAXRSServerFactoryBean extends AbstractJAXRSFactoryBean {
     protected ServerProviderFactory setupFactory(Endpoint ep) { 
         ServerProviderFactory factory = ServerProviderFactory.createInstance(getBus()); 
         setBeanInfo(factory);
+        factory.setApplicationProvider(appProvider);
         super.setupFactory(factory, ep);
         return factory;
     }

@@ -240,7 +240,7 @@ public class JAXRSUtilsTest extends Assert {
         ClassResourceInfo cri = sf.getServiceFactory().getClassResourceInfo().get(0);
         
         Customer customer = (Customer)cri.getResourceProvider().getInstance(
-             new MessageImpl());
+             createMessage());
         
         assertNull(customer.getApplication1());
         assertNull(customer.getApplication2());
@@ -1488,7 +1488,8 @@ public class JAXRSUtilsTest extends Assert {
                 }
             });
         
-        List<Object> params = JAXRSUtils.processParameters(new OperationResourceInfo(m, null), 
+        List<Object> params = JAXRSUtils.processParameters(new OperationResourceInfo(m, 
+                                                               new ClassResourceInfo(Customer.class)), 
                                                            new MetadataMap<String, String>(), messageImpl);
         assertEquals("3 params should've been identified", 3, params.size());
         

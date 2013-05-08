@@ -20,7 +20,6 @@
 package org.apache.cxf.jaxrs.interceptor;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -38,7 +37,7 @@ import javax.ws.rs.core.Response;
 
 import org.apache.cxf.common.i18n.BundleUtils;
 import org.apache.cxf.common.logging.LogUtils;
-import org.apache.cxf.helpers.CastUtils;
+import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.jaxrs.impl.MetadataMap;
 import org.apache.cxf.jaxrs.impl.RequestPreprocessor;
 import org.apache.cxf.jaxrs.impl.UriInfoImpl;
@@ -96,15 +95,10 @@ public class JAXRSInInterceptor extends AbstractPhaseInterceptor<Message> {
         
         try {
             processRequest(message);
+        } catch (Fault ex) {
+            convertExceptionToResponseIfPossible(ex.getCause(), message);
         } catch (RuntimeException ex) {
-            Response excResponse = JAXRSUtils.convertFaultToResponse(ex, message);
-            if (excResponse == null) {
-                ServerProviderFactory.getInstance(message).clearThreadLocalProxies();
-                message.getExchange().put(Message.PROPOGATE_EXCEPTION, 
-                                          JAXRSUtils.propogateException(message));
-                throw ex;
-            }
-            message.getExchange().put(Response.class, excResponse);
+            convertExceptionToResponseIfPossible(ex, message);
         }
         
         
@@ -123,19 +117,12 @@ public class JAXRSInInterceptor extends AbstractPhaseInterceptor<Message> {
         if (JAXRSUtils.runContainerRequestFilters(providerFactory, message, true, null, false)) {
             return;
         }
-        String httpMethod = HttpUtils.getProtocolHeader(message, Message.HTTP_REQUEST_METHOD, "POST");
+        String httpMethod = HttpUtils.getProtocolHeader(message, Message.HTTP_REQUEST_METHOD, 
+                                                        HttpMethod.POST, true);
         
         String requestContentType = (String)message.get(Message.CONTENT_TYPE);
         if (requestContentType == null) {
-            boolean getMethod = HttpMethod.GET.equals(httpMethod);
-            requestContentType = getMethod ? MediaType.WILDCARD : MediaType.APPLICATION_OCTET_STREAM;
-            message.put(Message.CONTENT_TYPE, requestContentType);
-            if (!getMethod) {
-                Map<String, List<String>> headers = CastUtils.cast((Map<?, ?>)message.get(Message.PROTOCOL_HEADERS));
-                if (headers != null) {
-                    headers.put(Message.CONTENT_TYPE, Collections.singletonList(requestContentType));    
-                }
-            }
+            requestContentType = MediaType.WILDCARD;
         }
         
         String rawPath = HttpUtils.getPathToMatch(message, true);
@@ -216,14 +203,20 @@ public class JAXRSInInterceptor extends AbstractPhaseInterceptor<Message> {
             List<Object> params = JAXRSUtils.processParameters(ori, matchedValues, message);
             message.setContent(List.class, params);
         } catch (IOException ex) {
-            Response excResponse = JAXRSUtils.convertFaultToResponse(ex, message);
-            if (excResponse == null) {
-                throw new InternalServerErrorException(ex);
-            } else {
-                message.getExchange().put(Response.class, excResponse);
-            }
+            convertExceptionToResponseIfPossible(ex, message);
         }
         
+    }
+    
+    private void convertExceptionToResponseIfPossible(Throwable ex, Message message) {
+        Response excResponse = JAXRSUtils.convertFaultToResponse(ex, message);
+        if (excResponse == null) {
+            ServerProviderFactory.getInstance(message).clearThreadLocalProxies();
+            message.getExchange().put(Message.PROPOGATE_EXCEPTION, 
+                                      JAXRSUtils.propogateException(message));
+            throw ex instanceof RuntimeException ? (RuntimeException)ex : new InternalServerErrorException(ex);
+        }
+        message.getExchange().put(Response.class, excResponse);
     }
     
     private void setExchangeProperties(Message message, OperationResourceInfo ori, 

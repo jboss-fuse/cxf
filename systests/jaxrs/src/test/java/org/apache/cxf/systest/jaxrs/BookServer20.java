@@ -46,6 +46,7 @@ import javax.ws.rs.container.PreMatching;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.FeatureContext;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.ReaderInterceptor;
@@ -79,6 +80,7 @@ public class BookServer20 extends AbstractBusTestServerBase {
         providers.add(new PostMatchContainerResponseFilter());
         providers.add(new PostMatchContainerResponseFilter3());
         providers.add(new PostMatchContainerResponseFilter2());
+        providers.add(new CustomReaderBoundInterceptor());
         providers.add(new CustomReaderInterceptor());
         providers.add(new CustomWriterInterceptor());
         providers.add(new CustomDynamicFeature());
@@ -325,6 +327,13 @@ public class BookServer20 extends AbstractBusTestServerBase {
     @Target({ ElementType.TYPE, ElementType.METHOD })
     @Retention(value = RetentionPolicy.RUNTIME)
     @NameBinding
+    public @interface CustomHeaderAddedAsync { 
+        
+    }
+    
+    @Target({ ElementType.TYPE, ElementType.METHOD })
+    @Retention(value = RetentionPolicy.RUNTIME)
+    @NameBinding
     public @interface PostMatchMode { 
         
     }
@@ -336,6 +345,7 @@ public class BookServer20 extends AbstractBusTestServerBase {
         
     }
     
+    @Priority(1)
     public static class CustomReaderInterceptor implements ReaderInterceptor {
         @Context
         private ResourceInfo ri;
@@ -344,6 +354,31 @@ public class BookServer20 extends AbstractBusTestServerBase {
             WebApplicationException {
             if (ri.getResourceClass() == BookStore.class) {
                 context.getHeaders().add("ServerReaderInterceptor", "serverRead");
+            }
+            return context.proceed();
+            
+        }
+        
+    }
+    
+    @Priority(2)
+    @CustomHeaderAddedAsync
+    public static class CustomReaderBoundInterceptor implements ReaderInterceptor {
+        @Context
+        private ResourceInfo ri;
+        @Context
+        private UriInfo ui;
+        @Override
+        public Object aroundReadFrom(ReaderInterceptorContext context) throws IOException,
+            WebApplicationException {
+            if (ri.getResourceClass() == BookStore.class) {
+                String serverRead = context.getHeaders().getFirst("ServerReaderInterceptor");
+                if (serverRead == null || !serverRead.equals("serverRead")) {
+                    throw new RuntimeException();
+                }
+                if (ui.getPath().endsWith("/async")) {
+                    context.getHeaders().putSingle("ServerReaderInterceptor", "serverReadAsync");
+                }
             }
             return context.proceed();
             
@@ -360,7 +395,7 @@ public class BookServer20 extends AbstractBusTestServerBase {
             if (!ct.endsWith("ISO-8859-1")) {
                 ct += "us-ascii";
             }
-            context.getHeaders().putSingle("Content-Type", ct);
+            context.setMediaType(MediaType.valueOf(ct));
             context.proceed();
         }
         

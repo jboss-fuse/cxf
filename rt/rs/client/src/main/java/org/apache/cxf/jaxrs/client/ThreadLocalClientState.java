@@ -34,7 +34,6 @@ import javax.ws.rs.core.UriBuilder;
  *
  */
 public class ThreadLocalClientState implements ClientState {
-    
     private Map<Thread, LocalClientState> state = 
         Collections.synchronizedMap(new WeakHashMap<Thread, LocalClientState>());
     
@@ -101,12 +100,10 @@ public class ThreadLocalClientState implements ClientState {
         removeThreadLocalState(Thread.currentThread());
     }
     
-    public ClientState newState(URI baseURI, 
+    public ClientState newState(URI currentURI, 
                                 MultivaluedMap<String, String> headers,
                                 MultivaluedMap<String, String> templates) {
-        LocalClientState ls = new LocalClientState(baseURI);
-        ls.setRequestHeaders(headers);
-        ls.setTemplates(templates);
+        LocalClientState ls = (LocalClientState)getState().newState(currentURI, headers, templates);
         return new ThreadLocalClientState(ls, timeToKeepState);
     }
     

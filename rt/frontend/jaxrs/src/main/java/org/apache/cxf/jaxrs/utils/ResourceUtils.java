@@ -97,6 +97,22 @@ public final class ResourceUtils {
     private static final Logger LOG = LogUtils.getL7dLogger(ResourceUtils.class);
     private static final ResourceBundle BUNDLE = BundleUtils.getBundle(ResourceUtils.class);
     private static final String CLASSPATH_PREFIX = "classpath:";
+    private static final Set<String> SERVER_PROVIDER_CLASS_NAMES;
+    static {
+        SERVER_PROVIDER_CLASS_NAMES = new HashSet<String>();
+        SERVER_PROVIDER_CLASS_NAMES.add("javax.ws.rs.ext.MessageBodyWriter");
+        SERVER_PROVIDER_CLASS_NAMES.add("javax.ws.rs.ext.MessageBodyReader");
+        SERVER_PROVIDER_CLASS_NAMES.add("javax.ws.rs.ext.ExceptionMapper");
+        SERVER_PROVIDER_CLASS_NAMES.add("javax.ws.rs.ext.ContextResolver");
+        SERVER_PROVIDER_CLASS_NAMES.add("javax.ws.rs.ext.ReaderInterceptor");
+        SERVER_PROVIDER_CLASS_NAMES.add("javax.ws.rs.ext.WriterInterceptor");
+        SERVER_PROVIDER_CLASS_NAMES.add("javax.ws.rs.ext.ParamConverterProvider");
+        SERVER_PROVIDER_CLASS_NAMES.add("javax.ws.rs.container.ContainerRequestFilter");
+        SERVER_PROVIDER_CLASS_NAMES.add("javax.ws.rs.container.ContainerResponseFilter");
+        SERVER_PROVIDER_CLASS_NAMES.add("javax.ws.rs.container.DynamicFeature");
+        SERVER_PROVIDER_CLASS_NAMES.add("org.apache.cxf.jaxrs.ext.ContextResolver");
+        
+    }
     
     private ResourceUtils() {
         
@@ -598,7 +614,16 @@ public final class ResourceUtils {
         return op;
     }
     
-    public static Object[] createConstructorArguments(Constructor<?> c, Message m) {
+    public static Object[] createConstructorArguments(Constructor<?> c, 
+                                                      Message m, 
+                                                      boolean perRequest) {
+        return createConstructorArguments(c, m, perRequest, null);
+    }
+    
+    public static Object[] createConstructorArguments(Constructor<?> c, 
+                                                      Message m, 
+                                                      boolean perRequest,
+                                                      Map<Class<?>, Object> contextValues) {
         Class<?>[] params = c.getParameterTypes();
         Annotation[][] anns = c.getParameterAnnotations();
         Type[] genericTypes = c.getGenericParameterTypes();
@@ -608,8 +633,19 @@ public final class ResourceUtils {
         Object[] values = new Object[params.length];
         for (int i = 0; i < params.length; i++) {
             if (AnnotationUtils.getAnnotation(anns[i], Context.class) != null) {
-                values[i] = JAXRSUtils.createContextValue(m, genericTypes[i], params[i]);
+                Object contextValue = contextValues != null ? contextValues.get(params[i]) : null;
+                if (contextValue == null) {
+                    if (perRequest) {
+                        values[i] = JAXRSUtils.createContextValue(m, genericTypes[i], params[i]);
+                    } else {
+                        values[i] = InjectionUtils.createThreadLocalProxy(params[i]);
+                    }
+                } else {
+                    values[i] = contextValue;
+                }
             } else {
+                // this branch won't execute for singletons given that the found constructor
+                // is guaranteed to have only Context parameters, if any, for singletons
                 Parameter p = ResourceUtils.getParameter(i, anns[i], params[i]);
                 values[i] = JAXRSUtils.createHttpParameterValue(
                                 p, params[i], genericTypes[i], anns[i], m, templateValues, null);
@@ -630,27 +666,31 @@ public final class ResourceUtils {
         List<Object> providers = new ArrayList<Object>();
         Map<Class<?>, ResourceProvider> map = new HashMap<Class<?>, ResourceProvider>();
         
-        // Note, app.getClasse() returns a list of per-resource classes
+        // Note, app.getClasses() returns a list of per-request classes
         // or singleton provider classes
-        for (Class<?> c : app.getClasses()) {
-            if (isValidApplicationClass(c, singletons)) {
-                if (c.getAnnotation(Provider.class) != null) {
+        for (Class<?> cls : app.getClasses()) {
+            if (isValidApplicationClass(cls, singletons)) {
+                if (isValidProvider(cls)) {
                     try {
-                        providers.add(c.newInstance());
+                        Constructor<?> c = ResourceUtils.findResourceConstructor(cls, false);
+                        if (c.getParameterTypes().length == 0) {
+                            providers.add(c.newInstance());
+                        } else {
+                            providers.add(c);
+                        }
                     } catch (Throwable ex) {
-                        throw new RuntimeException("Provider " + c.getName() + " can not be created", ex); 
+                        throw new RuntimeException("Provider " + cls.getName() + " can not be created", ex); 
                     }
                 } else {
-                    resourceClasses.add(c);
-                    map.put(c, new PerRequestResourceProvider(c));
+                    resourceClasses.add(cls);
+                    map.put(cls, new PerRequestResourceProvider(cls));
                 }
             }
         }
         
         // we can get either a provider or resource class here        
         for (Object o : singletons) {
-            boolean isProvider = o.getClass().getAnnotation(Provider.class) != null;
-            if (isProvider) {
+            if (isValidProvider(o.getClass())) {
                 providers.add(o);
             } else {
                 resourceClasses.add(o.getClass());
@@ -683,6 +723,21 @@ public final class ResourceUtils {
         bean.setApplication(app);
         
         return bean;
+    }
+    
+    private static boolean isValidProvider(Class<?> c) {
+        if (c == null || c == Object.class) {
+            return false;
+        }
+        if (c.getAnnotation(Provider.class) != null) {
+            return true;
+        }
+        for (Class<?> itf : c.getInterfaces()) {    
+            if (SERVER_PROVIDER_CLASS_NAMES.contains(itf.getName())) {
+                return true;
+            }
+        }
+        return isValidProvider(c.getSuperclass());
     }
     
     private static void verifySingletons(Set<Object> singletons) {

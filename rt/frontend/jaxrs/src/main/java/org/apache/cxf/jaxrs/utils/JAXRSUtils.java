@@ -103,6 +103,7 @@ import org.apache.cxf.common.util.PackageUtils;
 import org.apache.cxf.common.util.ReflectionUtil;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.helpers.XMLUtils;
+import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.jaxrs.JAXRSServiceImpl;
 import org.apache.cxf.jaxrs.ext.ContextProvider;
 import org.apache.cxf.jaxrs.ext.MessageContext;
@@ -158,6 +159,7 @@ public final class JAXRSUtils {
     public static final String IGNORE_MESSAGE_WRITERS = "ignore.message.writers";
     public static final String ROOT_INSTANCE = "service.root.instance";
     public static final String ROOT_PROVIDER = "service.root.provider";
+    public static final String EXCEPTION_FROM_MAPPER = "exception.from.mapper";
     public static final String PARTIAL_HIERARCHICAL_MEDIA_SUBTYPE_CHECK = 
         "media.subtype.partial.check"; 
     public static final String DOC_LOCATION = "wadl.location";
@@ -822,8 +824,7 @@ public final class JAXRSUtils {
             String contentType = (String)message.get(Message.CONTENT_TYPE);
 
             if (contentType == null) {
-                // for tests only
-                contentType = MediaType.WILDCARD;
+                contentType = MediaType.APPLICATION_OCTET_STREAM;
             }
 
             return readFromMessageBody(parameterClass,
@@ -831,7 +832,7 @@ public final class JAXRSUtils {
                                        parameterAnns,
                                        is, 
                                        toMediaType(contentType),
-                                       ori.getConsumeTypes(),
+                                       ori,
                                        message);
         } else if (parameter.getType() == ParameterType.CONTEXT) {
             return createContextValue(message, parameterType, parameterClass);
@@ -1079,7 +1080,7 @@ public final class JAXRSUtils {
         } else if (ResourceInfo.class.isAssignableFrom(clazz)) {
             o = new ResourceInfoImpl(contextMessage);
         } else if (ResourceContext.class.isAssignableFrom(clazz)) {
-            o = new ResourceContextImpl(contextMessage.getExchange().get(OperationResourceInfo.class));
+            o = new ResourceContextImpl(contextMessage, contextMessage.getExchange().get(OperationResourceInfo.class));
         } else if (Request.class.isAssignableFrom(clazz)) {
             o = new RequestImpl(contextMessage);
         } else if (Providers.class.isAssignableFrom(clazz)) {
@@ -1260,10 +1261,10 @@ public final class JAXRSUtils {
                                                   Annotation[] parameterAnnotations,
                                                   InputStream is, 
                                                   MediaType contentType, 
-                                                  List<MediaType> consumeTypes,
+                                                  OperationResourceInfo ori,
                                                   Message m) throws IOException, WebApplicationException {
         
-        List<MediaType> types = JAXRSUtils.intersectMimeTypes(consumeTypes, contentType);
+        List<MediaType> types = JAXRSUtils.intersectMimeTypes(ori.getConsumeTypes(), contentType);
         
         final ProviderFactory pf = ServerProviderFactory.getInstance(m);
         for (MediaType type : types) { 
@@ -1272,7 +1273,8 @@ public final class JAXRSUtils {
                                          parameterType,
                                          parameterAnnotations,
                                          type,
-                                         m);
+                                         m,
+                                         ori.getNameBindings());
             if (readers != null) {
                 try {
                     return readFromMessageBodyReader(readers, 
@@ -1289,7 +1291,7 @@ public final class JAXRSUtils {
                 } catch (WebApplicationException ex) {
                     throw ex;
                 } catch (Exception ex) {
-                    throw new WebApplicationException(ex);
+                    throw new Fault(ex);
                 }
             } else {
                 String errorMessage = new org.apache.cxf.common.i18n.Message("NO_MSG_READER",
@@ -1319,7 +1321,6 @@ public final class JAXRSUtils {
             ReaderInterceptorContext context = new ReaderInterceptorContextImpl(targetTypeClass, 
                                                                             parameterType, 
                                                                             parameterAnnotations, 
-                                                                            mediaType,
                                                                             is,
                                                                             m,
                                                                             readers);
@@ -1352,8 +1353,7 @@ public final class JAXRSUtils {
             WriterInterceptorContext context = new WriterInterceptorContextImpl(entity,
                                                                                 type, 
                                                                             genericType, 
-                                                                            annotations, 
-                                                                            mediaType,
+                                                                            annotations,
                                                                             entityStream,
                                                                             message,
                                                                             writers);
@@ -1625,6 +1625,7 @@ public final class JAXRSUtils {
                 try {
                     response = mapper.toResponse(ex);
                 } catch (Exception mapperEx) {
+                    inMessage.getExchange().put(JAXRSUtils.EXCEPTION_FROM_MAPPER, "true");
                     mapperEx.printStackTrace();
                     return Response.serverError().build();
                 }
@@ -1757,7 +1758,7 @@ public final class JAXRSUtils {
     public static ResponseBuilder fromResponse(Response response) {
         ResponseBuilder rb = toResponseBuilder(response.getStatus());
         rb.entity(response.getEntity());
-        for (Map.Entry<String, List<Object>> entry : response.getHeaders().entrySet()) {
+        for (Map.Entry<String, List<Object>> entry : response.getMetadata().entrySet()) {
             List<Object> values = entry.getValue();
             for (Object value : values) {
                 rb.header(entry.getKey(), value);
@@ -1778,7 +1779,7 @@ public final class JAXRSUtils {
                             ReflectionUtil.accessDeclaredField(f, response, Annotation[].class);
                         ((ResponseImpl)r).setEntityAnnotations(fieldAnnotations);
                     } catch (Throwable ex) {
-                        LOG.warning("Custom annotations if any may can not be copied");
+                        LOG.warning("Custom annotations if any can not be copied");
                     }
                     break;
                 }
