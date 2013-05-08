@@ -16,24 +16,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.systest.jaxrs;
+package org.apache.cxf.systest.handlers;
 
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.ext.ExceptionMapper;
+import javax.xml.ws.handler.LogicalHandler;
+import javax.xml.ws.handler.LogicalMessageContext;
+import javax.xml.ws.handler.MessageContext;
 
-public class RuntimeExceptionMapper implements ExceptionMapper<RuntimeException> {
+public class FaultThrowingHandler implements LogicalHandler<LogicalMessageContext> {
 
-    @Context 
-    private UriInfo ui;
-    
-    public Response toResponse(RuntimeException exception) {
-        String path = ui.getPath();
-        if (path.endsWith("nonexistent")) {
-            return Response.status(405).type("text/plain").entity("Nonexistent method").build();
-        }
-        return null;
+    @Override
+    public boolean handleMessage(LogicalMessageContext context) {
+        throw new CustomSoapFault();
+    }
+
+    @Override
+    public boolean handleFault(LogicalMessageContext context) {
+        return false;
+    }
+
+    @Override
+    public void close(MessageContext context) {
+
     }
 
 }
