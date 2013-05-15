@@ -22,6 +22,7 @@ package org.apache.cxf.jaxrs.impl;
 import java.lang.annotation.Annotation;
 import java.net.URI;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -35,9 +36,11 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Variant;
 
 import org.apache.cxf.jaxrs.utils.HttpUtils;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -129,6 +132,12 @@ public class ResponseBuilderImplTest extends Assert {
         methods.add("GET");
         checkBuild(Response.ok().allow(methods).build(), 200, null, m);
     }
+    
+    @Test
+    public void testAllowReSet() throws Exception {
+        Response r = Response.ok().allow("GET").allow((Set<String>)null).build();
+        assertNull(r.getMetadata().getFirst("Allow"));
+    }
 
     @Test
     public void testValidStatus() {
@@ -152,7 +161,7 @@ public class ResponseBuilderImplTest extends Assert {
     @Test
     public void testAbsoluteLocation() {
         MetadataMap<String, Object> m = new MetadataMap<String, Object>();
-        m.putSingle("Location", "http://localhost/rest");
+        m.putSingle("Location", URI.create("http://localhost/rest"));
         checkBuild(Response.ok().location(URI.create("http://localhost/rest")).build(), 200, null, m);
     }
     
@@ -174,15 +183,15 @@ public class ResponseBuilderImplTest extends Assert {
     @Test
     public void testLinkStr() {
         MetadataMap<String, Object> m = new MetadataMap<String, Object>();
-        m.putSingle("Link", "<http://example.com/page3>;rel=\"next\"");
+        m.putSingle("Link", Link.valueOf("<http://example.com/page3>;rel=\"next\""));
         checkBuild(Response.ok().link("http://example.com/page3", "next").build(), 200, null, m);
     }
 
     @Test
     public void testLinkStrMultiple() {
         MetadataMap<String, Object> m = new MetadataMap<String, Object>();
-        m.add("Link", "<http://example.com/page1>;rel=\"previous\"");
-        m.add("Link", "<http://example.com/page3>;rel=\"next\"");
+        m.add("Link", Link.valueOf("<http://example.com/page1>;rel=\"previous\""));
+        m.add("Link", Link.valueOf("<http://example.com/page3>;rel=\"next\""));
         checkBuild(Response.ok().link("http://example.com/page1", "previous")
                        .link("http://example.com/page3", "next").build(), 200, null, m);
     }
@@ -190,8 +199,8 @@ public class ResponseBuilderImplTest extends Assert {
     @Test
     public void testLinkStrMultipleSameRel() {
         MetadataMap<String, Object> m = new MetadataMap<String, Object>();
-        m.add("Link", "<http://example.com/page2.pdf>;rel=\"alternate\"");
-        m.add("Link", "<http://example.com/page2.txt>;rel=\"alternate\"");
+        m.add("Link", Link.valueOf("<http://example.com/page2.pdf>;rel=\"alternate\""));
+        m.add("Link", Link.valueOf("<http://example.com/page2.txt>;rel=\"alternate\""));
         checkBuild(Response.ok().link("http://example.com/page2.pdf", "alternate")
                        .link("http://example.com/page2.txt", "alternate").build(), 200, null, m);
     }
@@ -200,15 +209,15 @@ public class ResponseBuilderImplTest extends Assert {
     public void testLinkURI() {
         MetadataMap<String, Object> m = new MetadataMap<String, Object>();
         URI uri = URI.create("http://example.com/page3");
-        m.putSingle("Link", "<http://example.com/page3>;rel=\"next\"");
+        m.putSingle("Link", Link.valueOf("<http://example.com/page3>;rel=\"next\""));
         checkBuild(Response.ok().link(uri, "next").build(), 200, null, m);
     }
 
     @Test
     public void testLinks() {
         MetadataMap<String, Object> m = new MetadataMap<String, Object>();
-        m.add("Link", "<http://example.com/page1>;rel=\"previous\"");
-        m.add("Link", "<http://example.com/page3>;rel=\"next\"");
+        m.add("Link", Link.valueOf("<http://example.com/page1>;rel=\"previous\""));
+        m.add("Link", Link.valueOf("<http://example.com/page3>;rel=\"next\""));
         RuntimeDelegateImpl delegate = new RuntimeDelegateImpl();
         Link.Builder linkBuilder = delegate.createLinkBuilder();
         Link prevLink = linkBuilder.uri("http://example.com/page1").rel("previous").build();
@@ -221,8 +230,8 @@ public class ResponseBuilderImplTest extends Assert {
     @Test
     public void testLinksNoReset() {
         MetadataMap<String, Object> m = new MetadataMap<String, Object>();
-        m.add("Link", "<http://example.com/page1>;rel=\"previous\"");
-        m.add("Link", "<http://example.com/page3>;rel=\"next\"");
+        m.add("Link", Link.valueOf("<http://example.com/page1>;rel=\"previous\""));
+        m.add("Link", Link.valueOf("<http://example.com/page3>;rel=\"next\""));
         RuntimeDelegateImpl delegate = new RuntimeDelegateImpl();
         Link.Builder linkBuilder = delegate.createLinkBuilder();
         Link prevLink = linkBuilder.uri("http://example.com/page1").rel("previous").build();
@@ -234,7 +243,7 @@ public class ResponseBuilderImplTest extends Assert {
     @Test
     public void testLinksWithReset() {
         MetadataMap<String, Object> m = new MetadataMap<String, Object>();
-        m.add("Link", "<http://example.com/page3>;rel=\"next\"");
+        m.add("Link", Link.valueOf("<http://example.com/page3>;rel=\"next\""));
         RuntimeDelegateImpl delegate = new RuntimeDelegateImpl();
         Link.Builder linkBuilder = delegate.createLinkBuilder();
         Link prevLink = linkBuilder.uri("http://example.com/page1").rel("previous").build();
@@ -259,8 +268,8 @@ public class ResponseBuilderImplTest extends Assert {
     @Test
     public void testAddCookie() {
         MetadataMap<String, Object> m = new MetadataMap<String, Object>();
-        m.add("Set-Cookie", "a=b;Version=1");
-        m.add("Set-Cookie", "c=d;Version=1");
+        m.add("Set-Cookie", new NewCookie("a", "b"));
+        m.add("Set-Cookie", new NewCookie("c", "d"));
         checkBuild(Response.ok().cookie(new NewCookie("a", "b"))
                                 .cookie(new NewCookie("c", "d")).build(), 
                   200, null, m);
@@ -296,14 +305,18 @@ public class ResponseBuilderImplTest extends Assert {
     
     @Test
     public void testExpires() throws Exception {
-        MetadataMap<String, Object> m = new MetadataMap<String, Object>();
-        m.putSingle("Expires", "Tue, 21 Oct 2008 17:00:00 GMT");
         SimpleDateFormat format = HttpUtils.getHttpDateFormat();
         Date date = format.parse("Tue, 21 Oct 2008 17:00:00 GMT");
-        checkBuild(Response.ok().expires(date).build(), 200, null, m);
-        checkBuild(Response.ok().expires(date)
-                   .header(HttpHeaders.EXPIRES, date).build(), 200, null, m);
-        checkBuild(Response.ok().header(HttpHeaders.EXPIRES, date).build(), 200, null, m);
+        
+        MetadataMap<String, Object> m = new MetadataMap<String, Object>();
+        m.putSingle("Expires", date);
+        checkBuild(Response.ok()
+                   .expires(format.parse("Tue, 21 Oct 2008 17:00:00 GMT"))
+                   .build(), 200, null, m);
+        checkBuild(Response.ok()
+                   .header(HttpHeaders.EXPIRES, 
+                           format.parse("Tue, 21 Oct 2008 17:00:00 GMT"))
+                   .build(), 200, null, m);
     }
     
     @Test
@@ -318,8 +331,8 @@ public class ResponseBuilderImplTest extends Assert {
     public void testVariant() throws Exception {
         
         MetadataMap<String, Object> m = new MetadataMap<String, Object>();
-        m.putSingle("Content-Type", "text/xml");
-        m.putSingle("Content-Language", "en");
+        m.putSingle("Content-Type", MediaType.TEXT_XML_TYPE);
+        m.putSingle("Content-Language", new Locale("en"));
         m.putSingle("Content-Encoding", "gzip");
         Variant v = new Variant(MediaType.TEXT_XML_TYPE, new Locale("en"), "gzip");
         
@@ -327,12 +340,34 @@ public class ResponseBuilderImplTest extends Assert {
                    200, null, m);
     }
     
+    @Test
+    public void testVariant2() throws Exception {
+        List<String> encoding = Arrays.asList("gzip", "compress");
+        MediaType mt = MediaType.APPLICATION_JSON_TYPE;
+        ResponseBuilder rb = Response.ok();
+        rb = rb.variants(getVariantList(encoding, mt).toArray(new Variant[0]));
+        Response response = rb.build();
+        List<Object> enc = response.getHeaders().get(HttpHeaders.CONTENT_ENCODING);
+        assertTrue(encoding.containsAll(enc));
+        List<Object> ct = response.getHeaders().get(HttpHeaders.CONTENT_TYPE);
+        assertTrue(ct.contains(mt));
+    }
+    
+    protected static List<Variant> getVariantList(List<String> encoding,
+                                                  MediaType... mt) {
+        return Variant.VariantListBuilder.newInstance()
+            .mediaTypes(mt)
+            .languages(new Locale("en", "US"), new Locale("en", "GB"), new Locale("zh", "CN"))
+            .encodings(encoding.toArray(new String[]{}))
+            .add()
+            .build();
+    }
 
     @Test
     public void testCreatedNoEntity() throws Exception {
         
         MetadataMap<String, Object> m = new MetadataMap<String, Object>();
-        m.putSingle("Location", "http://foo");
+        m.putSingle("Location", URI.create("http://foo"));
         
         checkBuild(Response.created(new URI("http://foo")).build(),
                    201, null, m);
@@ -353,12 +388,14 @@ public class ResponseBuilderImplTest extends Assert {
     public void testVariantsArray() throws Exception {
         
         MetadataMap<String, Object> m = new MetadataMap<String, Object>();
-        m.add("Accept", "application/json");
-        m.add("Accept", "application/xml");
+        m.add("Content-Type", MediaType.APPLICATION_JSON_TYPE);
+        m.add("Content-Language", new Locale("en_uk"));
+        m.add("Content-Language", new Locale("en_gb"));
         m.add("Vary", "Accept");
-
-        Variant json = new Variant(MediaType.APPLICATION_JSON_TYPE, (String)null, null);
-        Variant xml = new Variant(MediaType.APPLICATION_XML_TYPE, (String)null, null);
+        m.add("Vary", "Accept-Language");
+        
+        Variant json = new Variant(MediaType.APPLICATION_JSON_TYPE, new Locale("en_uk"), null);
+        Variant xml = new Variant(MediaType.APPLICATION_JSON_TYPE, new Locale("en_gb"), null);
 
         checkBuild(Response.ok().variants(json, xml).build(), 200, null, m);
     }
@@ -366,17 +403,17 @@ public class ResponseBuilderImplTest extends Assert {
     @Test
     public void testVariantsList() throws Exception {
         MetadataMap<String, Object> m = new MetadataMap<String, Object>();
-        m.add("Accept", "text/xml");
-        m.add("Accept", "application/xml");
-        m.add("Accept-Language", "en_UK");
-        m.add("Accept-Language", "en_GB");
-        m.add("Accept-Encoding", "compress");
-        m.add("Accept-Encoding", "gzip");
+        m.add("Content-Type", MediaType.TEXT_XML_TYPE);
+        m.add("Content-Language", new Locale("en", "UK"));
+        m.add("Content-Language", new Locale("en", "GB"));
+        m.add("Content-Encoding", "compress");
+        m.add("Content-Encoding", "gzip");
         m.add("Vary", "Accept");
         m.add("Vary", "Accept-Language");
         m.add("Vary", "Accept-Encoding");
+        
         List<Variant> vts = Variant.VariantListBuilder.newInstance()
-            .mediaTypes(MediaType.TEXT_XML_TYPE, MediaType.APPLICATION_XML_TYPE).
+            .mediaTypes(MediaType.TEXT_XML_TYPE).
             languages(new Locale("en", "UK"), new Locale("en", "GB")).encodings("compress", "gzip").
                       add().build();
 
