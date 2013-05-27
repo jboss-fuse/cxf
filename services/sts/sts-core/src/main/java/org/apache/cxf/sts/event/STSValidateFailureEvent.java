@@ -16,8 +16,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.bus;
 
-public enum BusState {
-    INITIAL, INITIALIZING, RUNNING, SHUTTING_DOWN, SHUTDOWN;
+package org.apache.cxf.sts.event;
+
+import org.apache.cxf.sts.token.validator.TokenValidatorParameters;
+
+public class STSValidateFailureEvent extends AbstractSTSFailureEvent implements TokenValidatorParametersSupport {
+
+    private static final long serialVersionUID = 1L;
+    
+    private static final String OPERATION = "Validate";
+    
+    
+    public STSValidateFailureEvent(TokenValidatorParameters parameters, long duration, Exception exception) {
+        super(parameters, duration, exception);
+    }
+    
+    @Override
+    public String getOperation() {
+        return OPERATION;
+    }
+
+    @Override
+    public TokenValidatorParameters getTokenParameters() {
+        return (TokenValidatorParameters)this.getSource();
+    }
+
 }
