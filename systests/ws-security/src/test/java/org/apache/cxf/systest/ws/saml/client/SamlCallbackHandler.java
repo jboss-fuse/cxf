@@ -27,17 +27,18 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
-import org.apache.ws.security.components.crypto.Crypto;
-import org.apache.ws.security.components.crypto.CryptoFactory;
-import org.apache.ws.security.components.crypto.CryptoType;
-import org.apache.ws.security.saml.ext.SAMLCallback;
-import org.apache.ws.security.saml.ext.bean.AttributeBean;
-import org.apache.ws.security.saml.ext.bean.AttributeStatementBean;
-import org.apache.ws.security.saml.ext.bean.KeyInfoBean;
-import org.apache.ws.security.saml.ext.bean.KeyInfoBean.CERT_IDENTIFIER;
-import org.apache.ws.security.saml.ext.bean.SubjectBean;
-import org.apache.ws.security.saml.ext.builder.SAML1Constants;
-import org.apache.ws.security.saml.ext.builder.SAML2Constants;
+import org.apache.wss4j.common.crypto.Crypto;
+import org.apache.wss4j.common.crypto.CryptoFactory;
+import org.apache.wss4j.common.crypto.CryptoType;
+import org.apache.wss4j.common.ext.WSSecurityException;
+import org.apache.wss4j.common.saml.SAMLCallback;
+import org.apache.wss4j.common.saml.bean.AttributeBean;
+import org.apache.wss4j.common.saml.bean.AttributeStatementBean;
+import org.apache.wss4j.common.saml.bean.KeyInfoBean;
+import org.apache.wss4j.common.saml.bean.KeyInfoBean.CERT_IDENTIFIER;
+import org.apache.wss4j.common.saml.bean.SubjectBean;
+import org.apache.wss4j.common.saml.builder.SAML1Constants;
+import org.apache.wss4j.common.saml.builder.SAML2Constants;
 import org.opensaml.common.SAMLVersion;
 
 /**
@@ -47,6 +48,7 @@ public class SamlCallbackHandler implements CallbackHandler {
     private boolean saml2 = true;
     private String confirmationMethod = SAML2Constants.CONF_SENDER_VOUCHES;
     private CERT_IDENTIFIER keyInfoIdentifier = CERT_IDENTIFIER.X509_CERT;
+    private boolean signAssertion;
     
     public SamlCallbackHandler() {
         //
@@ -54,6 +56,11 @@ public class SamlCallbackHandler implements CallbackHandler {
     
     public SamlCallbackHandler(boolean saml2) {
         this.saml2 = saml2;
+    }
+    
+    public SamlCallbackHandler(boolean saml2, boolean signAssertion) {
+        this.saml2 = saml2;
+        this.signAssertion = signAssertion;
     }
     
     public void setConfirmationMethod(String confirmationMethod) {
@@ -107,6 +114,19 @@ public class SamlCallbackHandler implements CallbackHandler {
                 attributeBean.setAttributeValues(Collections.singletonList("system-user"));
                 attrBean.setSamlAttributes(Collections.singletonList(attributeBean));
                 callback.setAttributeStatementData(Collections.singletonList(attrBean));
+                
+                try {
+                    if (signAssertion) {
+                        String file = "org/apache/cxf/systest/ws/wssec10/client/alice.properties";
+                        Crypto crypto = CryptoFactory.getInstance(file);
+                        callback.setIssuerCrypto(crypto);
+                        callback.setIssuerKeyName("alice");
+                        callback.setIssuerKeyPassword("password");
+                    }
+                    callback.setSignAssertion(signAssertion);
+                } catch (WSSecurityException e) {
+                    throw new IOException(e);
+                }
             }
         }
     }
@@ -127,6 +147,14 @@ public class SamlCallbackHandler implements CallbackHandler {
         }
         
         return keyInfo;
+    }
+
+    public boolean isSignAssertion() {
+        return signAssertion;
+    }
+
+    public void setSignAssertion(boolean signAssertion) {
+        this.signAssertion = signAssertion;
     }
     
 }
