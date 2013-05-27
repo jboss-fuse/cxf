@@ -90,8 +90,6 @@ import org.apache.ws.security.validate.Validator;
 
 /**
  * Performs WS-Security inbound actions.
- * 
- * @author <a href="mailto:tsztelak@gmail.com">Tomasz Sztelak</a>
  */
 public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
 
@@ -491,7 +489,7 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
                         new RolePrefixSecurityContextImpl(subject, roleClassifier, roleClassifierType)
                     );
                 } else {
-                    msg.put(SecurityContext.class, new DefaultSecurityContext(subject));
+                    msg.put(SecurityContext.class, new DefaultSecurityContext(p, subject));
                 }
                 break;
             } else if (p != null && isSecurityContextPrincipal(p, wsResult)) {

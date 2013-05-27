@@ -54,8 +54,17 @@ public class LdapGroupClaimsHandler implements ClaimsHandler {
     private String groupNameGlobalFilter = ROLE;
     private String groupNameScopedFilter = SCOPE + "_" + ROLE;
     private Map<String, String> appliesToScopeMapping;
+    private boolean useFullGroupNameAsValue;
     
     
+    public boolean isUseFullGroupNameAsValue() {
+        return useFullGroupNameAsValue;
+    }
+
+    public void setUseFullGroupNameAsValue(boolean useFullGroupNameAsValue) {
+        this.useFullGroupNameAsValue = useFullGroupNameAsValue;
+    }
+
     public String getUserObjectClass() {
         return userObjectClass;
     }
@@ -203,7 +212,7 @@ public class LdapGroupClaimsHandler implements ClaimsHandler {
         }
         
         if (LOG.isLoggable(Level.FINER)) {
-            LOG.finest("Retrieve groups for user " + user);
+            LOG.finer("Retrieve groups for user " + user);
         }
         
         List<String> groups = null;
@@ -212,15 +221,22 @@ public class LdapGroupClaimsHandler implements ClaimsHandler {
         
         if (groups == null || groups.size() == 0) {
             if (LOG.isLoggable(Level.INFO)) {
-                LOG.finest("No groups found for user '" + user + "'");
+                LOG.info("No groups found for user '" + user + "'");
             }
             return new ClaimCollection();
+        }
+        
+        if (LOG.isLoggable(Level.FINE)) {
+            LOG.fine("Groups for user '" + parameters.getPrincipal().getName() + "': " + groups);
         }
         
         String scope = null;
         if (getAppliesToScopeMapping() != null && getAppliesToScopeMapping().size() > 0
             && parameters.getAppliesToAddress() != null) {
             scope = getAppliesToScopeMapping().get(parameters.getAppliesToAddress());
+            if (LOG.isLoggable(Level.FINE)) {
+                LOG.fine("AppliesTo matchs with scope: " + scope);
+            }
         }
         
         String regex = this.groupNameGlobalFilter;
@@ -244,18 +260,36 @@ public class LdapGroupClaimsHandler implements ClaimsHandler {
                 //  Demo_User -> Role=User
                 //  Demo_Admin -> Role=Admin
                 String filter = this.groupNameScopedFilter;
-                filteredGroups.add(parseRole(group, filter.replaceAll(SCOPE, scope)));
+                String role = null;
+                if (isUseFullGroupNameAsValue()) {
+                    role = group;
+                } else {
+                    role = parseRole(group, filter.replaceAll(SCOPE, scope));
+                }
+                filteredGroups.add(role);
             } else {
                 if (globalPattern.matcher(group).matches()) {
                     //Group matches the global filter
                     //ex. (default groupNameGlobalFilter)
                     //  User -> Role=User
                     //  Admin -> Role=Admin
-                    filteredGroups.add(parseRole(group, this.groupNameGlobalFilter));
+                    String role = null;
+                    if (isUseFullGroupNameAsValue()) {
+                        role = group;
+                    } else {
+                        role = parseRole(group, this.groupNameGlobalFilter);
+                    }
+                    filteredGroups.add(role);
                 } else {
                     LOG.finer("Group '" + group + "' doesn't match scoped and global group filter");
                 }
             }
+        }
+        
+        LOG.info("Filtered groups: " + filteredGroups);
+        if (filteredGroups.size() == 0) {
+            LOG.info("No matching groups found for user '" + principal + "'");
+            return new ClaimCollection();
         }
         
         ClaimCollection claimsColl = new ClaimCollection();
@@ -278,4 +312,3 @@ public class LdapGroupClaimsHandler implements ClaimsHandler {
     }
     
 }
-
