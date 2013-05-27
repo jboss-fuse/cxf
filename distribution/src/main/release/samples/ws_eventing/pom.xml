@@ -6,14 +6,14 @@
 
     <groupId>org.apache.cxf.samples</groupId>
     <artifactId>ws_eventing</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.0.x-fuse-SNAPSHOT</version>
     <name>WS-Eventing Demo</name>
     <packaging>war</packaging>
 
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
         <artifactId>cxf-samples</artifactId>
-        <version>3.0.0-SNAPSHOT</version>
+        <version>3.0.x-fuse-SNAPSHOT</version>
     </parent>
 
     <properties>
