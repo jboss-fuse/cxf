@@ -16,23 +16,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.management.counters;
 
-public interface ResponseTimeCounterMBean {   
-    Number getNumInvocations();
-    Number getNumCheckedApplicationFaults();
-    Number getNumLogicalRuntimeFaults();
-    Number getNumRuntimeFaults();
-    Number getNumUnCheckedApplicationFaults();
+package org.apache.cxf.sts.event;
+
+import ch.qos.logback.classic.PatternLayout;
+
+public class LoggerPatternLayoutLogback extends PatternLayout {
     
-    /**
-     * Get the Average Response Time
-     * NOTE: if the invocation number is 0, this method
-     * will return -1
-     */
-    Number getAvgResponseTime();
-    Number getMaxResponseTime();
-    Number getMinResponseTime();   
-    Number getTotalHandlingTime();
-    void reset();
+    private String header;  
+
+    @Override
+    public String getFileHeader() {
+        if (this.header != null) {
+            return this.header + System.getProperty("line.separator");
+        }
+        LoggerListener ll = new LoggerListener();
+        StringBuffer line = new StringBuffer();
+        for (String item : ll.getFieldOrder()) {
+            line.append(item).append(";");
+        }
+        return line.toString() + System.getProperty("line.separator");        
+    }
+
 }
