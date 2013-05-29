@@ -30,18 +30,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-
 import javax.servlet.ServletInputStream;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
-
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusException;
 import org.apache.cxf.BusFactory;
-import org.apache.cxf.bus.extension.ExtensionManagerBus;
+import org.apache.cxf.bus.CXFBusImpl;
 import org.apache.cxf.common.util.Base64Utility;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.configuration.security.AuthorizationPolicy;
@@ -75,7 +73,6 @@ import org.apache.cxf.ws.addressing.EndpointReferenceType;
 import org.apache.cxf.ws.addressing.JAXWSAConstants;
 import org.apache.cxf.wsdl.EndpointReferenceUtils;
 import org.easymock.EasyMock;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -98,6 +95,7 @@ public class NettyHttpDestinationTest extends Assert {
     private Conduit decoupledBackChannel;
     private EndpointInfo endpointInfo;
     private EndpointReferenceType address;
+    private EndpointReferenceType replyTo;
     private NettyHttpServerEngine engine;
     private HTTPServerPolicy policy;
     private NettyHttpDestination destination;
@@ -140,6 +138,7 @@ public class NettyHttpDestinationTest extends Assert {
         transportFactory = null;
         decoupledBackChannel = null;
         address = null;
+        replyTo = null;
         engine = null;
         request = null;
         response = null;
@@ -223,7 +222,7 @@ public class NettyHttpDestinationTest extends Assert {
             }
         };
         transportFactory = new HTTPTransportFactory();
-        transportFactory.setBus(new ExtensionManagerBus());
+        transportFactory.setBus(new CXFBusImpl());
         transportFactory.getBus().setExtension(
             factory, NettyHttpServerEngineFactory.class);
         
@@ -279,7 +278,7 @@ public class NettyHttpDestinationTest extends Assert {
 
     @Test
     public void testDoService() throws Exception {
-        Bus defaultBus = new ExtensionManagerBus();
+        Bus defaultBus = new CXFBusImpl();
         assertSame("Default thread bus has not been set",
                    defaultBus, BusFactory.getThreadDefaultBus()); 
         destination = setUpDestination(false, false);
@@ -356,7 +355,7 @@ public class NettyHttpDestinationTest extends Assert {
         setUpDoService(false);
         destination.doService(request, response);
         setUpInMessage();
-        Conduit backChannel = destination.getBackChannel(inMessage);
+        Conduit backChannel = destination.getBackChannel(inMessage, null, null);
         
         assertNotNull("expected back channel", backChannel);
         assertEquals("unexpected target",
@@ -371,7 +370,7 @@ public class NettyHttpDestinationTest extends Assert {
         destination.doService(request, response);
         setUpInMessage();
         Conduit backChannel =
-            destination.getBackChannel(inMessage);
+            destination.getBackChannel(inMessage, null, null);
         outMessage = setUpOutMessage();
         backChannel.prepare(outMessage);
         verifyBackChannelSend(backChannel, outMessage, 200);
@@ -384,7 +383,7 @@ public class NettyHttpDestinationTest extends Assert {
         destination.doService(request, response);
         setUpInMessage();
         Conduit backChannel =
-            destination.getBackChannel(inMessage);
+            destination.getBackChannel(inMessage, null, null);
         outMessage = setUpOutMessage();
         backChannel.prepare(outMessage);
         verifyBackChannelSend(backChannel, outMessage, 500);
@@ -397,7 +396,7 @@ public class NettyHttpDestinationTest extends Assert {
         destination.doService(request, response);
         setUpInMessage();
         Conduit backChannel =
-            destination.getBackChannel(inMessage);
+            destination.getBackChannel(inMessage, null, null);
         outMessage = setUpOutMessage();
         backChannel.prepare(outMessage);
         verifyBackChannelSend(backChannel, outMessage, 500, true);
@@ -406,6 +405,7 @@ public class NettyHttpDestinationTest extends Assert {
     @Test
     public void testGetBackChannelSendDecoupled() throws Exception {
         destination = setUpDestination(false, false);
+        replyTo = getEPR(NOWHERE + "response/foo");
         setUpDoService(false, true, true, 202);
         destination.doService(request, response);
         setUpInMessage();
@@ -413,13 +413,13 @@ public class NettyHttpDestinationTest extends Assert {
         Message partialResponse = setUpOutMessage();
         partialResponse.put(Message.PARTIAL_RESPONSE_MESSAGE, Boolean.TRUE);
         Conduit partialBackChannel =
-            destination.getBackChannel(inMessage);
+            destination.getBackChannel(inMessage, partialResponse, replyTo);
         partialBackChannel.prepare(partialResponse);
         verifyBackChannelSend(partialBackChannel, partialResponse, 202);
 
         outMessage = setUpOutMessage();
         Conduit fullBackChannel =
-            destination.getBackChannel(inMessage);
+            destination.getBackChannel(inMessage, null, replyTo);
 
         fullBackChannel.prepare(outMessage);
     }
@@ -429,7 +429,7 @@ public class NettyHttpDestinationTest extends Assert {
         throws Exception {
         policy = new HTTPServerPolicy();
         address = getEPR("bar/foo");
-        bus = new ExtensionManagerBus();
+        bus = new CXFBusImpl();
         
         transportFactory = new HTTPTransportFactory();
         transportFactory.setBus(bus);
@@ -564,7 +564,7 @@ public class NettyHttpDestinationTest extends Assert {
         };
         
         if (!mockedBus) {
-            bus = new ExtensionManagerBus();
+            bus = new CXFBusImpl();
             bus.setExtension(mgr, ConduitInitiatorManager.class);
         } else {
             bus = EasyMock.createMock(Bus.class);
@@ -677,7 +677,6 @@ public class NettyHttpDestinationTest extends Assert {
         request.getUserPrincipal();
         EasyMock.expectLastCall().andReturn(null).anyTimes();
         
-        
         if (setRedirectURL) {
             policy.setRedirectURL(NOWHERE + "foo/bar");
             response.sendRedirect(EasyMock.eq(NOWHERE + "foo/bar"));
@@ -699,12 +698,12 @@ public class NettyHttpDestinationTest extends Assert {
                 EasyMock.expect(request.getInputStream()).andReturn(is);
                 EasyMock.expect(request.getContextPath()).andReturn("/bar");
                 EasyMock.expect(request.getServletPath()).andReturn("");
-                EasyMock.expect(request.getPathInfo()).andReturn("/foo").times(2);
+                EasyMock.expect(request.getPathInfo()).andReturn("/foo");
                 EasyMock.expect(request.getRequestURI()).andReturn("/foo");
                 EasyMock.expect(request.getRequestURL())
                     .andReturn(new StringBuffer("http://localhost/foo")).anyTimes();
                 EasyMock.expect(request.getCharacterEncoding()).andReturn("UTF-8");
-                EasyMock.expect(request.getQueryString()).andReturn(query).times(2);    
+                EasyMock.expect(request.getQueryString()).andReturn(query);    
                 EasyMock.expect(request.getHeader("Accept")).andReturn("*/*");  
                 EasyMock.expect(request.getContentType()).andReturn("text/xml charset=utf8").times(2);
                 EasyMock.expect(request.getAttribute("org.eclipse.jetty.ajax.Continuation")).andReturn(null);
