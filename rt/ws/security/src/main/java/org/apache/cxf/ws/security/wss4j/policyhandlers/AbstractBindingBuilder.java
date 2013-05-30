@@ -162,12 +162,13 @@ public abstract class AbstractBindingBuilder {
     
     protected List<byte[]> signatures = new ArrayList<byte[]>();
 
-    Element lastSupportingTokenElement;
-    Element lastEncryptedKeyElement;
-    Element lastDerivedKeyElement;
-    Element bottomUpElement;
-    Element topDownElement;
-    Element bstElement;
+    protected Element bottomUpElement;
+    protected Element topDownElement;
+    protected Element bstElement;
+    protected Element lastEncryptedKeyElement;
+    
+    private Element lastSupportingTokenElement;
+    private Element lastDerivedKeyElement;
     
     public AbstractBindingBuilder(
                            WSSConfig config,
@@ -185,7 +186,7 @@ public abstract class AbstractBindingBuilder {
         message.getExchange().put(WSHandlerConstants.SEND_SIGV, signatures);
     }
     
-    private void insertAfter(Element child, Element sib) {
+    protected void insertAfter(Element child, Element sib) {
         if (sib.getNextSibling() == null) {
             secHeader.getSecurityHeader().appendChild(child);
         } else {
