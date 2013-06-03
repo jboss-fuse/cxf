@@ -241,6 +241,13 @@ public class StaxAsymmetricBindingHandler extends AbstractStaxBindingHandler {
             }
             
             if (encryptionToken != null && encrParts.size() > 0) {
+                if (isRequestor()) {
+                    addSupportingTokens();
+                    encrParts.addAll(encryptedTokensList);
+                } else {
+                    addSignatureConfirmation(sigParts);
+                }
+                
                 //Check for signature protection
                 if (abinding.isEncryptSignature()) {
                     SecurePart part = 
@@ -253,12 +260,6 @@ public class StaxAsymmetricBindingHandler extends AbstractStaxBindingHandler {
                     SecurePart part = 
                         new SecurePart(new QName(WSSConstants.NS_WSU10, "Timestamp"), Modifier.Element);
                     sigParts.add(part);
-                }
-                
-                if (isRequestor()) {
-                    addSupportingTokens();
-                } else {
-                    addSignatureConfirmation(sigParts);
                 }
                 
                 if ((sigParts.size() > 0) && initiatorWrapper != null && isRequestor()) {
@@ -351,7 +352,9 @@ public class StaxAsymmetricBindingHandler extends AbstractStaxBindingHandler {
         
         if (config.containsKey(ConfigurationConstants.ACTION)) {
             String action = (String)config.get(ConfigurationConstants.ACTION);
-            config.put(ConfigurationConstants.ACTION, action + " " + actionToPerform);
+            if (!action.contains(ConfigurationConstants.SAML_TOKEN_SIGNED)) {
+                config.put(ConfigurationConstants.ACTION, action + " " + actionToPerform);
+            }
         } else {
             config.put(ConfigurationConstants.ACTION, actionToPerform);
         }

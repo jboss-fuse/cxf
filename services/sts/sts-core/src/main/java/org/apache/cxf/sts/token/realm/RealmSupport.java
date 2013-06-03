@@ -17,23 +17,18 @@
  * under the License.
  */
 
-package org.apache.cxf.ws.eventing.shared.faults;
+package org.apache.cxf.sts.token.realm;
 
-import javax.xml.namespace.QName;
+import java.util.List;
 
-import org.apache.cxf.ws.eventing.shared.EventingConstants;
+/**
+ * 
+ */
+public interface RealmSupport {
 
-public class EndToNotSupported extends WSEventingFault {
+    List<String> getSupportedRealms();
 
-    public static final String REASON = "wse:EndTo semantics is not supported.";
-    public static final String LOCAL_PART = "EndToNotSupported";
-
-    private static final long serialVersionUID = 1L;
-
-    public EndToNotSupported() {
-        super(REASON,
-                null,
-                new QName(EventingConstants.EVENTING_2011_03_NAMESPACE, LOCAL_PART));
-    }
+    String getHandlerRealm();
 
 }
+ 
