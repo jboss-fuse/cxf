@@ -406,20 +406,20 @@ public class NettyHttpServletRequest implements HttpServletRequest {
 
     @Override
     public String getAuthType() {
-        throw new IllegalStateException(
-                "Method 'getAuthType' not yet implemented!");
+        // Current we just return null here
+        return null;
     }
 
     @Override
     public String getPathTranslated() {
-        throw new IllegalStateException(
-                "Method 'getPathTranslated' not yet implemented!");
+        // Current we just return null here
+        return null;
     }
 
     @Override
     public String getRemoteUser() {
-        throw new IllegalStateException(
-                "Method 'getRemoteUser' not yet implemented!");
+        // Current we just return null here
+        return null;
     }
 
     @Override
@@ -430,37 +430,37 @@ public class NettyHttpServletRequest implements HttpServletRequest {
 
     @Override
     public boolean isRequestedSessionIdFromURL() {
-        throw new IllegalStateException(
-                "Method 'isRequestedSessionIdFromURL' not yet implemented!");
+        // Current we just return false here
+        return false;
     }
 
     @Override
     public boolean isRequestedSessionIdFromUrl() {
-        throw new IllegalStateException(
-                "Method 'isRequestedSessionIdFromUrl' not yet implemented!");
+        // Current we just return false here
+        return false;
     }
 
     @Override
     public boolean isRequestedSessionIdValid() {
-        throw new IllegalStateException(
-                "Method 'isRequestedSessionIdValid' not yet implemented!");
+        // Current we just return false here
+        return false;
     }
 
     @Override
     public boolean isUserInRole(String role) {
-        throw new IllegalStateException(
-                "Method 'isUserInRole' not yet implemented!");
+        // Current we just return false here
+        return false;
     }
 
     @Override
     public String getRealPath(String path) {
-        throw new IllegalStateException(
-                "Method 'getRealPath' not yet implemented!");
+        // Current we just return null here
+        return null;
     }
 
     @Override
     public RequestDispatcher getRequestDispatcher(String path) {
-        throw new IllegalStateException(
-                "Method 'getRequestDispatcher' not yet implemented!");
+        // Current we just return null here
+        return null;
     }
 }
