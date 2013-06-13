@@ -46,6 +46,8 @@ import org.apache.wss4j.policy.model.X509Token;
 import org.apache.wss4j.stax.ext.WSSConstants;
 import org.apache.xml.security.stax.ext.SecurePart;
 import org.apache.xml.security.stax.ext.SecurePart.Modifier;
+import org.apache.xml.security.stax.securityToken.OutboundSecurityToken;
+import org.apache.xml.security.stax.securityToken.SecurityTokenProvider;
 
 /**
  * 
@@ -57,8 +59,12 @@ public class StaxAsymmetricBindingHandler extends AbstractStaxBindingHandler {
     private AsymmetricBinding abinding;
     private SoapMessage message;
     
-    public StaxAsymmetricBindingHandler(Map<String, Object> properties, SoapMessage msg) {
-        super(properties, msg);
+    public StaxAsymmetricBindingHandler(
+        Map<String, Object> properties, 
+        SoapMessage msg,
+        Map<String, SecurityTokenProvider<OutboundSecurityToken>> outboundTokens
+    ) {
+        super(properties, msg, outboundTokens);
         this.message = msg;
     }
     
@@ -82,7 +88,6 @@ public class StaxAsymmetricBindingHandler extends AbstractStaxBindingHandler {
             if (initiatorWrapper == null) {
                 initiatorWrapper = abinding.getInitiatorToken();
             }
-            boolean attached = false;
             /*
             if (initiatorWrapper != null) {
                 AbstractToken initiatorToken = initiatorWrapper.getToken();
@@ -123,7 +128,7 @@ public class StaxAsymmetricBindingHandler extends AbstractStaxBindingHandler {
             addSupportingTokens();
             
             if (isRequestor() && initiatorWrapper != null) {
-                doSignature(initiatorWrapper, sigs, attached);
+                doSignature(initiatorWrapper, sigs);
                 //doEndorse();
             } else if (!isRequestor()) {
                 //confirm sig
@@ -134,7 +139,7 @@ public class StaxAsymmetricBindingHandler extends AbstractStaxBindingHandler {
                     recipientSignatureToken = abinding.getRecipientToken();
                 }
                 if (recipientSignatureToken != null) {
-                    doSignature(recipientSignatureToken, sigs, attached);
+                    doSignature(recipientSignatureToken, sigs);
                 }
             }
             
@@ -192,7 +197,6 @@ public class StaxAsymmetricBindingHandler extends AbstractStaxBindingHandler {
                 initiatorWrapper = abinding.getInitiatorToken();
             }
             
-            boolean attached = false;
             /*
             if (initiatorWrapper != null) {
                 AbstractToken initiatorToken = initiatorWrapper.getToken();
@@ -263,14 +267,14 @@ public class StaxAsymmetricBindingHandler extends AbstractStaxBindingHandler {
                 }
                 
                 if ((sigParts.size() > 0) && initiatorWrapper != null && isRequestor()) {
-                    doSignature(initiatorWrapper, sigParts, attached);
+                    doSignature(initiatorWrapper, sigParts);
                 } else if (!isRequestor()) {
                     AbstractTokenWrapper recipientSignatureToken = abinding.getRecipientSignatureToken();
                     if (recipientSignatureToken == null) {
                         recipientSignatureToken = abinding.getRecipientToken(); 
                     }
                     if (recipientSignatureToken != null) {
-                        doSignature(recipientSignatureToken, sigParts, attached);
+                        doSignature(recipientSignatureToken, sigParts);
                     }
                 }
     
@@ -315,8 +319,6 @@ public class StaxAsymmetricBindingHandler extends AbstractStaxBindingHandler {
                 }
             }
             
-            encrParts.addAll(this.getEncryptedParts());
-            
             for (SecurePart part : encrParts) {
                 QName name = part.getName();
                 parts += "{" + part.getModifier() + "}{"
@@ -340,7 +342,7 @@ public class StaxAsymmetricBindingHandler extends AbstractStaxBindingHandler {
         }
     }
     
-    private void doSignature(AbstractTokenWrapper wrapper, List<SecurePart> sigParts, boolean attached) 
+    private void doSignature(AbstractTokenWrapper wrapper, List<SecurePart> sigParts) 
         throws WSSecurityException, SOAPException {
         
         // Action

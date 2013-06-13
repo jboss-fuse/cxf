@@ -78,7 +78,7 @@ public class DefaultXACMLRequestBuilder implements XACMLRequestBuilder {
         Principal principal, List<String> roles, Message message
     ) throws Exception {
         String issuer = getIssuer(message);
-        String resource = getResource(message);
+        List<String> resources = getResources(message);
         String actionToUse = getAction(message);
         
         // Subject
@@ -95,31 +95,37 @@ public class DefaultXACMLRequestBuilder implements XACMLRequestBuilder {
         attributes.add(subjectIdAttribute);
         
         for (String role : roles) {
-            AttributeValueType subjectRoleAttributeValue = 
-                RequestComponentBuilder.createAttributeValueType(role);
-            AttributeType subjectRoleAttribute = 
-                RequestComponentBuilder.createAttributeType(
-                        XACMLConstants.SUBJECT_ROLE,
-                        XACMLConstants.XS_ANY_URI,
-                        issuer,
-                        Collections.singletonList(subjectRoleAttributeValue)
-                );
-            attributes.add(subjectRoleAttribute);
+            if (role != null) {
+                AttributeValueType subjectRoleAttributeValue = 
+                    RequestComponentBuilder.createAttributeValueType(role);
+                AttributeType subjectRoleAttribute = 
+                    RequestComponentBuilder.createAttributeType(
+                            XACMLConstants.SUBJECT_ROLE,
+                            XACMLConstants.XS_ANY_URI,
+                            issuer,
+                            Collections.singletonList(subjectRoleAttributeValue)
+                    );
+                attributes.add(subjectRoleAttribute);
+            }
         }
         SubjectType subjectType = RequestComponentBuilder.createSubjectType(attributes, null);
         
         // Resource
-        AttributeValueType resourceAttributeValue = 
-            RequestComponentBuilder.createAttributeValueType(resource);
-        AttributeType resourceAttribute = 
-            RequestComponentBuilder.createAttributeType(
-                    XACMLConstants.RESOURCE_ID,
-                    XACMLConstants.XS_STRING,
-                    null,
-                    Collections.singletonList(resourceAttributeValue)
-            );
         attributes.clear();
-        attributes.add(resourceAttribute);
+        for (String resource : resources) {
+            if (resource != null) {
+                AttributeValueType resourceAttributeValue = 
+                    RequestComponentBuilder.createAttributeValueType(resource);
+                AttributeType resourceAttribute = 
+                    RequestComponentBuilder.createAttributeType(
+                            XACMLConstants.RESOURCE_ID,
+                            XACMLConstants.XS_STRING,
+                            null,
+                            Collections.singletonList(resourceAttributeValue)
+                    );
+                attributes.add(resourceAttribute);
+            }
+        }
         ResourceType resourceType = RequestComponentBuilder.createResourceType(attributes, null);
         
         // Action
@@ -207,8 +213,24 @@ public class DefaultXACMLRequestBuilder implements XACMLRequestBuilder {
     
     
     /**
-     * Return the Resource that has been inserted into the Request
+     * Return the Resources that have been inserted into the Request
      */
+    public List<String> getResources(Message message) {
+        if (message == null) {
+            return Collections.emptyList();
+        }
+        List<String> resources = new ArrayList<String>();
+        if (message.get(Message.WSDL_OPERATION) != null) {
+            resources.add(message.get(Message.WSDL_OPERATION).toString());
+        } 
+        if (sendFullRequestURL) {
+            resources.add((String)message.get(Message.REQUEST_URL));
+        } else {
+            resources.add((String)message.get(Message.REQUEST_URI));
+        }
+        return resources;
+    }
+    
     public String getResource(Message message) {
         if (message == null) {
             return null;

@@ -39,7 +39,7 @@ import org.junit.BeforeClass;
  * "/etc/bob.keytab" (this can all be edited in src/test/resource/kerberos.jaas". Then disable the
  * @Ignore annotations and run the tests with:
  *  
- * mvn test -Pnochecks -Dtest=KerberosTokenTest 
+ * mvn test -Pnochecks -Dtest=StaxKerberosTokenTest 
  *     -Djava.security.auth.login.config=src/test/resources/kerberos.jaas
  * 
  * See here for more information:
@@ -74,6 +74,7 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
         stopAllServers();
     }
 
+    // TODO See WSS-453
     @org.junit.Test
     @org.junit.Ignore
     public void testKerberosOverTransport() throws Exception {
@@ -96,9 +97,9 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
         // DOM
         kerberosPort.doubleIt(25);
         
-        // TODO Streaming
-        // SecurityTestUtil.enableStreaming(kerberosPort);
-        // kerberosPort.doubleIt(25);
+        // Streaming
+        SecurityTestUtil.enableStreaming(kerberosPort);
+        kerberosPort.doubleIt(25);
         
         ((java.io.Closeable)kerberosPort).close();
         bus.shutdown(true);
@@ -163,7 +164,7 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
     }
     */
     
-    // TODO - See WSS-442
+    // TODO - See WSS-454
     @org.junit.Test
     @org.junit.Ignore
     public void testKerberosOverAsymmetric() throws Exception {
@@ -190,14 +191,15 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
         // DOM
         kerberosPort.doubleIt(25);
         
-        // TODO Streaming
-        // SecurityTestUtil.enableStreaming(kerberosPort);
-        // kerberosPort.doubleIt(25);
+        // Streaming
+        SecurityTestUtil.enableStreaming(kerberosPort);
+        kerberosPort.doubleIt(25);
         
         ((java.io.Closeable)kerberosPort).close();
         bus.shutdown(true);
     }
     
+    // TODO See WSS-453
     @org.junit.Test
     @org.junit.Ignore
     public void testKerberosOverTransportEndorsing() throws Exception {
@@ -220,15 +222,15 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
         // DOM
         kerberosPort.doubleIt(25);
         
-        // TODO Streaming
-        // SecurityTestUtil.enableStreaming(kerberosPort);
-        // kerberosPort.doubleIt(25);
+        // Streaming
+        SecurityTestUtil.enableStreaming(kerberosPort);
+        kerberosPort.doubleIt(25);
         
         ((java.io.Closeable)kerberosPort).close();
         bus.shutdown(true);
     }
     
-    // TODO - See WSS-442
+    // TODO See WSS-453
     @org.junit.Test
     @org.junit.Ignore
     public void testKerberosOverAsymmetricEndorsing() throws Exception {
@@ -308,7 +310,7 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
     }
     */
     
-    // TODO - See WSS-442
+    // TODO - See WSS-453 WSS-454
     @org.junit.Test
     @org.junit.Ignore
     public void testKerberosOverAsymmetricSignedEndorsing() throws Exception {
@@ -343,7 +345,7 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
         bus.shutdown(true);
     }
     
-    // TODO - See WSS-442
+    // TODO - See WSS-453 WSS-454
     @org.junit.Test
     @org.junit.Ignore
     public void testKerberosOverAsymmetricSignedEncrypted() throws Exception {
@@ -370,9 +372,9 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
         // DOM
         kerberosPort.doubleIt(25);
         
-        // TODO Streaming
-        // SecurityTestUtil.enableStreaming(kerberosPort);
-        // kerberosPort.doubleIt(25);
+        // Streaming
+        SecurityTestUtil.enableStreaming(kerberosPort);
+        kerberosPort.doubleIt(25);
         
         ((java.io.Closeable)kerberosPort).close();
         bus.shutdown(true);
