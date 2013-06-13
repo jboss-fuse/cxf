@@ -57,6 +57,7 @@ public class ClassResourceInfo extends AbstractResourceInfo {
     private boolean createdFromModel; 
     private String consumesTypes;
     private String producesTypes;
+    private ClassResourceInfo parent;
     
     public ClassResourceInfo(ClassResourceInfo cri) {
         super(cri.getBus());       
@@ -69,6 +70,7 @@ public class ClassResourceInfo extends AbstractResourceInfo {
             this.paramFields = cri.paramFields;
             this.paramMethods = cri.paramMethods;
             this.enableStatic = true;
+            this.parent = cri.parent;
         } else {
             throw new IllegalArgumentException();
         }
@@ -102,7 +104,7 @@ public class ClassResourceInfo extends AbstractResourceInfo {
     
     // The following constructors are used by tests only
     public ClassResourceInfo(Class<?> theResourceClass) {
-        this(theResourceClass, false);
+        this(theResourceClass, true);
     }
     
     public ClassResourceInfo(Class<?> theResourceClass, boolean theRoot) {
@@ -140,6 +142,12 @@ public class ClassResourceInfo extends AbstractResourceInfo {
             }
         }
         return cri;
+    }
+    
+    public void addSubClassResourceInfo(ClassResourceInfo cri) {
+        subResources.putIfAbsent(new SubresourceKey(cri.getResourceClass(), 
+                                            cri.getServiceClass()),
+                                 cri);
     }
     
     public Collection<ClassResourceInfo> getSubResources() {
@@ -214,11 +222,6 @@ public class ClassResourceInfo extends AbstractResourceInfo {
         return !subResources.isEmpty();
     }
     
-    public void addSubClassResourceInfo(ClassResourceInfo cri) {
-        subResources.putIfAbsent(new SubresourceKey(cri.getResourceClass(), 
-                                            cri.getServiceClass()),
-                                 cri);
-    }
     
     public boolean isCreatedFromModel() {
         return createdFromModel;
@@ -233,19 +236,27 @@ public class ClassResourceInfo extends AbstractResourceInfo {
     }
     
     public List<MediaType> getProduceMime() {
-        if (producesTypes != null) {
-            return JAXRSUtils.parseMediaTypes(producesTypes);
+        if (root || parent == null) {
+            if (producesTypes != null) {
+                return JAXRSUtils.parseMediaTypes(producesTypes);
+            }
+            return JAXRSUtils.getProduceTypes(
+                 AnnotationUtils.getClassAnnotation(getServiceClass(), Produces.class));
+        } else {
+            return parent.getProduceMime();
         }
-        return JAXRSUtils.getProduceTypes(
-             AnnotationUtils.getClassAnnotation(getServiceClass(), Produces.class));
     }
     
     public List<MediaType> getConsumeMime() {
-        if (consumesTypes != null) {
-            return JAXRSUtils.parseMediaTypes(consumesTypes);
+        if (root || parent == null) {
+            if (consumesTypes != null) {
+                return JAXRSUtils.parseMediaTypes(consumesTypes);
+            }
+            return JAXRSUtils.getConsumeTypes(
+                 AnnotationUtils.getClassAnnotation(getServiceClass(), Consumes.class));
+        } else {
+            return parent.getConsumeMime();
         }
-        return JAXRSUtils.getConsumeTypes(
-             AnnotationUtils.getClassAnnotation(getServiceClass(), Consumes.class));
     }
     
     public Path getPath() {
@@ -280,5 +291,13 @@ public class ClassResourceInfo extends AbstractResourceInfo {
     @Override
     public boolean isSingleton() {
         return resourceProvider != null && resourceProvider.isSingleton();
+    }
+
+    public void setParent(ClassResourceInfo parent) {
+        this.parent = parent;
+    }
+    
+    public ClassResourceInfo getParent() {
+        return parent;
     }
 }
