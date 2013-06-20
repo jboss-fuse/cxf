@@ -744,7 +744,7 @@ public class UriBuilderImpl extends UriBuilder implements Cloneable {
         // be supported though the use of non-http schemes for *building* new URIs
         // is pretty limited in the context of working with JAX-RS services
          
-        return path.startsWith("http");
+        return path.startsWith("http:") || path.startsWith("https:");
     }
     
     @Override
@@ -878,7 +878,7 @@ public class UriBuilderImpl extends UriBuilder implements Cloneable {
         }
     }
 
-    private UriBuilder uriAsTemplate(String uri) {
+    public UriBuilder uriAsTemplate(String uri) {
         // This can be a start of replacing URI class Parser completely
         // but it can be too complicated, the following code is needed for now 
         // to deal with URIs containing template variables. 

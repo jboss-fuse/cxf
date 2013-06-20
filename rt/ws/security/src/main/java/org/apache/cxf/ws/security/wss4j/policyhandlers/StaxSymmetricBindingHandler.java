@@ -19,6 +19,7 @@
 
 package org.apache.cxf.ws.security.wss4j.policyhandlers;
 
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -27,25 +28,25 @@ import java.util.Map;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
 
 import org.apache.cxf.binding.soap.SoapMessage;
 import org.apache.cxf.common.util.StringUtils;
-import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.ws.policy.AssertionInfoMap;
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.cxf.ws.security.tokenstore.SecurityToken;
+import org.apache.cxf.ws.security.tokenstore.TokenStore;
 import org.apache.wss4j.common.ConfigurationConstants;
+import org.apache.wss4j.common.ext.WSPasswordCallback;
 import org.apache.wss4j.common.ext.WSSecurityException;
 import org.apache.wss4j.dom.WSConstants;
 import org.apache.wss4j.dom.WSSConfig;
-import org.apache.wss4j.dom.WSSecurityEngineResult;
-import org.apache.wss4j.dom.handler.WSHandlerConstants;
-import org.apache.wss4j.dom.handler.WSHandlerResult;
 import org.apache.wss4j.dom.util.WSSecurityUtil;
-import org.apache.wss4j.policy.SPConstants.IncludeTokenType;
 import org.apache.wss4j.policy.model.AbstractSymmetricAsymmetricBinding;
 import org.apache.wss4j.policy.model.AbstractToken;
 import org.apache.wss4j.policy.model.AbstractToken.DerivedKeys;
@@ -60,6 +61,7 @@ import org.apache.wss4j.policy.model.SymmetricBinding;
 import org.apache.wss4j.policy.model.UsernameToken;
 import org.apache.wss4j.policy.model.X509Token;
 import org.apache.wss4j.stax.ext.WSSConstants;
+import org.apache.wss4j.stax.securityEvent.WSSecurityEventConstants;
 import org.apache.wss4j.stax.securityToken.WSSecurityTokenConstants;
 import org.apache.xml.security.algorithms.JCEMapper;
 import org.apache.xml.security.exceptions.XMLSecurityException;
@@ -67,6 +69,8 @@ import org.apache.xml.security.stax.ext.SecurePart;
 import org.apache.xml.security.stax.ext.SecurePart.Modifier;
 import org.apache.xml.security.stax.impl.securityToken.GenericOutboundSecurityToken;
 import org.apache.xml.security.stax.impl.util.IDGenerator;
+import org.apache.xml.security.stax.securityEvent.AbstractSecuredElementSecurityEvent;
+import org.apache.xml.security.stax.securityEvent.SecurityEvent;
 import org.apache.xml.security.stax.securityToken.OutboundSecurityToken;
 import org.apache.xml.security.stax.securityToken.SecurityTokenProvider;
 import org.apache.xml.security.utils.Base64;
@@ -108,11 +112,23 @@ public class StaxSymmetricBindingHandler extends AbstractStaxBindingHandler {
         configureLayout(aim);
         sbinding = (SymmetricBinding)getBinding(aim);
         
+        // Set up CallbackHandler which wraps the configured Handler
+        Map<String, Object> config = getProperties();
+        TokenStoreCallbackHandler callbackHandler = 
+            new TokenStoreCallbackHandler(
+                (CallbackHandler)config.get(ConfigurationConstants.PW_CALLBACK_REF), getTokenStore()
+            );
+        config.put(ConfigurationConstants.PW_CALLBACK_REF, callbackHandler);
+        
         if (sbinding.getProtectionOrder() 
             == AbstractSymmetricAsymmetricBinding.ProtectionOrder.EncryptBeforeSigning) {
             doEncryptBeforeSign();
         } else {
             doSignBeforeEncrypt();
+        }
+        
+        if (!isRequestor()) {
+            config.put(ConfigurationConstants.ENC_SYM_ENC_KEY, "false");
         }
     }
     
@@ -328,8 +344,12 @@ public class StaxSymmetricBindingHandler extends AbstractStaxBindingHandler {
 
             config.put(ConfigurationConstants.ENCRYPTION_PARTS, parts);
 
-            config.put(ConfigurationConstants.ENC_KEY_ID, 
+            if (isRequestor()) {
+                config.put(ConfigurationConstants.ENC_KEY_ID, 
                        getKeyIdentifierType(recToken, encrToken));
+            } else {
+                config.put(ConfigurationConstants.ENC_KEY_ID, "EncryptedKeySHA1");
+            }
 
             config.put(ConfigurationConstants.ENC_KEY_TRANSPORT, 
                        algorithmSuite.getAlgorithmSuiteType().getAsymmetricKeyWrap());
@@ -379,9 +399,8 @@ public class StaxSymmetricBindingHandler extends AbstractStaxBindingHandler {
         }
         
         AbstractToken sigToken = wrapper.getToken();
-        if (sbinding.isProtectTokens() && (sigToken instanceof X509Token)
-            && sigToken.getIncludeTokenType() != IncludeTokenType.INCLUDE_TOKEN_NEVER) {
-            parts += "{Element}{" + WSSConstants.NS_WSSE10 + "}BinarySecurityToken;";
+        if (sbinding.isProtectTokens() && (sigToken instanceof X509Token)) {
+            parts += "{Element}{" + WSSConstants.NS_XMLENC + "}EncryptedKey;";
         }
         
         config.put(ConfigurationConstants.SIGNATURE_PARTS, parts);
@@ -394,7 +413,6 @@ public class StaxSymmetricBindingHandler extends AbstractStaxBindingHandler {
                 config.put(ConfigurationConstants.SIG_KEY_ID, "EncryptedKey");
             } else {
                 config.put(ConfigurationConstants.SIG_KEY_ID, "EncryptedKeySHA1");
-                // TODO sig.setEncrKeySha1value(tok.getSHA1());
             }
         }
         
@@ -418,39 +436,58 @@ public class StaxSymmetricBindingHandler extends AbstractStaxBindingHandler {
         tempTok.setKey(symmetricKey);
         tempTok.setSecret(symmetricKey.getEncoded());
         
-        // Set the SHA1 value of the encrypted key, this is used when the encrypted
-        // key is referenced via a key identifier of type EncryptedKeySHA1
-        // tempTok.setSHA1(getSHA1(encrKey.getEncryptedEphemeralKey()));
-        
         getTokenStore().add(tempTok);
         
         return tempTok.getId();
     }
     
-    private String getEncryptedKey() {
+    private String getEncryptedKey() throws XMLSecurityException {
+        org.apache.xml.security.stax.securityToken.SecurityToken securityToken = 
+            findEncryptedKeyToken();
+        if (securityToken != null) {
+            Date created = new Date();
+            Date expires = new Date();
+            expires.setTime(created.getTime() + 300000);
+
+            String encryptedKeyID = securityToken.getId();
+            SecurityToken tempTok = new SecurityToken(encryptedKeyID, created, expires);
+            // TODO revisit
+            for (String key : securityToken.getSecretKey().keySet()) {
+                if (securityToken.getSecretKey().get(key) != null) {
+                    tempTok.setKey(securityToken.getSecretKey().get(key));
+                    tempTok.setSecret(securityToken.getSecretKey().get(key).getEncoded());
+                    break;
+                }
+            }
+            //tempTok.setSHA1(getSHA1((byte[])wser.get(WSSecurityEngineResult.TAG_ENCRYPTED_EPHEMERAL_KEY)));
+            getTokenStore().add(tempTok);
+
+            return encryptedKeyID;
+        }
+        return null;
         
-        List<WSHandlerResult> results = CastUtils.cast((List<?>)message.getExchange().getInMessage()
-            .get(WSHandlerConstants.RECV_RESULTS));
-        
-        for (WSHandlerResult rResult : results) {
-            List<WSSecurityEngineResult> wsSecEngineResults = rResult.getResults();
-            
-            for (WSSecurityEngineResult wser : wsSecEngineResults) {
-                Integer actInt = (Integer)wser.get(WSSecurityEngineResult.TAG_ACTION);
-                String encryptedKeyID = (String)wser.get(WSSecurityEngineResult.TAG_ID);
-                if (actInt.intValue() == WSConstants.ENCR
-                    && encryptedKeyID != null
-                    && encryptedKeyID.length() != 0) {
-                    Date created = new Date();
-                    Date expires = new Date();
-                    expires.setTime(created.getTime() + 300000);
-                    SecurityToken tempTok = new SecurityToken(encryptedKeyID, created, expires);
-                    tempTok.setSecret((byte[])wser.get(WSSecurityEngineResult.TAG_SECRET));
-                    tempTok.setSHA1(getSHA1((byte[])wser
-                                            .get(WSSecurityEngineResult.TAG_ENCRYPTED_EPHEMERAL_KEY)));
-                    getTokenStore().add(tempTok);
-                    
-                    return encryptedKeyID;
+    }
+    
+    // TODO revisit
+    private org.apache.xml.security.stax.securityToken.SecurityToken 
+    findEncryptedKeyToken() throws XMLSecurityException {
+        @SuppressWarnings("unchecked")
+        final List<SecurityEvent> incomingEventList = 
+            (List<SecurityEvent>) message.getExchange().get(SecurityEvent.class.getName() + ".in");
+        if (incomingEventList != null) {
+            for (SecurityEvent incomingEvent : incomingEventList) {
+                if (WSSecurityEventConstants.EncryptedPart == incomingEvent.getSecurityEventType()
+                    || WSSecurityEventConstants.EncryptedElement 
+                        == incomingEvent.getSecurityEventType()) {
+                    org.apache.xml.security.stax.securityToken.SecurityToken token = 
+                        ((AbstractSecuredElementSecurityEvent)incomingEvent).getSecurityToken();
+                    if (token != null && token.getSecretKey() != null) {
+                        for (String key : token.getSecretKey().keySet()) {
+                            if (token.getSecretKey().get(key) != null) {
+                                return token;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -517,5 +554,35 @@ public class StaxSymmetricBindingHandler extends AbstractStaxBindingHandler {
                            encryptedKeySecurityTokenProvider);
         outboundTokens.put(WSSConstants.PROP_USE_THIS_TOKEN_ID_FOR_SIGNATURE, 
                            encryptedKeySecurityTokenProvider);
+    }
+    
+    private class TokenStoreCallbackHandler implements CallbackHandler {
+        private CallbackHandler internal;
+        private TokenStore store;
+        public TokenStoreCallbackHandler(CallbackHandler in, TokenStore st) {
+            internal = in;
+            store = st;
+        }
+        
+        public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+            for (int i = 0; i < callbacks.length; i++) {
+                WSPasswordCallback pc = (WSPasswordCallback)callbacks[i];
+                
+                if (pc.getKey() != null) {
+                    String id = pc.getIdentifier();
+                    SecurityToken token = store.getToken(id);
+                    if (token != null && token.getSHA1() == null) {
+                        token.setSHA1(getSHA1(pc.getKey()));
+                        // Create another cache entry with the SHA1 Identifier as the key 
+                        // for easy retrieval
+                        store.add(token.getSHA1(), token);
+                    }
+                }
+            }
+            if (internal != null) {
+                internal.handle(callbacks);
+            }
+        }
+        
     }
 }
