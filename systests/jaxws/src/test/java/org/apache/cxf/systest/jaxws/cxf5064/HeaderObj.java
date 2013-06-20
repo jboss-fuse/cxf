@@ -16,27 +16,47 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jaxrs.fortest.jaxb.jaxbelement;
 
-import javax.xml.bind.JAXBElement;
-import javax.xml.namespace.QName;
+package org.apache.cxf.systest.jaxws.cxf5064;
 
-@SuppressWarnings({
-    "unchecked", "rawtypes"
-})
-//CHECKSTYLE:OFF
-public class ParamJAXBElement extends JAXBElement<ParamType> {
+/**
+ * 
+ */
+public class HeaderObj {
+    String field1;
+    String field2;
 
-    private static final long serialVersionUID = 4994571526736505284L;
-    protected final static QName NAME = new QName("http://jaxbelement/10", "param");
-    
-    public ParamJAXBElement(ParamType value) {
-        super(NAME, ((Class) ParamType.class), null, value);
+    public HeaderObj() {
     }
 
-    public ParamJAXBElement() {
-        super(NAME, ((Class) ParamType.class), null, null);
+    public HeaderObj(String value) {
+        if (value != null && !value.trim().isEmpty()) {
+            String fields[] = value.split("-");
+            if (fields.length == 2) {
+                field1 = fields[0];
+                field2 = fields[1];
+            }
+        }
     }
 
+    public String getField1() {
+        return field1;
+    }
+
+    public void setField1(String field1) {
+        this.field1 = field1;
+    }
+
+    public String getField2() {
+        return field2;
+    }
+
+    public void setField2(String field2) {
+        this.field2 = field2;
+    }
+
+    @Override
+    public String toString() {
+        return field1 + "-" + field2;
+    }
 }
-//CHECKSTYLE:ON

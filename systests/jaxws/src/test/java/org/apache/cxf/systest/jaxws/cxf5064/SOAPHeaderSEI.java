@@ -16,27 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jaxrs.fortest.jaxb.jaxbelement;
 
-import javax.xml.bind.JAXBElement;
-import javax.xml.namespace.QName;
+package org.apache.cxf.systest.jaxws.cxf5064;
 
-@SuppressWarnings({
-    "unchecked", "rawtypes"
-})
-//CHECKSTYLE:OFF
-public class ParamJAXBElement extends JAXBElement<ParamType> {
+import javax.jws.WebMethod;
+import javax.jws.WebParam;
+import javax.jws.WebParam.Mode;
+import javax.jws.WebService;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-    private static final long serialVersionUID = 4994571526736505284L;
-    protected final static QName NAME = new QName("http://jaxbelement/10", "param");
-    
-    public ParamJAXBElement(ParamType value) {
-        super(NAME, ((Class) ParamType.class), null, value);
-    }
-
-    public ParamJAXBElement() {
-        super(NAME, ((Class) ParamType.class), null, null);
-    }
-
+@WebService(targetNamespace = "http://cxf.apache.org/cxf5064")
+public interface SOAPHeaderSEI {
+    @WebMethod(operationName = "test")
+    String test(@WebParam(header = true, mode = Mode.IN, name = "SESSIONID") 
+        @XmlJavaTypeAdapter(HeaderObjTypeAdapter.class) HeaderObj headerObj);
 }
-//CHECKSTYLE:ON

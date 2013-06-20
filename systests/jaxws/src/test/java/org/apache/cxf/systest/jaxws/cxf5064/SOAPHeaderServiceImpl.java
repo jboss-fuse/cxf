@@ -16,27 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jaxrs.fortest.jaxb.jaxbelement;
 
-import javax.xml.bind.JAXBElement;
-import javax.xml.namespace.QName;
+package org.apache.cxf.systest.jaxws.cxf5064;
 
-@SuppressWarnings({
-    "unchecked", "rawtypes"
-})
-//CHECKSTYLE:OFF
-public class ParamJAXBElement extends JAXBElement<ParamType> {
+import javax.jws.WebService;
 
-    private static final long serialVersionUID = 4994571526736505284L;
-    protected final static QName NAME = new QName("http://jaxbelement/10", "param");
-    
-    public ParamJAXBElement(ParamType value) {
-        super(NAME, ((Class) ParamType.class), null, value);
+@WebService(targetNamespace = "http://cxf.apache.org/cxf5064")
+public class SOAPHeaderServiceImpl implements SOAPHeaderSEI {
+
+    /**
+     * 
+     */
+    public SOAPHeaderServiceImpl() {
+        // TODO Auto-generated constructor stub
     }
 
-    public ParamJAXBElement() {
-        super(NAME, ((Class) ParamType.class), null, null);
+    public String test(HeaderObj headerObj) {
+        return headerObj.toString();
     }
 
 }
-//CHECKSTYLE:ON
