@@ -623,7 +623,7 @@ public class UriBuilderImpl extends UriBuilder {
         // be supported though the use of non-http schemes for *building* new URIs
         // is pretty limited in the context of working with JAX-RS services
          
-        return path.startsWith("http");
+        return path.startsWith("http:") || path.startsWith("https:");
     }
     
     @Override
@@ -739,4 +739,30 @@ public class UriBuilderImpl extends UriBuilder {
         buildMatrix(sb, matrix);
         return new PathSegmentImpl(sb.toString());
     }
+
+    public UriBuilder uriAsTemplate(String uri) {
+        // This can be a start of replacing URI class Parser completely
+        // but it can be too complicated, the following code is needed for now 
+        // to deal with URIs containing template variables. 
+        int index = uri.indexOf(":");
+        if (index != -1) {
+            this.scheme = uri.substring(0, index);
+            uri = uri.substring(index + 1);
+            if (uri.indexOf("//") == 0) {
+                uri = uri.substring(2);
+                index = uri.indexOf("/");
+                if (index != -1) {
+                    String[] schemePair = uri.substring(0, index).split(":");
+                    this.host = schemePair[0];
+                    this.port = schemePair.length == 2 ? Integer.valueOf(schemePair[1]) : -1;
+                    
+                }
+                uri = uri.substring(index);
+            }
+            
+        }
+        setPathAndMatrix(uri);
+        return this;
+    }
+    
 }
