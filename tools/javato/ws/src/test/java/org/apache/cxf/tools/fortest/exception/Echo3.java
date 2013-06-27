@@ -16,35 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.transport;
+package org.apache.cxf.tools.fortest.exception;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import javax.jws.WebService;
 
-import org.apache.cxf.helpers.CastUtils;
-
-/**
- * Helper methods for {@link DestinationFactory}s and {@link ConduitInitiator}s.
- */
-public abstract class AbstractTransportFactory {
-    private List<String> transportIds;
-    
-    public AbstractTransportFactory() {
-    }
-    public AbstractTransportFactory(List<String> ids) {
-        transportIds = ids;
-    }
-    
-    public final List<String> getTransportIds() {
-        return transportIds;
-    }
-
-    public void setTransportIds(List<String> transportIds) {
-        this.transportIds = transportIds;
-    }
-
-    public Set<String> getUriPrefixes() {
-        return CastUtils.cast(Collections.EMPTY_SET);
-    }
+@WebService(targetNamespace = "http://cxf.apache.org/test/HelloService", name = "HelloService")
+public interface Echo3 {
+    String echo(OrderItem request) throws OrderException2;
 }
+

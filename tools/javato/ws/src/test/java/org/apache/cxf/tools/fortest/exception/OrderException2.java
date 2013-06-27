@@ -16,35 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.transport;
+package org.apache.cxf.tools.fortest.exception;
+public class OrderException2 extends Exception {
+    private static final long serialVersionUID = 1L;
+    private OrderItem data;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
-import org.apache.cxf.helpers.CastUtils;
-
-/**
- * Helper methods for {@link DestinationFactory}s and {@link ConduitInitiator}s.
- */
-public abstract class AbstractTransportFactory {
-    private List<String> transportIds;
-    
-    public AbstractTransportFactory() {
-    }
-    public AbstractTransportFactory(List<String> ids) {
-        transportIds = ids;
-    }
-    
-    public final List<String> getTransportIds() {
-        return transportIds;
+    public OrderException2(String message) {
+        super(message);
     }
 
-    public void setTransportIds(List<String> transportIds) {
-        this.transportIds = transportIds;
+    public void setData(OrderItem data) {
+        this.data = data;
     }
 
-    public Set<String> getUriPrefixes() {
-        return CastUtils.cast(Collections.EMPTY_SET);
+    public OrderItem getData() {
+        return this.data;
     }
+
 }
