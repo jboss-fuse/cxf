@@ -39,6 +39,8 @@
             org.apache.cxf.*,
         </cxf.osgi.export>
         <cxf.osgi.import>
+            com.ctc.wstx.stax*;resolution:=optional,
+            org.codehaus.stax2*;resolution:=optional,
             com.sun*;resolution:=optional,
             org.slf4j*;resolution:=optional;version="${cxf.osgi.slf4j.version}",
             org.apache.log4j*;resolution:=optional,
@@ -100,9 +102,8 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-             <groupId>${cxf.stax.impl.groupId}</groupId>
-             <artifactId>${cxf.stax.impl.artifactId}</artifactId>
-             <scope>runtime</scope>
+             <groupId>org.codehaus.woodstox</groupId>
+             <artifactId>woodstox-core-asl</artifactId>
          </dependency>
 
         <dependency>
