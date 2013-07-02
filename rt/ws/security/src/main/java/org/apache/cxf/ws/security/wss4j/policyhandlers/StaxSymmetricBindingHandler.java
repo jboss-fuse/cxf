@@ -72,6 +72,7 @@ import org.apache.xml.security.stax.impl.util.IDGenerator;
 import org.apache.xml.security.stax.securityEvent.AbstractSecuredElementSecurityEvent;
 import org.apache.xml.security.stax.securityEvent.SecurityEvent;
 import org.apache.xml.security.stax.securityToken.OutboundSecurityToken;
+import org.apache.xml.security.stax.securityToken.SecurityTokenConstants.TokenType;
 import org.apache.xml.security.stax.securityToken.SecurityTokenProvider;
 import org.apache.xml.security.utils.Base64;
 
@@ -141,8 +142,10 @@ public class StaxSymmetricBindingHandler extends AbstractStaxBindingHandler {
             //SecureConversationToken
             String tokenId = null;
             SecurityToken tok = null;
-            if (encryptionToken instanceof IssuedToken 
-                || encryptionToken instanceof KerberosToken
+            if (encryptionToken instanceof KerberosToken) {
+                tok = getSecurityToken();
+                addKerberosToken((KerberosToken)encryptionToken, false, false);
+            } else if (encryptionToken instanceof IssuedToken 
                 || encryptionToken instanceof SecureConversationToken
                 || encryptionToken instanceof SecurityContextToken
                 || encryptionToken instanceof SpnegoContextToken) {
@@ -232,10 +235,12 @@ public class StaxSymmetricBindingHandler extends AbstractStaxBindingHandler {
         try {
             SecurityToken sigTok = null;
             if (sigToken != null) {
-                if (sigToken instanceof SecureConversationToken
+                if (sigToken instanceof KerberosToken) {
+                    sigTok = getSecurityToken();
+                    addKerberosToken((KerberosToken)sigToken, false, false);
+                } else if (sigToken instanceof SecureConversationToken
                     || sigToken instanceof SecurityContextToken
                     || sigToken instanceof IssuedToken 
-                    || sigToken instanceof KerberosToken
                     || sigToken instanceof SpnegoContextToken) {
                     sigTok = getSecurityToken();
                 } else if (sigToken instanceof X509Token) {
@@ -347,6 +352,8 @@ public class StaxSymmetricBindingHandler extends AbstractStaxBindingHandler {
             if (isRequestor()) {
                 config.put(ConfigurationConstants.ENC_KEY_ID, 
                        getKeyIdentifierType(recToken, encrToken));
+            } else if (recToken.getToken() instanceof KerberosToken && !isRequestor()) {
+                config.put(ConfigurationConstants.ENC_KEY_ID, "KerberosSHA1");
             } else {
                 config.put(ConfigurationConstants.ENC_KEY_ID, "EncryptedKeySHA1");
             }
@@ -359,6 +366,10 @@ public class StaxSymmetricBindingHandler extends AbstractStaxBindingHandler {
             String encUser = (String)message.getContextualProperty(SecurityConstants.ENCRYPT_USERNAME);
             if (encUser != null) {
                 config.put(ConfigurationConstants.ENCRYPTION_USER, encUser);
+            }
+            
+            if (encrToken instanceof KerberosToken) {
+                config.put(ConfigurationConstants.ENC_SYM_ENC_KEY, "false");
             }
         }
     }
@@ -414,6 +425,8 @@ public class StaxSymmetricBindingHandler extends AbstractStaxBindingHandler {
             } else {
                 config.put(ConfigurationConstants.SIG_KEY_ID, "EncryptedKeySHA1");
             }
+        } else if (policyToken instanceof KerberosToken && !isRequestor()) {
+            config.put(ConfigurationConstants.SIG_KEY_ID, "KerberosSHA1");
         }
         
         if (sigToken.getDerivedKeys() == DerivedKeys.RequireDerivedKeys) {
@@ -530,8 +543,14 @@ public class StaxSymmetricBindingHandler extends AbstractStaxBindingHandler {
     }
     
     private void storeSecurityToken(SecurityToken tok) {
+        TokenType tokenType = WSSecurityTokenConstants.EncryptedKeyToken;
+        if (tok.getTokenType() != null 
+            && tok.getTokenType().startsWith(WSSConstants.NS_KERBEROS11_TOKEN_PROFILE)) {
+            tokenType = WSSecurityTokenConstants.KerberosToken;
+        }
+        
         final GenericOutboundSecurityToken encryptedKeySecurityToken = 
-            new GenericOutboundSecurityToken(tok.getId(), WSSecurityTokenConstants.EncryptedKeyToken, tok.getKey());
+            new GenericOutboundSecurityToken(tok.getId(), tokenType, tok.getKey());
         
         final SecurityTokenProvider<OutboundSecurityToken> encryptedKeySecurityTokenProvider =
             new SecurityTokenProvider<OutboundSecurityToken>() {

@@ -59,6 +59,7 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.Form;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -148,6 +149,25 @@ public class BookStore {
     public Book getBookDropJsonRoot(@Context MessageContext mc) throws BookNotFoundFault {
         mc.put("drop.json.root.element", "true");
         return doGetBook("123");
+    }
+    
+    @RETRIEVE
+    @Path("/retrieve")
+    @Produces("application/xml")
+    @Consumes("application/xml")
+    public Book retrieveBook(Book book) {
+        return book;
+    }
+    
+    @POST
+    @Path("/emptyform")
+    @Produces("text/plain")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public String postEmptyForm(Form form) {
+        if (!form.asMap().isEmpty()) {
+            throw new WebApplicationException(400);
+        }
+        return "empty form";
     }
     
     @GET

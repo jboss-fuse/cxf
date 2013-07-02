@@ -44,6 +44,8 @@ import org.junit.BeforeClass;
  * 
  * See here for more information:
  * http://coheigea.blogspot.com/2011/10/using-kerberos-with-web-services-part.html
+ * 
+ * It tests both DOM + StAX clients against the DOM server
  */
 @org.junit.Ignore
 public class KerberosTokenTest extends AbstractBusClientServerTestBase {
@@ -303,9 +305,9 @@ public class KerberosTokenTest extends AbstractBusClientServerTestBase {
         // DOM
         kerberosPort.doubleIt(25);
         
-        // TODO Streaming
-        // SecurityTestUtil.enableStreaming(kerberosPort);
-        // kerberosPort.doubleIt(25);
+        // Streaming
+        SecurityTestUtil.enableStreaming(kerberosPort);
+        kerberosPort.doubleIt(25);
         
         ((java.io.Closeable)kerberosPort).close();
         bus.shutdown(true);
