@@ -149,6 +149,25 @@ public class BookStore {
         return doGetBook("123");
     }
     
+    @RETRIEVE
+    @Path("/retrieve")
+    @Produces("application/xml")
+    @Consumes("application/xml")
+    public Book retrieveBook(Book book) {
+        return book;
+    }
+    
+    @POST
+    @Path("/emptyform")
+    @Produces("text/plain")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public String postEmptyForm(org.apache.cxf.jaxrs.ext.form.Form form) {
+        if (!form.getData().isEmpty()) {
+            throw new WebApplicationException(400);
+        }
+        return "empty form";
+    }
+    
     @GET
     @Path("/booknames/123")
     @Produces("application/bar")
