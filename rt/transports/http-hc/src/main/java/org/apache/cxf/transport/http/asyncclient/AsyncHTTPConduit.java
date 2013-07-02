@@ -152,6 +152,14 @@ public class AsyncHTTPConduit extends URLConnectionHTTPConduit {
             }
             
         } 
+        if (uri.getScheme().equals("https") 
+            && tlsClientParameters != null
+            && tlsClientParameters.getSSLSocketFactory() != null) {
+            //if they configured in an SSLSocketFactory, we cannot do anything
+            //with it as the NIO based transport cannot use socket created from
+            //the SSLSocketFactory.
+            o = false;
+        }
         if (!MessageUtils.isTrue(o)) {
             message.put(USE_ASYNC, Boolean.FALSE);
             super.setupConnection(message, uri, csPolicy);
@@ -200,6 +208,7 @@ public class AsyncHTTPConduit extends URLConnectionHTTPConduit {
                                               boolean needToCacheRequest, 
                                               boolean isChunking,
                                               int chunkThreshold) throws IOException {
+        
         if (Boolean.TRUE.equals(message.get(USE_ASYNC))) {
             CXFHttpRequest entity = message.get(CXFHttpRequest.class);
             AsyncWrappedOutputStream out = new AsyncWrappedOutputStream(message,
@@ -787,7 +796,7 @@ public class AsyncHTTPConduit extends URLConnectionHTTPConduit {
         ctx.getClientSessionContext().setSessionTimeout(tlsClientParameters.getSslCacheTimeout());
         KeyManager[] keyManagers = tlsClientParameters.getKeyManagers();
         if (tlsClientParameters.getCertAlias() != null) {
-            getKeyManagersWithCertAlias(tlsClientParameters, keyManagers);
+            keyManagers = getKeyManagersWithCertAlias(tlsClientParameters, keyManagers);
         }
         ctx.init(keyManagers, tlsClientParameters.getTrustManagers(),
                  tlsClientParameters.getSecureRandom());
@@ -809,20 +818,25 @@ public class AsyncHTTPConduit extends URLConnectionHTTPConduit {
         sslengine.setEnabledCipherSuites(cipherSuites);
     }
 
-    protected static void getKeyManagersWithCertAlias(TLSClientParameters tlsClientParameters,
+    protected static KeyManager[] getKeyManagersWithCertAlias(TLSClientParameters tlsClientParameters,
                                                       KeyManager[] keyManagers) throws GeneralSecurityException {
         if (tlsClientParameters.getCertAlias() != null) {
+            KeyManager ret[] = new KeyManager[keyManagers.length];  
             for (int idx = 0; idx < keyManagers.length; idx++) {
                 if (keyManagers[idx] instanceof X509KeyManager) {
                     try {
-                        keyManagers[idx] = new AliasedX509ExtendedKeyManager(tlsClientParameters.getCertAlias(),
+                        ret[idx] = new AliasedX509ExtendedKeyManager(tlsClientParameters.getCertAlias(),
                                                                              (X509KeyManager)keyManagers[idx]);
                     } catch (Exception e) {
                         throw new GeneralSecurityException(e);
                     }
+                } else {
+                    ret[idx] = keyManagers[idx]; 
                 }
             }
+            return ret;
         }
+        return keyManagers;
     }
 
 

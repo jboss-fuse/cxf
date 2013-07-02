@@ -24,6 +24,7 @@ import java.util.List;
 
 import org.apache.cxf.rs.security.oauth2.common.AccessTokenRegistration;
 import org.apache.cxf.rs.security.oauth2.common.Client;
+import org.apache.cxf.rs.security.oauth2.common.OAuthError;
 import org.apache.cxf.rs.security.oauth2.common.ServerAccessToken;
 import org.apache.cxf.rs.security.oauth2.common.UserSubject;
 import org.apache.cxf.rs.security.oauth2.provider.AccessTokenGrantHandler;
@@ -40,10 +41,10 @@ public abstract class AbstractGrantHandler implements AccessTokenGrantHandler {
     
     private String supportedGrant;
     private OAuthDataProvider dataProvider;
-    private boolean isClientConfidential;    
-    protected AbstractGrantHandler(String grant, boolean isClientConfidential) {
+    private boolean partialMatchScopeValidation;
+    private boolean canSupportPublicClients;
+    protected AbstractGrantHandler(String grant) {
         supportedGrant = grant;
-        this.isClientConfidential = isClientConfidential;
     }
     
     public void setDataProvider(OAuthDataProvider dataProvider) {
@@ -58,7 +59,9 @@ public abstract class AbstractGrantHandler implements AccessTokenGrantHandler {
     }
     
     protected void checkIfGrantSupported(Client client) {
-        if (!OAuthUtils.isGrantSupportedForClient(client, isClientConfidential, supportedGrant)) {
+        if (!OAuthUtils.isGrantSupportedForClient(client, 
+                                                  canSupportPublicClients,
+                                                  OAuthConstants.AUTHORIZATION_CODE_GRANT)) {
             throw new OAuthServiceException(OAuthConstants.UNAUTHORIZED_CLIENT);    
         }
     }
@@ -66,6 +69,10 @@ public abstract class AbstractGrantHandler implements AccessTokenGrantHandler {
     protected ServerAccessToken doCreateAccessToken(Client client,
                                                     UserSubject subject,
                                                     List<String> requestedScope) {
+        if (!OAuthUtils.validateScopes(requestedScope, client.getRegisteredScopes(), 
+                                       partialMatchScopeValidation)) {
+            throw new OAuthServiceException(new OAuthError(OAuthConstants.INVALID_SCOPE));     
+        }
         // Check if a pre-authorized  token available
         ServerAccessToken token = dataProvider.getPreauthorizedToken(
                                      client, requestedScope, subject, supportedGrant);
@@ -81,5 +88,17 @@ public abstract class AbstractGrantHandler implements AccessTokenGrantHandler {
         reg.setRequestedScope(requestedScope);        
         
         return dataProvider.createAccessToken(reg);
+    }
+    
+    public void setPartialMatchScopeValidation(boolean partialMatchScopeValidation) {
+        this.partialMatchScopeValidation = partialMatchScopeValidation;
+    }
+    
+    public void setCanSupportPublicClients(boolean support) {
+        canSupportPublicClients = support;
+    }
+    
+    public boolean isCanSupportPublicClients() {
+        return canSupportPublicClients;
     }
 }

@@ -20,7 +20,7 @@
 package org.apache.cxf.rs.security.oauth2.services;
 
 import java.security.Principal;
-import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
@@ -51,8 +51,9 @@ import org.apache.cxf.rs.security.oauth2.utils.OAuthUtils;
  */
 @Path("/token")
 public class AccessTokenService extends AbstractOAuthService {
-    private List<AccessTokenGrantHandler> grantHandlers = Collections.emptyList();
+    private List<AccessTokenGrantHandler> grantHandlers = new LinkedList<AccessTokenGrantHandler>();
     private boolean writeCustomErrors;
+    private boolean canSupportPublicClients;
     
     public void setWriteCustomErrors(boolean write) {
         writeCustomErrors = write;
@@ -64,6 +65,14 @@ public class AccessTokenService extends AbstractOAuthService {
      */
     public void setGrantHandlers(List<AccessTokenGrantHandler> handlers) {
         grantHandlers = handlers;
+    }
+    
+    /**
+     * Sets a grant handler
+     * @param handler the grant handler
+     */
+    public void setGrantHandler(AccessTokenGrantHandler handler) {
+        grantHandlers.add(handler);
     }
     
     /**
@@ -170,7 +179,15 @@ public class AccessTokenService extends AbstractOAuthService {
     // Get the Client and check the id and secret
     private Client getAndValidateClient(String clientId, String clientSecret) {
         Client client = getClient(clientId);
-        if (clientSecret == null || !client.getClientId().equals(clientId) 
+        if (canSupportPublicClients 
+            && !client.isConfidential() 
+            && client.getClientSecret() == null 
+            && client.getRedirectUris().isEmpty()
+            && clientSecret == null) {
+            return client;
+        }
+        if (clientSecret == null || client.getClientSecret() == null 
+            || !client.getClientId().equals(clientId) 
             || !client.getClientSecret().equals(clientSecret)) {
             throw new NotAuthorizedException(Response.status(401).build());
         }
@@ -229,5 +246,9 @@ public class AccessTokenService extends AbstractOAuthService {
         }
         return client;
         
+    }
+    
+    public void setCanSupportPublicClients(boolean support) {
+        this.canSupportPublicClients = support;
     }
 }

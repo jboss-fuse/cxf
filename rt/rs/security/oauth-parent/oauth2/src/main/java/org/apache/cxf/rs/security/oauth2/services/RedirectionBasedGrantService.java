@@ -57,17 +57,16 @@ import org.apache.cxf.security.SecurityContext;
 public abstract class RedirectionBasedGrantService extends AbstractOAuthService {
     private String supportedResponseType;
     private String supportedGrantType;
-    private boolean isClientConfidential;
+    private boolean partialMatchScopeValidation;
+    private boolean useRegisteredRedirectUriIfPossible = true;
     private SessionAuthenticityTokenProvider sessionAuthenticityTokenProvider;
     private SubjectCreator subjectCreator;
     private ResourceOwnerNameProvider resourceOwnerNameProvider;
     
     protected RedirectionBasedGrantService(String supportedResponseType,
-                                           String supportedGrantType,
-                                           boolean isConfidential) {
+                                           String supportedGrantType) {
         this.supportedResponseType = supportedResponseType;
         this.supportedGrantType = supportedGrantType;
-        this.isClientConfidential = isConfidential;
     }
     
     /**
@@ -119,7 +118,7 @@ public abstract class RedirectionBasedGrantService extends AbstractOAuthService 
         String redirectUri = validateRedirectUri(client, params.getFirst(OAuthConstants.REDIRECT_URI)); 
         
         // Enforce the client confidentiality requirements
-        if (!OAuthUtils.isGrantSupportedForClient(client, isClientConfidential, supportedGrantType)) {
+        if (!OAuthUtils.isGrantSupportedForClient(client, !canSupportPublicClient(client), supportedGrantType)) {
             return createErrorResponse(params, redirectUri, OAuthConstants.UNAUTHORIZED_CLIENT);
         }
         
@@ -128,9 +127,17 @@ public abstract class RedirectionBasedGrantService extends AbstractOAuthService 
         if (responseType == null || !responseType.equals(supportedResponseType)) {
             return createErrorResponse(params, redirectUri, OAuthConstants.UNSUPPORTED_RESPONSE_TYPE);
         }
-        
         // Get the requested scopes
-        List<String> requestedScope = OAuthUtils.parseScope(params.getFirst(OAuthConstants.SCOPE));
+        List<String> requestedScope = null;
+        
+        try {
+            requestedScope = OAuthUtils.getRequestedScopes(client, 
+                                                           params.getFirst(OAuthConstants.SCOPE), 
+                                                           partialMatchScopeValidation);
+        } catch (OAuthServiceException ex) {
+            return createErrorResponse(params, redirectUri, OAuthConstants.INVALID_SCOPE);
+        }
+        
         
         // Create a UserSubject representing the end user 
         UserSubject userSubject = createUserSubject(sc);
@@ -158,7 +165,7 @@ public abstract class RedirectionBasedGrantService extends AbstractOAuthService 
     
         // Return the authorization challenge data to the end user 
         OAuthAuthorizationData data = 
-            createAuthorizationData(client, params, permissions);
+            createAuthorizationData(client, params, redirectUri, permissions);
         personalizeData(data, userSubject);
         return Response.ok(data).build();
         
@@ -168,7 +175,7 @@ public abstract class RedirectionBasedGrantService extends AbstractOAuthService 
      * Create the authorization challenge data 
      */
     protected OAuthAuthorizationData createAuthorizationData(
-        Client client, MultivaluedMap<String, String> params, List<OAuthPermission> perms) {
+        Client client, MultivaluedMap<String, String> params, String redirectUri, List<OAuthPermission> perms) {
         
         OAuthAuthorizationData secData = new OAuthAuthorizationData();
         
@@ -177,7 +184,9 @@ public abstract class RedirectionBasedGrantService extends AbstractOAuthService 
         secData.setPermissions(perms);
         secData.setProposedScope(OAuthUtils.convertPermissionsToScope(perms));
         secData.setClientId(client.getClientId());
-        secData.setRedirectUri(params.getFirst(OAuthConstants.REDIRECT_URI));
+        if (redirectUri != null) {
+            secData.setRedirectUri(redirectUri);
+        }
         secData.setState(params.getFirst(OAuthConstants.STATE));
         
         secData.setApplicationName(client.getApplicationName()); 
@@ -235,10 +244,11 @@ public abstract class RedirectionBasedGrantService extends AbstractOAuthService 
                 approvedScope.add(rScope);
             }
         }
-        if (!requestedScope.containsAll(approvedScope)) {
+        if (!requestedScope.containsAll(approvedScope)
+            || !OAuthUtils.validateScopes(requestedScope, client.getRegisteredScopes(), 
+                                         partialMatchScopeValidation)) {
             return createErrorResponse(params, redirectUri, OAuthConstants.INVALID_SCOPE);
         }
-        
         UserSubject userSubject = createUserSubject(securityContext);
         
         // Request a new grant
@@ -306,11 +316,11 @@ public abstract class RedirectionBasedGrantService extends AbstractOAuthService 
             if (!uris.contains(redirectUri)) {
                 redirectUri = null;
             } 
-        } else if (uris.size() == 1) {
+        } else if (uris.size() == 1 && useRegisteredRedirectUriIfPossible) {
             redirectUri = uris.get(0);
         }
-        if (redirectUri == null) {
-            reportInvalidRequestError("Client Redirect Uri is invalid");
+        if (redirectUri == null && uris.size() == 0 && !canRedirectUriBeEmpty(client)) {
+            reportInvalidRequestError("Client Redirect Uri is invalid");    
         }
         return redirectUri;
     }
@@ -374,4 +384,20 @@ public abstract class RedirectionBasedGrantService extends AbstractOAuthService 
     public void setResourceOwnerNameProvider(ResourceOwnerNameProvider resourceOwnerNameProvider) {
         this.resourceOwnerNameProvider = resourceOwnerNameProvider;
     }
+
+    public void setPartialMatchScopeValidation(boolean partialMatchScopeValidation) {
+        this.partialMatchScopeValidation = partialMatchScopeValidation;
+    }
+    /**
+     * If a client does not include a redirect_uri parameter but has an exactly one
+     * pre-registered redirect_uri then use that redirect_uri
+     * @param use allows to use a single registered redirect_uri if set to true (default)
+     */
+    public void setUseRegisteredRedirectUriIfPossible(boolean use) {
+        this.useRegisteredRedirectUriIfPossible = use;
+    }
+    
+    protected abstract boolean canSupportPublicClient(Client c);
+    
+    protected abstract boolean canRedirectUriBeEmpty(Client c);
 }

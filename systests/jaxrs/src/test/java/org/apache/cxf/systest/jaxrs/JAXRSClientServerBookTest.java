@@ -90,7 +90,13 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
         createStaticBus();
     }
     
-
+    @Test
+    public void testPostEmptyForm() throws Exception {
+        String address = "http://localhost:" + PORT + "/bookstore/emptyform";
+        WebClient wc = WebClient.create(address);
+        Response r = wc.form(new org.apache.cxf.jaxrs.ext.form.Form());
+        assertEquals("empty form", r.readEntity(String.class));
+    }
 
     @Test
     public void testGetCustomBookResponse() {

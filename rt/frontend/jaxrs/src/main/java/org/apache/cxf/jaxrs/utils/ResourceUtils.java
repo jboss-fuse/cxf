@@ -232,7 +232,17 @@ public final class ResourceUtils {
                                                             boolean root, 
                                                             boolean enableStatic,
                                                             Bus bus) {
+        return createClassResourceInfo(rClass, sClass, null, root, enableStatic, bus);
+    }
+    
+    public static ClassResourceInfo createClassResourceInfo(final Class<?> rClass, 
+                                                            final Class<?> sClass,
+                                                            ClassResourceInfo parent,
+                                                            boolean root, 
+                                                            boolean enableStatic,
+                                                            Bus bus) {
         ClassResourceInfo cri = new ClassResourceInfo(rClass, sClass, root, enableStatic, bus);
+        cri.setParent(parent);
 
         if (root) {
             URITemplate t = URITemplate.createTemplate(cri.getPath());
@@ -260,8 +270,9 @@ public final class ResourceUtils {
                     if (enableStatic) {
                         ClassResourceInfo subCri = cri.findResource(subClass, subClass);
                         if (subCri == null) {
-                            subCri = subClass == cri.getServiceClass() ? cri
-                                     : createClassResourceInfo(subClass, subClass, false, enableStatic,
+                            ClassResourceInfo ancestor = getAncestorWithSameServiceClass(cri, subClass);
+                            subCri = ancestor != null ? ancestor
+                                     : createClassResourceInfo(subClass, subClass, cri, false, enableStatic,
                                                                cri.getBus());
                         }
                         
@@ -273,6 +284,16 @@ public final class ResourceUtils {
             }
         }
         cri.setMethodDispatcher(md);
+    }
+    
+    private static ClassResourceInfo getAncestorWithSameServiceClass(ClassResourceInfo parent, Class<?> subClass) {
+        if (parent == null) {
+            return null;
+        }
+        if (parent.getServiceClass() == subClass) {
+            return parent;
+        }
+        return getAncestorWithSameServiceClass(parent.getParent(), subClass);
     }
     
     public static Constructor<?> findResourceConstructor(Class<?> resourceClass, boolean perRequest) {
@@ -542,10 +563,20 @@ public final class ResourceUtils {
         }
         
         for (ClassResourceInfo sub : resource.getSubResources()) {
-            if (sub != resource) {
+            if (!isRecursiveSubResource(resource, sub)) {
                 getAllTypesForResource(sub, types, jaxbOnly);
             }
         }
+    }
+    
+    private static boolean isRecursiveSubResource(ClassResourceInfo parent, ClassResourceInfo sub) {
+        if (parent == null) {
+            return false;
+        }
+        if (parent == sub) {
+            return true;
+        }
+        return isRecursiveSubResource(parent.getParent(), sub);
     }
     
     private static void checkJaxbType(Class<?> type, 

@@ -22,6 +22,7 @@ package org.apache.cxf.jaxrs.provider.json;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.StringReader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -53,11 +54,13 @@ import javax.xml.bind.annotation.XmlMixed;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
+import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 import javax.xml.transform.stream.StreamSource;
 
 import org.w3c.dom.Document;
 
+import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.jaxrs.impl.MetadataMap;
@@ -70,6 +73,7 @@ import org.apache.cxf.jaxrs.resources.TagVO;
 import org.apache.cxf.jaxrs.resources.TagVO2;
 import org.apache.cxf.jaxrs.resources.Tags;
 import org.apache.cxf.jaxrs.resources.jaxb.Book2;
+import org.apache.cxf.staxutils.DelegatingXMLStreamWriter;
 import org.apache.cxf.staxutils.StaxUtils;
 
 import org.junit.Assert;
@@ -109,6 +113,18 @@ public class JSONProviderTest extends Assert {
         assertNotNull(names);
         assertEquals("1", names.get(0));
         assertEquals("2", names.get(1));
+    }
+    
+    @Test
+    public void testReadNullStringAsNull() throws Exception {
+        
+        String input = "{\"Book\":{\"id\":123,\"name\":\"null\"}}";
+    
+        JSONProvider<Book> provider = new JSONProvider<Book>();
+        Book theBook = provider.readFrom(Book.class, null, null, 
+                                   null, null, new ByteArrayInputStream(input.getBytes()));
+        assertEquals(123L, theBook.getId());
+        assertEquals("", theBook.getName());
     }
     
     @Test
@@ -192,6 +208,152 @@ public class JSONProviderTest extends Assert {
             + "\"state\":\"\",\"superId\":124}]}";
         assertEquals(expected, bos.toString());
     }
+    
+    @Test
+    public void testWriteCollectionAsPureArray() throws Exception {
+        JSONProvider<ReportDefinition> provider 
+            = new JSONProvider<ReportDefinition>();
+        provider.setSerializeAsArray(true);
+        provider.setDropRootElement(true);
+        provider.setDropElementsInXmlStream(false);
+        ReportDefinition r = new ReportDefinition();
+        r.setReportName("report");
+        r.addParameterDefinition(new ParameterDefinition("param"));
+        
+        Method m = ReportService.class.getMethod("findReport", new Class<?>[]{});
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        provider.writeTo(r, m.getReturnType(), m.getGenericReturnType(),
+                         new Annotation[0], MediaType.APPLICATION_JSON_TYPE, 
+                         new MetadataMap<String, Object>(), bos);
+        assertTrue(bos.toString().startsWith("[{\"parameterList\":"));
+    }
+    
+    @Test
+    public void testWriteCollectionAsPureArray2() throws Exception {
+        JSONProvider<ReportDefinition> provider 
+            = new JSONProvider<ReportDefinition>();
+        provider.setSerializeAsArray(true);
+        provider.setOutDropElements(Collections.singletonList("reportDefinition"));
+        provider.setDropElementsInXmlStream(false);
+        ReportDefinition r = new ReportDefinition();
+        r.setReportName("report");
+        r.addParameterDefinition(new ParameterDefinition("param"));
+        
+        Method m = ReportService.class.getMethod("findReport", new Class<?>[]{});
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        provider.writeTo(r, m.getReturnType(), m.getGenericReturnType(),
+                         new Annotation[0], MediaType.APPLICATION_JSON_TYPE, 
+                         new MetadataMap<String, Object>(), bos);
+        assertTrue(bos.toString().startsWith("[{\"parameterList\":"));
+    }
+    
+    @Test
+    public void testWriteBeanNoRootAtJsonLevel() throws Exception {
+        JSONProvider<Book> provider = new JSONProvider<Book>();
+        provider.setDropRootElement(true);
+        provider.setDropElementsInXmlStream(false);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        provider.writeTo(new Book("cxf", 123), Book.class, Book.class,
+                         new Annotation[0], MediaType.APPLICATION_JSON_TYPE, 
+                         new MetadataMap<String, Object>(), bos);
+        assertTrue(bos.toString().contains("\"name\":\"cxf\""));
+        assertTrue(bos.toString().contains("\"id\":123"));
+        assertFalse(bos.toString().startsWith("{\"Book\":"));
+    }
+    
+    @Test
+    public void testWriteBeanIgnorePropertyAtJsonLevel() throws Exception {
+        JSONProvider<Book> provider = new JSONProvider<Book>();
+        provider.setOutDropElements(Collections.singletonList("id"));
+        provider.setDropElementsInXmlStream(false);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        provider.writeTo(new Book("cxf", 123), Book.class, Book.class,
+                         new Annotation[0], MediaType.APPLICATION_JSON_TYPE, 
+                         new MetadataMap<String, Object>(), bos);
+        assertTrue(bos.toString().contains("\"name\":\"cxf\""));
+        assertFalse(bos.toString().contains("\"id\":123"));
+        assertTrue(bos.toString().startsWith("{\"Book\":"));
+    }
+    
+    @Test
+    public void testWriteNullValueAsString() throws Exception {
+        doTestWriteNullValue(true);
+    }
+    @Test
+    public void testWriteNullValueAsNull() throws Exception {
+        doTestWriteNullValue(false);
+    }
+    
+    private void doTestWriteNullValue(boolean nullAsString) throws Exception {
+        JSONProvider<Book> provider = new JSONProvider<Book>() {
+            protected XMLStreamWriter createWriter(Object actualObject, Class<?> actualClass, 
+                Type genericType, String enc, OutputStream os, boolean isCollection) throws Exception {
+                return new NullWriter(
+                    super.createWriter(actualObject, actualClass, genericType, enc, os, isCollection));
+            }
+        };
+        provider.setWriteNullAsString(nullAsString);
+        
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        provider.writeTo(new Book("cxf", 123), Book.class, Book.class,
+                         new Annotation[0], MediaType.APPLICATION_JSON_TYPE, 
+                         new MetadataMap<String, Object>(), bos);
+        if (nullAsString) {
+            assertTrue(bos.toString().contains("\"state\":\"null\""));
+        } else {
+            assertTrue(bos.toString().contains("\"state\":null"));
+        }
+    }
+    
+    @Test
+    public void testWriteCollectionParameterDef() 
+        throws Exception {
+        doTestWriteCollectionParameterDef(false);
+    }
+    
+    @Test
+    public void testWriteCollectionParameterDefAsJaxbElement() 
+        throws Exception {
+        doTestWriteCollectionParameterDef(true);
+    }
+    
+    private void doTestWriteCollectionParameterDef(boolean asJaxbElement) 
+        throws Exception {
+        JSONProvider<List<ReportDefinition>> provider 
+            = new JSONProvider<List<ReportDefinition>>();
+        provider.setMarshallAsJaxbElement(asJaxbElement);
+        provider.setUnmarshallAsJaxbElement(asJaxbElement);
+        ReportDefinition r = new ReportDefinition();
+        r.setReportName("report");
+        r.addParameterDefinition(new ParameterDefinition("param"));
+        List<ReportDefinition> reports = Collections.singletonList(r);
+        
+        Method m = ReportService.class.getMethod("findAllReports", new Class<?>[]{});
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        provider.writeTo(reports, m.getReturnType(), m.getGenericReturnType(),
+                         new Annotation[0], MediaType.APPLICATION_JSON_TYPE, 
+                         new MetadataMap<String, Object>(), bos);
+        @SuppressWarnings({
+            "unchecked", "rawtypes"
+        })
+        List<ReportDefinition> reports2 = provider.readFrom((Class)m.getReturnType(), m.getGenericReturnType(),
+                          new Annotation[0], MediaType.APPLICATION_JSON_TYPE, 
+                          new MetadataMap<String, String>(), new ByteArrayInputStream(bos.toString().getBytes()));
+        assertNotNull(reports2);
+        assertEquals(1, reports2.size());
+        ReportDefinition rd = reports2.get(0);
+        assertEquals("report", rd.getReportName());
+        
+        List<ParameterDefinition> params = rd.getParameterList();
+        assertNotNull(params);
+        assertEquals(1, params.size());
+        ParameterDefinition pd = params.get(0);
+        assertEquals("param", pd.getName());
+        
+    }
+    
+    
+
     
     @Test
     public void testReadFromTags() throws Exception {
@@ -766,6 +928,21 @@ public class JSONProviderTest extends Assert {
     }
     
     @Test
+    public void testWriteArrayAndNamespaceOnObject() throws Exception {
+        JSONProvider<TagVO2> p = new JSONProvider<TagVO2>();
+        p.setIgnoreNamespaces(true);
+        p.setSerializeAsArray(true);
+        TagVO2 tag = new TagVO2("a", "b");
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        
+        p.writeTo(tag, TagVO2.class, TagVO2.class, TagVO2.class.getAnnotations(), 
+                  MediaType.APPLICATION_JSON_TYPE, new MetadataMap<String, Object>(), os);
+        
+        String s = os.toString();
+        assertEquals("{\"thetag\":[{\"group\":\"b\",\"name\":\"a\"}]}", s);
+    }
+    
+    @Test
     public void testWriteUsingNaturalNotation() throws Exception {
         JSONProvider<Post> p = new JSONProvider<Post>();
         p.setSerializeAsArray(true);
@@ -1004,7 +1181,6 @@ public class JSONProviderTest extends Assert {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         provider.writeTo(many, ManyTags.class, ManyTags.class,
                        new Annotation[0], MediaType.TEXT_XML_TYPE, new MetadataMap<String, Object>(), bos);
-        System.out.println(bos.toString());
     }
  
     @Test
@@ -1369,5 +1545,81 @@ public class JSONProviderTest extends Assert {
             return attr;
         }
         
+    }
+    
+    interface ReportService {
+
+        List<ReportDefinition> findAllReports();
+        ReportDefinition findReport();
+
+    } 
+    
+    public static class ParameterDefinition {
+        private String name;
+        public ParameterDefinition() {
+        }
+        public ParameterDefinition(String name) {
+            this.name = name;
+        }
+        public String getName() {
+            return name;
+        }
+    
+        public void setName(String name) {
+            this.name = name;
+        }
+        
+    }
+
+    @XmlRootElement
+    public static class ReportDefinition {
+        private String reportName;
+       
+        private List<ParameterDefinition> parameterList;
+       
+        public ReportDefinition() {
+       
+        }
+       
+        public ReportDefinition(String reportName) {
+            this.reportName = reportName;
+        }
+       
+        public String getReportName() {
+            return reportName;
+        }
+
+        public void setReportName(String reportName) {
+            this.reportName = reportName;
+        }
+       
+        public List<ParameterDefinition> getParameterList() {
+            return parameterList;
+        }
+
+        public void setParameterList(List<ParameterDefinition> parameterList) {
+            this.parameterList = parameterList;
+        }
+       
+        public void addParameterDefinition(ParameterDefinition parameterDefinition) {
+            if (parameterList == null) {
+                parameterList = new ArrayList<ParameterDefinition>();
+            }
+            parameterList.add(parameterDefinition);
+        }
+    }
+    
+    private static class NullWriter extends DelegatingXMLStreamWriter {
+        public NullWriter(XMLStreamWriter writer) {
+            super(writer);
+        }
+
+        public void writeCharacters(String text) throws XMLStreamException {
+            if (StringUtils.isEmpty(text.trim())) {
+                super.writeCharacters(null); 
+            } else {
+                super.writeCharacters(text);
+            }
+        }
     }
 }
