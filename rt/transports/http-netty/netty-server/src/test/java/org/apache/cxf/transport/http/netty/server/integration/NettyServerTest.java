@@ -41,7 +41,7 @@ public class NettyServerTest extends AbstractBusClientServerTestBase {
     public static void start() throws Exception {
         Bus b = createStaticBus();
         BusFactory.setThreadDefaultBus(b);
-        ep = Endpoint.publish("http://localhost:" + PORT + "/SoapContext/SoapPort",
+        ep = Endpoint.publish("netty://http://localhost:" + PORT + "/SoapContext/SoapPort",
                 new org.apache.hello_world_soap_http.GreeterImpl());
         
         URL wsdl = NettyServerTest.class.getResource("/wsdl/hello_world.wsdl");
@@ -67,7 +67,7 @@ public class NettyServerTest extends AbstractBusClientServerTestBase {
 
     @Test
     public void testInvocation() throws Exception {
-        System.out.println("http://localhost:" + PORT + "/SoapContext/SoapPort");
+        
         updateAddressPort(g, PORT);
         String response = g.greetMe("test");
         assertEquals("Get a wrong response", "Hello test", response);

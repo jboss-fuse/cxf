@@ -37,6 +37,7 @@ import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageUtils;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
+import org.apache.cxf.ws.policy.AssertionInfoMap;
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.wss4j.common.ConfigurationConstants;
 import org.apache.wss4j.common.crypto.Crypto;
@@ -133,6 +134,12 @@ public class WSS4JStaxOutInterceptor extends AbstractWSS4JStaxInterceptor {
                 secProps = ConfigurationConverter.convert(getProperties());
             }
             
+            if ((secProps.getOutAction() == null || secProps.getOutAction().length == 0)
+                && mc.get(AssertionInfoMap.class) != null) {
+                // If no actions configured (with SecurityPolicy) then return
+                return;
+            }
+            
             SecurityEventListener securityEventListener = 
                 configureSecurityEventListener(mc, secProps);
             
@@ -220,6 +227,11 @@ public class WSS4JStaxOutInterceptor extends AbstractWSS4JStaxInterceptor {
             if (sigCrypto != null) {
                 config.put(ConfigurationConstants.SIG_PROP_REF_ID, "RefId-" + sigCrypto.hashCode());
                 config.put("RefId-" + sigCrypto.hashCode(), sigCrypto);
+                if (sigUser == null && sigCrypto.getDefaultX509Identifier() != null) {
+                    // Fall back to default identifier
+                    config.put(ConfigurationConstants.SIGNATURE_USER, 
+                               sigCrypto.getDefaultX509Identifier());
+                }
             }
             
             Crypto encCrypto = 
@@ -231,6 +243,11 @@ public class WSS4JStaxOutInterceptor extends AbstractWSS4JStaxInterceptor {
             if (encCrypto != null) {
                 config.put(ConfigurationConstants.ENC_PROP_REF_ID, "RefId-" + encCrypto.hashCode());
                 config.put("RefId-" + encCrypto.hashCode(), encCrypto);
+                if (encUser == null && encCrypto.getDefaultX509Identifier() != null) {
+                    // Fall back to default identifier
+                    config.put(ConfigurationConstants.ENCRYPTION_USER, 
+                               encCrypto.getDefaultX509Identifier());
+                }
             }
         }
     }

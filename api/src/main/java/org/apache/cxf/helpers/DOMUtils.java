@@ -21,27 +21,17 @@ package org.apache.cxf.helpers;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.WeakHashMap;
 
 import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
 import org.w3c.dom.Attr;
@@ -64,26 +54,7 @@ import org.apache.cxf.common.util.StringUtils;
 public final class DOMUtils {
     private static final String XMLNAMESPACE = "xmlns";
 
-    private static final Map<ClassLoader, DocumentBuilder> DOCUMENT_BUILDERS = Collections
-        .synchronizedMap(new WeakHashMap<ClassLoader, DocumentBuilder>());
-
     private DOMUtils() {
-    }
-
-    private static DocumentBuilder getBuilder() throws ParserConfigurationException {
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        if (loader == null) {
-            loader = DOMUtils.class.getClassLoader();
-        }
-        if (loader == null) {
-            return XMLUtils.getParser();
-        }
-        DocumentBuilder builder = DOCUMENT_BUILDERS.get(loader);
-        if (builder == null) {
-            builder = XMLUtils.getParser();
-            DOCUMENT_BUILDERS.put(loader, builder);
-        }
-        return builder;
     }
 
     /**
@@ -509,25 +480,9 @@ public final class DOMUtils {
         return db.parse(is2);
     }
 
-    public static void writeXml(Node n, OutputStream os) throws TransformerException {
-        TransformerFactory tf = TransformerFactory.newInstance();
-        // identity
-        Transformer t = tf.newTransformer();
-        t.setOutputProperty(OutputKeys.INDENT, "yes");
-        t.transform(new DOMSource(n), new StreamResult(os));
-    }
-
-    public static DocumentBuilder createDocumentBuilder() {
-        try {
-            return getBuilder();
-        } catch (ParserConfigurationException e) {
-            throw new RuntimeException("Couldn't find a DOM parser.", e);
-        }
-    }
-
     public static Document createDocument() {
         try {
-            return getBuilder().newDocument();
+            return XMLUtils.newDocument();
         } catch (ParserConfigurationException e) {
             throw new RuntimeException("Couldn't find a DOM parser.", e);
         }

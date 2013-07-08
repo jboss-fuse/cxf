@@ -19,7 +19,8 @@
 
 package org.apache.cxf.ws.rm;
 
-import org.apache.cxf.ws.rm.manager.RM10AddressingNamespaceType;
+import org.apache.cxf.ws.addressing.VersionTransformer.Names200408;
+
 
 /**
  * Configuration parameters for reliable messaging. These may be defined by a combination of Spring/Blueprint
@@ -39,7 +40,7 @@ public class RMConfiguration {
     private boolean inOrder;
     private DeliveryAssurance deliveryAssurance;
     private String rmNamespace;
-    private RM10AddressingNamespaceType rm10AddressingNamespace;
+    private String rm10AddressingNamespace;
     
     /**
      * Constructor.
@@ -59,6 +60,7 @@ public class RMConfiguration {
         exponentialBackoff = base.exponentialBackoff;
         sequenceSTRRequired = base.sequenceSTRRequired;
         sequenceTransportSecurityRequired = base.sequenceTransportSecurityRequired;
+        inOrder = base.inOrder;
         deliveryAssurance = base.deliveryAssurance;
         rmNamespace = base.rmNamespace;
         rm10AddressingNamespace = base.rm10AddressingNamespace;
@@ -201,19 +203,30 @@ public class RMConfiguration {
         rmNamespace = uri;
     }
 
-    public RM10AddressingNamespaceType getRM10AddressingNamespace() {
+    public String getRM10AddressingNamespace() {
         return rm10AddressingNamespace;
     }
 
-    public void setRM10AddressingNamespace(RM10AddressingNamespaceType addrns) {
+    public void setRM10AddressingNamespace(String addrns) {
         rm10AddressingNamespace = addrns;
     }
-
-    /**
-     * @return protocol variation
-     */
-    public ProtocolVariation getConfiguredProtocol() {
-        String addrns = rm10AddressingNamespace == null ? null : rm10AddressingNamespace.getUri();
-        return ProtocolVariation.findVariant(getRMNamespace(), addrns);
+    
+    public String getAddressingNamespace() {
+        
+        // determine based on RM namespace and RM 1.0 addressing namespace values
+        if (RM10Constants.NAMESPACE_URI.equals(rmNamespace)) {
+            return rm10AddressingNamespace == null
+                ? EncoderDecoder10Impl.INSTANCE.getWSANamespace() : rm10AddressingNamespace;
+        }
+        if (RM11Constants.NAMESPACE_URI.equals(rmNamespace)) {
+            return EncoderDecoder11Impl.INSTANCE.getWSANamespace();
+        }
+        
+        // should not happen, but in case RM namespace is not set
+        return Names200408.WSA_NAMESPACE_NAME;
+    }
+    
+    public ProtocolVariation getProtocolVariation() {
+        return ProtocolVariation.findVariant(getRMNamespace(), getRM10AddressingNamespace());
     }
 }

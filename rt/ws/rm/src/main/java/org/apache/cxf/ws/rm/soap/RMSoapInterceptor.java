@@ -47,7 +47,6 @@ import org.apache.cxf.binding.soap.interceptor.AbstractSoapInterceptor;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.headers.Header;
-import org.apache.cxf.interceptor.BareInInterceptor;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.interceptor.Interceptor;
 import org.apache.cxf.interceptor.InterceptorChain;
@@ -69,6 +68,7 @@ import org.apache.cxf.ws.rm.EncoderDecoder;
 import org.apache.cxf.ws.rm.ProtocolVariation;
 import org.apache.cxf.ws.rm.RM10Constants;
 import org.apache.cxf.ws.rm.RM11Constants;
+import org.apache.cxf.ws.rm.RMConfiguration;
 import org.apache.cxf.ws.rm.RMConstants;
 import org.apache.cxf.ws.rm.RMContextUtils;
 import org.apache.cxf.ws.rm.RMEndpoint;
@@ -79,6 +79,7 @@ import org.apache.cxf.ws.rm.RMProperties;
 import org.apache.cxf.ws.rm.SequenceFault;
 import org.apache.cxf.ws.rm.v200702.AckRequestedType;
 import org.apache.cxf.ws.rm.v200702.SequenceAcknowledgement;
+import org.apache.cxf.wsdl.interceptors.BareInInterceptor;
 
 /**
  * Protocol Handler responsible for {en|de}coding the RM 
@@ -285,7 +286,8 @@ public class RMSoapInterceptor extends AbstractSoapInterceptor {
                             String wsauri = null;
                             AddressingProperties maps = ContextUtils.retrieveMAPs(message, false, false, false);
                             if (maps == null) {
-                                wsauri = getManager(message).getAddressingNamespace(message);
+                                RMConfiguration config = getManager(message).getEffectiveConfiguration(message);
+                                wsauri = config.getAddressingNamespace();
                             } else {
                                 wsauri = maps.getNamespaceURI();
                             }

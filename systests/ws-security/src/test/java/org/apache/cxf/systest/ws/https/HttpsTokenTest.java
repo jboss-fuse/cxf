@@ -33,7 +33,8 @@ import org.example.contract.doubleit.DoubleItPortType;
 import org.junit.BeforeClass;
 
 /**
- * A set of tests for the HttpsToken policy
+ * A set of tests for the HttpsToken policy. It tests both DOM + StAX clients against the 
+ * DOM server.
  */
 public class HttpsTokenTest extends AbstractBusClientServerTestBase {
     static final String PORT = allocatePort(Server.class);
@@ -74,6 +75,11 @@ public class HttpsTokenTest extends AbstractBusClientServerTestBase {
                 service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
+        port.doubleIt(25);
+        
+        // Streaming
+        SecurityTestUtil.enableStreaming(port);
         port.doubleIt(25);
         
         // This should fail, as the client does not use a client cert
@@ -82,11 +88,21 @@ public class HttpsTokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(port, PORT);
         
         try {
+            // DOM
             port.doubleIt(25);
             fail("Failure expected on not using a client cert");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
             String error = "HttpsToken";
             assertTrue(ex.getMessage().contains(error));
+        }
+        
+        try {
+            // Streaming
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on not using a client cert");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // expected
         }
         
         ((java.io.Closeable)port).close();
@@ -110,7 +126,12 @@ public class HttpsTokenTest extends AbstractBusClientServerTestBase {
                 service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         port.doubleIt(25);
+        
+        // Streaming
+        SecurityTestUtil.enableStreaming(port);
+        port.doubleIt(25);  
         
         // This should fail, as the client does not send a UsernamePassword
         portQName = new QName(NAMESPACE, "DoubleItBasicAuthPort2");
@@ -118,11 +139,21 @@ public class HttpsTokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(port, PORT);
         
         try {
+            // DOM
             port.doubleIt(25);
             fail("Failure expected on not sending a UsernamePassword");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
             String error = "HttpsToken";
             assertTrue(ex.getMessage().contains(error));
+        }
+        
+        try {
+            // Streaming
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on not sending a UsernamePassword");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // expected
         }
         
     }

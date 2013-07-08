@@ -21,23 +21,35 @@ package org.apache.cxf.ws.rm.policy;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+
+import javax.xml.namespace.QName;
 
 import org.apache.cxf.message.Message;
 import org.apache.cxf.ws.policy.AssertionInfo;
 import org.apache.cxf.ws.policy.AssertionInfoMap;
 import org.apache.cxf.ws.policy.builder.jaxb.JaxbAssertion;
-import org.apache.cxf.ws.rm.RM10Constants;
 import org.apache.cxf.ws.rm.RM11Constants;
 import org.apache.cxf.ws.rm.RMConfiguration;
 import org.apache.cxf.ws.rm.RMConfiguration.DeliveryAssurance;
 import org.apache.cxf.ws.rm.RMUtils;
-import org.apache.cxf.ws.rm.policy.RM12Assertion.Order;
 import org.apache.cxf.ws.rmp.v200502.RMAssertion;
+import org.apache.neethi.builders.PrimitiveAssertion;
 
 /**
  * Utilities for working with policies and configurations.
  */
 public final class RMPolicyUtilities {
+    
+    private static final List<QName> ASSERTION_NAMES;
+    static {
+        ASSERTION_NAMES = new ArrayList<QName>();
+        ASSERTION_NAMES.addAll(RM10AssertionBuilder.KNOWN_ELEMENTS);
+        for (QName qn : RM12AssertionBuilder.KNOWN_ELEMENTS) {
+            ASSERTION_NAMES.add(qn);
+        }
+        ASSERTION_NAMES.add(RSPAssertionBuilder.CONFORMANT_QNAME);
+    }
     
     private RMPolicyUtilities() {
     }
@@ -57,16 +69,19 @@ public final class RMPolicyUtilities {
             if (ai.getAssertion() instanceof JaxbAssertion<?>) {
                 RMAssertion rma = (RMAssertion)((JaxbAssertion<?>)ai.getAssertion()).getData();
                 compatible = intersect(rma, compatible);
-            } else if (ai.getAssertion() instanceof RM12Assertion) {
-                RM12Assertion rma = (RM12Assertion) ai.getAssertion();
-                compatible = intersect(rma, compatible);
+            } else if (ai.getAssertion() instanceof PrimitiveAssertion) {
+                PrimitiveAssertion assertion = (PrimitiveAssertion)ai.getAssertion();
+                if (RM11Constants.WSRMP_NAMESPACE_URI.equals(assertion.getName().getNamespaceURI())) {
+                    compatible = intersect(assertion, compatible);
+                }
             }
         }
         return compatible;
     }
 
     /**
-     * Collect RMAssertions from map. This checks both namespaces defined for WS-RM policy assertions.
+     * Collect RMAssertions from map. This checks both namespaces defined for WS-RM policy assertions, along with the
+     * WS-I RSP namespace.
      * 
      * @param aim map, may be <code>null</code>
      * @return merged collection, never <code>null</code>
@@ -74,13 +89,11 @@ public final class RMPolicyUtilities {
     public static Collection<AssertionInfo> collectRMAssertions(AssertionInfoMap aim) {
         Collection<AssertionInfo> mergedAsserts = new ArrayList<AssertionInfo>();
         if (aim != null) {
-            Collection<AssertionInfo> ais = aim.get(RM10Constants.WSRMP_RMASSERTION_QNAME);
-            if (ais != null) {
-                mergedAsserts.addAll(ais);
-            }
-            ais = aim.get(RM11Constants.WSRMP_RMASSERTION_QNAME);
-            if (ais != null) {
-                mergedAsserts.addAll(ais);
+            for (QName qn : ASSERTION_NAMES) {
+                Collection<AssertionInfo> ais = aim.get(qn);
+                if (ais != null) {
+                    mergedAsserts.addAll(ais);
+                }
             }
         }
         return mergedAsserts;
@@ -156,8 +169,7 @@ public final class RMPolicyUtilities {
             }
         } else if (b.getRM10AddressingNamespace() == null) {
             return false;
-        } else if (!RMUtils.equalStrings(a.getRM10AddressingNamespace().getUri(),
-                                         b.getRM10AddressingNamespace().getUri())) {
+        } else if (!RMUtils.equalStrings(a.getRM10AddressingNamespace(), b.getRM10AddressingNamespace())) {
             return false;
         }
         if (!RMUtils.equalStrings(a.getRMNamespace(), b.getRMNamespace())) {
@@ -184,7 +196,7 @@ public final class RMPolicyUtilities {
             return cfg;
         }
         
-        RMConfiguration compatible = new RMConfiguration();
+        RMConfiguration compatible = new RMConfiguration(cfg);
         
         // if supplied, policy value overrides default inactivity timeout
         Long aval = cfg.getInactivityTimeout();
@@ -285,40 +297,26 @@ public final class RMPolicyUtilities {
      * @param cfg
      * @return result configuration
      */
-    public static RMConfiguration intersect(RM12Assertion rma, RMConfiguration cfg) {
+    public static RMConfiguration intersect(PrimitiveAssertion rma, RMConfiguration cfg) {
         if (isCompatible(rma, cfg)) {
             return cfg;
         }
         RMConfiguration compatible = new RMConfiguration(cfg);
-        
-        // policy values override supplied settings
-        if (rma.isSequenceSTR()) {
+        String lname = rma.getName().getLocalPart();
+        if (RM11Constants.RMASSERTION_NAME.equals(lname)) {
+            compatible.setRMNamespace(RM11Constants.NAMESPACE_URI);
+        } else if (RM12AssertionBuilder.SEQUENCESTR_NAME.equals(lname)) {
             compatible.setSequenceSTRRequired(true);
-        }
-        if (rma.isSequenceTransportSecurity()) {
+        } else if (RM12AssertionBuilder.SEQUENCETRANSEC_NAME.equals(lname)) {
             compatible.setSequenceTransportSecurityRequired(true);
-        }
-        if (rma.isAssuranceSet()) {
-            compatible.setInOrder(rma.isInOrder());
-            DeliveryAssurance da = null;
-            Order order = rma.getOrder();
-            if (order != null) {
-                switch (order) {
-                case AtLeastOnce:
-                    da = DeliveryAssurance.AT_LEAST_ONCE;
-                    break;
-                case AtMostOnce:
-                    da = DeliveryAssurance.AT_MOST_ONCE;
-                    break;
-                case ExactlyOnce:
-                    da = DeliveryAssurance.EXACTLY_ONCE;
-                    break;
-                default:
-                    // unreachable code, required by checkstyle
-                    break;
-                }
-                compatible.setDeliveryAssurance(da);
-            }
+        } else if (RM12AssertionBuilder.EXACTLYONCE_NAME.equals(lname)) {
+            compatible.setDeliveryAssurance(DeliveryAssurance.EXACTLY_ONCE);
+        } else if (RM12AssertionBuilder.ATLEASTONCE_NAME.equals(lname)) {
+            compatible.setDeliveryAssurance(DeliveryAssurance.AT_LEAST_ONCE);
+        } else if (RM12AssertionBuilder.ATMOSTONCE_NAME.equals(lname)) {
+            compatible.setDeliveryAssurance(DeliveryAssurance.AT_MOST_ONCE);
+        } else if (RM12AssertionBuilder.INORDER_NAME.equals(lname)) {
+            compatible.setInOrder(true);
         }
         return compatible;
     }
@@ -330,29 +328,24 @@ public final class RMPolicyUtilities {
      * @param cfg
      * @return <code>true</code> if compatible, <code>false</code> if not
      */
-    public static boolean isCompatible(RM12Assertion rma, RMConfiguration cfg) {
-        if ((rma.isSequenceSTR() && !cfg.isSequenceSTRRequired())
-            || (rma.isSequenceTransportSecurity() && !cfg.isSequenceTransportSecurityRequired())) {
-            return false;
+    public static boolean isCompatible(PrimitiveAssertion rma, RMConfiguration cfg) {
+        String lname = rma.getName().getLocalPart();
+        boolean compatible = true;
+        if (RM11Constants.RMASSERTION_NAME.equals(lname)) {
+            compatible = RM11Constants.WSRMP_NAMESPACE_URI.equals(cfg.getRMNamespace());
+        } else if (RM12AssertionBuilder.SEQUENCESTR_NAME.equals(lname)) {
+            compatible = cfg.isSequenceSTRRequired();
+        } else if (RM12AssertionBuilder.SEQUENCETRANSEC_NAME.equals(lname)) {
+            compatible = cfg.isSequenceTransportSecurityRequired();
+        } else if (RM12AssertionBuilder.EXACTLYONCE_NAME.equals(lname)) {
+            compatible = cfg.getDeliveryAssurance() == DeliveryAssurance.EXACTLY_ONCE;
+        } else if (RM12AssertionBuilder.ATLEASTONCE_NAME.equals(lname)) {
+            compatible = cfg.getDeliveryAssurance() == DeliveryAssurance.AT_LEAST_ONCE;
+        } else if (RM12AssertionBuilder.ATMOSTONCE_NAME.equals(lname)) {
+            compatible = cfg.getDeliveryAssurance() == DeliveryAssurance.AT_MOST_ONCE;
+        } else if (RM12AssertionBuilder.INORDER_NAME.equals(lname)) {
+            compatible = cfg.isInOrder();
         }
-        if (rma.isInOrder() != cfg.isInOrder()) {
-            return false;
-        }
-        Order order = rma.getOrder();
-        DeliveryAssurance da = cfg.getDeliveryAssurance();
-        if (order != null) {
-            switch (order) {
-            case AtLeastOnce:
-                return da == DeliveryAssurance.AT_LEAST_ONCE;
-            case AtMostOnce:
-                return da == DeliveryAssurance.AT_MOST_ONCE;
-            case ExactlyOnce:
-                return da == DeliveryAssurance.EXACTLY_ONCE;
-            default:
-                // unreachable code, required by checkstyle
-                break;
-            }
-        }
-        return true;
+        return compatible;
     }
 }

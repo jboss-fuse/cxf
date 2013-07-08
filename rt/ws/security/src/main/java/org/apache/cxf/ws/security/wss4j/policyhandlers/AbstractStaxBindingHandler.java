@@ -19,6 +19,7 @@
 
 package org.apache.cxf.ws.security.wss4j.policyhandlers;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,9 +31,13 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
+
+import org.w3c.dom.Element;
 
 import org.apache.cxf.binding.soap.SoapMessage;
 import org.apache.cxf.common.classloader.ClassLoaderUtils;
@@ -50,7 +55,9 @@ import org.apache.cxf.ws.security.tokenstore.TokenStore;
 import org.apache.cxf.ws.security.tokenstore.TokenStoreFactory;
 import org.apache.neethi.Assertion;
 import org.apache.wss4j.common.ConfigurationConstants;
+import org.apache.wss4j.common.ext.WSPasswordCallback;
 import org.apache.wss4j.common.ext.WSSecurityException;
+import org.apache.wss4j.common.saml.SAMLCallback;
 import org.apache.wss4j.dom.WSConstants;
 import org.apache.wss4j.policy.SP11Constants;
 import org.apache.wss4j.policy.SP12Constants;
@@ -62,6 +69,7 @@ import org.apache.wss4j.policy.model.AbstractTokenWrapper;
 import org.apache.wss4j.policy.model.AlgorithmSuite.AlgorithmSuiteType;
 import org.apache.wss4j.policy.model.EncryptedParts;
 import org.apache.wss4j.policy.model.Header;
+import org.apache.wss4j.policy.model.IssuedToken;
 import org.apache.wss4j.policy.model.KerberosToken;
 import org.apache.wss4j.policy.model.KeyValueToken;
 import org.apache.wss4j.policy.model.Layout;
@@ -90,6 +98,7 @@ import org.apache.xml.security.stax.securityToken.SecurityTokenProvider;
 public abstract class AbstractStaxBindingHandler {
     private static final Logger LOG = LogUtils.getL7dLogger(AbstractStaxBindingHandler.class);
     protected boolean timestampAdded;
+    protected boolean signatureConfirmationAdded;
     protected Set<SecurePart> encryptedTokensList = new HashSet<SecurePart>();
     
     protected Map<AbstractToken, SecurePart> endEncSuppTokMap;
@@ -147,7 +156,42 @@ public abstract class AbstractStaxBindingHandler {
             config.put(ConfigurationConstants.ADD_USERNAMETOKEN_CREATED, "true");
         }
         
+        // Check if a CallbackHandler was specified
+        if (config.get(ConfigurationConstants.PW_CALLBACK_REF) == null) {
+            String password = (String)message.getContextualProperty(SecurityConstants.PASSWORD);
+            if (password != null) {
+                String username = 
+                    (String)message.getContextualProperty(SecurityConstants.USERNAME);
+                UTCallbackHandler callbackHandler = new UTCallbackHandler(username, password);
+                config.put(ConfigurationConstants.PW_CALLBACK_REF, callbackHandler);
+            }
+        }
+        
         return new SecurePart(WSSConstants.TAG_wsse_UsernameToken, Modifier.Element);
+    }
+    
+    private static class UTCallbackHandler implements CallbackHandler {
+        
+        private final String username;
+        private final String password;
+        
+        public UTCallbackHandler(String username, String password) {
+            this.username = username;
+            this.password = password;
+        }
+
+        @Override
+        public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+            for (Callback callback : callbacks) {
+                if (callback instanceof WSPasswordCallback) {
+                    WSPasswordCallback pwcb = (WSPasswordCallback)callback;
+                    if (pwcb.getIdentifier().equals(username)) {
+                        pwcb.setPassword(password);
+                    }
+                }
+            }
+        }
+        
     }
     
     protected SecurePart addKerberosToken(
@@ -265,6 +309,40 @@ public abstract class AbstractStaxBindingHandler {
         return new SecurePart(qname, Modifier.Element);
     }
     
+    protected void addIssuedToken(IssuedToken token, SecurityToken secToken, 
+                                  boolean signed, boolean endorsing) {
+        if (isTokenRequired(token.getIncludeTokenType())) {
+            final Element el = secToken.getToken();
+            
+            String samlAction = ConfigurationConstants.SAML_TOKEN_UNSIGNED;
+            if (signed || endorsing) {
+                samlAction = ConfigurationConstants.SAML_TOKEN_SIGNED;
+            }
+            Map<String, Object> config = getProperties();
+            if (config.containsKey(ConfigurationConstants.ACTION)) {
+                String action = (String)config.get(ConfigurationConstants.ACTION);
+                config.put(ConfigurationConstants.ACTION, action + " " + samlAction);
+            } else {
+                config.put(ConfigurationConstants.ACTION, samlAction);
+            }
+            
+            CallbackHandler callbackHandler = new CallbackHandler() {
+
+                @Override
+                public void handle(Callback[] callbacks) {
+                    for (Callback callback : callbacks) {
+                        if (callback instanceof SAMLCallback) {
+                            SAMLCallback samlCallback = (SAMLCallback)callback;
+                            samlCallback.setAssertionElement(el);
+                        }
+                    }
+                }
+                
+            };
+            config.put(ConfigurationConstants.SAML_CALLBACK_REF, callbackHandler);
+        } 
+    }
+    
     protected void policyNotAsserted(Assertion assertion, String reason) {
         if (assertion == null) {
             return;
@@ -285,20 +363,8 @@ public abstract class AbstractStaxBindingHandler {
     }
     
     protected void configureTimestamp(AssertionInfoMap aim) {
-        Map<String, Object> config = getProperties();
-        
         AbstractBinding binding = getBinding(aim);
         if (binding != null && binding.isIncludeTimestamp()) {
-            // Action
-            if (config.containsKey(ConfigurationConstants.ACTION)) {
-                String action = (String)config.get(ConfigurationConstants.ACTION);
-                config.put(ConfigurationConstants.ACTION, 
-                           action + " " + ConfigurationConstants.TIMESTAMP);
-            } else {
-                config.put(ConfigurationConstants.ACTION, 
-                           ConfigurationConstants.TIMESTAMP);
-            }
-            
             timestampAdded = true;
         }
     }
@@ -400,60 +466,11 @@ public abstract class AbstractStaxBindingHandler {
             }
         }
         
-        // boolean alsoIncludeToken = false;
-        /* TODO if (token instanceof IssuedToken || token instanceof SamlToken) {
-            SecurityToken securityToken = getSecurityToken();
-            String tokenType = securityToken.getTokenType();
-
-            Element ref;
-            if (attached) {
-                ref = securityToken.getAttachedReference();
-            } else {
-                ref = securityToken.getUnattachedReference();
-            }
-
-            if (ref != null) {
-                SecurityTokenReference secRef = 
-                    new SecurityTokenReference(cloneElement(ref), new BSPEnforcer());
-                sig.setSecurityTokenReference(secRef);
-                sig.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
-            } else {
-                int type = attached ? WSConstants.CUSTOM_SYMM_SIGNING 
-                    : WSConstants.CUSTOM_SYMM_SIGNING_DIRECT;
-                if (WSConstants.WSS_SAML_TOKEN_TYPE.equals(tokenType)
-                    || WSConstants.SAML_NS.equals(tokenType)) {
-                    sig.setCustomTokenValueType(WSConstants.WSS_SAML_KI_VALUE_TYPE);
-                    sig.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
-                } else if (WSConstants.WSS_SAML2_TOKEN_TYPE.equals(tokenType)
-                    || WSConstants.SAML2_NS.equals(tokenType)) {
-                    sig.setCustomTokenValueType(WSConstants.WSS_SAML2_KI_VALUE_TYPE);
-                    sig.setKeyIdentifierType(WSConstants.CUSTOM_KEY_IDENTIFIER);
-                } else {
-                    sig.setCustomTokenValueType(tokenType);
-                    sig.setKeyIdentifierType(type);
-                }
-            }
-
-            String sigTokId;
-            if (attached) {
-                sigTokId = securityToken.getWsuId();
-                if (sigTokId == null) {
-                    sigTokId = securityToken.getId();                    
-                }
-                if (sigTokId.startsWith("#")) {
-                    sigTokId = sigTokId.substring(1);
-                }
-            } else {
-                sigTokId = securityToken.getId();
-            }
-
-            sig.setCustomTokenId(sigTokId);
-        } else {
-        */
         AssertionInfoMap aim = message.get(AssertionInfoMap.class);
         AbstractBinding binding = getBinding(aim);
-        config.put(ConfigurationConstants.SIG_KEY_ID, getKeyIdentifierType(wrapper, token));
         
+        config.put(ConfigurationConstants.SIG_KEY_ID, getKeyIdentifierType(wrapper, token));
+
         // Find out do we also need to include the token as per the Inclusion requirement
         if (token instanceof X509Token 
             && token.getIncludeTokenType() != IncludeTokenType.INCLUDE_TOKEN_NEVER
@@ -482,9 +499,6 @@ public abstract class AbstractStaxBindingHandler {
         config.put(ConfigurationConstants.SIG_DIGEST_ALGO, algType.getDigest());
         // sig.setSigCanonicalization(binding.getAlgorithmSuite().getC14n().getValue());
 
-        //if (alsoIncludeToken) {
-        //    includeToken(user, crypto, sig);
-        //}
     }
     
     protected final TokenStore getTokenStore() {
@@ -848,6 +862,7 @@ public abstract class AbstractStaxBindingHandler {
                 new SecurePart(WSSConstants.TAG_wsse11_SignatureConfirmation, Modifier.Element);
             sigParts.add(securePart);
         }
+        signatureConfirmationAdded = true;
     }
     
     /**
@@ -885,6 +900,7 @@ public abstract class AbstractStaxBindingHandler {
             for (Header head : parts.getHeaders()) {
                 QName qname = new QName(head.getNamespace(), head.getName());
                 SecurePart securePart = new SecurePart(qname, Modifier.Element);
+                securePart.setRequired(false);
                 signedParts.add(securePart);
             }
         }
@@ -937,6 +953,7 @@ public abstract class AbstractStaxBindingHandler {
             for (Header head : parts.getHeaders()) {
                 QName qname = new QName(head.getNamespace(), head.getName());
                 SecurePart securePart = new SecurePart(qname, Modifier.Content);
+                securePart.setRequired(false);
                 encryptedParts.add(securePart);
             }
         }

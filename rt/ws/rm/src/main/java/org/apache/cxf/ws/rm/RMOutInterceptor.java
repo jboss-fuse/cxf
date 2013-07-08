@@ -64,26 +64,26 @@ public class RMOutInterceptor extends AbstractRMInterceptor<Message>  {
             LogUtils.log(LOG, Level.WARNING, "MAPS_RETRIEVAL_FAILURE_MSG");
             return;
         }
-        String rmUri = getManager().getRMNamespace(msg);
-        String addrUri = getManager().getAddressingNamespace(msg);
+        
         if (isRuntimeFault(msg)) {
             LogUtils.log(LOG, Level.WARNING, "RUNTIME_FAULT_MSG");
             // in case of a SequenceFault or other WS-RM related fault, set action appropriately.
             // the received inbound maps is available to extract some values in case if needed.
             Throwable cause = msg.getContent(Exception.class).getCause();
             if (cause instanceof SequenceFault || cause instanceof RMException) {
-                maps.getAction().setValue(RM11Constants.NAMESPACE_URI.equals(rmUri)
-                                          ? RM11Constants.NAMESPACE_URI + "/fault"
-                                          : addrUri + "/fault");
+                maps.getAction().setValue(getAddressingNamespace(maps) + "/fault");
             }
             return;
         }
-        
-        Source source = getManager().getSource(msg);
 
-        ProtocolVariation protocol = ProtocolVariation.findVariant(rmUri, addrUri);
+        Source source = getManager().getSource(msg);
+        
+        RMConfiguration config = getManager().getEffectiveConfiguration(msg);
+        String wsaNamespace = config.getAddressingNamespace();
+        String rmNamespace = config.getRMNamespace();
+        ProtocolVariation protocol = ProtocolVariation.findVariant(rmNamespace, wsaNamespace);
         RMContextUtils.setProtocolVariation(msg, protocol);
-        maps.exposeAs(protocol.getWSANamespace());
+        maps.exposeAs(wsaNamespace);
         Destination destination = getManager().getDestination(msg);
 
         String action = null;
@@ -210,6 +210,14 @@ public class RMOutInterceptor extends AbstractRMInterceptor<Message>  {
         }
         
         assertReliability(msg);
+    }
+
+    private String getAddressingNamespace(AddressingProperties maps) {
+        String wsaNamespace = maps.getNamespaceURI();
+        if (wsaNamespace == null) {
+            getManager().getConfiguration().getAddressingNamespace();
+        }
+        return wsaNamespace;
     }
     
     void addAcknowledgements(Destination destination, 

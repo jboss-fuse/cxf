@@ -31,6 +31,7 @@ import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.ws.policy.AssertionInfo;
 import org.apache.cxf.ws.policy.AssertionInfoMap;
+import org.apache.cxf.ws.security.tokenstore.SecurityToken;
 import org.apache.wss4j.common.ConfigurationConstants;
 import org.apache.wss4j.policy.SPConstants;
 import org.apache.wss4j.policy.model.AbstractToken;
@@ -75,9 +76,16 @@ public class StaxTransportBindingHandler extends AbstractStaxBindingHandler {
         
         if (this.isRequestor()) {
             tbinding = (TransportBinding)getBinding(aim);
-            TransportToken token = tbinding.getTransportToken();
-            if (token.getToken() instanceof IssuedToken) {
-                // TODO
+            if (tbinding != null) {
+                TransportToken token = tbinding.getTransportToken();
+                if (token.getToken() instanceof IssuedToken) {
+                    SecurityToken secToken = getSecurityToken();
+                    if (secToken == null) {
+                        policyNotAsserted(token.getToken(), "No transport token id");
+                        return;
+                    }
+                    addIssuedToken((IssuedToken)token.getToken(), secToken, false, false);
+                }
             }
             
             try {
@@ -89,6 +97,19 @@ public class StaxTransportBindingHandler extends AbstractStaxBindingHandler {
             }
         } else {
             addSignatureConfirmation(null);
+        }
+        
+        if (timestampAdded) {
+            Map<String, Object> config = getProperties();
+            // Action
+            if (config.containsKey(ConfigurationConstants.ACTION)) {
+                String action = (String)config.get(ConfigurationConstants.ACTION);
+                config.put(ConfigurationConstants.ACTION, 
+                           action + " " + ConfigurationConstants.TIMESTAMP);
+            } else {
+                config.put(ConfigurationConstants.ACTION, 
+                           ConfigurationConstants.TIMESTAMP);
+            }
         }
     }
     
@@ -149,15 +170,8 @@ public class StaxTransportBindingHandler extends AbstractStaxBindingHandler {
         for (AbstractToken token : sgndSuppTokens.getTokens()) {
             if (token instanceof UsernameToken) {
                 addUsernameToken((UsernameToken)token);
-            /*TODO 
-              else if (token instanceof IssuedToken) {
-                SecurityToken secTok = getSecurityToken();
-                
-                if (includeToken(token.getIncludeTokenType())) {
-                    //Add the token
-                    addEncryptedKeyElement(cloneElement(secTok.getToken()));
-                }
-            } */
+            } else if (token instanceof IssuedToken) {
+                addIssuedToken((IssuedToken)token, getSecurityToken(), false, false);
             } else if (token instanceof KerberosToken) {
                 addKerberosToken((KerberosToken)token, false, false);
             } else if (token instanceof SamlToken) {
@@ -166,7 +180,6 @@ public class StaxTransportBindingHandler extends AbstractStaxBindingHandler {
                 throw new Exception(token.getName() + " is not supported in the streaming code");
             }
         }
-        
     }
     
     /**
@@ -236,15 +249,17 @@ public class StaxTransportBindingHandler extends AbstractStaxBindingHandler {
     private void handleEndorsingToken(
         AbstractToken token, SupportingTokens wrapper
     ) throws Exception {
-        /* TODO if (token instanceof IssuedToken
-            || token instanceof SecureConversationToken
+        if (token instanceof IssuedToken) {
+            addIssuedToken((IssuedToken)token, getSecurityToken(), false, true);
+            doSignature(token, wrapper);
+        /* TODO if (token instanceof SecureConversationToken
             || token instanceof SecurityContextToken
             || token instanceof SpnegoContextToken) {
             addSig(doIssuedTokenSignature(token, wrapper));
-        } else */ 
-        if (token instanceof X509Token
+        */
+        } else if (token instanceof X509Token
             || token instanceof KeyValueToken) {
-            doX509TokenSignature(token, wrapper);
+            doSignature(token, wrapper);
         } else if (token instanceof SamlToken) {
             addSamlToken((SamlToken)token, false, true);
             signPartsAndElements(wrapper.getSignedParts(), wrapper.getSignedElements());
@@ -268,7 +283,7 @@ public class StaxTransportBindingHandler extends AbstractStaxBindingHandler {
         }
     }
     
-    private void doX509TokenSignature(AbstractToken token, SupportingTokens wrapper) 
+    private void doSignature(AbstractToken token, SupportingTokens wrapper) 
         throws Exception {
         
         signPartsAndElements(wrapper.getSignedParts(), wrapper.getSignedElements());
@@ -310,6 +325,14 @@ public class StaxTransportBindingHandler extends AbstractStaxBindingHandler {
             }
         }
         
+        String optionalParts = "";
+        if (properties.containsKey(ConfigurationConstants.OPTIONAL_SIGNATURE_PARTS)) {
+            optionalParts = (String)properties.get(ConfigurationConstants.OPTIONAL_SIGNATURE_PARTS);
+            if (!optionalParts.endsWith(";")) {
+                optionalParts += ";";
+            }
+        }
+        
         // Add timestamp
         if (timestampAdded) {
             parts += "{Element}{" + WSSConstants.NS_WSU10 + "}Timestamp;";
@@ -322,7 +345,7 @@ public class StaxTransportBindingHandler extends AbstractStaxBindingHandler {
             }
             
             for (Header head : signedParts.getHeaders()) {
-                parts += "{Element}{" +  head.getNamespace() + "}" + head.getName() + ";";
+                optionalParts += "{Element}{" +  head.getNamespace() + "}" + head.getName() + ";";
             }
         }
         /*
@@ -343,6 +366,7 @@ public class StaxTransportBindingHandler extends AbstractStaxBindingHandler {
         */
         
         properties.put(ConfigurationConstants.SIGNATURE_PARTS, parts);
+        properties.put(ConfigurationConstants.OPTIONAL_SIGNATURE_PARTS, optionalParts);
     }
 
 

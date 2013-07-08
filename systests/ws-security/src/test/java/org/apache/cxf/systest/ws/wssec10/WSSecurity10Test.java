@@ -24,6 +24,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.xml.namespace.QName;
+import javax.xml.ws.BindingProvider;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
@@ -35,6 +36,7 @@ import org.apache.cxf.systest.ws.wssec10.server.Server;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
+import org.apache.cxf.ws.security.SecurityConstants;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -43,7 +45,7 @@ import wssec.wssec10.PingService;
 
 
 /**
- *
+ * It tests both DOM + StAX clients against the DOM server
  */
 public class WSSecurity10Test extends AbstractBusClientServerTestBase {
     static final String PORT = allocatePort(Server.class);
@@ -74,7 +76,7 @@ public class WSSecurity10Test extends AbstractBusClientServerTestBase {
     }
 
     @Test
-    public void testClientServer() {
+    public void testClientServerDOM() {
 
         String[] argv = new String[] {
             "UserName",
@@ -115,7 +117,65 @@ public class WSSecurity10Test extends AbstractBusClientServerTestBase {
             httpClientPolicy.setReceiveTimeout(0);
              
             http.setClient(httpClientPolicy);
-            final String output = port.echo(INPUT);
+            String output = port.echo(INPUT);
+            assertEquals(INPUT, output);
+            
+            cl.destroy();
+        }
+        
+        bus.shutdown(true);
+    }
+    
+    @Test
+    public void testClientServerStreaming() {
+
+        String[] argv = new String[] {
+            // TODO - See WSS-458 "UserName",
+            "UserNameOverTransport",
+            "MutualCertificate10SignEncrypt",
+            "MutualCertificate10SignEncryptRsa15TripleDes"
+        };
+        //argv = new String[] {argv[1]};
+        Bus bus = null;
+        if (unrestrictedPoliciesInstalled) {
+            bus = new SpringBusFactory().createBus("org/apache/cxf/systest/ws/wssec10/client/client.xml");
+        } else {
+            bus = new SpringBusFactory().createBus(
+                    "org/apache/cxf/systest/ws/wssec10/client/client_restricted.xml");
+        }
+        BusFactory.setDefaultBus(bus);
+        BusFactory.setThreadDefaultBus(bus);
+        URL wsdlLocation = null;
+        for (String portPrefix : argv) {
+            PingService svc = null; 
+            wsdlLocation = getWsdlLocation(portPrefix); 
+            svc = new PingService(wsdlLocation);
+            final IPingService port = 
+                svc.getPort(
+                    new QName(
+                        "http://WSSec/wssec10",
+                        portPrefix + "_IPingService"
+                    ),
+                    IPingService.class
+                );
+         
+            // Streaming
+            ((BindingProvider)port).getRequestContext().put(
+                SecurityConstants.ENABLE_STREAMING_SECURITY, "true"
+            );
+            ((BindingProvider)port).getResponseContext().put(
+                SecurityConstants.ENABLE_STREAMING_SECURITY, "true"
+            );
+            Client cl = ClientProxy.getClient(port);
+            
+            HTTPConduit http = (HTTPConduit) cl.getConduit();
+             
+            HTTPClientPolicy httpClientPolicy = new HTTPClientPolicy();
+            httpClientPolicy.setConnectionTimeout(0);
+            httpClientPolicy.setReceiveTimeout(0);
+             
+            http.setClient(httpClientPolicy);
+            String output = port.echo(INPUT);
             assertEquals(INPUT, output);
             
             cl.destroy();

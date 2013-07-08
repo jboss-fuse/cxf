@@ -34,7 +34,6 @@ import java.security.cert.Certificate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -91,6 +90,15 @@ public class NettyHttpConduit extends URLConnectionHTTPConduit {
     // Using Netty API directly
     protected void setupConnection(Message message, URI uri, HTTPClientPolicy csPolicy) throws IOException {
 
+        // need to do some clean up work on the URI address
+        String uriString = uri.toString();
+        if (uriString.startsWith("netty://")) {
+            try {
+                uri = new URI(uriString.substring(8));
+            } catch (URISyntaxException ex) {
+                throw new MalformedURLException("unsupport uri: "  + uriString);
+            }
+        }
         String s = uri.getScheme();
         if (!"http".equals(s) && !"https".equals(s)) {
             throw new MalformedURLException("unknown protocol: " + s);
@@ -266,23 +274,14 @@ public class NettyHttpConduit extends URLConnectionHTTPConduit {
             // Setup the call back on the NettyHttpClientRequest
             ChannelFutureListener listener = new ChannelFutureListener() {
                 
-                private final AtomicBoolean handshakeDone = new AtomicBoolean(false);
-
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
                     if (future.isSuccess()) {
                         setChannel(future.getChannel());
                         SslHandler sslHandler = channel.getPipeline().get(SslHandler.class);
-                        if (!handshakeDone.getAndSet(true) && (sslHandler != null)) {
-                            sslHandler.handshake().addListener(this);
-                            return;
-                        } else {
-                            if (sslHandler != null) {
-                                // setup the session for use
-                                session = sslHandler.getEngine().getSession();
-                            }
+                        if (sslHandler != null) {
+                            session = sslHandler.getEngine().getSession();
                         }
-
                     } else {
                         setException((Exception) future.getCause());
                     }

@@ -103,6 +103,7 @@ public class RMEndpoint {
     private AtomicInteger controlMessageCount;
     private InstrumentationManager instrumentationManager;
     private ManagedRMEndpoint managedEndpoint;
+    private RMConfiguration configuration;
     
     /**
      * Constructor.
@@ -252,6 +253,15 @@ public class RMEndpoint {
     public Conduit getConduit() {
         return conduit;
     }
+    
+    /**
+     * Get the RM configuration applied to this endpoint.
+     * 
+     * @return configuration
+     */
+    public RMConfiguration getConfiguration() {
+        return configuration;
+    }
 
     /**
      * Returns the replyTo address of the first application request, i.e. the
@@ -264,9 +274,9 @@ public class RMEndpoint {
         return replyTo;
     }
 
-    void initialise(Conduit c, 
-                    EndpointReferenceType r,
-                    org.apache.cxf.transport.Destination d) {
+    void initialise(RMConfiguration config, Conduit c, EndpointReferenceType r,
+        org.apache.cxf.transport.Destination d) {
+        configuration = config;
         conduit = c;
         replyTo = r;
         createServices();
@@ -384,32 +394,33 @@ public class RMEndpoint {
             return;
         }
 
-        EndpointInfo ei = getEndpoint(ProtocolVariation.RM10WSA200408).getEndpointInfo();
-
-        PolicyInterceptorProviderRegistry reg = manager.getBus()
-            .getExtension(PolicyInterceptorProviderRegistry.class);
-        EndpointPolicy ep = null == conduit ? engine.getServerEndpointPolicy(applicationEndpoint
-            .getEndpointInfo(), null) : engine.getClientEndpointPolicy(applicationEndpoint.getEndpointInfo(),
-                                                                       conduit);
-
-        if (conduit != null) {
-            engine.setClientEndpointPolicy(ei, ep);
-        } else {
-            engine.setServerEndpointPolicy(ei, ep);
-        }
-
-        EffectivePolicy effectiveOutbound = new EffectivePolicyImpl(ep, reg, true, false);
-        EffectivePolicy effectiveInbound = new EffectivePolicyImpl(ep, reg, false, false);
-
-        BindingInfo bi = ei.getBinding();
-        Collection<BindingOperationInfo> bois = bi.getOperations();
-
-        for (BindingOperationInfo boi : bois) {
-            engine.setEffectiveServerRequestPolicy(ei, boi, effectiveInbound);
-            engine.setEffectiveServerResponsePolicy(ei, boi, effectiveOutbound);
-
-            engine.setEffectiveClientRequestPolicy(ei, boi, effectiveOutbound);
-            engine.setEffectiveClientResponsePolicy(ei, boi, effectiveInbound);
+        for (Endpoint endpoint : endpoints.values()) {
+            EndpointInfo ei = endpoint.getEndpointInfo();
+            PolicyInterceptorProviderRegistry reg = manager.getBus()
+                .getExtension(PolicyInterceptorProviderRegistry.class);
+            EndpointPolicy ep = null == conduit ? engine.getServerEndpointPolicy(applicationEndpoint
+                .getEndpointInfo(), null) : engine.getClientEndpointPolicy(applicationEndpoint.getEndpointInfo(),
+                    conduit);
+            
+            if (conduit != null) {
+                engine.setClientEndpointPolicy(ei, ep);
+            } else {
+                engine.setServerEndpointPolicy(ei, ep);
+            }
+            
+            EffectivePolicy effectiveOutbound = new EffectivePolicyImpl(ep, reg, true, false);
+            EffectivePolicy effectiveInbound = new EffectivePolicyImpl(ep, reg, false, false);
+            
+            BindingInfo bi = ei.getBinding();
+            Collection<BindingOperationInfo> bois = bi.getOperations();
+            
+            for (BindingOperationInfo boi : bois) {
+                engine.setEffectiveServerRequestPolicy(ei, boi, effectiveInbound);
+                engine.setEffectiveServerResponsePolicy(ei, boi, effectiveOutbound);
+                
+                engine.setEffectiveClientRequestPolicy(ei, boi, effectiveOutbound);
+                engine.setEffectiveClientResponsePolicy(ei, boi, effectiveInbound);
+            }
         }
 
         // TODO: FaultPolicy (SequenceFault)
