@@ -29,9 +29,9 @@ import javax.xml.ws.Service;
 import org.apache.cxf.Bus;
 import org.apache.cxf.bus.spring.SpringBusFactory;
 import org.apache.cxf.systest.ws.common.SecurityTestUtil;
-import org.apache.cxf.systest.ws.coverage_checker.server.Server;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 import org.apache.cxf.ws.security.wss4j.WSS4JOutInterceptor;
+import org.apache.cxf.ws.security.wss4j.WSS4JStaxOutInterceptor;
 import org.example.contract.doubleit.DoubleItPortType;
 import org.junit.BeforeClass;
 
@@ -83,14 +83,21 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
                      "org/apache/cxf/systest/ws/wssec10/client/alice.properties");
         outProps.put("user", "alice");
         outProps.put("passwordCallbackClass", 
-                     "org.apache.cxf.systest.ws.wssec10.client.KeystorePasswordCallback");
+                     "org.apache.cxf.systest.ws.common.KeystorePasswordCallback");
         outProps.put("signatureParts",
                      "{}{http://schemas.xmlsoap.org/soap/envelope/}Body;"
                      + "{}{http://docs.oasis-open.org/wss/2004/01/oasis-"
                      + "200401-wss-wssecurity-utility-1.0.xsd}Timestamp;");
         
-        bus.getOutInterceptors().add(new WSS4JOutInterceptor(outProps));
+        // DOM
+        WSS4JOutInterceptor outInterceptor = new WSS4JOutInterceptor(outProps);
+        bus.getOutInterceptors().add(outInterceptor);
+        port.doubleIt(25);
+        bus.getOutInterceptors().remove(outInterceptor);
         
+        // Streaming
+        WSS4JStaxOutInterceptor staxOutInterceptor = new WSS4JStaxOutInterceptor(outProps);
+        bus.getOutInterceptors().add(staxOutInterceptor);
         port.doubleIt(25);
         
         ((java.io.Closeable)port).close();
@@ -119,11 +126,25 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
                      "org/apache/cxf/systest/ws/wssec10/client/alice.properties");
         outProps.put("user", "alice");
         outProps.put("passwordCallbackClass", 
-                     "org.apache.cxf.systest.ws.wssec10.client.KeystorePasswordCallback");
+                     "org.apache.cxf.systest.ws.common.KeystorePasswordCallback");
         outProps.put("signatureParts",
                      "{}{http://schemas.xmlsoap.org/soap/envelope/}Body;");
         
-        bus.getOutInterceptors().add(new WSS4JOutInterceptor(outProps));
+        // DOM
+        WSS4JOutInterceptor outInterceptor = new WSS4JOutInterceptor(outProps);
+        bus.getOutInterceptors().add(outInterceptor);
+        
+        try {
+            port.doubleIt(25);
+            fail("Failure expected on not signing the Timestamp");
+        } catch (Exception ex) {
+            // expected
+        }
+        bus.getOutInterceptors().remove(outInterceptor);
+        
+        // Streaming
+        WSS4JStaxOutInterceptor staxOutInterceptor = new WSS4JStaxOutInterceptor(outProps);
+        bus.getOutInterceptors().add(staxOutInterceptor);
         
         try {
             port.doubleIt(25);
@@ -158,12 +179,26 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
                      "org/apache/cxf/systest/ws/wssec10/client/alice.properties");
         outProps.put("user", "alice");
         outProps.put("passwordCallbackClass", 
-                     "org.apache.cxf.systest.ws.wssec10.client.KeystorePasswordCallback");
+                     "org.apache.cxf.systest.ws.common.KeystorePasswordCallback");
         outProps.put("signatureParts",
                      "{}{http://docs.oasis-open.org/wss/2004/01/oasis-"
                      + "200401-wss-wssecurity-utility-1.0.xsd}Timestamp;");
         
-        bus.getOutInterceptors().add(new WSS4JOutInterceptor(outProps));
+        // DOM
+        WSS4JOutInterceptor outInterceptor = new WSS4JOutInterceptor(outProps);
+        bus.getOutInterceptors().add(outInterceptor);
+        
+        try {
+            port.doubleIt(25);
+            fail("Failure expected on not signing the Timestamp");
+        } catch (Exception ex) {
+            // expected
+        }
+        bus.getOutInterceptors().remove(outInterceptor);
+        
+        // Streaming
+        WSS4JStaxOutInterceptor staxOutInterceptor = new WSS4JStaxOutInterceptor(outProps);
+        bus.getOutInterceptors().add(staxOutInterceptor);
         
         try {
             port.doubleIt(25);
@@ -198,14 +233,21 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
                      "org/apache/cxf/systest/ws/wssec10/client/alice.properties");
         outProps.put("user", "alice");
         outProps.put("passwordCallbackClass", 
-                     "org.apache.cxf.systest.ws.wssec10.client.KeystorePasswordCallback");
+                     "org.apache.cxf.systest.ws.common.KeystorePasswordCallback");
         outProps.put("signatureParts",
                      "{}{http://www.w3.org/2003/05/soap-envelope}Body;"
                      + "{}{http://docs.oasis-open.org/wss/2004/01/oasis-"
                      + "200401-wss-wssecurity-utility-1.0.xsd}Timestamp;");
         
-        bus.getOutInterceptors().add(new WSS4JOutInterceptor(outProps));
+        // DOM
+        WSS4JOutInterceptor outInterceptor = new WSS4JOutInterceptor(outProps);
+        bus.getOutInterceptors().add(outInterceptor);
+        port.doubleIt(25);
+        bus.getOutInterceptors().remove(outInterceptor);
         
+        // Streaming
+        WSS4JStaxOutInterceptor staxOutInterceptor = new WSS4JStaxOutInterceptor(outProps);
+        bus.getOutInterceptors().add(staxOutInterceptor);
         port.doubleIt(25);
         
         ((java.io.Closeable)port).close();
@@ -234,11 +276,25 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
                      "org/apache/cxf/systest/ws/wssec10/client/alice.properties");
         outProps.put("user", "alice");
         outProps.put("passwordCallbackClass", 
-                     "org.apache.cxf.systest.ws.wssec10.client.KeystorePasswordCallback");
+                     "org.apache.cxf.systest.ws.common.KeystorePasswordCallback");
         outProps.put("signatureParts",
                      "{}{http://www.w3.org/2003/05/soap-envelope}Body;");
         
-        bus.getOutInterceptors().add(new WSS4JOutInterceptor(outProps));
+        // DOM
+        WSS4JOutInterceptor outInterceptor = new WSS4JOutInterceptor(outProps);
+        bus.getOutInterceptors().add(outInterceptor);
+        
+        try {
+            port.doubleIt(25);
+            fail("Failure expected on not signing the Timestamp");
+        } catch (Exception ex) {
+            // expected
+        }
+        bus.getOutInterceptors().remove(outInterceptor);
+        
+        // Streaming
+        WSS4JStaxOutInterceptor staxOutInterceptor = new WSS4JStaxOutInterceptor(outProps);
+        bus.getOutInterceptors().add(staxOutInterceptor);
         
         try {
             port.doubleIt(25);
@@ -273,12 +329,26 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
                      "org/apache/cxf/systest/ws/wssec10/client/alice.properties");
         outProps.put("user", "alice");
         outProps.put("passwordCallbackClass", 
-                     "org.apache.cxf.systest.ws.wssec10.client.KeystorePasswordCallback");
+                     "org.apache.cxf.systest.ws.common.KeystorePasswordCallback");
         outProps.put("signatureParts",
                      "{}{http://docs.oasis-open.org/wss/2004/01/oasis-"
                      + "200401-wss-wssecurity-utility-1.0.xsd}Timestamp;");
         
-        bus.getOutInterceptors().add(new WSS4JOutInterceptor(outProps));
+        // DOM
+        WSS4JOutInterceptor outInterceptor = new WSS4JOutInterceptor(outProps);
+        bus.getOutInterceptors().add(outInterceptor);
+        
+        try {
+            port.doubleIt(25);
+            fail("Failure expected on not signing the Timestamp");
+        } catch (Exception ex) {
+            // expected
+        }
+        bus.getOutInterceptors().remove(outInterceptor);
+        
+        // Streaming
+        WSS4JStaxOutInterceptor staxOutInterceptor = new WSS4JStaxOutInterceptor(outProps);
+        bus.getOutInterceptors().add(staxOutInterceptor);
         
         try {
             port.doubleIt(25);
@@ -316,14 +386,21 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
         outProps.put("user", "alice");
         outProps.put("encryptionUser", "bob");
         outProps.put("passwordCallbackClass", 
-                     "org.apache.cxf.systest.ws.wssec10.client.KeystorePasswordCallback");
+                     "org.apache.cxf.systest.ws.common.KeystorePasswordCallback");
         outProps.put("signatureParts",
                      "{}{http://schemas.xmlsoap.org/soap/envelope/}Body;");
         outProps.put("encryptionParts",
                      "{}{http://schemas.xmlsoap.org/soap/envelope/}Body;");
+
+        // DOM
+        WSS4JOutInterceptor outInterceptor = new WSS4JOutInterceptor(outProps);
+        bus.getOutInterceptors().add(outInterceptor);
+        port.doubleIt(25);
+        bus.getOutInterceptors().remove(outInterceptor);
         
-        bus.getOutInterceptors().add(new WSS4JOutInterceptor(outProps));
-        
+        // Streaming
+        WSS4JStaxOutInterceptor staxOutInterceptor = new WSS4JStaxOutInterceptor(outProps);
+        bus.getOutInterceptors().add(staxOutInterceptor);
         port.doubleIt(25);
         
         ((java.io.Closeable)port).close();
@@ -355,14 +432,28 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
         outProps.put("user", "alice");
         outProps.put("encryptionUser", "bob");
         outProps.put("passwordCallbackClass", 
-                     "org.apache.cxf.systest.ws.wssec10.client.KeystorePasswordCallback");
+                     "org.apache.cxf.systest.ws.common.KeystorePasswordCallback");
         outProps.put("signatureParts",
                      "{}{http://schemas.xmlsoap.org/soap/envelope/}Body;");
         outProps.put("encryptionParts",
                      "{}{http://docs.oasis-open.org/wss/2004/01/oasis-"
                      + "200401-wss-wssecurity-utility-1.0.xsd}Timestamp;");
         
-        bus.getOutInterceptors().add(new WSS4JOutInterceptor(outProps));
+        // DOM
+        WSS4JOutInterceptor outInterceptor = new WSS4JOutInterceptor(outProps);
+        bus.getOutInterceptors().add(outInterceptor);
+        
+        try {
+            port.doubleIt(25);
+            fail("Failure expected on not encrypting the SOAP Body");
+        } catch (Exception ex) {
+            // expected
+        }
+        bus.getOutInterceptors().remove(outInterceptor);
+        
+        // Streaming
+        WSS4JStaxOutInterceptor staxOutInterceptor = new WSS4JStaxOutInterceptor(outProps);
+        bus.getOutInterceptors().add(staxOutInterceptor);
         
         try {
             port.doubleIt(25);
@@ -397,14 +488,15 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
                      "org/apache/cxf/systest/ws/wssec10/client/alice.properties");
         outProps.put("user", "alice");
         outProps.put("passwordCallbackClass", 
-                     "org.apache.cxf.systest.ws.wssec10.client.KeystorePasswordCallback");
+                     "org.apache.cxf.systest.ws.common.KeystorePasswordCallback");
         outProps.put("signatureParts",
                      "{}{http://schemas.xmlsoap.org/soap/envelope/}Body;"
                      + "{}{http://docs.oasis-open.org/wss/2004/01/oasis-"
                      + "200401-wss-wssecurity-utility-1.0.xsd}Timestamp;");
-        
-        WSS4JOutInterceptor wss4jOutInterceptor = new WSS4JOutInterceptor(outProps);
-        bus.getOutInterceptors().add(wss4jOutInterceptor);
+
+        // DOM
+        WSS4JOutInterceptor outInterceptor = new WSS4JOutInterceptor(outProps);
+        bus.getOutInterceptors().add(outInterceptor);
         
         try {
             port.doubleIt(25);
@@ -412,18 +504,37 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
         } catch (Exception ex) {
             // expected
         }
+        bus.getOutInterceptors().remove(outInterceptor);
+        
+        // Streaming
+        WSS4JStaxOutInterceptor staxOutInterceptor = new WSS4JStaxOutInterceptor(outProps);
+        bus.getOutInterceptors().add(staxOutInterceptor);
+        
+        try {
+            port.doubleIt(25);
+            fail("Failure expected on not signing the WS-Addressing headers");
+        } catch (Exception ex) {
+            // expected
+        }
+        bus.getOutInterceptors().remove(staxOutInterceptor);
         
         // Now sign the WS-Addressing headers
-        bus.getOutInterceptors().remove(wss4jOutInterceptor);
-        
         outProps.put("signatureParts",
                 "{}{http://schemas.xmlsoap.org/soap/envelope/}Body;"
                 + "{}{http://docs.oasis-open.org/wss/2004/01/oasis-"
                 + "200401-wss-wssecurity-utility-1.0.xsd}Timestamp;"
                 + "{}{http://www.w3.org/2005/08/addressing}ReplyTo;");
         
-        wss4jOutInterceptor = new WSS4JOutInterceptor(outProps);
-        bus.getOutInterceptors().add(wss4jOutInterceptor);
+        // DOM
+        outInterceptor = new WSS4JOutInterceptor(outProps);
+        bus.getOutInterceptors().add(outInterceptor);
+        
+        port.doubleIt(25);
+        bus.getOutInterceptors().remove(outInterceptor);
+        
+        // Streaming
+        staxOutInterceptor = new WSS4JStaxOutInterceptor(outProps);
+        bus.getOutInterceptors().add(staxOutInterceptor);
         
         port.doubleIt(25);
         
