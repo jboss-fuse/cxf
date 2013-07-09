@@ -25,8 +25,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Resource;
 
 import org.apache.cxf.Bus;
+import org.apache.cxf.common.injection.NoJSR250Annotations;
 import org.apache.cxf.configuration.Configurer;
 import org.apache.cxf.service.model.EndpointInfo;
 import org.apache.cxf.transport.AbstractTransportFactory;
@@ -37,6 +39,7 @@ import org.apache.cxf.transport.http.DestinationRegistry;
 import org.apache.cxf.transport.http.DestinationRegistryImpl;
 import org.apache.cxf.transport.http.HttpDestinationFactory;
 
+@NoJSR250Annotations(unlessNull = "bus")
 public class NettyHttpTransportFactory extends AbstractTransportFactory implements DestinationFactory {
     
     public static final List<String> DEFAULT_NAMESPACES = Arrays
@@ -81,6 +84,11 @@ public class NettyHttpTransportFactory extends AbstractTransportFactory implemen
     public Set<String> getUriPrefixes() {
         return URI_PREFIXES;
     }
+   
+    @Resource
+    public void setBus(Bus b) {
+        super.setBus(b);
+    }
     
     /**
      * This call uses the Configurer from the bus to configure
@@ -110,16 +118,16 @@ public class NettyHttpTransportFactory extends AbstractTransportFactory implemen
         return address;
     }
     
-    public Destination getDestination(EndpointInfo endpointInfo, Bus bus) throws IOException {
+    public Destination getDestination(EndpointInfo endpointInfo) throws IOException {
         if (endpointInfo == null) {
             throw new IllegalArgumentException("EndpointInfo cannot be null");
         }
         synchronized (registry) {
             AbstractHTTPDestination d = registry.getDestinationForPath(endpointInfo.getAddress());
             if (d == null) {
-                d = factory.createDestination(endpointInfo, bus, registry);
+                d = factory.createDestination(endpointInfo, getBus(), registry);
                 registry.addDestination(d);
-                configure(bus, d);
+                configure(getBus(), d);
                 d.finalizeConfig();
             }
             return d;
