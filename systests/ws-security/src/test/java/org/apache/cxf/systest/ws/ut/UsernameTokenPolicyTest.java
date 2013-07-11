@@ -33,6 +33,7 @@ import org.junit.BeforeClass;
 
 /**
  * A set of (negative) tests for Username Tokens policies over the Transport Binding.
+ * It tests both DOM + StAX clients against the DOM server
  */
 public class UsernameTokenPolicyTest extends AbstractBusClientServerTestBase {
     static final String PORT = allocatePort(PolicyServer.class);
@@ -60,7 +61,7 @@ public class UsernameTokenPolicyTest extends AbstractBusClientServerTestBase {
     public void testSupportingToken() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = UsernameTokenPolicyTest.class.getResource("client/policy-client.xml");
+        URL busFile = UsernameTokenPolicyTest.class.getResource("policy-client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -73,6 +74,11 @@ public class UsernameTokenPolicyTest extends AbstractBusClientServerTestBase {
                 service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
+        port.doubleIt(25);
+        
+        // Streaming
+        SecurityTestUtil.enableStreaming(port);
         port.doubleIt(25);
         
         // This should fail, as the client is not sending a UsernameToken Supporting Token
@@ -80,12 +86,23 @@ public class UsernameTokenPolicyTest extends AbstractBusClientServerTestBase {
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
             port.doubleIt(25);
             fail("Failure expected on not sending a UsernameToken Supporting Token");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
             String error = "These policy alternatives can not be satisfied";
             assertTrue(ex.getMessage().contains(error));
+        }
+        
+        // Streaming
+        try {
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on not sending a UsernameToken Supporting Token");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // String error = "These policy alternatives can not be satisfied";
+            // assertTrue(ex.getMessage().contains(error));
         }
         
         ((java.io.Closeable)port).close();
@@ -96,7 +113,7 @@ public class UsernameTokenPolicyTest extends AbstractBusClientServerTestBase {
     public void testPlaintextPassword() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = UsernameTokenPolicyTest.class.getResource("client/policy-client.xml");
+        URL busFile = UsernameTokenPolicyTest.class.getResource("policy-client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -109,6 +126,11 @@ public class UsernameTokenPolicyTest extends AbstractBusClientServerTestBase {
                 service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
+        port.doubleIt(25);
+        
+        // Streaming
+        SecurityTestUtil.enableStreaming(port);
         port.doubleIt(25);
         
         // This should fail, as the client is sending a hashed password
@@ -116,6 +138,7 @@ public class UsernameTokenPolicyTest extends AbstractBusClientServerTestBase {
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
             port.doubleIt(25);
             fail("Failure expected on a hashed password");
@@ -124,12 +147,32 @@ public class UsernameTokenPolicyTest extends AbstractBusClientServerTestBase {
             assertTrue(ex.getMessage().contains(error));
         }
         
+        // Streaming
+        try {
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on a hashed password");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // String error = "These policy alternatives can not be satisfied";
+            // assertTrue(ex.getMessage().contains(error));
+        }
+        
         // This should fail, as the client is not sending any password
         portQName = new QName(NAMESPACE, "DoubleItPlaintextPort3");
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
+            port.doubleIt(25);
+            fail("Failure expected on not sending a password");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // expected
+        }
+        
+        // Streaming
+        try {
+            SecurityTestUtil.enableStreaming(port);
             port.doubleIt(25);
             fail("Failure expected on not sending a password");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
@@ -144,7 +187,7 @@ public class UsernameTokenPolicyTest extends AbstractBusClientServerTestBase {
     public void testHashPassword() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = UsernameTokenPolicyTest.class.getResource("client/policy-client.xml");
+        URL busFile = UsernameTokenPolicyTest.class.getResource("policy-client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -157,6 +200,11 @@ public class UsernameTokenPolicyTest extends AbstractBusClientServerTestBase {
                 service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
+        port.doubleIt(25);
+        
+        // Streaming
+        SecurityTestUtil.enableStreaming(port);
         port.doubleIt(25);
         
         // This should fail, as the client is sending a plaintext password
@@ -164,6 +212,7 @@ public class UsernameTokenPolicyTest extends AbstractBusClientServerTestBase {
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
             port.doubleIt(25);
             fail("Failure expected on a plaintext password");
@@ -172,12 +221,32 @@ public class UsernameTokenPolicyTest extends AbstractBusClientServerTestBase {
             assertTrue(ex.getMessage().contains(error));
         }
         
+        // Streaming
+        try {
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on a plaintext password");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // String error = "These policy alternatives can not be satisfied";
+            // assertTrue(ex.getMessage().contains(error));
+        }
+        
         // This should fail, as the client is not sending any password
         portQName = new QName(NAMESPACE, "DoubleItHashPort3");
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
+            port.doubleIt(25);
+            fail("Failure expected on not sending a password");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // expected
+        }
+        
+        // Streaming
+        try {
+            SecurityTestUtil.enableStreaming(port);
             port.doubleIt(25);
             fail("Failure expected on not sending a password");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
@@ -192,7 +261,7 @@ public class UsernameTokenPolicyTest extends AbstractBusClientServerTestBase {
     public void testCreated() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = UsernameTokenPolicyTest.class.getResource("client/policy-client.xml");
+        URL busFile = UsernameTokenPolicyTest.class.getResource("policy-client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -205,6 +274,11 @@ public class UsernameTokenPolicyTest extends AbstractBusClientServerTestBase {
                 service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
+        port.doubleIt(25);
+        
+        // Streaming
+        SecurityTestUtil.enableStreaming(port);
         port.doubleIt(25);
         
         // This should fail, as the client is not sending a Created element
@@ -212,12 +286,23 @@ public class UsernameTokenPolicyTest extends AbstractBusClientServerTestBase {
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
             port.doubleIt(25);
             fail("Failure expected on not sending a Created element");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
             String error = "These policy alternatives can not be satisfied";
             assertTrue(ex.getMessage().contains(error));
+        }
+        
+        // Streaming
+        try {
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on not sending a Created element");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // String error = "These policy alternatives can not be satisfied";
+            // assertTrue(ex.getMessage().contains(error));
         }
         
         ((java.io.Closeable)port).close();
@@ -228,7 +313,7 @@ public class UsernameTokenPolicyTest extends AbstractBusClientServerTestBase {
     public void testNonce() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = UsernameTokenPolicyTest.class.getResource("client/policy-client.xml");
+        URL busFile = UsernameTokenPolicyTest.class.getResource("policy-client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -241,6 +326,11 @@ public class UsernameTokenPolicyTest extends AbstractBusClientServerTestBase {
                 service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
+        port.doubleIt(25);
+        
+        // Streaming
+        SecurityTestUtil.enableStreaming(port);
         port.doubleIt(25);
         
         // This should fail, as the client is not sending a Nonce element
@@ -248,12 +338,22 @@ public class UsernameTokenPolicyTest extends AbstractBusClientServerTestBase {
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
             port.doubleIt(25);
             fail("Failure expected on not sending a Nonce element");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
             String error = "These policy alternatives can not be satisfied";
             assertTrue(ex.getMessage().contains(error));
+        }
+        
+        // Streaming
+        try {
+            port.doubleIt(25);
+            fail("Failure expected on not sending a Nonce element");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // String error = "These policy alternatives can not be satisfied";
+            // assertTrue(ex.getMessage().contains(error));
         }
         
         ((java.io.Closeable)port).close();

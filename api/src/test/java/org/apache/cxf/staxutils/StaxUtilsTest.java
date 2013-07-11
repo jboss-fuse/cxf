@@ -41,7 +41,7 @@ import org.w3c.dom.Element;
 
 import org.xml.sax.InputSource;
 
-import org.apache.cxf.helpers.XMLUtils;
+import org.apache.cxf.helpers.DOMUtils;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -131,7 +131,7 @@ public class StaxUtilsTest extends Assert {
     
     @Test
     public void testCXF2468() throws Exception {
-        Document doc = XMLUtils.newDocument();
+        Document doc = DOMUtils.newDocument();
         doc.appendChild(doc.createElementNS("http://blah.org/", "blah"));
         Element foo = doc.createElementNS("http://blah.org/", "foo");
         Attr attr = doc.createAttributeNS("http://www.w3.org/2001/XMLSchema-instance", "xsi:nil");
@@ -238,7 +238,7 @@ public class StaxUtilsTest extends Assert {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         dbf.setNamespaceAware(true);
         Document doc = dbf.newDocumentBuilder().parse(new InputSource(reader));
-        String orig = XMLUtils.toString(doc.getDocumentElement());
+        String orig = StaxUtils.toString(doc.getDocumentElement());
         
         StringWriter sw = new StringWriter();
         XMLStreamWriter swriter = StaxUtils.createXMLStreamWriter(sw);
@@ -252,7 +252,7 @@ public class StaxUtilsTest extends Assert {
         
         W3CDOMStreamWriter domwriter = new W3CDOMStreamWriter();
         StaxUtils.writeDocument(doc, domwriter, false, true);
-        output = XMLUtils.toString(domwriter.getDocument().getDocumentElement());
+        output = StaxUtils.toString(domwriter.getDocument().getDocumentElement());
         assertEquals(orig, output);
     }
     

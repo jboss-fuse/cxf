@@ -47,12 +47,12 @@ import org.w3c.dom.Node;
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.bus.spring.SpringBusFactory;
-import org.apache.cxf.helpers.XMLUtils;
 import org.apache.cxf.helpers.XPathUtils;
 import org.apache.cxf.interceptor.LoggingOutInterceptor;
 import org.apache.cxf.jaxws.EndpointImpl;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.service.model.EndpointInfo;
+import org.apache.cxf.staxutils.StaxUtils;
 import org.apache.cxf.systest.ws.common.DoubleItImpl;
 import org.apache.cxf.systest.ws.common.KeystorePasswordCallback;
 import org.apache.cxf.systest.ws.common.SecurityTestUtil;
@@ -60,7 +60,6 @@ import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 import org.apache.cxf.ws.policy.PolicyEngine;
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.wss4j.common.ext.WSPasswordCallback;
-
 import org.example.contract.doubleit.DoubleItPortType;
 import org.example.contract.doubleit.DoubleItPortTypeHeader;
 import org.example.schema.doubleit.DoubleIt;
@@ -420,7 +419,7 @@ public class SecurityPolicyTest extends AbstractBusClientServerTestBase  {
         Source source = new StreamSource(new StringReader(req));
         source = disp.invoke(source);
         
-        Node nd = XMLUtils.fromSource(source);
+        Node nd = StaxUtils.read(source);
         if (nd instanceof Document) {
             nd = ((Document)nd).getDocumentElement();
         }
@@ -428,7 +427,7 @@ public class SecurityPolicyTest extends AbstractBusClientServerTestBase  {
         ns.put("ns2", "http://www.example.org/schema/DoubleIt");
         XPathUtils xp = new XPathUtils(ns);
         Object o = xp.getValue("//ns2:DoubleItResponse/doubledNumber", nd, XPathConstants.STRING);
-        assertEquals(XMLUtils.toString(nd), "50", o);
+        assertEquals(StaxUtils.toString(nd), "50", o);
         
         bus.shutdown(true);
     }
@@ -445,7 +444,7 @@ public class SecurityPolicyTest extends AbstractBusClientServerTestBase  {
             
             Node el;
             try {
-                el = XMLUtils.fromSource(obj);
+                el = StaxUtils.read(obj);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -527,9 +526,9 @@ public class SecurityPolicyTest extends AbstractBusClientServerTestBase  {
         // DOM
         assertEquals(10, pt.doubleIt(5));
         
-        // TODO See WSS-458 Streaming
-        // SecurityTestUtil.enableStreaming(pt);
-        // assertEquals(10, pt.doubleIt(5));
+        // Streaming
+        SecurityTestUtil.enableStreaming(pt);
+        assertEquals(10, pt.doubleIt(5));
         
         ((java.io.Closeable)pt).close();
         bus.shutdown(true);

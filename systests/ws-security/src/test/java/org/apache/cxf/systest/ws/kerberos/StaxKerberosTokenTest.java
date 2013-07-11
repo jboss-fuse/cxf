@@ -77,7 +77,7 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
     public void testKerberosOverTransport() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxKerberosTokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxKerberosTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -110,7 +110,7 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
         }
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxKerberosTokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxKerberosTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -143,7 +143,7 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
         }
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxKerberosTokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxKerberosTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -176,7 +176,7 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
         }
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = KerberosTokenTest.class.getResource("client/client.xml");
+        URL busFile = KerberosTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -193,9 +193,9 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
         // DOM
         kerberosPort.doubleIt(25);
         
-        // TODO - See WSS-458 Streaming
-        // SecurityTestUtil.enableStreaming(kerberosPort);
-        // kerberosPort.doubleIt(25);
+        // Streaming
+        SecurityTestUtil.enableStreaming(kerberosPort);
+        kerberosPort.doubleIt(25);
         
         ((java.io.Closeable)kerberosPort).close();
         bus.shutdown(true);
@@ -209,7 +209,7 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
         }
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxKerberosTokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxKerberosTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -238,7 +238,7 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
     public void testKerberosOverTransportEndorsing() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxKerberosTokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxKerberosTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -267,7 +267,7 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
     public void testKerberosOverAsymmetricEndorsing() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxKerberosTokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxKerberosTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -296,7 +296,7 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
     public void testKerberosOverSymmetricProtection() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxKerberosTokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxKerberosTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -325,7 +325,7 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
     public void testKerberosOverSymmetricDerivedProtection() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxKerberosTokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxKerberosTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -354,7 +354,7 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
         }
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxKerberosTokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxKerberosTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -387,7 +387,7 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
         }
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxKerberosTokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxKerberosTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -420,7 +420,7 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
         }
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxKerberosTokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxKerberosTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -449,7 +449,7 @@ public class StaxKerberosTokenTest extends AbstractBusClientServerTestBase {
         }
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxKerberosTokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxKerberosTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);

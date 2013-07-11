@@ -44,6 +44,12 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
 
     private static final String NAMESPACE = "http://www.example.org/contract/DoubleIt";
     private static final QName SERVICE_QNAME = new QName(NAMESPACE, "DoubleItService");
+    
+    private static boolean unrestrictedPoliciesInstalled;
+    
+    static {
+        unrestrictedPoliciesInstalled = SecurityTestUtil.checkUnrestrictedPoliciesInstalled();
+    };    
 
     @BeforeClass
     public static void startServers() throws Exception {
@@ -64,7 +70,7 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
     @org.junit.Test
     public void testSignedBodyTimestamp() throws Exception {
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client/client.xml");
+        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -79,8 +85,7 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
         
         Map<String, Object> outProps = new HashMap<String, Object>();
         outProps.put("action", "Timestamp Signature");
-        outProps.put("signaturePropFile", 
-                     "org/apache/cxf/systest/ws/wssec10/client/alice.properties");
+        outProps.put("signaturePropFile", "alice.properties");
         outProps.put("user", "alice");
         outProps.put("passwordCallbackClass", 
                      "org.apache.cxf.systest.ws.common.KeystorePasswordCallback");
@@ -107,7 +112,7 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
     @org.junit.Test
     public void testSignedBodyOnly() throws Exception {
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client/client.xml");
+        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -122,8 +127,7 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
         
         Map<String, Object> outProps = new HashMap<String, Object>();
         outProps.put("action", "Timestamp Signature");
-        outProps.put("signaturePropFile", 
-                     "org/apache/cxf/systest/ws/wssec10/client/alice.properties");
+        outProps.put("signaturePropFile", "alice.properties");
         outProps.put("user", "alice");
         outProps.put("passwordCallbackClass", 
                      "org.apache.cxf.systest.ws.common.KeystorePasswordCallback");
@@ -160,7 +164,7 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
     @org.junit.Test
     public void testSignedTimestampOnly() throws Exception {
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client/client.xml");
+        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -175,8 +179,7 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
         
         Map<String, Object> outProps = new HashMap<String, Object>();
         outProps.put("action", "Timestamp Signature");
-        outProps.put("signaturePropFile", 
-                     "org/apache/cxf/systest/ws/wssec10/client/alice.properties");
+        outProps.put("signaturePropFile", "alice.properties");
         outProps.put("user", "alice");
         outProps.put("passwordCallbackClass", 
                      "org.apache.cxf.systest.ws.common.KeystorePasswordCallback");
@@ -214,7 +217,7 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
     @org.junit.Test
     public void testSignedBodyTimestampSoap12() throws Exception {
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client/client.xml");
+        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -229,8 +232,7 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
         
         Map<String, Object> outProps = new HashMap<String, Object>();
         outProps.put("action", "Timestamp Signature");
-        outProps.put("signaturePropFile", 
-                     "org/apache/cxf/systest/ws/wssec10/client/alice.properties");
+        outProps.put("signaturePropFile", "alice.properties");
         outProps.put("user", "alice");
         outProps.put("passwordCallbackClass", 
                      "org.apache.cxf.systest.ws.common.KeystorePasswordCallback");
@@ -257,7 +259,7 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
     @org.junit.Test
     public void testSignedBodyOnlySoap12() throws Exception {
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client/client.xml");
+        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -272,8 +274,7 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
         
         Map<String, Object> outProps = new HashMap<String, Object>();
         outProps.put("action", "Timestamp Signature");
-        outProps.put("signaturePropFile", 
-                     "org/apache/cxf/systest/ws/wssec10/client/alice.properties");
+        outProps.put("signaturePropFile", "alice.properties");
         outProps.put("user", "alice");
         outProps.put("passwordCallbackClass", 
                      "org.apache.cxf.systest.ws.common.KeystorePasswordCallback");
@@ -310,7 +311,7 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
     @org.junit.Test
     public void testSignedTimestampOnlySoap12() throws Exception {
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client/client.xml");
+        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -325,8 +326,7 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
         
         Map<String, Object> outProps = new HashMap<String, Object>();
         outProps.put("action", "Timestamp Signature");
-        outProps.put("signaturePropFile", 
-                     "org/apache/cxf/systest/ws/wssec10/client/alice.properties");
+        outProps.put("signaturePropFile", "alice.properties");
         outProps.put("user", "alice");
         outProps.put("passwordCallbackClass", 
                      "org.apache.cxf.systest.ws.common.KeystorePasswordCallback");
@@ -363,8 +363,12 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
     
     @org.junit.Test
     public void testSignedEncryptedBody() throws Exception {
+        
+        if (!unrestrictedPoliciesInstalled) {
+            return;
+        }
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client/client.xml");
+        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -379,10 +383,8 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
         
         Map<String, Object> outProps = new HashMap<String, Object>();
         outProps.put("action", "Timestamp Signature Encrypt");
-        outProps.put("signaturePropFile", 
-                     "org/apache/cxf/systest/ws/wssec10/client/alice.properties");
-        outProps.put("encryptionPropFile", 
-                     "org/apache/cxf/systest/ws/wssec10/client/bob.properties");
+        outProps.put("signaturePropFile", "alice.properties");
+        outProps.put("encryptionPropFile", "bob.properties");
         outProps.put("user", "alice");
         outProps.put("encryptionUser", "bob");
         outProps.put("passwordCallbackClass", 
@@ -410,7 +412,7 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
     @org.junit.Test
     public void testSignedNotEncryptedBody() throws Exception {
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client/client.xml");
+        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -425,10 +427,8 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
         
         Map<String, Object> outProps = new HashMap<String, Object>();
         outProps.put("action", "Timestamp Signature Encrypt");
-        outProps.put("signaturePropFile", 
-                     "org/apache/cxf/systest/ws/wssec10/client/alice.properties");
-        outProps.put("encryptionPropFile", 
-                     "org/apache/cxf/systest/ws/wssec10/client/bob.properties");
+        outProps.put("signaturePropFile", "alice.properties");
+        outProps.put("encryptionPropFile", "bob.properties");
         outProps.put("user", "alice");
         outProps.put("encryptionUser", "bob");
         outProps.put("passwordCallbackClass", 
@@ -469,7 +469,7 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
     @org.junit.Test
     public void testWSAddressing() throws Exception {
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client/client.xml");
+        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -484,8 +484,7 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
         
         Map<String, Object> outProps = new HashMap<String, Object>();
         outProps.put("action", "Timestamp Signature");
-        outProps.put("signaturePropFile", 
-                     "org/apache/cxf/systest/ws/wssec10/client/alice.properties");
+        outProps.put("signaturePropFile", "alice.properties");
         outProps.put("user", "alice");
         outProps.put("passwordCallbackClass", 
                      "org.apache.cxf.systest.ws.common.KeystorePasswordCallback");
@@ -548,7 +547,7 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
     @org.junit.Test
     public void testClientChecker() throws Exception {
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client/client.xml");
+        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -580,7 +579,7 @@ public class DefaultCryptoCoverageCheckerTest extends AbstractBusClientServerTes
     @org.junit.Test
     public void testClientChecker2() throws Exception {
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client/client.xml");
+        URL busFile = DefaultCryptoCoverageCheckerTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);

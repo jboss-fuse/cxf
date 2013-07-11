@@ -73,7 +73,7 @@ public class HTTPGetTest extends AbstractBusClientServerTestBase {
         }
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = HTTPGetTest.class.getResource("client/client.xml");
+        URL busFile = HTTPGetTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -98,7 +98,7 @@ public class HTTPGetTest extends AbstractBusClientServerTestBase {
         }
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = HTTPGetTest.class.getResource("client/client.xml");
+        URL busFile = HTTPGetTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -125,7 +125,7 @@ public class HTTPGetTest extends AbstractBusClientServerTestBase {
         }
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = HTTPGetTest.class.getResource("client/client.xml");
+        URL busFile = HTTPGetTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -140,8 +140,7 @@ public class HTTPGetTest extends AbstractBusClientServerTestBase {
         
         Map<String, Object> outProps = new HashMap<String, Object>();
         outProps.put("action", "Timestamp Signature");
-        outProps.put("signaturePropFile", 
-                     "org/apache/cxf/systest/ws/wssec10/client/alice.properties");
+        outProps.put("signaturePropFile", "alice.properties");
         outProps.put("user", "alice");
         outProps.put("passwordCallbackClass", 
                      "org.apache.cxf.systest.ws.common.KeystorePasswordCallback");
@@ -165,7 +164,7 @@ public class HTTPGetTest extends AbstractBusClientServerTestBase {
         }
         
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = HTTPGetTest.class.getResource("client/client.xml");
+        URL busFile = HTTPGetTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);

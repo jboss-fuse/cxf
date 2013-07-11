@@ -86,7 +86,7 @@ public class Server extends AbstractBusTestServerBase {
     protected void run()  {
         try {
             Bus busLocal = new SpringBusFactory().createBus(
-                "org/apache/cxf/systest/ws/wssc/server/server.xml");
+                "org/apache/cxf/systest/ws/wssc/server.xml");
             BusFactory.setDefaultBus(busLocal);
             setBus(busLocal);
             new Server("http://localhost:" + PORT + "/");
@@ -99,18 +99,18 @@ public class Server extends AbstractBusTestServerBase {
         Endpoint ep = Endpoint.create(obj);
         ep.getProperties().put(SecurityConstants.CALLBACK_HANDLER + ".sct", new KeystorePasswordCallback());
         ep.getProperties().put(SecurityConstants.ENCRYPT_PROPERTIES + ".sct", 
-                "org/apache/cxf/systest/ws/wssec11/server/bob.properties");
+                "bob.properties");
         
         if (url.contains("X10_I")) {
             ep.getProperties().put(SecurityConstants.SIGNATURE_PROPERTIES + ".sct", 
-                    "org/apache/cxf/systest/ws/wssec11/server/bob.properties");
+                    "bob.properties");
             ep.getProperties().put(SecurityConstants.ENCRYPT_PROPERTIES + ".sct", 
-                    "org/apache/cxf/systest/ws/wssec11/server/alice.properties");
+                    "alice.properties");
         } else if (url.contains("MutualCert")) {
             ep.getProperties().put(SecurityConstants.ENCRYPT_PROPERTIES + ".sct", 
-                "org/apache/cxf/systest/ws/wssec11/server/bob.properties");
+                "bob.properties");
             ep.getProperties().put(SecurityConstants.SIGNATURE_PROPERTIES + ".sct", 
-                "org/apache/cxf/systest/ws/wssec11/server/alice.properties");
+                "alice.properties");
             ep.getProperties().put(SecurityConstants.CALLBACK_HANDLER, new KeystorePasswordCallback());
         }
         ep.publish(url);

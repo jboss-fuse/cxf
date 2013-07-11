@@ -34,7 +34,8 @@ import org.example.contract.doubleit.DoubleItPortType;
 import org.junit.BeforeClass;
 
 /**
- * This is a test for various Required/Signed/Encrypted Parts/Elements
+ * This is a test for various Required/Signed/Encrypted Parts/Elements. It tests both DOM + StAX 
+ * clients against the DOM server
  */
 public class PartsTest extends AbstractBusClientServerTestBase {
     static final String PORT = allocatePort(Server.class);
@@ -62,7 +63,7 @@ public class PartsTest extends AbstractBusClientServerTestBase {
     public void testRequiredParts() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = PartsTest.class.getResource("client/client.xml");
+        URL busFile = PartsTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -75,6 +76,12 @@ public class PartsTest extends AbstractBusClientServerTestBase {
         QName portQName = new QName(NAMESPACE, "DoubleItRequiredPartsPort");
         DoubleItPortType port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
+        
+        // DOM
+        port.doubleIt(25);
+        
+        // Streaming
+        SecurityTestUtil.enableStreaming(port);
         port.doubleIt(25);
         
         // This should fail, as the service requires a (bad) header
@@ -82,12 +89,23 @@ public class PartsTest extends AbstractBusClientServerTestBase {
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
             port.doubleIt(25);
             fail("Failure expected on a required header which isn't present");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
             String error = "RequiredParts: No header element";
             assertTrue(ex.getMessage().contains(error));
+        }
+
+        // Streaming
+        try {
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on a required header which isn't present");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // String error = "RequiredParts: No header element";
+            // assertTrue(ex.getMessage().contains(error));
         }
         
         ((java.io.Closeable)port).close();
@@ -98,7 +116,7 @@ public class PartsTest extends AbstractBusClientServerTestBase {
     public void testRequiredElements() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = PartsTest.class.getResource("client/client.xml");
+        URL busFile = PartsTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -134,7 +152,7 @@ public class PartsTest extends AbstractBusClientServerTestBase {
     public void testSignedParts() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = PartsTest.class.getResource("client/client.xml");
+        URL busFile = PartsTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -147,6 +165,12 @@ public class PartsTest extends AbstractBusClientServerTestBase {
         QName portQName = new QName(NAMESPACE, "DoubleItSignedPartsPort");
         DoubleItPortType port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
+        
+        // DOM
+        port.doubleIt(25);
+        
+        // Streaming
+        SecurityTestUtil.enableStreaming(port);
         port.doubleIt(25);
         
         // This should fail, as the service requires that the Body must be signed
@@ -154,6 +178,7 @@ public class PartsTest extends AbstractBusClientServerTestBase {
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
             port.doubleIt(25);
             fail("Failure expected on a body which isn't signed");
@@ -162,17 +187,38 @@ public class PartsTest extends AbstractBusClientServerTestBase {
             assertTrue(ex.getMessage().contains(error));
         }
         
+        // Streaming
+        try {
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on a body which isn't signed");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // String error = "SignedParts";
+            // assertTrue(ex.getMessage().contains(error));
+        }
+        
         // This should fail, as the service requires that the To header must be signed
         portQName = new QName(NAMESPACE, "DoubleItSignedPartsPort3");
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
             port.doubleIt(25);
             fail("Failure expected on a header which isn't signed");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
             String error = "SignedParts";
             assertTrue(ex.getMessage().contains(error));
+        }
+        
+        // Streaming
+        try {
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on a body which isn't signed");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // String error = "SignedParts";
+            // assertTrue(ex.getMessage().contains(error));
         }
         
         ((java.io.Closeable)port).close();
@@ -183,7 +229,7 @@ public class PartsTest extends AbstractBusClientServerTestBase {
     public void testSignedElements() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = PartsTest.class.getResource("client/client.xml");
+        URL busFile = PartsTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -219,7 +265,7 @@ public class PartsTest extends AbstractBusClientServerTestBase {
     public void testEncryptedParts() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = PartsTest.class.getResource("client/client.xml");
+        URL busFile = PartsTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -232,6 +278,12 @@ public class PartsTest extends AbstractBusClientServerTestBase {
         QName portQName = new QName(NAMESPACE, "DoubleItEncryptedPartsPort");
         DoubleItPortType port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
+        
+        // DOM
+        port.doubleIt(25);
+        
+        // Streaming
+        SecurityTestUtil.enableStreaming(port);
         port.doubleIt(25);
         
         // This should fail, as the service requires that the Body must be encrypted
@@ -239,6 +291,7 @@ public class PartsTest extends AbstractBusClientServerTestBase {
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
             port.doubleIt(25);
             fail("Failure expected on a body which isn't encrypted");
@@ -247,17 +300,38 @@ public class PartsTest extends AbstractBusClientServerTestBase {
             assertTrue(ex.getMessage().contains(error));
         }
         
+        // Streaming
+        try {
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on a body which isn't encrypted");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // String error = "EncryptedParts";
+            // assertTrue(ex.getMessage().contains(error));
+        }
+        
         // This should fail, as the service requires that the To header must be encrypted
         portQName = new QName(NAMESPACE, "DoubleItEncryptedPartsPort3");
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
             port.doubleIt(25);
             fail("Failure expected on a header which isn't encrypted");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
             String error = "EncryptedParts";
             assertTrue(ex.getMessage().contains(error));
+        }
+        
+        // Streaming
+        try {
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on a header which isn't encrypted");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // String error = "EncryptedParts";
+            // assertTrue(ex.getMessage().contains(error));
         }
         
         ((java.io.Closeable)port).close();
@@ -268,7 +342,7 @@ public class PartsTest extends AbstractBusClientServerTestBase {
     public void testEncryptedElements() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = PartsTest.class.getResource("client/client.xml");
+        URL busFile = PartsTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -304,7 +378,7 @@ public class PartsTest extends AbstractBusClientServerTestBase {
     public void testContentEncryptedElements() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = PartsTest.class.getResource("client/client.xml");
+        URL busFile = PartsTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);

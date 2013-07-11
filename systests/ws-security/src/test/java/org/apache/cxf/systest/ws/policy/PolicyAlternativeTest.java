@@ -68,7 +68,7 @@ public class PolicyAlternativeTest extends AbstractBusClientServerTestBase {
     public void testAsymmetric() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = PolicyAlternativeTest.class.getResource("client/client.xml");
+        URL busFile = PolicyAlternativeTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -99,7 +99,7 @@ public class PolicyAlternativeTest extends AbstractBusClientServerTestBase {
     public void testNoSecurity() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = PolicyAlternativeTest.class.getResource("client/client.xml");
+        URL busFile = PolicyAlternativeTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -140,7 +140,7 @@ public class PolicyAlternativeTest extends AbstractBusClientServerTestBase {
     public void testUsernameToken() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = PolicyAlternativeTest.class.getResource("client/client.xml");
+        URL busFile = PolicyAlternativeTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -156,9 +156,9 @@ public class PolicyAlternativeTest extends AbstractBusClientServerTestBase {
         // DOM
         utPort.doubleIt(25);
         
-        // TODO See WSS-458 Streaming
-        // SecurityTestUtil.enableStreaming(utPort);
-        // utPort.doubleIt(25);
+        // Streaming
+        SecurityTestUtil.enableStreaming(utPort);
+        utPort.doubleIt(25);
         
         ((java.io.Closeable)utPort).close();
         bus.shutdown(true);
@@ -172,7 +172,7 @@ public class PolicyAlternativeTest extends AbstractBusClientServerTestBase {
     @org.junit.Test
     public void testRequireClientCertToken() throws Exception {
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = PolicyAlternativeTest.class.getResource("client/client.xml");
+        URL busFile = PolicyAlternativeTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -214,7 +214,7 @@ public class PolicyAlternativeTest extends AbstractBusClientServerTestBase {
     public void testTransportSupportingSigned() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = PolicyAlternativeTest.class.getResource("client/client.xml");
+        URL busFile = PolicyAlternativeTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -257,7 +257,7 @@ public class PolicyAlternativeTest extends AbstractBusClientServerTestBase {
     public void testTransportUTSupportingSigned() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = PolicyAlternativeTest.class.getResource("client/client.xml");
+        URL busFile = PolicyAlternativeTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);

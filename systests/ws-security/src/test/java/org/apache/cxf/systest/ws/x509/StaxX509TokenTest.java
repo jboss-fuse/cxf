@@ -72,7 +72,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testKeyIdentifier() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -100,7 +100,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testKeyIdentifierJaxwsClient() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/jaxws-client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("jaxws-client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -114,7 +114,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(x509Port, PORT);
         
         ((BindingProvider)x509Port).getRequestContext().put(SecurityConstants.ENCRYPT_PROPERTIES,
-                "org/apache/cxf/systest/ws/wssec10/client/bob.properties");
+                "bob.properties");
         ((BindingProvider)x509Port).getRequestContext().put(SecurityConstants.ENCRYPT_USERNAME, "bob");
         
         // DOM
@@ -132,7 +132,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testIssuerSerial() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -160,7 +160,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testThumbprint() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -188,7 +188,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testAsymmetricIssuerSerial() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -216,7 +216,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testAsymmetricThumbprint() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -244,7 +244,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testAsymmetricEncryptBeforeSigning() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -272,7 +272,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testAsymmetricEncryptSignature() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -300,7 +300,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testAsymmetricProtectTokens() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -328,7 +328,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testAsymmetricUsernameToken() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -352,13 +352,11 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
         bus.shutdown(true);
     }
     
-    // TODO - See WSS-457
     @org.junit.Test
-    @org.junit.Ignore
     public void testSymmetricProtectTokens() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -382,7 +380,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testTransportEndorsing() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -410,7 +408,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testTransportEndorsingSP11() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -438,7 +436,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testTransportSignedEndorsing() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -466,7 +464,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testTransportEndorsingEncrypted() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -494,7 +492,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testTransportSignedEndorsingEncrypted() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -522,7 +520,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testAsymmetricSignature() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -550,7 +548,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testAsymmetricSignatureSP11() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -578,7 +576,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testAsymmetricEncryption() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -606,7 +604,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testAsymmetricSignatureReplay() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -642,7 +640,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testTransportSupportingSigned() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -672,7 +670,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testTransportSupportingSignedCertConstraints() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -686,7 +684,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
         updateAddressPort(x509Port, PORT2);
         
         ((BindingProvider)x509Port).getRequestContext().put(SecurityConstants.SIGNATURE_PROPERTIES,
-                "org/apache/cxf/systest/ws/wssec10/client/bob.properties");
+                "bob.properties");
         ((BindingProvider)x509Port).getRequestContext().put(SecurityConstants.SIGNATURE_USERNAME, "bob");
         
         try {
@@ -697,7 +695,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
         }
         
         ((BindingProvider)x509Port).getRequestContext().put(SecurityConstants.SIGNATURE_PROPERTIES,
-            "org/apache/cxf/systest/ws/wssec10/client/alice.properties");
+            "alice.properties");
         ((BindingProvider)x509Port).getRequestContext().put(SecurityConstants.SIGNATURE_USERNAME, "alice");
     
         x509Port.doubleIt(25);
@@ -710,7 +708,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testTransportKVT() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -738,7 +736,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testKeyIdentifier2() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -772,7 +770,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testSupportingToken() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -796,8 +794,8 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
             port.doubleIt(25);
             fail("Failure expected on not sending an X.509 Supporting Token");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
-            // String error = "These policy alternatives can not be satisfied";
-            // assertTrue(ex.getMessage().contains(error));
+            String error = "X509Token not satisfied";
+            assertTrue(ex.getMessage().contains(error));
         }
         
         // This should fail, as the client is not sending a PKI Token
@@ -809,8 +807,8 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
             port.doubleIt(25);
             fail("Failure expected on not sending a PKI token");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
-            // String error = "These policy alternatives can not be satisfied";
-            // assertTrue(ex.getMessage().contains(error));
+            String error = "WssX509PkiPathV1Token11";
+            assertTrue(ex.getMessage().contains(error));
         }
         
         ((java.io.Closeable)port).close();
@@ -821,7 +819,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
     public void testNegativeEndorsing() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = StaxX509TokenTest.class.getResource("client/client.xml");
+        URL busFile = StaxX509TokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -852,8 +850,8 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
             port.doubleIt(25);
             fail("Failure expected on not endorsing the token");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
-            // String error = "These policy alternatives can not be satisfied";
-            // assertTrue(ex.getMessage().contains(error));
+            String error = "X509Token not satisfied";
+            assertTrue(ex.getMessage().contains(error));
         }
         
         try {
@@ -862,8 +860,7 @@ public class StaxX509TokenTest extends AbstractBusClientServerTestBase {
             port.doubleIt(25);
             fail("Failure expected on not endorsing the token");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
-            // String error = "These policy alternatives can not be satisfied";
-            // assertTrue(ex.getMessage().contains(error));
+            // expected
         }
         
         ((java.io.Closeable)port).close();

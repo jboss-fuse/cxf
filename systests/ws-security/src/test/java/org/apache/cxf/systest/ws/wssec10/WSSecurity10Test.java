@@ -87,10 +87,10 @@ public class WSSecurity10Test extends AbstractBusClientServerTestBase {
         //argv = new String[] {argv[1]};
         Bus bus = null;
         if (unrestrictedPoliciesInstalled) {
-            bus = new SpringBusFactory().createBus("org/apache/cxf/systest/ws/wssec10/client/client.xml");
+            bus = new SpringBusFactory().createBus("org/apache/cxf/systest/ws/wssec10/client.xml");
         } else {
             bus = new SpringBusFactory().createBus(
-                    "org/apache/cxf/systest/ws/wssec10/client/client_restricted.xml");
+                    "org/apache/cxf/systest/ws/wssec10/client_restricted.xml");
         }
         BusFactory.setDefaultBus(bus);
         BusFactory.setThreadDefaultBus(bus);
@@ -130,7 +130,7 @@ public class WSSecurity10Test extends AbstractBusClientServerTestBase {
     public void testClientServerStreaming() {
 
         String[] argv = new String[] {
-            // TODO - See WSS-458 "UserName",
+            "UserName",
             "UserNameOverTransport",
             "MutualCertificate10SignEncrypt",
             "MutualCertificate10SignEncryptRsa15TripleDes"
@@ -138,10 +138,10 @@ public class WSSecurity10Test extends AbstractBusClientServerTestBase {
         //argv = new String[] {argv[1]};
         Bus bus = null;
         if (unrestrictedPoliciesInstalled) {
-            bus = new SpringBusFactory().createBus("org/apache/cxf/systest/ws/wssec10/client/client.xml");
+            bus = new SpringBusFactory().createBus("org/apache/cxf/systest/ws/wssec10/client.xml");
         } else {
             bus = new SpringBusFactory().createBus(
-                    "org/apache/cxf/systest/ws/wssec10/client/client_restricted.xml");
+                    "org/apache/cxf/systest/ws/wssec10/client_restricted.xml");
         }
         BusFactory.setDefaultBus(bus);
         BusFactory.setThreadDefaultBus(bus);

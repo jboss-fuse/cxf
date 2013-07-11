@@ -65,7 +65,7 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
     public void testPlaintext() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = UsernameTokenTest.class.getResource("client/client.xml");
+        URL busFile = UsernameTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -93,7 +93,7 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
     public void testPlaintextCreated() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = UsernameTokenTest.class.getResource("client/client.xml");
+        URL busFile = UsernameTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -121,7 +121,7 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
     public void testPlaintextSupporting() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = UsernameTokenTest.class.getResource("client/client.xml");
+        URL busFile = UsernameTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -137,9 +137,9 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
         // DOM
         utPort.doubleIt(25);
         
-        // TODO - See WSS-458 Streaming
-        // SecurityTestUtil.enableStreaming(utPort);
-        // utPort.doubleIt(25);
+        // Streaming
+        SecurityTestUtil.enableStreaming(utPort);
+        utPort.doubleIt(25);
         
         ((java.io.Closeable)utPort).close();
         bus.shutdown(true);
@@ -149,7 +149,7 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
     public void testPasswordHashed() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = UsernameTokenTest.class.getResource("client/client.xml");
+        URL busFile = UsernameTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -177,7 +177,7 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
     public void testNoPassword() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = UsernameTokenTest.class.getResource("client/client.xml");
+        URL busFile = UsernameTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -205,7 +205,7 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
     public void testSignedEndorsing() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = UsernameTokenTest.class.getResource("client/client.xml");
+        URL busFile = UsernameTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -233,7 +233,7 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
     public void testSignedEncrypted() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = UsernameTokenTest.class.getResource("client/client.xml");
+        URL busFile = UsernameTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -261,7 +261,7 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
     public void testEncrypted() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = UsernameTokenTest.class.getResource("client/client.xml");
+        URL busFile = UsernameTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -289,7 +289,7 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
     public void testNoUsernameToken() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = UsernameTokenTest.class.getResource("client/client.xml");
+        URL busFile = UsernameTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -311,18 +311,14 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
             assertTrue(ex.getMessage().contains(error));
         }
 
-        /*
-        // TODO
         // Streaming
         SecurityTestUtil.enableStreaming(utPort);
         try {
             utPort.doubleIt(25);
             fail("Failure expected on no UsernameToken");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
-            String error = "The received token does not match the token inclusion requirement";
-            assertTrue(ex.getMessage().contains(error));
+            assertTrue(ex.getMessage().contains("PolicyViolationException"));
         }
-        */
         
         ((java.io.Closeable)utPort).close();
         bus.shutdown(true);
@@ -332,7 +328,7 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
     public void testPasswordHashedReplay() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = UsernameTokenTest.class.getResource("client/client.xml");
+        URL busFile = UsernameTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -371,7 +367,7 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
     public void testPasswordHashedNoBindingReplay() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = UsernameTokenTest.class.getResource("client/client.xml");
+        URL busFile = UsernameTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -408,7 +404,7 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
     public void testPlaintextPrincipal() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = UsernameTokenTest.class.getResource("client/client.xml");
+        URL busFile = UsernameTokenTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -435,8 +431,6 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
         }
         
         // Streaming
-        /*
-        // TODO
         SecurityTestUtil.enableStreaming(utPort);
         ((BindingProvider)utPort).getRequestContext().put(SecurityConstants.USERNAME, "Alice");
         utPort.doubleIt(25);
@@ -446,10 +440,9 @@ public class UsernameTokenTest extends AbstractBusClientServerTestBase {
             utPort.doubleIt(30);
             fail("Failure expected on a user with the wrong role");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
-            String error = "Unauthorized";
-            assertTrue(ex.getMessage().contains(error));
+            // String error = "Unauthorized";
+            // assertTrue(ex.getMessage().contains(error));
         }
-        */
         
         ((java.io.Closeable)utPort).close();
         bus.shutdown(true);

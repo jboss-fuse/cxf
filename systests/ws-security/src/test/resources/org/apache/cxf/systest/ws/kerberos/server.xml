@@ -23,7 +23,6 @@
     xmlns:http="http://cxf.apache.org/transports/http/configuration"
     xmlns:httpj="http://cxf.apache.org/transports/http-jetty/configuration"
     xmlns:sec="http://cxf.apache.org/configuration/security"
-    xmlns:security="http://schemas.iona.com/soa/security-config"
     xmlns:interop="http://WSSec/wssec10"
     xmlns:cxf="http://cxf.apache.org/core"
     xmlns:p="http://cxf.apache.org/policy"
@@ -35,7 +34,6 @@
         http://cxf.apache.org/transports/http/configuration             http://cxf.apache.org/schemas/configuration/http-conf.xsd
         http://cxf.apache.org/transports/http-jetty/configuration       http://cxf.apache.org/schemas/configuration/http-jetty.xsd
         http://cxf.apache.org/configuration/security                    http://cxf.apache.org/schemas/configuration/security.xsd
-        http://schemas.iona.com/soa/security-config                     http://schemas.iona.com/soa/security-config.xsd
     ">
     <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"/>
     
@@ -111,8 +109,7 @@
        <jaxws:properties>
            <entry key="ws-security.callback-handler" 
                   value="org.apache.cxf.systest.ws.common.KeystorePasswordCallback"/>
-           <entry key="ws-security.signature.properties" 
-                  value="org/apache/cxf/systest/ws/wssec10/client/bob.properties"/> 
+           <entry key="ws-security.signature.properties" value="bob.properties"/> 
            <entry key="ws-security.bst.validator" value-ref="kerberosValidator"/>
        </jaxws:properties> 
      
@@ -130,8 +127,7 @@
        <jaxws:properties>
            <entry key="ws-security.callback-handler" 
                   value="org.apache.cxf.systest.ws.common.KeystorePasswordCallback"/>
-           <entry key="ws-security.signature.properties" 
-                  value="org/apache/cxf/systest/ws/wssec10/client/bob.properties"/> 
+           <entry key="ws-security.signature.properties" value="bob.properties"/> 
            <entry key="ws-security.bst.validator" value-ref="kerberosValidator"/>
        </jaxws:properties> 
      
@@ -149,8 +145,7 @@
        <jaxws:properties>
            <entry key="ws-security.callback-handler" 
                   value="org.apache.cxf.systest.ws.common.KeystorePasswordCallback"/>
-           <entry key="ws-security.signature.properties" 
-                  value="org/apache/cxf/systest/ws/wssec10/client/bob.properties"/> 
+           <entry key="ws-security.signature.properties" value="bob.properties"/> 
            <entry key="ws-security.bst.validator" value-ref="kerberosValidator"/>
        </jaxws:properties> 
      
@@ -169,10 +164,8 @@
            <entry key="ws-security.username" value="bob"/>
            <entry key="ws-security.callback-handler" 
                   value="org.apache.cxf.systest.ws.common.KeystorePasswordCallback"/>
-           <entry key="ws-security.signature.properties" 
-                  value="org/apache/cxf/systest/ws/wssec10/client/bob.properties"/> 
-           <entry key="ws-security.encryption.properties" 
-                  value="org/apache/cxf/systest/ws/wssec10/client/alice.properties"/> 
+           <entry key="ws-security.signature.properties" value="bob.properties"/> 
+           <entry key="ws-security.encryption.properties" value="alice.properties"/> 
            <entry key="ws-security.encryption.username" value="alice"/>
            <entry key="ws-security.bst.validator" value-ref="kerberosValidator"/>
            <entry key="ws-security.is-bsp-compliant" value="false"/>
@@ -210,10 +203,8 @@
            <entry key="ws-security.username" value="bob"/>
            <entry key="ws-security.callback-handler" 
                   value="org.apache.cxf.systest.ws.common.KeystorePasswordCallback"/>
-           <entry key="ws-security.signature.properties" 
-                  value="org/apache/cxf/systest/ws/wssec10/client/bob.properties"/> 
-           <entry key="ws-security.encryption.properties" 
-                  value="org/apache/cxf/systest/ws/wssec10/client/alice.properties"/> 
+           <entry key="ws-security.signature.properties" value="bob.properties"/> 
+           <entry key="ws-security.encryption.properties" value="alice.properties"/> 
            <entry key="ws-security.encryption.username" value="alice"/>
            <entry key="ws-security.bst.validator" value-ref="kerberosValidator"/>
            <entry key="ws-security.is-bsp-compliant" value="false"/>
@@ -233,8 +224,7 @@
        <jaxws:properties>
            <entry key="ws-security.callback-handler" 
                   value="org.apache.cxf.systest.ws.common.KeystorePasswordCallback"/>
-           <entry key="ws-security.signature.properties" 
-                  value="org/apache/cxf/systest/ws/wssec10/client/bob.properties"/> 
+           <entry key="ws-security.signature.properties" value="bob.properties"/> 
            <entry key="ws-security.bst.validator" value-ref="kerberosValidator"/>
        </jaxws:properties> 
      
@@ -252,8 +242,7 @@
        <jaxws:properties>
            <entry key="ws-security.callback-handler" 
                   value="org.apache.cxf.systest.ws.common.KeystorePasswordCallback"/>
-           <entry key="ws-security.signature.properties" 
-                  value="org/apache/cxf/systest/ws/wssec10/client/bob.properties"/> 
+           <entry key="ws-security.signature.properties" value="bob.properties"/> 
            <entry key="ws-security.bst.validator" value-ref="kerberosValidator"/>
        </jaxws:properties> 
      
@@ -272,10 +261,8 @@
            <entry key="ws-security.username" value="bob"/>
            <entry key="ws-security.callback-handler" 
                   value="org.apache.cxf.systest.ws.common.KeystorePasswordCallback"/>
-           <entry key="ws-security.signature.properties" 
-                  value="org/apache/cxf/systest/ws/wssec10/client/bob.properties"/> 
-           <entry key="ws-security.encryption.properties" 
-                  value="org/apache/cxf/systest/ws/wssec10/client/alice.properties"/> 
+           <entry key="ws-security.signature.properties" value="bob.properties"/> 
+           <entry key="ws-security.encryption.properties" value="alice.properties"/> 
            <entry key="ws-security.encryption.username" value="alice"/>
            <entry key="ws-security.bst.validator" value-ref="kerberosValidator"/>
            <entry key="ws-security.is-bsp-compliant" value="false"/>
@@ -296,10 +283,8 @@
            <entry key="ws-security.username" value="bob"/>
            <entry key="ws-security.callback-handler" 
                   value="org.apache.cxf.systest.ws.common.KeystorePasswordCallback"/>
-           <entry key="ws-security.signature.properties" 
-                  value="org/apache/cxf/systest/ws/wssec10/client/bob.properties"/> 
-           <entry key="ws-security.encryption.properties" 
-                  value="org/apache/cxf/systest/ws/wssec10/client/alice.properties"/> 
+           <entry key="ws-security.signature.properties" value="bob.properties"/> 
+           <entry key="ws-security.encryption.properties" value="alice.properties"/> 
            <entry key="ws-security.encryption.username" value="alice"/>
            <entry key="ws-security.bst.validator" value-ref="kerberosValidator"/>
            <entry key="ws-security.is-bsp-compliant" value="false"/>
@@ -319,8 +304,7 @@
        <jaxws:properties>
            <entry key="ws-security.callback-handler" 
                   value="org.apache.cxf.systest.ws.common.KeystorePasswordCallback"/>
-           <entry key="ws-security.signature.properties" 
-                  value="org/apache/cxf/systest/ws/wssec10/client/bob.properties"/> 
+           <entry key="ws-security.signature.properties" value="bob.properties"/> 
            <entry key="ws-security.bst.validator" value-ref="kerberosValidator"/>
        </jaxws:properties> 
      
@@ -338,8 +322,7 @@
        <jaxws:properties>
            <entry key="ws-security.callback-handler" 
                   value="org.apache.cxf.systest.ws.common.KeystorePasswordCallback"/>
-           <entry key="ws-security.signature.properties" 
-                  value="org/apache/cxf/systest/ws/wssec10/client/bob.properties"/> 
+           <entry key="ws-security.signature.properties" value="bob.properties"/> 
            <entry key="ws-security.bst.validator" value-ref="kerberosValidator"/>
        </jaxws:properties> 
      

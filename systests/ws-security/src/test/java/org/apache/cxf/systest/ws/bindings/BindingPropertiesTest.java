@@ -34,7 +34,8 @@ import org.example.contract.doubleit.DoubleItPortType;
 import org.junit.BeforeClass;
 
 /**
- * This is a test for various properties associated with a security binding
+ * This is a test for various properties associated with a security binding. It tests both DOM + 
+ * StAX clients against the DOM server
  */
 public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
     static final String PORT = allocatePort(Server.class);
@@ -63,7 +64,7 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
     public void testOnlySignEntireHeadersAndBody() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = BindingPropertiesTest.class.getResource("client/client.xml");
+        URL busFile = BindingPropertiesTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -76,19 +77,36 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
         QName portQName = new QName(NAMESPACE, "DoubleItNotOnlySignPort");
         DoubleItPortType port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
+        
+        // DOM
         port.doubleIt(25);
+        
+        // TODO - XPath support Streaming
+        // SecurityTestUtil.enableStreaming(port);
+        // port.doubleIt(25);
         
         // This should fail, as OnlySignEntireHeadersAndBody is specified
         portQName = new QName(NAMESPACE, "DoubleItOnlySignPort");
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
             port.doubleIt(25);
             fail("Failure expected on OnlySignEntireHeadersAndBody property");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
             String error = "OnlySignEntireHeadersAndBody does not match the requirements";
             assertTrue(ex.getMessage().contains(error));
+        }
+        
+        // Streaming
+        try {
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on OnlySignEntireHeadersAndBody property");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // String error = "OnlySignEntireHeadersAndBody does not match the requirements";
+            // assertTrue(ex.getMessage().contains(error));
         }
         
         ((java.io.Closeable)port).close();
@@ -99,7 +117,7 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
     public void testEncryptSignature() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = BindingPropertiesTest.class.getResource("client/client.xml");
+        URL busFile = BindingPropertiesTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -112,6 +130,12 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
         QName portQName = new QName(NAMESPACE, "DoubleItEncryptSignaturePort");
         DoubleItPortType port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
+        
+        // DOM
+        port.doubleIt(25);
+        
+        // Streaming
+        SecurityTestUtil.enableStreaming(port);
         port.doubleIt(25);
         
         // This should fail, as the client is not encrypting the signature is specified
@@ -119,12 +143,23 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
             port.doubleIt(25);
             fail("Failure expected on not encrypting the signature property");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
             String error = "The signature is not protected";
             assertTrue(ex.getMessage().contains(error));
+        }
+        
+        // Streaming
+        try {
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on not encrypting the signature property");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // String error = "The signature is not protected";
+            // assertTrue(ex.getMessage().contains(error));
         }
         
         ((java.io.Closeable)port).close();
@@ -135,7 +170,7 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
     public void testIncludeTimestamp() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = BindingPropertiesTest.class.getResource("client/client.xml");
+        URL busFile = BindingPropertiesTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -148,6 +183,12 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
         QName portQName = new QName(NAMESPACE, "DoubleItIncludeTimestampPort");
         DoubleItPortType port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
+        
+        // DOM
+        port.doubleIt(25);
+        
+        // Streaming
+        SecurityTestUtil.enableStreaming(port);
         port.doubleIt(25);
         
         // This should fail, as the client is not sending a Timestamp
@@ -155,12 +196,23 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
             port.doubleIt(25);
             fail("Failure expected on not sending a Timestamp");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
             String error = "Received Timestamp does not match the requirements";
             assertTrue(ex.getMessage().contains(error));
+        }
+        
+        // Streaming
+        try {
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on not sending a Timestamp");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // String error = "Received Timestamp does not match the requirements";
+            // assertTrue(ex.getMessage().contains(error));
         }
         
         ((java.io.Closeable)port).close();
@@ -171,7 +223,7 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
     public void testEncryptBeforeSigning() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = BindingPropertiesTest.class.getResource("client/client.xml");
+        URL busFile = BindingPropertiesTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -184,6 +236,12 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
         QName portQName = new QName(NAMESPACE, "DoubleItEncryptBeforeSigningPort");
         DoubleItPortType port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
+        
+        // DOM
+        port.doubleIt(25);
+        
+        // Streaming
+        SecurityTestUtil.enableStreaming(port);
         port.doubleIt(25);
         
         // This should fail, as the client is not following the correct steps for this property
@@ -191,12 +249,23 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
             port.doubleIt(25);
             fail("Failure expected on not encrypting before signing");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
             String error = "Not encrypted before signed";
             assertTrue(ex.getMessage().contains(error));
+        }
+        
+        // Streaming
+        try {
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on not encrypting before signing");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // String error = "Not encrypted before signed";
+            // assertTrue(ex.getMessage().contains(error));
         }
         
         ((java.io.Closeable)port).close();
@@ -207,7 +276,7 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
     public void testSignBeforeEncrypting() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = BindingPropertiesTest.class.getResource("client/client.xml");
+        URL busFile = BindingPropertiesTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -220,6 +289,12 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
         QName portQName = new QName(NAMESPACE, "DoubleItSignBeforeEncryptingPort");
         DoubleItPortType port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
+        
+        // DOM
+        port.doubleIt(25);
+        
+        // Streaming
+        SecurityTestUtil.enableStreaming(port);
         port.doubleIt(25);
         
         // This should fail, as the client is not following the correct steps for this property
@@ -227,6 +302,7 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
             port.doubleIt(25);
             fail("Failure expected on not signing before encrypting");
@@ -235,17 +311,25 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
             assertTrue(ex.getMessage().contains(error));
         }
         
+        // Streaming
+        try {
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on not signing before encrypting");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // String error = "Not signed before encrypted";
+            // assertTrue(ex.getMessage().contains(error));
+        }
+        
         ((java.io.Closeable)port).close();
         bus.shutdown(true);
     }
     
-    // TODO It's not sending the Timestamp "first" correctly
     @org.junit.Test
-    @org.junit.Ignore
     public void testTimestampFirst() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = BindingPropertiesTest.class.getResource("client/client.xml");
+        URL busFile = BindingPropertiesTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -258,6 +342,12 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
         QName portQName = new QName(NAMESPACE, "DoubleItTimestampFirstPort");
         DoubleItPortType port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
+        
+        // TODO It's not sending the Timestamp "first" correctly - DOM
+        // port.doubleIt(25);
+        
+        // Streaming
+        SecurityTestUtil.enableStreaming(port);
         port.doubleIt(25);
         
         // This should fail, as the client is sending the timestamp last
@@ -265,12 +355,24 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        /*
+        // DOM
         try {
             port.doubleIt(25);
             fail("Failure expected on on sending the timestamp last");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
             String error = "Layout does not match the requirements";
             assertTrue(ex.getMessage().contains(error));
+        }
+        */
+        // Streaming
+        try {
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on on sending the timestamp last");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // String error = "Layout does not match the requirements";
+            // assertTrue(ex.getMessage().contains(error));
         }
         
         ((java.io.Closeable)port).close();
@@ -281,7 +383,7 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
     public void testTimestampLast() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = BindingPropertiesTest.class.getResource("client/client.xml");
+        URL busFile = BindingPropertiesTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -294,6 +396,12 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
         QName portQName = new QName(NAMESPACE, "DoubleItTimestampLastPort");
         DoubleItPortType port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
+        
+        // DOM
+        port.doubleIt(25);
+        
+        // Streaming
+        SecurityTestUtil.enableStreaming(port);
         port.doubleIt(25);
         
         // This should fail, as the client is sending the timestamp first
@@ -301,12 +409,23 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
             port.doubleIt(25);
             fail("Failure expected on sending the timestamp first");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
             String error = "Layout does not match the requirements";
             assertTrue(ex.getMessage().contains(error));
+        }
+        
+        // Streaming
+        try {
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on sending the timestamp first");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // String error = "Layout does not match the requirements";
+            // assertTrue(ex.getMessage().contains(error));
         }
         
         ((java.io.Closeable)port).close();
@@ -317,7 +436,7 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
     public void testStrict() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = BindingPropertiesTest.class.getResource("client/client.xml");
+        URL busFile = BindingPropertiesTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -330,6 +449,12 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
         QName portQName = new QName(NAMESPACE, "DoubleItStrictPort");
         DoubleItPortType port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
+
+        // DOM
+        port.doubleIt(25);
+        
+        // Streaming
+        SecurityTestUtil.enableStreaming(port);
         port.doubleIt(25);
         
         // This should fail, as the client is sending the timestamp last
@@ -337,12 +462,23 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
             port.doubleIt(25);
             fail("Failure expected on sending the timestamp last");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
             String error = "Layout does not match the requirements";
             assertTrue(ex.getMessage().contains(error));
+        }
+        
+        // Streaming
+        try {
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on sending the timestamp last");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // String error = "Layout does not match the requirements";
+            // assertTrue(ex.getMessage().contains(error));
         }
         
         ((java.io.Closeable)port).close();
@@ -355,7 +491,7 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
     public void testTokenProtection() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = BindingPropertiesTest.class.getResource("client/client.xml");
+        URL busFile = BindingPropertiesTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -393,7 +529,7 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
     public void testSignatureConfirmation() throws Exception {
 
         SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = BindingPropertiesTest.class.getResource("client/client.xml");
+        URL busFile = BindingPropertiesTest.class.getResource("client.xml");
 
         Bus bus = bf.createBus(busFile.toString());
         SpringBusFactory.setDefaultBus(bus);
@@ -406,6 +542,12 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
         QName portQName = new QName(NAMESPACE, "DoubleItSignatureConfirmationPort");
         DoubleItPortType port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
+        
+        // DOM
+        port.doubleIt(25);
+        
+        // Streaming
+        SecurityTestUtil.enableStreaming(port);
         port.doubleIt(25);
         
         // This should fail, as SignatureConfirmation is not enabled
@@ -413,6 +555,7 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
         port = service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(port, PORT);
         
+        // DOM
         try {
             port.doubleIt(25);
             fail("Failure expected on not enabling SignatureConfirmation");
@@ -420,6 +563,19 @@ public class BindingPropertiesTest extends AbstractBusClientServerTestBase {
             String error = "Check Signature confirmation";
             assertTrue(ex.getMessage().contains(error));
         }
+        
+        // Streaming
+        /*
+         * TODO - See WSS-460
+        try {
+            SecurityTestUtil.enableStreaming(port);
+            port.doubleIt(25);
+            fail("Failure expected on not enabling SignatureConfirmation");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // String error = "Check Signature confirmation";
+            // assertTrue(ex.getMessage().contains(error));
+        }
+        */
         
         ((java.io.Closeable)port).close();
         bus.shutdown(true);
