@@ -25,7 +25,6 @@ import javax.xml.namespace.QName;
 
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.xmlschema.SchemaCollection;
-import org.apache.cxf.common.xmlschema.XmlSchemaConstants;
 import org.apache.cxf.common.xmlschema.XmlSchemaUtils;
 import org.apache.ws.commons.schema.XmlSchema;
 import org.apache.ws.commons.schema.XmlSchemaAnnotated;
@@ -34,6 +33,7 @@ import org.apache.ws.commons.schema.XmlSchemaAttribute;
 import org.apache.ws.commons.schema.XmlSchemaObject;
 import org.apache.ws.commons.schema.XmlSchemaType;
 import org.apache.ws.commons.schema.XmlSchemaUse;
+import org.apache.ws.commons.schema.constants.Constants;
 
 /**
  * All the information needed to create the JavaScript for an Xml Schema attribute
@@ -90,7 +90,7 @@ public final class AttributeInfo implements ItemInfo {
                                              XmlSchema currentSchema,
                                             SchemaCollection schemaCollection,
                                             NamespacePrefixAccumulator prefixAccumulator, QName contextName) {
-        XmlSchemaAnnotated annotated = XmlSchemaUtils.getObjectAnnotated(sequenceObject, contextName);
+        XmlSchemaAnnotated annotated = JavascriptUtils.getObjectAnnotated(sequenceObject, contextName);
         AttributeInfo attributeInfo = new AttributeInfo();
         XmlSchemaAnnotated realAnnotated = annotated;
 
@@ -162,19 +162,19 @@ public final class AttributeInfo implements ItemInfo {
                                          AttributeInfo attributeInfo) {
         attributeInfo.type = element.getSchemaType();
         if (attributeInfo.type == null) {
-            if (element.getSchemaTypeName().equals(XmlSchemaConstants.ANY_TYPE_QNAME)) {
+            if (element.getSchemaTypeName().equals(Constants.XSD_ANYTYPE)) {
                 attributeInfo.anyType = true;
             } else {
                 attributeInfo.type = schemaCollection.getTypeByQName(element.getSchemaTypeName());
                 if (attributeInfo.type == null
                     && !element.getSchemaTypeName()
-                            .getNamespaceURI().equals(XmlSchemaConstants.XSD_NAMESPACE_URI)) {
-                    XmlSchemaUtils.unsupportedConstruct("MISSING_TYPE", element.getSchemaTypeName()
+                            .getNamespaceURI().equals(Constants.URI_2001_SCHEMA_XSD)) {
+                    JavascriptUtils.unsupportedConstruct("MISSING_TYPE", element.getSchemaTypeName()
                             .toString(), element.getQName(), element);
                 }
             }
         } else if (attributeInfo.type.getQName() != null
-            && XmlSchemaConstants.ANY_TYPE_QNAME.equals(attributeInfo.type.getQName())) {
+            && Constants.XSD_ANYTYPE.equals(attributeInfo.type.getQName())) {
             attributeInfo.anyType = true;
         }
     }

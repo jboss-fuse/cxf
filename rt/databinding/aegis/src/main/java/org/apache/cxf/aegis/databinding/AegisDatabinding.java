@@ -43,12 +43,10 @@ import org.apache.cxf.aegis.type.TypeMapping;
 import org.apache.cxf.aegis.type.basic.ArrayType;
 import org.apache.cxf.aegis.type.java5.AnnotationReader;
 import org.apache.cxf.aegis.type.mtom.AbstractXOPType;
-import org.apache.cxf.common.WSDLConstants;
 import org.apache.cxf.common.classloader.ClassLoaderUtils;
 import org.apache.cxf.common.i18n.Message;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.xmlschema.SchemaCollection;
-import org.apache.cxf.common.xmlschema.XmlSchemaConstants;
 import org.apache.cxf.common.xmlschema.XmlSchemaUtils;
 import org.apache.cxf.databinding.AbstractDataBinding;
 import org.apache.cxf.databinding.DataReader;
@@ -62,10 +60,12 @@ import org.apache.cxf.service.model.MessagePartInfo;
 import org.apache.cxf.service.model.OperationInfo;
 import org.apache.cxf.service.model.SchemaInfo;
 import org.apache.cxf.service.model.ServiceInfo;
+import org.apache.cxf.wsdl.WSDLConstants;
 import org.apache.ws.commons.schema.XmlSchema;
 import org.apache.ws.commons.schema.XmlSchemaAnnotated;
 import org.apache.ws.commons.schema.XmlSchemaException;
 import org.apache.ws.commons.schema.XmlSchemaForm;
+import org.apache.ws.commons.schema.constants.Constants;
 import org.apache.ws.commons.schema.utils.NamespaceMap;
 
 /**
@@ -434,7 +434,7 @@ public class AegisDatabinding extends AbstractDataBinding {
 
                 String schemaNamespaceUri = entry.getKey();
 
-                if (XmlSchemaConstants.XSD_NAMESPACE_URI.equals(schemaNamespaceUri)) {
+                if (Constants.URI_2001_SCHEMA_XSD.equals(schemaNamespaceUri)) {
                     continue;
                 }
 
@@ -466,8 +466,8 @@ public class AegisDatabinding extends AbstractDataBinding {
 
                 // ditto for xsd: instead of just namespace= for the schema schema.
                 if (!xmlsNamespaceMap.containsKey("xsd")
-                    && !xmlsNamespaceMap.containsValue(XmlSchemaConstants.XSD_NAMESPACE_URI)) {
-                    xmlsNamespaceMap.add("xsd", XmlSchemaConstants.XSD_NAMESPACE_URI);
+                    && !xmlsNamespaceMap.containsValue(Constants.URI_2001_SCHEMA_XSD)) {
+                    xmlsNamespaceMap.add("xsd", Constants.URI_2001_SCHEMA_XSD);
                 }
 
                 schema.setNamespaceContext(xmlsNamespaceMap);

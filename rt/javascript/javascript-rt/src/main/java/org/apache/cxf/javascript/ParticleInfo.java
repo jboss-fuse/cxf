@@ -26,13 +26,13 @@ import javax.xml.namespace.QName;
 import org.apache.cxf.common.i18n.Message;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.xmlschema.SchemaCollection;
-import org.apache.cxf.common.xmlschema.XmlSchemaConstants;
 import org.apache.cxf.common.xmlschema.XmlSchemaUtils;
 import org.apache.ws.commons.schema.XmlSchema;
 import org.apache.ws.commons.schema.XmlSchemaElement;
 import org.apache.ws.commons.schema.XmlSchemaObject;
 import org.apache.ws.commons.schema.XmlSchemaParticle;
 import org.apache.ws.commons.schema.XmlSchemaType;
+import org.apache.ws.commons.schema.constants.Constants;
 
 /**
  * All the information needed to create the JavaScript for an Xml Schema element
@@ -131,7 +131,7 @@ public final class ParticleInfo implements ItemInfo {
                                             SchemaCollection schemaCollection,
                                             NamespacePrefixAccumulator prefixAccumulator, QName contextName) {
         XmlSchemaParticle sequenceParticle =
-            XmlSchemaUtils.getObjectParticle(sequenceObject, contextName);
+            JavascriptUtils.getObjectParticle(sequenceObject, contextName);
         ParticleInfo elementInfo = new ParticleInfo();
         XmlSchemaParticle realParticle = sequenceParticle;
 
@@ -248,19 +248,19 @@ public final class ParticleInfo implements ItemInfo {
         elementInfo.type = element.getSchemaType();
         if (elementInfo.type == null) {
             if (element.getSchemaTypeName() == null // no type at all -> anyType
-                || element.getSchemaTypeName().equals(XmlSchemaConstants.ANY_TYPE_QNAME)) {
+                || element.getSchemaTypeName().equals(Constants.XSD_ANYTYPE)) {
                 elementInfo.anyType = true;
             } else {
                 elementInfo.type = schemaCollection.getTypeByQName(element.getSchemaTypeName());
                 if (elementInfo.type == null
                     && !element.getSchemaTypeName()
-                            .getNamespaceURI().equals(XmlSchemaConstants.XSD_NAMESPACE_URI)) {
-                    XmlSchemaUtils.unsupportedConstruct("MISSING_TYPE", element.getSchemaTypeName()
+                            .getNamespaceURI().equals(Constants.URI_2001_SCHEMA_XSD)) {
+                    JavascriptUtils.unsupportedConstruct("MISSING_TYPE", element.getSchemaTypeName()
                             .toString(), element.getQName(), element);
                 }
             }
         } else if (elementInfo.type.getQName() != null
-            && XmlSchemaConstants.ANY_TYPE_QNAME.equals(elementInfo.type.getQName())) {
+            && Constants.XSD_ANYTYPE.equals(elementInfo.type.getQName())) {
             elementInfo.anyType = true;
         }
     }
@@ -284,8 +284,7 @@ public final class ParticleInfo implements ItemInfo {
                 return element.getQName();
             }
         }
-        Message message = new Message("IMPOSSIBLE_GLOBAL_ITEM", LOG, XmlSchemaUtils
-            .cleanedUpSchemaSource(particle));
+        Message message = new Message("IMPOSSIBLE_GLOBAL_ITEM", LOG, JavascriptUtils.cleanedUpSchemaSource(particle));
         LOG.severe(message.toString());
         throw new UnsupportedConstruct(message);
     }

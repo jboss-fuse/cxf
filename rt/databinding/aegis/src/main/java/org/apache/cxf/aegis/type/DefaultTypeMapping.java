@@ -70,8 +70,7 @@ import org.apache.cxf.aegis.type.xml.XMLStreamReaderType;
 import org.apache.cxf.binding.soap.Soap11;
 import org.apache.cxf.common.classloader.ClassLoaderUtils;
 import org.apache.cxf.common.logging.LogUtils;
-import org.apache.cxf.common.util.SOAPConstants;
-import org.apache.cxf.common.util.XMLSchemaQNames;
+import org.apache.ws.commons.schema.constants.Constants;
 
 /**
  * The implementation of the Aegis type map. It maintains a map from
@@ -217,49 +216,49 @@ public class DefaultTypeMapping implements TypeMapping {
 
     private static void fillStandardMappings(TypeMapping tm, boolean defaultNillable, 
                                              boolean enableMtomXmime, boolean enableJDOM) {
-        defaultRegister(tm, defaultNillable, BigDecimal.class, XMLSchemaQNames.XSD_DECIMAL,
+        defaultRegister(tm, defaultNillable, BigDecimal.class, Constants.XSD_DECIMAL,
                         new BigDecimalType());
-        defaultRegister(tm, defaultNillable, BigInteger.class, XMLSchemaQNames.XSD_INTEGER,
+        defaultRegister(tm, defaultNillable, BigInteger.class, Constants.XSD_INTEGER,
                         new BigIntegerType());
-        defaultRegister(tm, defaultNillable, Boolean.class, XMLSchemaQNames.XSD_BOOLEAN,
+        defaultRegister(tm, defaultNillable, Boolean.class, Constants.XSD_BOOLEAN,
                         new BooleanType());
-        defaultRegister(tm, defaultNillable, Calendar.class, XMLSchemaQNames.XSD_DATETIME,
+        defaultRegister(tm, defaultNillable, Calendar.class, Constants.XSD_DATETIME,
                         new CalendarType());
-        defaultRegister(tm, defaultNillable, Date.class, XMLSchemaQNames.XSD_DATETIME, new DateTimeType());
-        defaultRegister(tm, defaultNillable, Float.class, XMLSchemaQNames.XSD_FLOAT, new FloatType());
-        defaultRegister(tm, defaultNillable, Double.class, XMLSchemaQNames.XSD_DOUBLE, new DoubleType());
-        defaultRegister(tm, defaultNillable, Integer.class, XMLSchemaQNames.XSD_INT, new IntType());
-        defaultRegister(tm, defaultNillable, Long.class, XMLSchemaQNames.XSD_LONG, new LongType());
-        defaultRegister(tm, defaultNillable, Object.class, XMLSchemaQNames.XSD_ANY, new ObjectType());
-        defaultRegister(tm, defaultNillable, Byte.class, XMLSchemaQNames.XSD_BYTE, new ByteType());
-        defaultRegister(tm, defaultNillable, Short.class, XMLSchemaQNames.XSD_SHORT, new ShortType());
-        defaultRegister(tm, defaultNillable, Source.class, XMLSchemaQNames.XSD_ANY, new SourceType());
-        defaultRegister(tm, defaultNillable, String.class, XMLSchemaQNames.XSD_STRING, new StringType());
-        defaultRegister(tm, defaultNillable, Time.class, XMLSchemaQNames.XSD_TIME, new TimeType());
-        defaultRegister(tm, defaultNillable, Timestamp.class, XMLSchemaQNames.XSD_DATETIME,
+        defaultRegister(tm, defaultNillable, Date.class, Constants.XSD_DATETIME, new DateTimeType());
+        defaultRegister(tm, defaultNillable, Float.class, Constants.XSD_FLOAT, new FloatType());
+        defaultRegister(tm, defaultNillable, Double.class, Constants.XSD_DOUBLE, new DoubleType());
+        defaultRegister(tm, defaultNillable, Integer.class, Constants.XSD_INT, new IntType());
+        defaultRegister(tm, defaultNillable, Long.class, Constants.XSD_LONG, new LongType());
+        defaultRegister(tm, defaultNillable, Object.class, Constants.XSD_ANYTYPE, new ObjectType());
+        defaultRegister(tm, defaultNillable, Byte.class, Constants.XSD_BYTE, new ByteType());
+        defaultRegister(tm, defaultNillable, Short.class, Constants.XSD_SHORT, new ShortType());
+        defaultRegister(tm, defaultNillable, Source.class, Constants.XSD_ANYTYPE, new SourceType());
+        defaultRegister(tm, defaultNillable, String.class, Constants.XSD_STRING, new StringType());
+        defaultRegister(tm, defaultNillable, Time.class, Constants.XSD_TIME, new TimeType());
+        defaultRegister(tm, defaultNillable, Timestamp.class, Constants.XSD_DATETIME,
                         new TimestampType());
-        defaultRegister(tm, defaultNillable, URI.class, XMLSchemaQNames.XSD_URI, new URIType());
-        defaultRegister(tm, defaultNillable, XMLStreamReader.class, XMLSchemaQNames.XSD_ANY,
+        defaultRegister(tm, defaultNillable, URI.class, Constants.XSD_ANYURI, new URIType());
+        defaultRegister(tm, defaultNillable, XMLStreamReader.class, Constants.XSD_ANYTYPE,
                         new XMLStreamReaderType());
         
-        defaultRegister(tm, defaultNillable, boolean.class, XMLSchemaQNames.XSD_BOOLEAN,
+        defaultRegister(tm, defaultNillable, boolean.class, Constants.XSD_BOOLEAN,
                         new BooleanType());
-        defaultRegister(tm, defaultNillable, byte[].class, XMLSchemaQNames.XSD_BASE64, new Base64Type());
-        defaultRegister(tm, defaultNillable, double.class, XMLSchemaQNames.XSD_DOUBLE, new DoubleType());
-        defaultRegister(tm, defaultNillable, float.class, XMLSchemaQNames.XSD_FLOAT, new FloatType());
-        defaultRegister(tm, defaultNillable, int.class, XMLSchemaQNames.XSD_INT, new IntType());
-        defaultRegister(tm, defaultNillable, short.class, XMLSchemaQNames.XSD_SHORT, new ShortType());
-        defaultRegister(tm, defaultNillable, byte.class, XMLSchemaQNames.XSD_BYTE, new ByteType());
-        defaultRegister(tm, defaultNillable, long.class, XMLSchemaQNames.XSD_LONG, new LongType());
+        defaultRegister(tm, defaultNillable, byte[].class, Constants.XSD_BASE64, new Base64Type());
+        defaultRegister(tm, defaultNillable, double.class, Constants.XSD_DOUBLE, new DoubleType());
+        defaultRegister(tm, defaultNillable, float.class, Constants.XSD_FLOAT, new FloatType());
+        defaultRegister(tm, defaultNillable, int.class, Constants.XSD_INT, new IntType());
+        defaultRegister(tm, defaultNillable, short.class, Constants.XSD_SHORT, new ShortType());
+        defaultRegister(tm, defaultNillable, byte.class, Constants.XSD_BYTE, new ByteType());
+        defaultRegister(tm, defaultNillable, long.class, Constants.XSD_LONG, new LongType());
 
-        defaultRegister(tm, defaultNillable, java.sql.Date.class, XMLSchemaQNames.XSD_DATETIME,
+        defaultRegister(tm, defaultNillable, java.sql.Date.class, Constants.XSD_DATETIME,
                         new SqlDateType());
-        defaultRegister(tm, defaultNillable, java.sql.Date.class, XMLSchemaQNames.XSD_DATE,
+        defaultRegister(tm, defaultNillable, java.sql.Date.class, Constants.XSD_DATE,
                         new SqlDateType());
-        defaultRegister(tm, defaultNillable, Number.class, XMLSchemaQNames.XSD_DECIMAL,
+        defaultRegister(tm, defaultNillable, Number.class, Constants.XSD_DECIMAL,
                         new BigDecimalType());
         
-        QName mtomBase64 = XMLSchemaQNames.XSD_BASE64;
+        QName mtomBase64 = Constants.XSD_BASE64;
         if (enableMtomXmime) {
             mtomBase64 = AbstractXOPType.XML_MIME_BASE64;
         }
@@ -270,7 +269,7 @@ public class DefaultTypeMapping implements TypeMapping {
                         new DataHandlerType(enableMtomXmime, null));
         
 
-        defaultRegister(tm, defaultNillable, Document.class, XMLSchemaQNames.XSD_ANY, new DocumentType());
+        defaultRegister(tm, defaultNillable, Document.class, Constants.XSD_ANYTYPE, new DocumentType());
         if (enableJDOM) {
             registerJDOMTypes(tm, defaultNillable);
         }
@@ -280,7 +279,7 @@ public class DefaultTypeMapping implements TypeMapping {
     private static void registerJDOMTypes(TypeMapping tm, boolean defaultNillable) {
         try {
             Class<?> jdomDocClass = ClassLoaderUtils.loadClass("org.jdom.Document", DefaultTypeMapping.class);
-            defaultRegister(tm, defaultNillable, jdomDocClass, XMLSchemaQNames.XSD_ANY,
+            defaultRegister(tm, defaultNillable, jdomDocClass, Constants.XSD_ANYTYPE,
                             new JDOMDocumentType());
 
         } catch (ClassNotFoundException e) {
@@ -290,19 +289,11 @@ public class DefaultTypeMapping implements TypeMapping {
         try {
             Class<?> jdomElementClass = 
                 ClassLoaderUtils.loadClass("org.jdom.Element", DefaultTypeMapping.class);
-            defaultRegister(tm, defaultNillable, jdomElementClass, XMLSchemaQNames.XSD_ANY,
+            defaultRegister(tm, defaultNillable, jdomElementClass, Constants.XSD_ANYTYPE,
                                 new JDOMElementType());
         } catch (ClassNotFoundException e) {
             // not available.
         }
-    }
-
-    public static DefaultTypeMapping createSoap11TypeMapping(boolean defaultNillable, 
-     boolean enableMtomXmime) {
-        return createSoap11TypeMapping(
-                                       defaultNillable,
-                                       enableMtomXmime,
-                                       false);
     }
 
     /**
@@ -367,7 +358,7 @@ public class DefaultTypeMapping implements TypeMapping {
                                                               boolean enableMtomXmime, 
                                                               boolean enableJDOM) {
         // by convention, the default mapping is against the XML schema URI.
-        DefaultTypeMapping tm = new DefaultTypeMapping(SOAPConstants.XSD);
+        DefaultTypeMapping tm = new DefaultTypeMapping(Constants.URI_2001_SCHEMA_XSD);
         fillStandardMappings(tm, defaultNillable, enableMtomXmime, enableJDOM);
         defaultRegister(tm, defaultNillable, Character.class, 
                         CharacterAsStringType.CHARACTER_AS_STRING_TYPE_QNAME,
@@ -376,31 +367,31 @@ public class DefaultTypeMapping implements TypeMapping {
                         CharacterAsStringType.CHARACTER_AS_STRING_TYPE_QNAME,
                         new CharacterAsStringType());
 
-        defaultRegister(tm, defaultNillable, javax.xml.datatype.Duration.class, XMLSchemaQNames.XSD_DURATION,
+        defaultRegister(tm, defaultNillable, javax.xml.datatype.Duration.class, Constants.XSD_DURATION,
                             new org.apache.cxf.aegis.type.java5.DurationType());
         defaultRegister(tm, defaultNillable, javax.xml.datatype.XMLGregorianCalendar.class,
-                            XMLSchemaQNames.XSD_DATE,
+                        Constants.XSD_DATE,
                             new org.apache.cxf.aegis.type.java5.XMLGregorianCalendarType());
         defaultRegister(tm, defaultNillable, javax.xml.datatype.XMLGregorianCalendar.class,
-                            XMLSchemaQNames.XSD_TIME,
+                        Constants.XSD_TIME,
                             new org.apache.cxf.aegis.type.java5.XMLGregorianCalendarType());
         defaultRegister(tm, defaultNillable, javax.xml.datatype.XMLGregorianCalendar.class,
-                            XMLSchemaQNames.XSD_G_DAY,
+                        Constants.XSD_DAY,
                             new org.apache.cxf.aegis.type.java5.XMLGregorianCalendarType());
         defaultRegister(tm, defaultNillable, javax.xml.datatype.XMLGregorianCalendar.class,
-                            XMLSchemaQNames.XSD_G_MONTH,
+                        Constants.XSD_MONTH,
                             new org.apache.cxf.aegis.type.java5.XMLGregorianCalendarType());
         defaultRegister(tm, defaultNillable, javax.xml.datatype.XMLGregorianCalendar.class,
-                            XMLSchemaQNames.XSD_G_MONTH_DAY,
+                        Constants.XSD_MONTHDAY,
                             new org.apache.cxf.aegis.type.java5.XMLGregorianCalendarType());
         defaultRegister(tm, defaultNillable, javax.xml.datatype.XMLGregorianCalendar.class,
-                            XMLSchemaQNames.XSD_G_YEAR,
+                        Constants.XSD_YEAR,
                             new org.apache.cxf.aegis.type.java5.XMLGregorianCalendarType());
         defaultRegister(tm, defaultNillable, javax.xml.datatype.XMLGregorianCalendar.class,
-                            XMLSchemaQNames.XSD_G_YEAR_MONTH,
+                        Constants.XSD_YEARMONTH,
                             new org.apache.cxf.aegis.type.java5.XMLGregorianCalendarType());
         defaultRegister(tm, defaultNillable, javax.xml.datatype.XMLGregorianCalendar.class,
-                            XMLSchemaQNames.XSD_DATETIME,
+                        Constants.XSD_DATETIME,
                             new org.apache.cxf.aegis.type.java5.XMLGregorianCalendarType());
         return tm;
     }

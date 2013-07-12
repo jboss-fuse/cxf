@@ -35,8 +35,8 @@ import org.apache.cxf.aegis.type.collection.CollectionType;
 import org.apache.cxf.aegis.type.collection.MapType;
 import org.apache.cxf.aegis.util.NamespaceHelper;
 import org.apache.cxf.aegis.util.ServiceUtils;
-import org.apache.cxf.common.WSDLConstants;
-import org.apache.cxf.common.util.XMLSchemaQNames;
+import org.apache.cxf.wsdl.WSDLConstants;
+import org.apache.ws.commons.schema.constants.Constants;
 
 public abstract class AbstractTypeCreator implements TypeCreator {
     public static final String HTTP_CXF_APACHE_ORG_ARRAYS = "http://cxf.apache.org/arrays";
@@ -282,7 +282,7 @@ public abstract class AbstractTypeCreator implements TypeCreator {
 
     protected AegisType createObjectType() {
         ObjectType type = new ObjectType();
-        type.setSchemaType(XMLSchemaQNames.XSD_ANY);
+        type.setSchemaType(Constants.XSD_ANYTYPE);
         type.setTypeClass(Object.class);
         type.setTypeMapping(getTypeMapping());
         return type;

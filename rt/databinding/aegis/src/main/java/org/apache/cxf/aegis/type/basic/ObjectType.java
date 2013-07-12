@@ -34,11 +34,10 @@ import org.apache.cxf.aegis.type.TypeMapping;
 import org.apache.cxf.aegis.xml.MessageReader;
 import org.apache.cxf.aegis.xml.MessageWriter;
 import org.apache.cxf.common.util.Base64Utility;
-import org.apache.cxf.common.util.SOAPConstants;
-import org.apache.cxf.common.xmlschema.XmlSchemaConstants;
 import org.apache.ws.commons.schema.XmlSchema;
 import org.apache.ws.commons.schema.XmlSchemaSimpleType;
 import org.apache.ws.commons.schema.XmlSchemaSimpleTypeRestriction;
+import org.apache.ws.commons.schema.constants.Constants;
 
 /**
  * AegisType for runtime inspection of types. Looks as the class to be written, and
@@ -51,8 +50,8 @@ import org.apache.ws.commons.schema.XmlSchemaSimpleTypeRestriction;
  *
  */
 public class ObjectType extends AegisType {
-    private static final QName XSI_TYPE = new QName(SOAPConstants.XSI_NS, "type");
-    private static final QName XSI_NIL = new QName(SOAPConstants.XSI_NS, "nil");
+    private static final QName XSI_TYPE = new QName(Constants.URI_2001_SCHEMA_XSI, "type");
+    private static final QName XSI_NIL = new QName(Constants.URI_2001_SCHEMA_XSI, "nil");
 
     private Set<AegisType> dependencies;
     private boolean serializedWhenUnknown;
@@ -271,7 +270,7 @@ public class ObjectType extends AegisType {
             simple.setName("serializedJavaObject");
             XmlSchemaSimpleTypeRestriction restriction = new XmlSchemaSimpleTypeRestriction();
             simple.setContent(restriction);
-            restriction.setBaseTypeName(XmlSchemaConstants.BASE64BINARY_QNAME);
+            restriction.setBaseTypeName(Constants.XSD_BASE64);
         }
     }
 }

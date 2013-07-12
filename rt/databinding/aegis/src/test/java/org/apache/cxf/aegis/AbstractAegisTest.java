@@ -21,6 +21,9 @@ package org.apache.cxf.aegis;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import javax.wsdl.Definition;
 import javax.wsdl.Import;
@@ -47,13 +50,11 @@ import org.apache.cxf.binding.soap.SoapBindingConstants;
 import org.apache.cxf.binding.soap.SoapBindingFactory;
 import org.apache.cxf.binding.soap.SoapTransportFactory;
 import org.apache.cxf.bus.extension.ExtensionManagerBus;
-import org.apache.cxf.common.WSDLConstants;
-import org.apache.cxf.common.util.SOAPConstants;
-import org.apache.cxf.common.xmlschema.XmlSchemaConstants;
 import org.apache.cxf.endpoint.Server;
 import org.apache.cxf.endpoint.ServerRegistry;
 import org.apache.cxf.frontend.AbstractWSDLBasedEndpointFactory;
 import org.apache.cxf.frontend.ServerFactoryBean;
+import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.helpers.MapNamespaceContext;
 import org.apache.cxf.jaxws.JaxWsServerFactoryBean;
@@ -65,12 +66,14 @@ import org.apache.cxf.test.AbstractCXFTest;
 import org.apache.cxf.transport.ConduitInitiatorManager;
 import org.apache.cxf.transport.DestinationFactoryManager;
 import org.apache.cxf.transport.local.LocalTransportFactory;
+import org.apache.cxf.wsdl.WSDLConstants;
 import org.apache.cxf.wsdl.WSDLManager;
 import org.apache.cxf.wsdl11.ServiceWSDLBuilder;
-import org.apache.cxf.wsdl11.WSDLDefinitionBuilder;
 import org.apache.cxf.wsdl11.WSDLManagerImpl;
 import org.apache.ws.commons.schema.XmlSchema;
+import org.apache.ws.commons.schema.constants.Constants;
 import org.apache.ws.commons.schema.utils.NamespaceMap;
+
 import org.junit.Before;
 
 public abstract class AbstractAegisTest extends AbstractCXFTest {
@@ -111,9 +114,9 @@ public abstract class AbstractAegisTest extends AbstractCXFTest {
         
         
 
-        addNamespace("wsdl", SOAPConstants.WSDL11_NS);
-        addNamespace("wsdlsoap", SOAPConstants.WSDL11_SOAP_NS);
-        addNamespace("xsd", SOAPConstants.XSD);
+        addNamespace("wsdl", WSDLConstants.NS_WSDL11);
+        addNamespace("wsdlsoap", WSDLConstants.NS_SOAP11);
+        addNamespace("xsd", WSDLConstants.NS_SCHEMA_XSD);
 
     }
 
@@ -238,11 +241,23 @@ public abstract class AbstractAegisTest extends AbstractCXFTest {
         }
         docs.add(writer.getDocument(definition));
 
-        for (Import wsdlImport : WSDLDefinitionBuilder.getImports(definition)) {
+        for (Import wsdlImport : getImports(definition)) {
             docs.add(writer.getDocument(wsdlImport.getDefinition()));
         }
         return docs;
     }
+    
+    private Collection<Import> getImports(final Definition wsdlDef) {
+        Collection<Import> importList = new ArrayList<Import>();
+        Map<?, ?> imports = wsdlDef.getImports();
+        for (Iterator<?> iter = imports.keySet().iterator(); iter.hasNext();) {
+            String uri = (String)iter.next();
+            List<Import> lst = CastUtils.cast((List<?>)imports.get(uri));
+            importList.addAll(lst);
+        }
+        return importList;
+    }
+    
 
     protected Definition getWSDLDefinition(String string) throws WSDLException {
         ServerRegistry svrMan = getBus().getExtension(ServerRegistry.class);
@@ -282,7 +297,7 @@ public abstract class AbstractAegisTest extends AbstractCXFTest {
         xmlsNamespaceMap.add(WSDLConstants.CONVENTIONAL_TNS_PREFIX, targetNamespace);
         
         // ditto for xsd: instead of just namespace= for the schema schema.
-        xmlsNamespaceMap.add("xsd", XmlSchemaConstants.XSD_NAMESPACE_URI);
+        xmlsNamespaceMap.add("xsd", Constants.URI_2001_SCHEMA_XSD);
         return s;
     }
     
