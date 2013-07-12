@@ -106,19 +106,17 @@ public class JAXRSInvoker extends AbstractInvoker {
             return handleFault(ex, exchange.getInMessage());
         } finally {
             boolean suspended = exchange.getInMessage().getInterceptorChain().getState() == State.SUSPENDED;
+            if (exchange.isOneWay() || suspended) {
+                ProviderFactory.getInstance(exchange.getInMessage()).clearThreadLocalProxies();
+            }
             if (!suspended) {
-                if (exchange.isOneWay()) {
-                    ProviderFactory.getInstance(exchange.getInMessage()).clearThreadLocalProxies();
-                }
                 if (!isServiceObjectRequestScope(exchange.getInMessage())) {
                     provider.releaseInstance(exchange.getInMessage(), rootInstance);
-                } else {
-                    persistRoots(exchange, rootInstance, provider);
                 }
             } else {
-                persistRoots(exchange, rootInstance, provider);
                 exchange.put(REQUEST_WAS_SUSPENDED, true);
             }
+            persistRoots(exchange, rootInstance, provider);
         }
     }
 
@@ -197,6 +195,7 @@ public class JAXRSInvoker extends AbstractInvoker {
             if (asyncResponse != null) {
                 if (!asyncResponse.isSuspended() && !asyncResponse.isResumedByApplication()) {
                     asyncResponse.suspendContinuation();
+                    providerFactory.clearThreadLocalProxies();
                 } else {
                     result = handleAsyncResponse(exchange, asyncResponse.getResponseObject());
                 }
