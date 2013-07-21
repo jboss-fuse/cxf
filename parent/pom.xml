@@ -93,8 +93,7 @@
         <cxf.commons-collections.version>3.2.1</cxf.commons-collections.version>
         <cxf.commons-lang.version>2.6</cxf.commons-lang.version>
         <cxf.derby.version>10.2.2.0</cxf.derby.version>
-        <cxf.ehcache.version>2.5.1</cxf.ehcache.version>
-        <cxf.ehcache.bundle.version>2.5.1_1</cxf.ehcache.bundle.version>
+        <cxf.ehcache.version>2.7.2</cxf.ehcache.version>
         <cxf.fastinfoset.bundle.version>1.2.7_4</cxf.fastinfoset.bundle.version>
         <cxf.hazelcast.version>1.9.4</cxf.hazelcast.version>
         <cxf.httpcomponents.asyncclient.version>4.0-beta3</cxf.httpcomponents.asyncclient.version>
@@ -104,7 +103,7 @@
         <cxf.httpcomponents.core.version.range>[4.2.1,4.3.0)</cxf.httpcomponents.core.version.range>
         <cxf.james.mim4j.version>0.7.2</cxf.james.mim4j.version>
         <cxf.mina.version>2.0.7</cxf.mina.version>
-        <cxf.javax.annotation-api.version>1.2-b04</cxf.javax.annotation-api.version>
+        <cxf.javax.annotation-api.version>1.2</cxf.javax.annotation-api.version>
         <cxf.geronimo.jms.version>1.1.1</cxf.geronimo.jms.version>
         <cxf.geronimo.j2ee.management.version>1.0.1</cxf.geronimo.j2ee.management.version>
         <cxf.geronimo.jpa.version>1.0</cxf.geronimo.jpa.version>
@@ -175,8 +174,7 @@
         <cxf.felix.framework.version>2.0.5</cxf.felix.framework.version>
         <cxf.felix.configadmin.version>1.2.4</cxf.felix.configadmin.version>
         <cxf.xmlbeans.bundle.version>2.6.0_2</cxf.xmlbeans.bundle.version>
-        <cxf.servicemix.specs.version>2.2.0</cxf.servicemix.specs.version>
-        <cxf.servicemix.specs.version.jaxrs>2.3-SNAPSHOT</cxf.servicemix.specs.version.jaxrs>
+        <cxf.servicemix.specs.version>2.3.0-SNAPSHOT</cxf.servicemix.specs.version>
         <cxf.javax.mail.version>1.4.4</cxf.javax.mail.version>
         <cxf.jaxb.bundle.version>2.2.1.1_2</cxf.jaxb.bundle.version>
         <cxf.saaj-impl.bundle.version>1.3.20_1</cxf.saaj-impl.bundle.version>
@@ -198,7 +196,7 @@
 
         <cxf.downloadSources>true</cxf.downloadSources>
 
-        <cxf.pmd.eclipse.ruleset>cxf-pmd-ruleset.xml</cxf.pmd.eclipse.ruleset>
+        <cxf.pmd.eclipse.ruleset.ext/>
 
         <cxf.resources.base.path />
     </properties>
@@ -290,11 +288,11 @@
                             </file>
                             <file>
                                 <name>.pmd</name>
-                                <location>/cxf-eclipse-pmd</location>
+                                <location>/cxf-eclipse-pmd${cxf.pmd.eclipse.ruleset.ext}</location>
                             </file>
                             <file>
                                 <name>.ruleset</name>
-                                <location>/${cxf.pmd.eclipse.ruleset}</location>
+                                <location>/cxf-pmd-ruleset${cxf.pmd.eclipse.ruleset.ext}.xml</location>
                             </file>
                         </additionalConfig>
                     </configuration>
@@ -335,12 +333,17 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-pmd-plugin</artifactId>
-                    <version>2.7.1</version>
+                    <version>3.0.1</version>
                     <dependencies>
                         <dependency>
                             <groupId>org.apache.cxf.build-utils</groupId>
                             <artifactId>cxf-buildtools</artifactId>
                             <version>${cxf.build-utils.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>net.sourceforge.pmd</groupId>
+                            <artifactId>pmd</artifactId>
+                            <version>5.0.4</version>
                         </dependency>
                     </dependencies>
                     <configuration>
@@ -403,6 +406,7 @@
                             <spring.validation.mode>${cxf.spring.validation.mode}</spring.validation.mode>
                             <server.launcher.vmargs>${cxf.server.launcher.vmargs}</server.launcher.vmargs>
                             <org.apache.cxf.transport.http.async.usePolicy>ALWAYS</org.apache.cxf.transport.http.async.usePolicy>
+                            <!--javax.xml.bind.JAXBContext>org.eclipse.persistence.jaxb.JAXBContextFactory</javax.xml.bind.JAXBContext-->
                         </systemPropertyVariables>
                     </configuration>
                 </plugin>
@@ -583,7 +587,11 @@
                 <version>${cxf.junit.version}</version>
                 <scope>test</scope>
             </dependency>
-
+            <dependency>
+                <groupId>nekohtml</groupId>
+                <artifactId>nekohtml</artifactId>
+                <version>1.9.6.2</version>
+            </dependency>
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-plugin-api</artifactId>
@@ -1537,13 +1545,7 @@
             <dependency>
                 <groupId>xerces</groupId>
                 <artifactId>xercesImpl</artifactId>
-                <version>2.9.1</version>
-                <exclusions>
-                    <exclusion>
-                        <artifactId>xml-apis</artifactId>
-                        <groupId>xml-apis</groupId>
-                    </exclusion>
-                </exclusions>
+                <version>2.11.0</version>
             </dependency>
             <!-- if we use the new woodstox artifact, we're using the new version -->
             <dependency>
@@ -1803,7 +1805,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-pmd-plugin</artifactId>
-                        <version>2.7.1</version>
+                        <version>3.0.1</version>
                         <dependencies>
                             <dependency>
                                 <groupId>org.apache.cxf.build-utils</groupId>

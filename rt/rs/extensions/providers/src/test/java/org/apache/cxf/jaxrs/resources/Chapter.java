@@ -24,8 +24,8 @@ import javax.ws.rs.Produces;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
+import org.apache.cxf.jaxrs.ext.xml.XMLName;
 import org.apache.cxf.jaxrs.model.wadl.Description;
-import org.apache.cxf.jaxrs.model.wadl.XMLName;
 
 @XmlRootElement(name = "thechapter", namespace = "http://superbooks")
 @XmlType(name = "chapter", namespace = "http://superbooks")

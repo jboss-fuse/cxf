@@ -19,23 +19,28 @@
 
 package org.apache.cxf.sts.event;
 
-import org.springframework.context.ApplicationEvent;
-
-public abstract class AbstractSTSEvent extends ApplicationEvent {
-
-    private static final long serialVersionUID = 1L;
-    
+public abstract class AbstractSTSEvent {
     private long duration;
-    
+    private final long timestamp;
+    private final Object source;
+
     public AbstractSTSEvent(Object source, long duration) {
-        super(source);
         this.duration = duration;
+        this.timestamp = System.currentTimeMillis();
+        this.source = source;
     }
+
     
     public abstract String getOperation();
     
     public long getDuration() {
         return duration;
+    }
+    public final long getTimestamp() {
+        return this.timestamp;
+    }
+    public final Object getSource() {
+        return source;
     }
 
 }

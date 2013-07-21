@@ -228,6 +228,7 @@ public class SecurityPolicyTest extends AbstractBusClientServerTestBase  {
 
         QName portQName = new QName(NAMESPACE, "DoubleItPortXPath");
         pt = service.getPort(portQName, DoubleItPortType.class);
+        
         updateAddressPort(pt, PORT);
         ((BindingProvider)pt).getRequestContext().put(SecurityConstants.CALLBACK_HANDLER, 
                                                       new KeystorePasswordCallback());
@@ -251,7 +252,7 @@ public class SecurityPolicyTest extends AbstractBusClientServerTestBase  {
         // DOM
         pt.doubleIt(5);
         
-        // TODO EncryptBeforeSigning + EncryptSignature not working
+        // TODO See WSS-464
         // SecurityTestUtil.enableStreaming(pt);
         // pt.doubleIt(5);
         
@@ -266,6 +267,11 @@ public class SecurityPolicyTest extends AbstractBusClientServerTestBase  {
                                                       getClass().getResource("alice.properties"));
         ((BindingProvider)pt).getRequestContext().put(SecurityConstants.ENCRYPT_PROPERTIES, 
                                                       getClass().getResource("bob.properties"));
+        // DOM
+        pt.doubleIt(5);
+        
+        // Streaming
+        SecurityTestUtil.enableStreaming(pt);
         pt.doubleIt(5);
         
         ((java.io.Closeable)pt).close();
@@ -285,7 +291,7 @@ public class SecurityPolicyTest extends AbstractBusClientServerTestBase  {
         
         // Streaming
         SecurityTestUtil.enableStreaming(pt);
-        // pt.doubleIt(5);
+        pt.doubleIt(5);
         
         ((java.io.Closeable)pt).close();
         
@@ -653,7 +659,7 @@ public class SecurityPolicyTest extends AbstractBusClientServerTestBase  {
                        || errorMessage.contains("Error during certificate path validation"));
         }
         
-        // TODO EncryptBeforeSigning + EncryptSignature not working
+        // TODO See WSS-464
         /*
         SecurityTestUtil.enableStreaming(pt);
         try {
