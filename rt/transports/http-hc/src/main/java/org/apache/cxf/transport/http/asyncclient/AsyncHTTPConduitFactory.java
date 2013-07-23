@@ -274,6 +274,13 @@ public class AsyncHTTPConduitFactory implements BusLifeCycleListener, HTTPCondui
     public HTTPConduit createConduit(HTTPTransportFactory f, 
                                      EndpointInfo localInfo,
                                      EndpointReferenceType target) throws IOException {
+       
+        return createConduit(bus, localInfo, target);
+    }
+    
+    public HTTPConduit createConduit(Bus bus,
+                                     EndpointInfo localInfo,
+                                     EndpointReferenceType target) throws IOException {
         if (isShutdown) {
             return null;
         }
