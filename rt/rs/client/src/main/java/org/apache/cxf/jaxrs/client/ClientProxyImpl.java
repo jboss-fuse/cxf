@@ -591,9 +591,14 @@ public class ClientProxyImpl extends AbstractClient implements
                     && ((InputStream)r.getEntity()).available() == 0)) {
                 return r;
             }
-            
-            return readBody(r, outMessage, method.getReturnType(), 
-                            method.getGenericReturnType(), method.getDeclaredAnnotations());
+            Type genericType = 
+                InjectionUtils.processGenericTypeIfNeeded(method.getDeclaringClass(), 
+                                                          method.getGenericReturnType());
+            return readBody(r, 
+                            outMessage, 
+                            method.getReturnType(), 
+                            genericType, 
+                            method.getDeclaredAnnotations());
         } finally {
             ClientProviderFactory.getInstance(outMessage).clearThreadLocalProxies();
         }
@@ -646,6 +651,9 @@ public class ClientProxyImpl extends AbstractClient implements
                     if (bodyType != null) {
                         paramType = bodyType;
                     }
+                    paramType = InjectionUtils.processGenericTypeIfNeeded(method.getDeclaringClass(),
+                                                                          paramType);
+                    
                     writeBody(body, outMessage, bodyClass, paramType,
                               anns, os);
                 } else {

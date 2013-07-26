@@ -90,7 +90,7 @@ public class WSSecurity111Test extends WSSecurity11Common {
             "UX-SEES",
             "UXD-SEES", 
         };
-        runClientServer(argv, unrestrictedPoliciesInstalled, false);
+        runClientServer(argv, unrestrictedPoliciesInstalled, false, false);
     }
     
     @Test
@@ -104,7 +104,7 @@ public class WSSecurity111Test extends WSSecurity11Common {
             "A",
             "A-NoTimestamp",
             // TODO Derived "AD",
-            // TODO EncryptBeforeSigning not working "A-ES",
+            // TODO See WSS-468 EncryptBeforeSigning not working "A-ES",
             // TODO Derived "AD-ES",
             "UX",
             "UX-NoTimestamp",
@@ -112,7 +112,7 @@ public class WSSecurity111Test extends WSSecurity11Common {
             "UX-SEES",
             // TODO Derived "UXD-SEES",
         };
-        runClientServerStreaming(argv, unrestrictedPoliciesInstalled, false);
+        runClientServerStreaming(argv, unrestrictedPoliciesInstalled, false, false);
     }
     
  

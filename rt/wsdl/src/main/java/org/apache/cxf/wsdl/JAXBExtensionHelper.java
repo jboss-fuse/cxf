@@ -55,12 +55,12 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlSchema;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
+import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 import javax.xml.stream.util.StreamReaderDelegate;
 
 import org.w3c.dom.Element;
-
 import org.apache.cxf.common.classloader.ClassLoaderUtils;
 import org.apache.cxf.common.jaxb.JAXBContextCache;
 import org.apache.cxf.common.jaxb.JAXBContextCache.CachedContextAndSchemas;
@@ -74,6 +74,7 @@ import org.apache.cxf.common.util.ASMHelper.Label;
 import org.apache.cxf.common.util.ASMHelper.MethodVisitor;
 import org.apache.cxf.common.util.ASMHelper.Opcodes;
 import org.apache.cxf.common.util.PackageUtils;
+import org.apache.cxf.common.util.ReflectionUtil;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.staxutils.PrettyPrintXMLStreamWriter;
 import org.apache.cxf.staxutils.StaxUtils;
@@ -173,7 +174,7 @@ public class JAXBExtensionHelper implements ExtensionSerializer, ExtensionDeseri
         try {
             Class<?> objectFactory = Class.forName(PackageUtils.getPackageName(cls) + ".ObjectFactory",
                                                    true, cls.getClassLoader());
-            Method methods[] = objectFactory.getDeclaredMethods();
+            Method methods[] = ReflectionUtil.getDeclaredMethods(objectFactory);
             for (Method method : methods) {
                 if (method.getParameterTypes().length == 1
                     && method.getParameterTypes()[0].equals(cls)) {
@@ -363,7 +364,11 @@ public class JAXBExtensionHelper implements ExtensionSerializer, ExtensionDeseri
                                     "Error reading element " + qname,
                                     ex);
         } finally {
-            StaxUtils.close(reader);
+            try {
+                StaxUtils.close(reader);
+            } catch (XMLStreamException ex) {
+                throw new WSDLException(WSDLException.PARSER_ERROR, ex.getMessage(), ex);
+            }
         }
     }
     

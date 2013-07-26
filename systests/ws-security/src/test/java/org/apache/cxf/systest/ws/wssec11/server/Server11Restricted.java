@@ -21,6 +21,7 @@ package org.apache.cxf.systest.ws.wssec11.server;
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.bus.spring.SpringBusFactory;
+import org.apache.cxf.systest.ws.wssec11.RestrictedAlgorithmSuiteLoader;
 
 public class Server11Restricted extends AbstractServerRestricted {
     static final String PORT = allocatePort(Server11.class);
@@ -36,14 +37,10 @@ public class Server11Restricted extends AbstractServerRestricted {
     protected void run()  {
         Bus busLocal = new SpringBusFactory().createBus(
             "org/apache/cxf/systest/ws/wssec11/server.xml");
+        new RestrictedAlgorithmSuiteLoader(busLocal);
         BusFactory.setDefaultBus(busLocal);
         setBus(busLocal);
-
-        try {
-            new Server11Restricted("http://localhost:" + PORT);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        super.run();
     }
     
 }

@@ -37,6 +37,8 @@ import org.junit.BeforeClass;
 /**
  * Test the TransportBinding. The CXF client gets a token from the STS over TLS, and then
  * sends it to the CXF endpoint over TLS.
+ * 
+ * It tests both DOM + StAX clients against the DOM server
  */
 public class TransportBindingTest extends AbstractBusClientServerTestBase {
     
@@ -233,7 +235,7 @@ public class TransportBindingTest extends AbstractBusClientServerTestBase {
             TokenTestUtils.updateSTSPort((BindingProvider)transportSaml1Port, STSPORT);
         }
         SecurityTestUtil.enableStreaming(transportSaml1Port);
-        // TODO doubleIt(transportSaml1Port, 25);
+        doubleIt(transportSaml1Port, 25);
         
         ((java.io.Closeable)transportSaml1Port).close();
         bus.shutdown(true);
