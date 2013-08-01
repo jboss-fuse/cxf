@@ -50,6 +50,7 @@ public interface XACMLRequestBuilder {
      * @param message The Message from which to retrieve the resource
      * @return the list of Resources that have been inserted into the Request
      */
+    @Deprecated
     List<String> getResources(Message message);
     
     /**

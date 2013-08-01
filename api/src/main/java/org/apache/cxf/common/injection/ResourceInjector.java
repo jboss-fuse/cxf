@@ -388,14 +388,14 @@ public class ResourceInjector extends AbstractAnnotationVisitor {
 
         Collection<Method> methods = new LinkedList<Method>(); 
         addAnnotatedMethods(acls, getTarget().getClass().getMethods(), methods); 
-        addAnnotatedMethods(acls, getTarget().getClass().getDeclaredMethods(), methods);
+        addAnnotatedMethods(acls, ReflectionUtil.getDeclaredMethods(getTarget().getClass()), methods);
         if (getTargetClass() != getTarget().getClass()) {
             addAnnotatedMethods(acls, getTargetClass().getMethods(), methods); 
-            addAnnotatedMethods(acls, getTargetClass().getDeclaredMethods(), methods);            
+            addAnnotatedMethods(acls, ReflectionUtil.getDeclaredMethods(getTargetClass()), methods);            
         }
         return methods;
-    } 
-
+    }
+    
     private void addAnnotatedMethods(Class<? extends Annotation> acls, Method[] methods,
         Collection<Method> annotatedMethods) {
         for (Method method : methods) { 
