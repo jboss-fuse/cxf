@@ -105,7 +105,7 @@
         <cxf.james.mim4j.version>0.7.2</cxf.james.mim4j.version>
         <cxf.geronimo.annotation.version>1.1.1</cxf.geronimo.annotation.version>
         <cxf.mina.version>2.0.7</cxf.mina.version>
-        <cxf.javax.annotation-api.version>1.2-b02</cxf.javax.annotation-api.version>
+        <cxf.javax.annotation-api.version>1.2-b04</cxf.javax.annotation-api.version>
         <cxf.geronimo.jms.version>1.1.1</cxf.geronimo.jms.version>
         <cxf.geronimo.j2ee.management.version>1.0.1</cxf.geronimo.j2ee.management.version>
         <cxf.geronimo.jpa.version>1.0</cxf.geronimo.jpa.version>
@@ -158,7 +158,7 @@
         <cxf.woodstox.core.version>4.2.0</cxf.woodstox.core.version>
         <cxf.woodstox.stax2-api.version>3.1.1</cxf.woodstox.stax2-api.version>
         <cxf.wsdl4j.version>1.6.3</cxf.wsdl4j.version>
-        <cxf.wss4j.version>1.6.10</cxf.wss4j.version>
+        <cxf.wss4j.version>1.6.11</cxf.wss4j.version>
         <cxf.xmlbeans.version>2.6.0</cxf.xmlbeans.version>
         <cxf.xmlschema.version>2.0.3</cxf.xmlschema.version>
         <cxf.xpp3.bundle.version>1.1.4c_6</cxf.xpp3.bundle.version>
@@ -197,7 +197,7 @@
 
         <cxf.downloadSources>true</cxf.downloadSources>
 
-        <cxf.pmd.eclipse.ruleset>cxf-pmd-ruleset.xml</cxf.pmd.eclipse.ruleset>
+        <cxf.pmd.eclipse.ruleset.ext/>
 
         <cxf.resources.base.path />
     </properties>
@@ -289,11 +289,11 @@
                             </file>
                             <file>
                                 <name>.pmd</name>
-                                <location>/cxf-eclipse-pmd</location>
+                                <location>/cxf-eclipse-pmd${cxf.pmd.eclipse.ruleset.ext}</location>
                             </file>
                             <file>
                                 <name>.ruleset</name>
-                                <location>/${cxf.pmd.eclipse.ruleset}</location>
+                                <location>/cxf-pmd-ruleset${cxf.pmd.eclipse.ruleset.ext}.xml</location>
                             </file>
                         </additionalConfig>
                     </configuration>
@@ -334,12 +334,17 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-pmd-plugin</artifactId>
-                    <version>2.7.1</version>
+                    <version>3.0.1</version>
                     <dependencies>
                         <dependency>
                             <groupId>org.apache.cxf.build-utils</groupId>
                             <artifactId>cxf-buildtools</artifactId>
                             <version>${cxf.build-utils.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>net.sourceforge.pmd</groupId>
+                            <artifactId>pmd</artifactId>
+                            <version>5.0.4</version>
                         </dependency>
                     </dependencies>
                     <configuration>
@@ -582,7 +587,11 @@
                 <version>${cxf.junit.version}</version>
                 <scope>test</scope>
             </dependency>
-
+            <dependency>
+                <groupId>nekohtml</groupId>
+                <artifactId>nekohtml</artifactId>
+                <version>1.9.6.2</version>
+            </dependency>
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-plugin-api</artifactId>
@@ -1536,13 +1545,7 @@
             <dependency>
                 <groupId>xerces</groupId>
                 <artifactId>xercesImpl</artifactId>
-                <version>2.9.1</version>
-                <exclusions>
-                    <exclusion>
-                        <artifactId>xml-apis</artifactId>
-                        <groupId>xml-apis</groupId>
-                    </exclusion>
-                </exclusions>
+                <version>2.11.0</version>
             </dependency>
             <!-- if we use the new woodstox artifact, we're using the new version -->
             <dependency>
@@ -1808,7 +1811,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-pmd-plugin</artifactId>
-                        <version>2.7.1</version>
+                        <version>3.0.1</version>
                         <dependencies>
                             <dependency>
                                 <groupId>org.apache.cxf.build-utils</groupId>

@@ -51,6 +51,7 @@ import org.apache.cxf.jaxrs.provider.ProviderFactory;
 import org.apache.cxf.jaxrs.utils.HttpUtils;
 import org.apache.cxf.jaxrs.utils.JAXRSUtils;
 import org.apache.cxf.message.Message;
+import org.apache.cxf.message.MessageUtils;
 
 public final class ResponseImpl extends Response {
     private int status;
@@ -297,16 +298,19 @@ public final class ResponseImpl extends Response {
         checkEntityIsClosed();
         
         if (!hasEntity()) {
-            return null;
+            throw new MessageProcessingException("Null entity");
         }
         
         if (cls.isAssignableFrom(entity.getClass())) {
-            T response = cls.cast(entity);
-            closeIfNotBufferred(cls);
-            return response;
+            return cls.cast(entity);
         }
-        
-        if (responseMessage != null && entity instanceof InputStream) {
+        if (entity instanceof InputStream) {
+            
+            if (responseMessage == null) {
+                // won't happen, just in case
+                throw new RuntimeException();    
+            }
+            
             MediaType mediaType = getMediaType();
             if (mediaType == null) {
                 mediaType = MediaType.WILDCARD_TYPE;
@@ -318,36 +322,39 @@ public final class ResponseImpl extends Response {
             if (readers != null) {
                 try {
                     responseMessage.put(Message.PROTOCOL_HEADERS, this.getMetadata());
-                    return cls.cast(JAXRSUtils.readFromMessageBodyReader(readers, cls, t, 
-                                                                anns, 
-                                                                InputStream.class.cast(entity), 
-                                                                mediaType, 
-                                                                responseMessage));
+                    Object newEntity = JAXRSUtils.readFromMessageBodyReader(readers, cls, t, 
+                                                                           anns, 
+                                                                           InputStream.class.cast(entity), 
+                                                                           mediaType, 
+                                                                           responseMessage);
+                    if (responseStreamCanBeClosed(cls)) {
+                        InputStream.class.cast(entity).close();
+                    }
+                    entity = newEntity;
+                    entityBufferred = true;
+                    
+                    return cls.cast(entity);
                 } catch (Exception ex) {
                     throw new MessageProcessingException(ex);
-                } finally {
-                    closeIfNotBufferred(cls);
                 }
             }
         }
+        throw new IllegalStateException("The entity is not backed by an input stream");
         
-        throw new MessageProcessingException("No Message Body reader is available");
     }
     
-    private void closeIfNotBufferred(Class<?> responseCls) {
-        if (!entityBufferred && !InputStream.class.isAssignableFrom(responseCls)) {
-            close();
-        }
+    protected boolean responseStreamCanBeClosed(Class<?> cls) {
+        return cls != InputStream.class
+            && MessageUtils.isTrue(responseMessage.getContextualProperty("response.stream.auto.close"));
     }
     
     public boolean bufferEntity() throws MessageProcessingException {
-        if (entityClosed) {
-            throw new IllegalStateException();
-        }
+        checkEntityIsClosed();
         if (!entityBufferred && entity instanceof InputStream) {
             try {
                 InputStream oldEntity = (InputStream)entity;
                 entity = IOUtils.loadIntoBAIS(oldEntity);
+                oldEntity.close();
                 entityBufferred = true;
             } catch (IOException ex) {
                 throw new MessageProcessingException(ex);
@@ -358,16 +365,15 @@ public final class ResponseImpl extends Response {
 
     public void close() throws MessageProcessingException {
         if (!entityClosed) {
-            if (entity instanceof InputStream) {
+            if (!entityBufferred && entity instanceof InputStream) {
                 try {
                     ((InputStream)entity).close();
-                    entity = null;
                 } catch (IOException ex) {
                     throw new MessageProcessingException(ex);
                 }
             }
+            entity = null;
             entityClosed = true;
-            
         }
         
     }

@@ -508,6 +508,14 @@ public abstract class AbstractClient implements Client, Retryable {
                                                             responseMessage);
             } catch (Exception ex) {
                 reportMessageHandlerProblem("MSG_READER_PROBLEM", cls, contentType, ex, r);
+            } finally {
+                if (inputStream != null && responseStreamCanBeClosed(outMessage, cls)) {
+                    try {
+                        inputStream.close();
+                    } catch (IOException ex) { 
+                        // ignore
+                    }
+                }
             }
         } else {
             reportMessageHandlerProblem("NO_MSG_READER", cls, contentType, null, null);
@@ -515,6 +523,11 @@ public abstract class AbstractClient implements Client, Retryable {
         return null;                                                
     }
     
+    protected boolean responseStreamCanBeClosed(Message outMessage, Class<?> cls) {
+        return cls != InputStream.class
+            && MessageUtils.isTrue(outMessage.getContextualProperty("response.stream.auto.close"));
+    }    
+
     protected void completeExchange(Object response, Exchange exchange, boolean proxy) {
         // higher level conduits such as FailoverTargetSelector need to
         // clear the request state but a fair number of response objects 
@@ -549,12 +562,16 @@ public abstract class AbstractClient implements Client, Retryable {
     }
     
     protected void checkClientException(Message outMessage, Exception ex) throws Exception {
+        Throwable actualEx = ex instanceof Fault ? ((Fault)ex).getCause() : ex;
+        
         Integer responseCode = getResponseCode(outMessage.getExchange());
-        if (responseCode == null) {
-            if (ex instanceof ClientException) {
+        if (responseCode == null 
+            || actualEx instanceof IOException 
+                && outMessage.getExchange().get("client.redirect.exception") != null) {
+            if (actualEx instanceof ClientException) {
                 throw ex;
-            } else if (ex != null) {
-                throw new ClientException(ex);
+            } else if (actualEx != null) {
+                throw new ClientException(actualEx);
             } else if (!outMessage.getExchange().isOneWay() || cfg.isResponseExpectedForOneway()) {
                 waitForResponseCode(outMessage.getExchange());
             }

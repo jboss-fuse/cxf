@@ -57,6 +57,7 @@ import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.interceptor.Fault;
+import org.apache.cxf.interceptor.LoggingInInterceptor;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactory;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactoryBean;
@@ -91,11 +92,87 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
     }
     
     @Test
+    public void testGetBookSameUriAutoRedirect() throws Exception {
+        String address = "http://localhost:" + PORT + "/bookstore/redirect?sameuri=true";
+        WebClient wc = WebClient.create(address);
+        WebClient.getConfig(wc).getHttpConduit().getClient().setAutoRedirect(true);
+        Response r = wc.get();
+        Book book = r.readEntity(Book.class);
+        assertEquals(123L, book.getId());
+    }
+    
+    @Test
+    public void testGetBookDiffUriAutoRedirect() throws Exception {
+        String address = "http://localhost:" + PORT + "/bookstore/redirect?sameuri=false";
+        WebClient wc = WebClient.create(address);
+        WebClient.getConfig(wc).getRequestContext().put("http.redirect.same.host.only", "true");
+        WebClient.getConfig(wc).getHttpConduit().getClient().setAutoRedirect(true);
+        try {
+            wc.get();
+            fail("Redirect to different host is not allowed");
+        } catch (ClientException ex) {
+            Throwable cause = ex.getCause();
+            assertTrue(cause.getMessage().contains("Different HTTP Scheme or Host Redirect detected on"));
+        }
+    }
+    
+
+    @Test
+    public void testGetBookRelativeUriAutoRedirect() throws Exception {
+        String address = "http://localhost:" + PORT + "/bookstore/redirect/relative?loop=false";
+        WebClient wc = WebClient.create(address);
+        WebClient.getConfig(wc).getRequestContext().put("http.redirect.relative.uri", "true");
+        WebClient.getConfig(wc).getHttpConduit().getClient().setAutoRedirect(true);
+        Response r = wc.get();
+        Book book = r.readEntity(Book.class);
+        assertEquals(124L, book.getId());
+    }
+    
+    @Test
+    public void testGetBookRelativeUriAutoRedirectLoop() throws Exception {
+        String address = "http://localhost:" + PORT + "/bookstore/redirect/relative?loop=true";
+        WebClient wc = WebClient.create(address);
+        WebClient.getConfig(wc).getRequestContext().put("http.redirect.relative.uri", "true");
+        WebClient.getConfig(wc).getHttpConduit().getClient().setAutoRedirect(true);
+        try {
+            wc.get();
+            fail("Redirect loop must be detected");
+        } catch (ClientException ex) {
+            Throwable cause = ex.getCause();
+            assertTrue(cause.getMessage().contains("Redirect loop detected on"));
+        }
+    }
+    
+    @Test
+    public void testGetBookRelativeUriAutoRedirectNotAllowed() throws Exception {
+        String address = "http://localhost:" + PORT + "/bookstore/redirect/relative?loop=true";
+        WebClient wc = WebClient.create(address);
+        WebClient.getConfig(wc).getHttpConduit().getClient().setAutoRedirect(true);
+        try {
+            wc.get();
+            fail("relative Redirect is not allowed");
+        } catch (ClientException ex) {
+            Throwable cause = ex.getCause().getCause();
+            assertTrue(cause.getMessage().startsWith("Relative Redirect detected on"));
+        }
+    }
+    
+    @Test
     public void testPostEmptyForm() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/emptyform";
         WebClient wc = WebClient.create(address);
         Response r = wc.form(new org.apache.cxf.jaxrs.ext.form.Form());
         assertEquals("empty form", r.readEntity(String.class));
+    }
+    
+    @Test
+    public void testGetBookDescriptionHttpResponse() throws Exception {
+        String address = "http://localhost:" + PORT + "/bookstore/httpresponse";
+        WebClient wc = WebClient.create(address);
+        WebClient.getConfig(wc).getInInterceptors().add(new LoggingInInterceptor());
+        Response r = wc.get();
+        assertEquals("text/plain", r.getMediaType().toString());
+        assertEquals("Good Book", r.readEntity(String.class));
     }
 
     @Test
