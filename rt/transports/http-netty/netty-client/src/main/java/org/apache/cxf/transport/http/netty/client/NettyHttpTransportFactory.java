@@ -110,7 +110,6 @@ public class NettyHttpTransportFactory extends AbstractTransportFactory implemen
         HTTPConduit conduit = null;
         // need to updated the endpointInfo
         endpointInfo.setAddress(getAddress(endpointInfo));
-        System.out.println("Bus is " + getBus()); 
         conduit = factory.createConduit(getBus(), endpointInfo, target);
 
         // Spring configure the conduit.  
