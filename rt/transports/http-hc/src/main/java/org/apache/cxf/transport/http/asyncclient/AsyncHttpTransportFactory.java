@@ -25,8 +25,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Resource;
 
 import org.apache.cxf.Bus;
+import org.apache.cxf.common.injection.NoJSR250Annotations;
 import org.apache.cxf.configuration.Configurer;
 import org.apache.cxf.service.model.EndpointInfo;
 import org.apache.cxf.transport.AbstractTransportFactory;
@@ -36,6 +38,7 @@ import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transport.http.HTTPConduitConfigurer;
 import org.apache.cxf.ws.addressing.EndpointReferenceType;
 
+@NoJSR250Annotations(unlessNull = "bus")
 public class AsyncHttpTransportFactory extends AbstractTransportFactory implements ConduitInitiator {
 
     public static final List<String> DEFAULT_NAMESPACES = Arrays
@@ -67,6 +70,11 @@ public class AsyncHttpTransportFactory extends AbstractTransportFactory implemen
     public Set<String> getUriPrefixes() {
         return URI_PREFIXES;
     }
+
+    @Resource
+    public void setBus(Bus b) {
+        super.setBus(b);
+    }
     
     protected void configure(Bus b, Object bean) {
         configure(b, bean, null, null);
@@ -89,21 +97,21 @@ public class AsyncHttpTransportFactory extends AbstractTransportFactory implemen
         }
         return address;
     }
-    
-    @Override
-    public Conduit getConduit(EndpointInfo endpointInfo, Bus bus) throws IOException {
-        return getConduit(endpointInfo, endpointInfo.getTarget(), bus);
+   
+    @Override 
+    public Conduit getConduit(EndpointInfo endpointInfo) throws IOException {
+        return getConduit(endpointInfo, endpointInfo.getTarget());
     }
 
     @Override
-    public Conduit getConduit(EndpointInfo endpointInfo, EndpointReferenceType target, Bus bus)
+    public Conduit getConduit(EndpointInfo endpointInfo, EndpointReferenceType target)
         throws IOException {
         
         HTTPConduit conduit = null;
         // need to updated the endpointInfo
         endpointInfo.setAddress(getAddress(endpointInfo));
         
-        conduit = factory.createConduit(bus, endpointInfo, target);
+        conduit = factory.createConduit(getBus(), endpointInfo, target);
 
         // Spring configure the conduit.  
         String address = conduit.getAddress();

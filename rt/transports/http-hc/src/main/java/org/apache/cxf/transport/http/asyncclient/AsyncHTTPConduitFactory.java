@@ -275,7 +275,7 @@ public class AsyncHTTPConduitFactory implements BusLifeCycleListener, HTTPCondui
                                      EndpointInfo localInfo,
                                      EndpointReferenceType target) throws IOException {
        
-        return createConduit(bus, localInfo, target);
+        return createConduit(f.getBus(), localInfo, target);
     }
     
     public HTTPConduit createConduit(Bus bus,
@@ -284,7 +284,7 @@ public class AsyncHTTPConduitFactory implements BusLifeCycleListener, HTTPCondui
         if (isShutdown) {
             return null;
         }
-        return new AsyncHTTPConduit(f.getBus(), localInfo, target, this);
+        return new AsyncHTTPConduit(bus, localInfo, target, this);
     }
 
     @Resource 
