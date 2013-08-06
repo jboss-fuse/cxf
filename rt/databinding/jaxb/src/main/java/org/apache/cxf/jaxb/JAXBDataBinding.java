@@ -71,7 +71,6 @@ import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.ModCountCopyOnWriteArrayList;
 import org.apache.cxf.common.util.PackageUtils;
 import org.apache.cxf.common.util.PropertyUtils;
-import org.apache.cxf.common.util.ReflectionInvokationHandler;
 import org.apache.cxf.common.util.ReflectionUtil;
 import org.apache.cxf.common.xmlschema.SchemaCollection;
 import org.apache.cxf.databinding.AbstractDataBinding;
