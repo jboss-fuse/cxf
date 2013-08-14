@@ -132,13 +132,7 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-rt-core</artifactId>
+            <artifactId>cxf-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -193,6 +187,10 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-jdk14</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -232,11 +230,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>cxf-rt-databinding-aegis</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-wstx-msv-validation</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -419,10 +412,6 @@
             <artifactId>${cxf.asm.artifactId}</artifactId>
         </dependency>
         <dependency>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.sun.xml.fastinfoset</groupId>
             <artifactId>FastInfoset</artifactId>
         </dependency>
@@ -458,7 +447,7 @@
                             <artifactItems>
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
-                                    <artifactId>cxf-api</artifactId>
+                                    <artifactId>cxf-core</artifactId>
                                     <classifier>javadoc</classifier>
                                     <version>${project.version}</version>
                                 </artifactItem>

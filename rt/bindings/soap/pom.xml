@@ -61,7 +61,7 @@
 
         <dependency>
             <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-api</artifactId>
+            <artifactId>cxf-core</artifactId>
             <version>${project.version}</version>
         </dependency>
        <dependency>
@@ -85,6 +85,11 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.geronimo.specs</groupId>
+            <artifactId>geronimo-javamail_1.4_spec</artifactId>
             <scope>test</scope>
         </dependency>
 

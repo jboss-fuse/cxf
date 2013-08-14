@@ -136,15 +136,10 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-api</artifactId>
+            <artifactId>cxf-core</artifactId>
             <version>${project.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-rt-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>cxf-rt-features-clustering</artifactId>
@@ -220,17 +215,6 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>cxf-rt-databinding-aegis</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-wstx-msv-validation</artifactId>
-            <version>${project.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.java.dev.msv</groupId>
-                    <artifactId>msv-core</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <dependency>

@@ -36,7 +36,7 @@
 
         <dependency>
             <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-api</artifactId>
+            <artifactId>cxf-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -46,10 +46,6 @@
             <optional>true</optional>
             <scope>provided</scope>
             <exclusions>
-                <exclusion>
-                    <groupId>org.apache.cxf</groupId>
-                    <artifactId>cxf-rt-core</artifactId>
-                </exclusion>
                 <exclusion>
                     <groupId>org.apache.cxf</groupId>
                     <artifactId>cxf-rt-databinding-jaxb</artifactId>
@@ -66,12 +62,6 @@
             <version>${project.version}</version>
             <optional>true</optional>
             <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.cxf</groupId>
-                    <artifactId>cxf-rt-core</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
@@ -79,12 +69,6 @@
             <version>${project.version}</version>
             <optional>true</optional>
             <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.cxf</groupId>
-                    <artifactId>cxf-rt-core</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

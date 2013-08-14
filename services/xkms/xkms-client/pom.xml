@@ -41,8 +41,13 @@
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-api</artifactId>
+            <artifactId>cxf-core</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+        	<groupId>net.sf.ehcache</groupId>
+        	<artifactId>ehcache</artifactId>
+    		<version>${cxf.ehcache.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>

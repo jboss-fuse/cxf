@@ -39,16 +39,9 @@
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-api</artifactId>
+            <artifactId>cxf-core</artifactId>
             <version>${project.version}</version>
         </dependency>
-
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-rt-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>cxf-rt-transports-http</artifactId>
@@ -76,11 +69,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>cxf-rt-databinding-aegis</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-wstx-msv-validation</artifactId>
             <version>${project.version}</version>
         </dependency>
 

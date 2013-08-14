@@ -18,13 +18,12 @@
  */
 package org.apache.cxf.xkms.x509.handlers;
 
+import java.io.InputStream;
 import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.List;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.UUID;
 
-
-import org.apache.cxf.xkms.client.X509AppId;
 import org.apache.cxf.xkms.handlers.Applications;
 import org.apache.cxf.xkms.handlers.XKMSConstants;
 import org.apache.cxf.xkms.model.xkms.LocateRequestType;
@@ -33,12 +32,8 @@ import org.apache.cxf.xkms.model.xkms.QueryKeyBindingType;
 import org.apache.cxf.xkms.model.xkms.UnverifiedKeyBindingType;
 import org.apache.cxf.xkms.model.xkms.UseKeyWithType;
 import org.apache.cxf.xkms.x509.repo.CertificateRepo;
-import org.apache.cxf.xkms.x509.repo.ldap.LdapCertificateRepo;
-import org.apache.cxf.xkms.x509.repo.ldap.LdapSchemaConfig;
-import org.apache.cxf.xkms.x509.repo.ldap.LdapSearch;
+import org.easymock.EasyMock;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -49,51 +44,35 @@ public class X509LocatorTest {
     private static final org.apache.cxf.xkms.model.xkms.ObjectFactory XKMS_OF = 
         new org.apache.cxf.xkms.model.xkms.ObjectFactory();
 
-    CertificateRepo certRepo;
-    X509Locator locator;
-
-    @Ignore
-    @Before
-    public void setUpLdapRepo() throws CertificateException {
-        LdapSearch ldapSearch = new LdapSearch("ldap://localhost:2389", 
-            "cn=Directory Manager,dc=example,dc=com", "test", 2);
-        LdapSchemaConfig ldapConfig = new LdapSchemaConfig();
-        ldapConfig.setAttrCrtBinary("userCertificate;binary");
-        ldapConfig.setAttrIssuerID("manager");
-        ldapConfig.setAttrSerialNumber("employeeNumber");
-        ldapConfig.setAttrUID("uid");
-        ldapConfig.setCertObjectClass("inetOrgPerson");
-        ldapConfig.setConstAttrNamesCSV("sn");
-        ldapConfig.setConstAttrValuesCSV("X509 certificate");
-        ldapConfig.setIntermediateFilter("(objectClass=*)");
-        ldapConfig.setServiceCertRDNTemplate("cn=%s,ou=services");
-        ldapConfig.setServiceCertUIDTemplate("cn=%s");
-        ldapConfig.setTrustedAuthorityFilter("(&(objectClass=inetOrgPerson)(ou:dn:=CAs))");
-        certRepo = new LdapCertificateRepo(ldapSearch, ldapConfig, "dc=example,dc=com");
-        locator = new X509Locator(certRepo);
-    }
-
-    @Ignore
     @Test
-    public void locate() {
-        List<X509AppId> ids = new ArrayList<X509AppId>();
-        X509AppId id = new X509AppId(Applications.PKIX, "alice");
-        ids.add(id);
-        LocateRequestType request = prepareLocateXKMSRequest(ids);
+    public void locate() throws CertificateException {
+        CertificateRepo certRepo = EasyMock.createMock(CertificateRepo.class);
+        EasyMock.expect(certRepo.findBySubjectDn(EasyMock.eq("alice"))).andReturn(getAliceCert());
+        EasyMock.replay(certRepo);
+        X509Locator locator = new X509Locator(certRepo);
+        LocateRequestType request = prepareLocateXKMSRequest();
         UnverifiedKeyBindingType result = locator.locate(request);
         Assert.assertNotNull(result.getKeyInfo());
     }
 
-    private LocateRequestType prepareLocateXKMSRequest(List<X509AppId> ids) {
+    private X509Certificate getAliceCert() {
+        try {
+            CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+            InputStream is = this.getClass().getResourceAsStream("/cert1.cer");
+            return (X509Certificate)certFactory.generateCertificate(is);
+        } catch (CertificateException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    private LocateRequestType prepareLocateXKMSRequest() {
         QueryKeyBindingType queryKeyBindingType = XKMS_OF.createQueryKeyBindingType();
 
-        for (X509AppId id : ids) {
-            UseKeyWithType useKeyWithType = XKMS_OF.createUseKeyWithType();
-            useKeyWithType.setIdentifier(id.getId());
-            useKeyWithType.setApplication(id.getApplication().getUri());
+        UseKeyWithType useKeyWithType = XKMS_OF.createUseKeyWithType();
+        useKeyWithType.setIdentifier("alice");
+        useKeyWithType.setApplication(Applications.PKIX.getUri());
 
-            queryKeyBindingType.getUseKeyWith().add(useKeyWithType);
-        }
+        queryKeyBindingType.getUseKeyWith().add(useKeyWithType);
 
         LocateRequestType locateRequestType = XKMS_OF.createLocateRequestType();
         locateRequestType.setQueryKeyBinding(queryKeyBindingType);
