@@ -18,6 +18,7 @@
  */
 package org.apache.cxf.jaxrs.client;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
@@ -447,6 +448,14 @@ public abstract class AbstractClient implements Client, Retryable {
                 return mbr.readFrom(cls, type, anns, contentType, m, inputStream);
             } catch (Exception ex) {
                 reportMessageHandlerProblem("MSG_READER_PROBLEM", cls, contentType, ex, r);
+            } finally {
+                if (inputStream != null && responseStreamCanBeClosed(outMessage, cls)) {
+                    try {
+                        inputStream.close();
+                    } catch (IOException ex) { 
+                        // ignore
+                    }
+                }
             }
         } else if (cls == Response.class) {
             return cls.cast(r);
@@ -456,6 +465,11 @@ public abstract class AbstractClient implements Client, Retryable {
         return null;                                                
     }
     
+    private boolean responseStreamCanBeClosed(Message outMessage, Class<?> cls) {
+        return cls != InputStream.class
+            && MessageUtils.isTrue(outMessage.getContextualProperty("response.stream.auto.close"));
+    }    
+
     protected void completeExchange(Object response, Exchange exchange, boolean proxy) {
         // higher level conduits such as FailoverTargetSelector need to
         // clear the request state but a fair number of response objects 

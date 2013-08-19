@@ -59,12 +59,9 @@ public class JAXRSLocalTransportTest extends AbstractBusClientServerTestBase {
     }
     
     @Test
-    public void testProxyDirectDispatchGet() throws Exception {
+    public void testProxyPipedDispatchGet() throws Exception {
         BookStore localProxy = 
             JAXRSClientFactory.create("local://books", BookStore.class);
-        
-        WebClient.getConfig(localProxy).getRequestContext().put(LocalConduit.DIRECT_DISPATCH, Boolean.TRUE);
-        
         Book book = localProxy.getBook("123");
         assertEquals(123L, book.getId());
     }
@@ -74,7 +71,7 @@ public class JAXRSLocalTransportTest extends AbstractBusClientServerTestBase {
         BookStore localProxy = 
             JAXRSClientFactory.create("local://books", BookStore.class);
         
-        WebClient.getConfig(localProxy).getRequestContext().put(LocalConduit.DIRECT_DISPATCH, Boolean.TRUE);
+        WebClient.getConfig(localProxy).getRequestContext().put(LocalConduit.DIRECT_DISPATCH, "true");
         
         Book bookSubProxy = localProxy.getBookSubResource("123");
         Book book = bookSubProxy.retrieveState();

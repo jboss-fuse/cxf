@@ -34,6 +34,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.DocumentFragment;
 import org.w3c.dom.Node;
 
+import org.xml.sax.SAXException;
+
 import org.apache.cxf.common.i18n.Message;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.databinding.DataWriter;
@@ -46,6 +48,8 @@ import org.apache.cxf.staxutils.W3CDOMStreamWriter;
 public class XMLStreamDataWriter implements DataWriter<XMLStreamWriter> {
     private static final Logger LOG = LogUtils.getL7dLogger(XMLStreamDataWriter.class);
 
+    private Schema schema;
+    
     public void write(Object obj, MessagePartInfo part, XMLStreamWriter output) {
         write(obj, output);
     }
@@ -55,14 +59,31 @@ public class XMLStreamDataWriter implements DataWriter<XMLStreamWriter> {
             XMLStreamReader reader = null;
             if (obj instanceof DataSource) {
                 DataSource ds = (DataSource)obj;
-                reader = StaxUtils.createXMLStreamReader(ds.getInputStream());
-                StaxUtils.copy(reader, writer);
-                reader.close();
+                if (schema != null) {
+                    DOMSource domSource = new DOMSource(StaxUtils.read(ds.getInputStream()));
+                    schema.newValidator().validate(domSource);
+                    StaxUtils.copy(domSource, writer);
+                } else {
+                    reader = StaxUtils.createXMLStreamReader(ds.getInputStream());
+                    StaxUtils.copy(reader, writer);
+                    reader.close();
+                }
+                
             } else if (obj instanceof Node) {
+                if (schema != null) {
+                    schema.newValidator().validate(new DOMSource((Node)obj));
+                }
                 Node nd = (Node)obj;
                 writeNode(nd, writer);
             } else {
                 Source s = (Source) obj;
+                if (schema != null) {
+                    if (!(s instanceof DOMSource)) {
+                        //make the source re-readable.
+                        s = new DOMSource(StaxUtils.read(s));
+                    }
+                    schema.newValidator().validate(s);
+                }
                 if (s instanceof DOMSource
                     && ((DOMSource) s).getNode() == null) {
                     return;
@@ -74,6 +95,9 @@ public class XMLStreamDataWriter implements DataWriter<XMLStreamWriter> {
                             e.getClass().getCanonicalName(), e.getMessage());
         } catch (IOException e) {
             throw new Fault(new Message("COULD_NOT_WRITE_XML_STREAM", LOG), e);
+        } catch (SAXException e) {
+            throw new Fault("COULD_NOT_WRITE_XML_STREAM_CAUSED_BY", LOG, e,
+                            e.getClass().getCanonicalName(), e.getMessage());
         }
     }
 
@@ -119,6 +143,7 @@ public class XMLStreamDataWriter implements DataWriter<XMLStreamWriter> {
     }
 
     public void setSchema(Schema s) {
+        this.schema = s;
     }
 
     public void setAttachments(Collection<Attachment> attachments) {

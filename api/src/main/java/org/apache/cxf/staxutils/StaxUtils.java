@@ -1529,6 +1529,7 @@ public final class StaxUtils {
         if (value == null) {
             return null;
         }
+        value = value.trim();
         
         int index = value.indexOf(":");
 
@@ -1726,6 +1727,18 @@ public final class StaxUtils {
             break;
         default:
             //shouldn't get here
+        }
+    }
+    public static void print(Node node) {
+        XMLStreamWriter writer = null;
+        try {
+            writer = createXMLStreamWriter(System.out);
+            copy(new DOMSource(node), writer);
+            writer.flush();
+        } catch (XMLStreamException e) {
+            throw new RuntimeException(e);
+        } finally {
+            StaxUtils.close(writer);
         }
     }
 
