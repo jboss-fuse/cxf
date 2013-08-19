@@ -36,6 +36,7 @@
         <module>sts</module>
         <module>wsn</module>
         <module>ws-discovery</module>
+        <module>xkms</module>
     </modules>
 
 </project>
