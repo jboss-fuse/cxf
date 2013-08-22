@@ -21,7 +21,6 @@
     <groupId>org.apache.cxf.services.wsn</groupId>
     <artifactId>cxf-services-wsn-osgi</artifactId>
     <packaging>bundle</packaging>
-    <version>3.0.x-fuse-SNAPSHOT</version>
     <name>Apache CXF WSN OSGi</name>
     <description>Apache CXF WSN Full OSGi</description>
     <url>http://cxf.apache.org</url>
@@ -41,12 +40,12 @@
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.cxf</groupId>
-                    <artifactId>cxf-api</artifactId>
+                    <artifactId>cxf-core</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
     </dependencies>
-
+    
     <build>
         <plugins>
             <plugin>

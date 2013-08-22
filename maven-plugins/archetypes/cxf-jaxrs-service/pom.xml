@@ -29,7 +29,6 @@
 
     <groupId>org.apache.cxf.archetype</groupId>
     <artifactId>cxf-jaxrs-service</artifactId>
-    <version>3.0.x-fuse-SNAPSHOT</version>
     <packaging>maven-archetype</packaging>
 
     <name>Apache CXF Archetype - Simple JAX-RS webapp</name>

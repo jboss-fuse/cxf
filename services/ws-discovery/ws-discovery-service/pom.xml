@@ -20,8 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.cxf.services.ws-discovery</groupId>
     <artifactId>cxf-services-ws-discovery-service</artifactId>
-    <packaging>jar</packaging>
-    <version>3.0.x-fuse-SNAPSHOT</version>
+    <packaging>bundle</packaging>
     <name>Apache CXF WS-Discovery Service</name>
     <description>Apache CXF WS-Discovery Service</description>
     <url>http://cxf.apache.org</url>
@@ -40,7 +39,7 @@
 	<dependencies>
         <dependency>
             <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-api</artifactId>
+            <artifactId>cxf-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

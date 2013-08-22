@@ -18,10 +18,8 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.apache.cxf</groupId>
     <artifactId>cxf-rt-transports-http-hc</artifactId>
     <packaging>jar</packaging>
-    <version>3.0.x-fuse-SNAPSHOT</version>
     <name>Apache CXF Runtime HTTP Async Transport</name>
     <description>Apache CXF Runtime HTTP Async Transport</description>
     <url>http://cxf.apache.org</url>
@@ -42,9 +40,6 @@
             org.apache.http.*;version="${cxf.httpcomponents.core.version.range}",
             javax.annotation;version="${cxf.osgi.javax.annotation.version}",
         </cxf.osgi.import>
-        <cxf.osgi.export>
-            org.apache.cxf.*,
-        </cxf.osgi.export>
     </properties>
 
     <dependencies>
@@ -60,12 +55,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-core</artifactId>
+            <artifactId>cxf-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -80,7 +70,11 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-jdk14</artifactId>
-            <version>1.6.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

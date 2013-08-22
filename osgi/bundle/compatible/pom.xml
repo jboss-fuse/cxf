@@ -19,12 +19,10 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.apache.cxf</groupId>
     <artifactId>cxf-bundle-compatible</artifactId>
     <packaging>bundle</packaging>
     <name>Apache CXF Compatibility Bundle Jar</name>
     <description>Apache CXF Compatibility Bundle Jar</description>
-    <version>3.0.x-fuse-SNAPSHOT</version>
     <url>http://cxf.apache.org</url>
 
     <parent>
@@ -136,13 +134,7 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-rt-core</artifactId>
+            <artifactId>cxf-core</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -263,8 +255,7 @@
                             javax.xml.ws*;version="[0.0,3)",
                             *
                         </Import-Package>
-                        <Require-Bundle>org.apache.cxf.cxf-api;visibility:=reexport,
-                            org.apache.cxf.cxf-rt-core;visibility:=reexport,
+                        <Require-Bundle>org.apache.cxf.cxf-core;visibility:=reexport,
                             org.apache.cxf.cxf-rt-frontend-jaxws;visibility:=reexport,
                             org.apache.cxf.cxf-rt-frontend-jaxrs;visibility:=reexport, 
                             org.apache.cxf.cxf-rt-transports-http;visibility:=reexport,

@@ -57,11 +57,13 @@ import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.wss4j.common.crypto.Crypto;
 import org.apache.wss4j.common.crypto.CryptoFactory;
 import org.apache.wss4j.common.ext.WSSecurityException;
+import org.apache.wss4j.common.util.Loader;
 import org.apache.wss4j.dom.handler.WSHandlerConstants;
 import org.apache.wss4j.policy.SP11Constants;
 import org.apache.wss4j.policy.SP12Constants;
 import org.apache.wss4j.policy.SPConstants;
 import org.apache.wss4j.policy.WSSPolicyException;
+import org.apache.wss4j.policy.model.AlgorithmSuite;
 import org.apache.wss4j.policy.stax.OperationPolicy;
 import org.apache.wss4j.policy.stax.PolicyEnforcer;
 import org.apache.wss4j.policy.stax.PolicyInputProcessor;
@@ -344,7 +346,9 @@ public class PolicyBasedWSS4JStaxInInterceptor extends WSS4JStaxInInterceptor {
                 throw new WSSecurityException(WSSecurityException.ErrorCode.FAILURE, ex);
             }
             
-            encrCrypto = CryptoFactory.getInstance(props);
+            encrCrypto = CryptoFactory.getInstance(props, 
+                                                   Loader.getClassLoader(CryptoFactory.class),
+                                                   getPasswordEncryptor(message));
 
             EndpointInfo info = message.getExchange().get(Endpoint.class).getEndpointInfo();
             synchronized (info) {
@@ -367,7 +371,9 @@ public class PolicyBasedWSS4JStaxInInterceptor extends WSS4JStaxInInterceptor {
                 throw new WSSecurityException(WSSecurityException.ErrorCode.FAILURE, ex);
             }
             
-            signCrypto = CryptoFactory.getInstance(props);
+            signCrypto = CryptoFactory.getInstance(props,
+                                                   Loader.getClassLoader(CryptoFactory.class),
+                                                   getPasswordEncryptor(message));
 
             EndpointInfo info = message.getExchange().get(Endpoint.class).getEndpointInfo();
             synchronized (info) {
@@ -383,6 +389,20 @@ public class PolicyBasedWSS4JStaxInInterceptor extends WSS4JStaxInInterceptor {
         checkAsymmetricBinding(aim, msg);
         checkSymmetricBinding(aim, msg);
         checkTransportBinding(aim, msg);
+        
+        // Allow for setting non-standard asymmetric signature algorithms
+        String asymSignatureAlgorithm = 
+            (String)msg.getContextualProperty(SecurityConstants.ASYMMETRIC_SIGNATURE_ALGORITHM);
+        if (asymSignatureAlgorithm != null) {
+            Collection<AssertionInfo> algorithmSuites = 
+                aim.get(SP12Constants.ALGORITHM_SUITE);
+            if (algorithmSuites != null && !algorithmSuites.isEmpty()) {
+                for (AssertionInfo algorithmSuite : algorithmSuites) {
+                    AlgorithmSuite algSuite = (AlgorithmSuite)algorithmSuite.getAssertion();
+                    algSuite.setAsymmetricSignature(asymSignatureAlgorithm);
+                }
+            }
+        }
         
         super.configureProperties(msg);
     }

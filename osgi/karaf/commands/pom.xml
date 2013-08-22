@@ -27,7 +27,6 @@
         <version>3.0.x-fuse-SNAPSHOT</version>
     </parent>
 
-    <groupId>org.apache.cxf.karaf</groupId>
     <artifactId>cxf-karaf-commands</artifactId>
     <packaging>bundle</packaging>
     <name>Apache CXF Karaf Commands</name>
@@ -37,12 +36,7 @@
         <!-- cxf -->
         <dependency>
             <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-core</artifactId>
+            <artifactId>cxf-core</artifactId>
             <version>${project.version}</version>
         </dependency>
 

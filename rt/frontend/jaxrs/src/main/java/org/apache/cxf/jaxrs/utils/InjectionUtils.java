@@ -130,23 +130,27 @@ public final class InjectionUtils {
             }
         }
         
-        Type[] bounds = var.getBounds();
-        int boundPos = bounds.length > pos ? pos : 0; 
-        if (bounds.length > boundPos && bounds[boundPos] != Object.class) {
-            return bounds[boundPos];
-        }
-                
         Type genericSubtype = serviceClass.getGenericSuperclass();
-        if (genericSubtype == Object.class) {
+        if (!(genericSubtype instanceof ParameterizedType)) {
             Type[] genInterfaces = serviceClass.getGenericInterfaces();
             for (Type t : genInterfaces) {
                 genericSubtype = t;
                 break;
             }
         }
-        Type result = genericSubtype != Object.class ? InjectionUtils.getActualType(genericSubtype, pos)
-                                              : genericSubtype;
-        return result == null ? Object.class : result;
+        if (!(genericSubtype instanceof ParameterizedType)) {
+            genericSubtype = null;
+        }
+        Type result = InjectionUtils.getActualType(genericSubtype, pos);
+                                             
+        if (result == null || result == Object.class) {
+            Type[] bounds = var.getBounds();
+            int boundPos = bounds.length > pos ? pos : 0; 
+            if (bounds.length > boundPos && bounds[boundPos] != Object.class) {
+                result = bounds[boundPos];
+            }
+        }
+        return result;
     }
     
     public static Method checkProxy(Method methodToInvoke, Object resourceObject) {
@@ -209,6 +213,9 @@ public final class InjectionUtils {
         if (genericType == null) {
             return null;
         }
+        if (genericType == Object.class) {
+            return (Class<?>)genericType;
+        }
         if (!ParameterizedType.class.isAssignableFrom(genericType.getClass())) {
             if (genericType instanceof TypeVariable) {
                 genericType = getType(((TypeVariable<?>)genericType).getBounds(), pos);
@@ -222,13 +229,18 @@ public final class InjectionUtils {
             } else if (genericType instanceof GenericArrayType) {
                 genericType = ((GenericArrayType)genericType).getGenericComponentType();
             }
-
-            Class<?> cls = (Class<?>)genericType;
+            Class<?> cls = null;
+            if (!(genericType instanceof ParameterizedType)) {
+                cls = (Class<?>)genericType;
+            } else {
+                cls = (Class<?>)((ParameterizedType)genericType).getRawType();
+            }
             return cls.isArray() ? cls.getComponentType() : cls;
+            
         }
         ParameterizedType paramType = (ParameterizedType)genericType;
         Type t = getType(paramType.getActualTypeArguments(), pos);
-        return t instanceof Class ? (Class<?>)t : getActualType(t, pos);
+        return t instanceof Class ? (Class<?>)t : getActualType(t, 0);
     }
     
     public static Type getType(Type[] types, int pos) {
@@ -1247,7 +1259,8 @@ public final class InjectionUtils {
         }
     }
     
-    public static Type getGenericResponseType(Method invoked, 
+    public static Type getGenericResponseType(Method invoked,
+                                        Class<?> serviceCls,      
                                         Object targetObject, 
                                         Class<?> targetType,
                                         Exchange exchange) {
@@ -1256,7 +1269,7 @@ public final class InjectionUtils {
         }
         Type type = null;
         if (GenericEntity.class.isAssignableFrom(targetObject.getClass())) {
-            type = ((GenericEntity<?>)targetObject).getType();
+            type = processGenericTypeIfNeeded(serviceCls, targetType, ((GenericEntity<?>)targetObject).getType());
         } else if (invoked == null 
                    || !invoked.getReturnType().isAssignableFrom(targetType)) {
             // when a method has been invoked it is still possible that either an ExceptionMapper
@@ -1265,23 +1278,36 @@ public final class InjectionUtils {
             // to invoked.getReturnType(); same applies to the case when a method returns Response
             type = targetObject.getClass(); 
         } else {
-            type = processGenericTypeIfNeeded(invoked.getDeclaringClass(), invoked.getGenericReturnType());
-            
+            type = processGenericTypeIfNeeded(serviceCls, targetType,  invoked.getGenericReturnType());
         }
         
         return type;
     }
+    public static Class<?> updateParamClassToTypeIfNeeded(Class<?> paramCls, Type type) {
+        if (type instanceof Class && paramCls.isAssignableFrom((Class<?>)type)) {
+            paramCls = (Class<?>)type; 
+        }
+        return paramCls;
+    }
     
-    public static Type processGenericTypeIfNeeded(Class<?> cls, Type type) {
+    public static Type processGenericTypeIfNeeded(Class<?> serviceCls, Class<?> paramCls, Type type) {
+       
         if (type instanceof TypeVariable) {
-            return InjectionUtils.getSuperType(cls, (TypeVariable<?>)type);
+            type = InjectionUtils.getSuperType(serviceCls, (TypeVariable<?>)type);
         } else if (type instanceof ParameterizedType
             && ((ParameterizedType)type).getActualTypeArguments()[0] instanceof TypeVariable
             && isSupportedCollectionOrArray(getRawType(type))) {
-            return new ParameterizedCollectionType(InjectionUtils.getActualType(type, 0));
-        } else {
-            return type;
+            TypeVariable<?> typeVar = (TypeVariable<?>)((ParameterizedType)type).getActualTypeArguments()[0];
+            Type theType = InjectionUtils.getSuperType(serviceCls, typeVar);
+            Class<?> cls = theType instanceof Class 
+                ? (Class<?>)theType : InjectionUtils.getActualType(theType, 0);
+            type = new ParameterizedCollectionType(cls);
+        } 
+        if (type == null || type == Object.class) {
+            type = paramCls;
         }
+        return type;
+        
     }
     
     public static Object getEntity(Object o) {

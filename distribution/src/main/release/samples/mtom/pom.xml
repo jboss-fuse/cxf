@@ -18,7 +18,6 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.apache.cxf.samples</groupId>
     <artifactId>mtom</artifactId>
     <name>MTOM Demo for SWA and XOP</name>
     <version>3.0.x-fuse-SNAPSHOT</version>
@@ -141,5 +140,10 @@
             <artifactId>cxf-rt-transports-http-jetty</artifactId>
             <version>3.0.x-fuse-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.geronimo.specs</groupId>
+            <artifactId>geronimo-javamail_1.4_spec</artifactId>
+        </dependency>
+        
     </dependencies>
 </project>

@@ -20,7 +20,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>cxf-rt-databinding-aegis</artifactId>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
     <name>Apache CXF Runtime Aegis Databinding</name>
     <description>Apache CXF Runtime Aegis Databinding</description>
     <url>http://cxf.apache.org/</url>
@@ -36,12 +36,7 @@
     <dependencies>
         <dependency>
             <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-core</artifactId>
+            <artifactId>cxf-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -78,6 +73,11 @@
              <scope>test</scope>
          </dependency>
         <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-frontend-jaxws</artifactId>
             <version>${project.version}</version>
@@ -102,9 +102,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-wstx-msv-validation</artifactId>
-            <version>${project.version}</version>
+            <groupId>net.java.dev.msv</groupId>
+            <artifactId>msv-core</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

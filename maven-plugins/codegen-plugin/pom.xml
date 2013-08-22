@@ -19,10 +19,8 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.apache.cxf</groupId>
     <artifactId>cxf-codegen-plugin</artifactId>
     <packaging>maven-plugin</packaging>
-    <version>3.0.x-fuse-SNAPSHOT</version>
     <name>Apache CXF Code Generation Maven2 Plugins</name>
     <description>Apache CXF Code Generation Maven2 Plugins</description>
     <url>http://cxf.apache.org</url>
@@ -32,10 +30,6 @@
       <artifactId>cxf-maven-plugins</artifactId>
       <version>3.0.x-fuse-SNAPSHOT</version>
     </parent>
-
-    <properties>
-        <cxf.manifest.location/>
-    </properties>
 
     <dependencies>
         <dependency>
@@ -81,7 +75,7 @@
 
         <dependency>
             <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-api</artifactId>
+            <artifactId>cxf-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

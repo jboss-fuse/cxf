@@ -18,10 +18,8 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.apache.cxf</groupId>
     <artifactId>cxf-rt-frontend-simple</artifactId>
-    <packaging>jar</packaging>
-    <version>3.0.x-fuse-SNAPSHOT</version>
+    <packaging>bundle</packaging>
     <name>Apache CXF Runtime Simple Frontend</name>
     <description>Apache CXF Runtime Simple Frontend</description>
     <url>http://cxf.apache.org</url>
@@ -94,13 +92,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-api</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-core</artifactId>
+            <artifactId>cxf-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -128,12 +126,9 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- if this is present, then the validation feature
-             will check W3C schema if Xerces is available. -->
         <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-xerces-xsd-validation</artifactId>
-            <version>${project.version}</version>
+            <groupId>com.sun.xml.bind</groupId>
+            <artifactId>jaxb-xjc</artifactId>
             <optional>true</optional>
         </dependency>
     </dependencies>

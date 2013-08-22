@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.cxf</groupId>
     <artifactId>cxf-rt-bindings-coloc</artifactId>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
     <name>Apache CXF Runtime Colocated Binding</name>
     <description>Apache CXF Runtime Colocated Binding</description>
     <url>http://cxf.apache.org</url>
@@ -62,12 +62,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-core</artifactId>
+            <artifactId>cxf-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

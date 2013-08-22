@@ -19,10 +19,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.apache.cxf</groupId>
     <artifactId>cxf-rt-transports-http-netty-client</artifactId>
-    <packaging>jar</packaging>
-    <version>3.0.x-fuse-SNAPSHOT</version>
+    <packaging>bundle</packaging>
     <name>Apache CXF Runtime HTTP Netty Client Transport</name>
     <description>Apache CXF Runtime HTTP Netty Client Transport</description>
     <url>http://cxf.apache.org</url>
@@ -35,13 +33,10 @@
     </parent>
     
     <properties>
-        <cxf.osgi.import>
-	    org.jboss.netty.*;version="${cxf.netty.version.range}",
+	    <cxf.osgi.import>
+	    io.netty.*;version="${cxf.netty.version.range}",
 	    javax.annotation;version="${cxf.osgi.javax.annotation.version}",
         </cxf.osgi.import>
-        <cxf.osgi.export>
-            org.apache.cxf.*,
-        </cxf.osgi.export>
     </properties>
 
     <dependencies>
@@ -53,7 +48,8 @@
 
         <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>netty</artifactId>
+            <artifactId>netty-codec-http</artifactId>
+            <version>${cxf.netty.version}</version>
         </dependency>
         
          <dependency>
@@ -112,7 +108,16 @@
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

@@ -27,7 +27,6 @@
         <version>3.0.x-fuse-SNAPSHOT</version>
     </parent>
 
-    <groupId>org.apache.cxf.karaf</groupId>
     <artifactId>apache-cxf</artifactId>
     <packaging>pom</packaging>
     <name>Apache CXF Karaf Features</name>

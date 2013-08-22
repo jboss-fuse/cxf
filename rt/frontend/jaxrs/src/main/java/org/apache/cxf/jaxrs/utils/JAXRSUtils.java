@@ -73,6 +73,7 @@ import javax.ws.rs.container.ContainerResponseFilter;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Configuration;
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -786,13 +787,8 @@ public final class JAXRSUtils {
         for (int i = 0; i < parameterTypes.length; i++) {
             Class<?> param = parameterTypes[i]; 
             Type genericParam = InjectionUtils.processGenericTypeIfNeeded(
-                ori.getClassResourceInfo().getServiceClass(), genericParameterTypes[i]);
-            if (param == Object.class) {
-                param = (Class<?>)genericParam; 
-            } else if (genericParam == Object.class) {
-                genericParam = param;
-            }
-            
+                ori.getClassResourceInfo().getServiceClass(), param, genericParameterTypes[i]);
+            param = InjectionUtils.updateParamClassToTypeIfNeeded(param, genericParam);
             
             Object paramValue = processParameter(param, 
                                                  genericParam,
@@ -1098,6 +1094,8 @@ public final class JAXRSUtils {
             o = new ProvidersImpl(contextMessage);
         } else if (ContextResolver.class.isAssignableFrom(clazz)) {
             o = createContextResolver(genericType, contextMessage);
+        } else if (Configuration.class.isAssignableFrom(clazz)) {
+            o = ProviderFactory.getInstance(contextMessage).getDynamicConfiguration();
         } else if (Application.class.isAssignableFrom(clazz)) {
             ProviderInfo<?> providerInfo = 
                 (ProviderInfo<?>)contextMessage.getExchange().getEndpoint().get(Application.class.getName());
@@ -1729,7 +1727,8 @@ public final class JAXRSUtils {
                                                false,
                                                true);
             ContainerResponseContext responseContext = 
-                new ContainerResponseContextImpl(r, m, invoked);
+                new ContainerResponseContextImpl(r, m, 
+                    ori == null ? null : ori.getClassResourceInfo().getServiceClass(), invoked);
             for (ProviderInfo<ContainerResponseFilter> filter : containerFilters) {
                 InjectionUtils.injectContexts(filter.getProvider(), filter, m);
                 filter.getProvider().filter(requestContext, responseContext);
