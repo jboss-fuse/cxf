@@ -131,15 +131,18 @@ public final class InjectionUtils {
         }
         
         Type genericSubtype = serviceClass.getGenericSuperclass();
-        if (genericSubtype == Object.class) {
+        if (!(genericSubtype instanceof ParameterizedType)) {
             Type[] genInterfaces = serviceClass.getGenericInterfaces();
             for (Type t : genInterfaces) {
                 genericSubtype = t;
                 break;
             }
         }
-        Type result = genericSubtype != Object.class ? InjectionUtils.getActualType(genericSubtype, pos)
-                                              : genericSubtype;
+        if (!(genericSubtype instanceof ParameterizedType)) {
+            genericSubtype = null;
+        }
+        Type result = InjectionUtils.getActualType(genericSubtype, pos);
+                                             
         if (result == null || result == Object.class) {
             Type[] bounds = var.getBounds();
             int boundPos = bounds.length > pos ? pos : 0; 
@@ -209,6 +212,9 @@ public final class InjectionUtils {
         
         if (genericType == null) {
             return null;
+        }
+        if (genericType == Object.class) {
+            return (Class<?>)genericType;
         }
         if (!ParameterizedType.class.isAssignableFrom(genericType.getClass())) {
             if (genericType instanceof TypeVariable) {
@@ -1240,7 +1246,7 @@ public final class InjectionUtils {
         }
         Type type = null;
         if (GenericEntity.class.isAssignableFrom(targetObject.getClass())) {
-            type = ((GenericEntity<?>)targetObject).getType();
+            type = processGenericTypeIfNeeded(serviceCls, targetType, ((GenericEntity<?>)targetObject).getType());
         } else if (invoked == null 
                    || !invoked.getReturnType().isAssignableFrom(targetType)) {
             // when a method has been invoked it is still possible that either an ExceptionMapper
