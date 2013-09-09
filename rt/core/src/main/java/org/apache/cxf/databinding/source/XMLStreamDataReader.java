@@ -22,12 +22,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.activation.DataSource;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import javax.xml.stream.XMLStreamWriter;
 import javax.xml.transform.Source;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.sax.SAXSource;
@@ -44,21 +46,23 @@ import org.apache.cxf.common.classloader.ClassLoaderUtils;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.databinding.DataReader;
+import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.io.CachedOutputStream;
+import org.apache.cxf.io.StaxValidationManager;
 import org.apache.cxf.message.Attachment;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.service.model.MessagePartInfo;
 import org.apache.cxf.staxutils.DepthXMLStreamReader;
 import org.apache.cxf.staxutils.FragmentStreamReader;
 import org.apache.cxf.staxutils.StaxSource;
+import org.apache.cxf.staxutils.StaxStreamFilter;
 import org.apache.cxf.staxutils.StaxUtils;
 import org.apache.cxf.staxutils.W3CDOMStreamReader;
 
-
-
 public class XMLStreamDataReader implements DataReader<XMLStreamReader> {
     private static final Logger LOG = LogUtils.getL7dLogger(XMLStreamDataReader.class);
+    private static final QName XOP = new QName("http://www.w3.org/2004/08/xop/include", "Include");
 
     private final Class<?> preferred;
     private Schema schema;
@@ -153,9 +157,6 @@ public class XMLStreamDataReader implements DataReader<XMLStreamReader> {
         } catch (XMLStreamException e) {
             throw new Fault("COULD_NOT_READ_XML_STREAM_CAUSED_BY", LOG, e,
                             e.getClass().getCanonicalName(), e.getMessage());
-        } catch (SAXException e) {
-            throw new Fault("COULD_NOT_READ_XML_STREAM_CAUSED_BY", LOG, e,
-                            e.getClass().getCanonicalName(), e.getMessage());
         }
     }
     
@@ -206,15 +207,49 @@ public class XMLStreamDataReader implements DataReader<XMLStreamReader> {
         return input;
     }
 
-    private Element validate(XMLStreamReader input) 
-        throws XMLStreamException, SAXException, IOException {
+    private Element validate(XMLStreamReader input) throws XMLStreamException, IOException {
         DOMSource ds = read(input);
-        schema.newValidator().validate(ds);
-        Node nd = ds.getNode();
-        if (nd instanceof Document) {
-            return ((Document)nd).getDocumentElement();
+        Element rootElement = null;
+        if (ds.getNode() instanceof Document) {
+            rootElement = ((Document)ds.getNode()).getDocumentElement();
+        } else {
+            rootElement = (Element)ds.getNode();
         }
-        return (Element)ds.getNode();
+        StaxValidationManager svm = message.getExchange().getBus().getExtension(StaxValidationManager.class);
+        if (svm != null) {
+            //filter xop node
+            XMLStreamReader reader = StaxUtils.createXMLStreamReader(ds);
+            XMLStreamReader filteredReader = 
+                StaxUtils.createFilteredReader(reader, 
+                                               new StaxStreamFilter(new QName[] {XOP}));
+            
+            XMLStreamWriter nullWriter = StaxUtils.createXMLStreamWriter(new NUllOutputStream());
+            
+            svm.setupValidation(nullWriter, message.getExchange().getService().getServiceInfos().get(0));
+            StaxUtils.copy(filteredReader, nullWriter);
+        } else {
+            //MSV not available, use a slower method of cloning the data, replace the xop's, validate
+            LOG.fine("NO_MSV_AVAILABLE");
+            if (DOMUtils.hasElementWithName(rootElement, "http://www.w3.org/2004/08/xop/include", "Include")) {
+                Element newElement = (Element)rootElement.cloneNode(true);
+                List<Element> elems = DOMUtils.findAllElementsByTagNameNS(newElement, 
+                                                                          "http://www.w3.org/2004/08/xop/include",
+                                                                          "Include");
+                for (Element include : elems) {
+                    Node parentNode = include.getParentNode();
+                    parentNode.removeChild(include);
+                    String cid = DOMUtils.getAttribute(include, "href");
+                    //set the fake base64Binary to validate instead of reading the attachment from message
+                    parentNode.setTextContent(javax.xml.bind.DatatypeConverter.printBase64Binary(cid.getBytes()));
+                }
+                try {
+                    schema.newValidator().validate(new DOMSource(newElement));
+                } catch (SAXException e) {
+                    throw new XMLStreamException(e);
+                }
+            }
+        }
+        return rootElement;        
     }
 
     private InputStream getInputStream(XMLStreamReader input) 
@@ -265,6 +300,15 @@ public class XMLStreamDataReader implements DataReader<XMLStreamReader> {
     public void setProperty(String prop, Object value) {
         if (Message.class.getName().equals(prop)) {
             message = (Message)value;
+        }
+    }
+    class NUllOutputStream extends OutputStream {
+        public void write(byte[] b, int off, int len) {
+        }
+        public void write(int b) {
+        }
+
+        public void write(byte[] b) throws IOException {
         }
     }
 }
