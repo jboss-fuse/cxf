@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BindingPriority;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NameBinding;
@@ -56,6 +57,7 @@ import javax.ws.rs.ext.WriterInterceptorContext;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
+import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.jaxrs.JAXRSServerFactoryBean;
 import org.apache.cxf.jaxrs.lifecycle.SingletonResourceProvider;
 import org.apache.cxf.jaxrs.utils.InjectionUtils;
@@ -135,6 +137,19 @@ public class BookServer20 extends AbstractBusTestServerBase {
                     Response.status(500).type("text/plain")
                         .entity("Prematch filter error").build());
             }
+            
+            MediaType mt = context.getMediaType();
+            if (mt != null && mt.toString().equals("text/xml")) {
+                String method = context.getMethod();
+                if ("PUT".equals(method)) {
+                    context.setMethod("POST");
+                }
+                context.getHeaders().putSingle("Content-Type", "application/xml");
+            }
+            List<MediaType> acceptTypes = context.getAcceptableMediaTypes();
+            if (acceptTypes.size() == 1 && acceptTypes.get(0).toString().equals("text/mistypedxml")) {
+                context.getHeaders().putSingle("Accept", "text/xml");
+            }
         }
         
     }
@@ -167,6 +182,12 @@ public class BookServer20 extends AbstractBusTestServerBase {
             if (path.endsWith("books/checkN")) {
                 URI requestURI = URI.create(path.replace("N", "2"));
                 context.setRequestUri(requestURI);
+                
+                String body = IOUtils.readStringFromStream(context.getEntityStream());
+                if (!"s".equals(body)) {
+                    throw new RuntimeException();
+                }
+                
                 replaceStream(context);
             } else if (path.endsWith("books/check2")) {
                 replaceStream(context);
@@ -354,9 +375,13 @@ public class BookServer20 extends AbstractBusTestServerBase {
     
     public static class CustomWriterInterceptor implements WriterInterceptor {
 
+        @Context
+        private HttpServletResponse response;
         @Override
         public void aroundWriteTo(WriterInterceptorContext context) throws IOException, WebApplicationException {
             context.getHeaders().add("ServerWriterInterceptor", "serverWrite");
+            context.getHeaders().putSingle("ServerWriterInterceptor2", "serverWrite2");
+            response.addHeader("ServerWriterInterceptorHttpResponse", "serverWriteHttpResponse");
             String ct = context.getHeaders().getFirst("Content-Type").toString();
             if (!ct.endsWith("ISO-8859-1")) {
                 ct += "us-ascii";

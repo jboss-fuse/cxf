@@ -18,6 +18,7 @@
  */
 package org.apache.cxf.rs.security.oauth2.common;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -28,9 +29,12 @@ import javax.xml.bind.annotation.XmlRootElement;
  * may capture after the end user approved a given third party request
  */
 @XmlRootElement
-public class UserSubject {
+public class UserSubject implements Serializable {
+    
+    private static final long serialVersionUID = -1469694589163385689L;
     
     private String login;
+    private String id;
     private List<String> roles = new LinkedList<String>();
     private List<Property> properties = new LinkedList<Property>();
     
@@ -44,6 +48,17 @@ public class UserSubject {
     
     public UserSubject(String login, List<String> roles) {
         this.login = login;
+        this.roles = roles;
+    }
+    
+    public UserSubject(String login, String id) { 
+        this.login = login;
+        this.id = id;
+    }
+    
+    public UserSubject(String login, String id, List<String> roles) {
+        this.login = login;
+        this.id = id;
         this.roles = roles;
     }
     
@@ -97,5 +112,20 @@ public class UserSubject {
         this.properties = properties;
     }
     
-
+    /**
+     * Get the user's unique id
+     * @return the user's id
+    */
+    public String getId() {
+        return this.id;
+    }
+    
+    /**
+     * Set the users unique id
+     * @param id the user's id
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+    
 }

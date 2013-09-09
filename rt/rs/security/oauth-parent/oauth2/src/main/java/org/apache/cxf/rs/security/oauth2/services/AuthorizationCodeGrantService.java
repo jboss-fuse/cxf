@@ -71,6 +71,8 @@ public class AuthorizationCodeGrantService extends RedirectionBasedGrantService 
         codeReg.setRequestedScope(requestedScope);
         codeReg.setApprovedScope(approvedScope);
         codeReg.setSubject(userSubject);
+        codeReg.setAudience(params.getFirst(OAuthConstants.CLIENT_AUDIENCE));
+        codeReg.setTempClientSecretHash(params.getFirst(OAuthConstants.TEMP_CLIENT_SECRET_HASH));
         
         ServerAuthorizationCodeGrant grant = null;
         try {
@@ -124,13 +126,12 @@ public class AuthorizationCodeGrantService extends RedirectionBasedGrantService 
 
     @Override
     protected boolean canSupportPublicClient(Client c) {
-        return canSupportPublicClients && !c.isConfidential()
-            && c.getClientSecret() == null && c.getRedirectUris().isEmpty();
+        return canSupportPublicClients && !c.isConfidential() && c.getClientSecret() == null;
     }
 
     @Override
     protected boolean canRedirectUriBeEmpty(Client c) {
-        return canSupportPublicClient(c);
+        return canSupportPublicClient(c) && c.getRedirectUris().isEmpty();
     }
     
     public void setCanSupportPublicClients(boolean support) {

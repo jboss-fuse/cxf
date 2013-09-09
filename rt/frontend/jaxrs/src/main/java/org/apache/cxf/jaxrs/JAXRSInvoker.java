@@ -109,14 +109,12 @@ public class JAXRSInvoker extends AbstractInvoker {
             if (exchange.isOneWay() || suspended) {
                 ProviderFactory.getInstance(exchange.getInMessage()).clearThreadLocalProxies();
             }
-            if (!suspended) {
-                if (!isServiceObjectRequestScope(exchange.getInMessage())) {
-                    provider.releaseInstance(exchange.getInMessage(), rootInstance);
-                }
+            if (!suspended && !isServiceObjectRequestScope(exchange.getInMessage())) {
+                provider.releaseInstance(exchange.getInMessage(), rootInstance);
             } else {
-                exchange.put(REQUEST_WAS_SUSPENDED, true);
+                exchange.put(REQUEST_WAS_SUSPENDED, suspended);
+                persistRoots(exchange, rootInstance, provider);
             }
-            persistRoots(exchange, rootInstance, provider);
         }
     }
 

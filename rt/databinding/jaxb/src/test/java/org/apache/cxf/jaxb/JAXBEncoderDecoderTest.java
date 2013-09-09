@@ -245,7 +245,7 @@ public class JAXBEncoderDecoderTest extends Assert {
         opFactory.setProperty(XMLOutputFactory.IS_REPAIRING_NAMESPACES, Boolean.TRUE);
         XMLEventWriter writer = opFactory.createXMLEventWriter(stringWriter);
         Marshaller m = context.createMarshaller();
-        JAXBUtils.setNamespaceWrapper(mapper, m);
+        JAXBUtils.setNamespaceMapper(mapper, m);
         JAXBEncoderDecoder.marshall(m, testObject, part, writer);
         writer.flush();
         writer.close();
@@ -472,6 +472,7 @@ public class JAXBEncoderDecoderTest extends Assert {
         assertTrue(b < c);
         assertTrue(c < d);
         assertTrue(d < e);
+        assertTrue(bout.toString().indexOf("transientValue") < 0);
     }
     
     @Test

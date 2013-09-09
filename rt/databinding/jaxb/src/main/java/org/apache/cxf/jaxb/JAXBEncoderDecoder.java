@@ -354,12 +354,11 @@ public final class JAXBEncoderDecoder {
             
             SchemaInfo sch = part.getMessageInfo().getOperation().getInterface()
                 .getService().getSchema(namespace);
-            if (sch != null) {
-                if (!sch.isElementFormQualified()) {
-                    namespace = null;
-                }
-            } else {
+            if (sch == null) {
                 LOG.warning("Schema associated with " + namespace + " is null");
+                namespace = null;
+            } else if (!sch.isElementFormQualified()) {
+                namespace = null;
             }
             List<Member> combinedMembers = new ArrayList<Member>();
 
@@ -551,6 +550,9 @@ public final class JAXBEncoderDecoder {
                             fn.set(obj, o);
                         }
                     }                
+                }
+                if (reader.getEventType() == XMLStreamReader.END_ELEMENT && q.equals(reader.getName())) {
+                    reader.next();
                 }
             }
             return (Exception)obj;

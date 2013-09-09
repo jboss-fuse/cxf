@@ -34,6 +34,8 @@ public class AuthorizationCodeRegistration {
     private List<String> approvedScope = Collections.emptyList();
     private String redirectUri;
     private UserSubject subject;
+    private String audience;
+    private String tempClientSecretHash;
     
     /**
      * Sets the {@link Client} reference
@@ -111,5 +113,17 @@ public class AuthorizationCodeRegistration {
      */
     public UserSubject getSubject() {
         return subject;
+    }
+    public String getAudience() {
+        return audience;
+    }
+    public void setAudience(String audience) {
+        this.audience = audience;
+    }
+    public String getTempClientSecretHash() {
+        return tempClientSecretHash;
+    }
+    public void setTempClientSecretHash(String tempClientSecretHash) {
+        this.tempClientSecretHash = tempClientSecretHash;
     }
 }

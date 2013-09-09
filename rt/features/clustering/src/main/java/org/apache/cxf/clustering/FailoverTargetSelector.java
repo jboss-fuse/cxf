@@ -315,7 +315,7 @@ public class FailoverTargetSelector extends AbstractConduitSelector {
                                                              String endpointAddress,
                                                              Conduit cond) {
         String requestURI = (String)message.get(Message.REQUEST_URI);
-        if (requestURI != null && endpointAddress != null && !requestURI.startsWith(endpointAddress)) {
+        if (requestURI != null && endpointAddress != null && !requestURI.equals(endpointAddress)) {
             String basePath = (String)message.get(Message.BASE_PATH);
             if (basePath != null && requestURI.startsWith(basePath)) {
                 String pathInfo = requestURI.substring(basePath.length());
@@ -392,16 +392,18 @@ public class FailoverTargetSelector extends AbstractConduitSelector {
         }
 
         Endpoint retrieveOriginalEndpoint(Endpoint endpoint) {
-            if (endpoint != originalEndpoint) {
-                getLogger().log(Level.INFO,
-                                "REVERT_TO_ORIGINAL_TARGET",
-                                endpoint.getEndpointInfo().getName());
-            }
-            if (!endpoint.getEndpointInfo().getAddress().equals(originalAddress)) {
-                endpoint.getEndpointInfo().setAddress(originalAddress);
-                getLogger().log(Level.INFO,
-                                "REVERT_TO_ORIGINAL_ADDRESS",
-                                endpoint.getEndpointInfo().getAddress());
+            if (endpoint != null) {
+                if (endpoint != originalEndpoint) {
+                    getLogger().log(Level.INFO,
+                                    "REVERT_TO_ORIGINAL_TARGET",
+                                    endpoint.getEndpointInfo().getName());
+                }
+                if (!endpoint.getEndpointInfo().getAddress().equals(originalAddress)) {
+                    endpoint.getEndpointInfo().setAddress(originalAddress);
+                    getLogger().log(Level.INFO,
+                                    "REVERT_TO_ORIGINAL_ADDRESS",
+                                    endpoint.getEndpointInfo().getAddress());
+                }
             }
             return originalEndpoint;
         }

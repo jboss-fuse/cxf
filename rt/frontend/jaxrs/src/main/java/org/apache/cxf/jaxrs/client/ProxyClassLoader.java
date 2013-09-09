@@ -18,40 +18,7 @@
  */
 package org.apache.cxf.jaxrs.client;
 
-import java.net.URL;
-import java.util.HashSet;
-import java.util.Set;
+@Deprecated
+public class ProxyClassLoader extends org.apache.cxf.common.util.ProxyClassLoader {
 
-/**
- * Utility class loader that can be used to create proxies in cases where
- * the the JAX-RS client classes are not visible to the loader of the
- * service class.    
- */
-public class ProxyClassLoader extends ClassLoader {
-    private Set<ClassLoader> loaders = new HashSet<ClassLoader>();
-
-    public void addLoader(ClassLoader loader) {
-        loaders.add(loader);
-    }
-
-    public Class<?> findClass(String name) throws ClassNotFoundException {
-        for (ClassLoader loader : loaders) {
-            try {
-                return loader.loadClass(name);
-            } catch (ClassNotFoundException cnfe) {
-                // Try next
-            }
-        }
-        throw new ClassNotFoundException(name);
-    }
-    
-    public URL findResource(String name) {
-        for (ClassLoader loader : loaders) {
-            URL url = loader.getResource(name);
-            if (url != null) {
-                return url;
-            }
-        }
-        return null;
-    }
 }

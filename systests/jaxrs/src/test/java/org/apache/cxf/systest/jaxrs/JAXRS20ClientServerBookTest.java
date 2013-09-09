@@ -150,6 +150,9 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         assertNull(response.getHeaderString("DynamicResponse"));
         assertNull(response.getHeaderString("Custom"));
         assertEquals("serverWrite", response.getHeaderString("ServerWriterInterceptor"));
+        assertEquals("serverWrite2", response.getHeaderString("ServerWriterInterceptor2"));
+        assertEquals("serverWriteHttpResponse", 
+                     response.getHeaderString("ServerWriterInterceptorHttpResponse"));
         assertEquals("text/plain;charset=us-ascii", response.getMediaType().toString());
     }
     
@@ -231,6 +234,30 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
                                         Collections.singletonList(new ReplaceBodyFilter()));
         wc.accept("text/xml").type("application/xml");
         Book book = wc.post(new Book("book", 555L), Book.class);
+        assertEquals(561L, book.getId());
+    }
+    
+    @Test
+    public void testPostReplaceBookMistypedCT() throws Exception {
+        
+        String endpointAddress = "http://localhost:" + PORT + "/bookstore/books2"; 
+        WebClient wc = WebClient.create(endpointAddress,
+                                        Collections.singletonList(new ReplaceBodyFilter()));
+        WebClient.getConfig(wc).getHttpConduit().getClient().setReceiveTimeout(1000000L);
+        wc.accept("text/mistypedxml").type("text/xml");
+        Book book = wc.post(new Book("book", 555L), Book.class);
+        assertEquals(561L, book.getId());
+    }
+    
+    @Test
+    public void testReplaceBookMistypedCTAndHttpVerb() throws Exception {
+        
+        String endpointAddress = "http://localhost:" + PORT + "/bookstore/books2"; 
+        WebClient wc = WebClient.create(endpointAddress,
+                                        Collections.singletonList(new ReplaceBodyFilter()));
+        WebClient.getConfig(wc).getHttpConduit().getClient().setReceiveTimeout(1000000L);
+        wc.accept("text/mistypedxml").type("text/xml");
+        Book book = wc.put(new Book("book", 555L), Book.class);
         assertEquals(561L, book.getId());
     }
     

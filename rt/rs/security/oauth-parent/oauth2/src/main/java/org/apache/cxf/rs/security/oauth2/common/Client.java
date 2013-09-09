@@ -18,13 +18,16 @@
  */
 package org.apache.cxf.rs.security.oauth2.common;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
 /**
  * Represents a registered third-party Client application
  */
-public class Client {
+public class Client implements Serializable {
+    
+    private static final long serialVersionUID = -5550840247125850922L;
     
     private String clientId;
     // TODO: Consider introducing ClientCredentials instead
@@ -40,6 +43,7 @@ public class Client {
     private boolean isConfidential;
     private List<String> allowedGrantTypes = new LinkedList<String>();
     private List<String> registeredScopes = new LinkedList<String>();
+    private List<String> registeredAudiences = new LinkedList<String>();
     
     private List<Property> properties = new LinkedList<Property>();
     private UserSubject subject;
@@ -252,5 +256,13 @@ public class Client {
      */
     public void setRegisteredScopes(List<String> registeredScopes) {
         this.registeredScopes = registeredScopes;
+    }
+
+    public List<String> getRegisteredAudiences() {
+        return registeredAudiences;
+    }
+
+    public void setRegisteredAudiences(List<String> registeredAudiences) {
+        this.registeredAudiences = registeredAudiences;
     }
 }

@@ -474,7 +474,7 @@ public class ClientImpl
         return doInvoke(null, oi, params, context, exchange);
     }
 
-    private Object[] doInvoke(ClientCallback callback,
+    private Object[] doInvoke(final ClientCallback callback,
                               BindingOperationInfo oi,
                               Object[] params,
                               Map<String, Object> context,
@@ -532,7 +532,31 @@ public class ClientImpl
 
             PhaseInterceptorChain chain = setupInterceptorChain(endpoint);
             message.setInterceptorChain(chain);
-            chain.setFaultObserver(outFaultObserver);
+            if (callback == null) {
+                chain.setFaultObserver(outFaultObserver);
+            } else {
+                // We need to wrap the outFaultObserver if the callback is not null
+                // calling the conduitSelector.complete to make sure the fail over feature works
+                chain.setFaultObserver(new MessageObserver() {
+                    public void onMessage(Message message) {
+                        Exception ex = message.getContent(Exception.class);
+                        if (ex != null) {
+                            getConduitSelector().complete(message.getExchange());
+                            if (message.getContent(Exception.class) == null) {
+                                // handle the right response
+                                List<Object> resList = null;
+                                Message inMsg = message.getExchange().getInMessage();
+                                Map<String, Object> ctx = responseContext.get(Thread.currentThread());
+                                resList = CastUtils.cast(inMsg.getContent(List.class));
+                                Object[] result = resList == null ? null : resList.toArray();
+                                callback.handleResponse(ctx, result);
+                                return;
+                            }
+                        }
+                        outFaultObserver.onMessage(message);
+                    }
+                });
+            }
             prepareConduitSelector(message);
 
             // add additional interceptors and such
@@ -853,7 +877,8 @@ public class ClientImpl
         Message message = new MessageImpl();
         Exchange exchange = new ExchangeImpl();
         message.setExchange(exchange);
-        setExchangeProperties(exchange, null, null);
+        message.putAll(getRequestContext());
+        setExchangeProperties(exchange, getEndpoint(), null);
         return getConduitSelector().selectConduit(message);
     }
 
@@ -913,10 +938,11 @@ public class ClientImpl
         exchange.put(Client.class, this);
         exchange.put(Bus.class, bus);
 
-        if (endpoint != null && boi != null) {
-
+        if (endpoint != null) {
             EndpointInfo endpointInfo = endpoint.getEndpointInfo();
-            exchange.put(Message.WSDL_OPERATION, boi.getName());
+            if (boi != null) {
+                exchange.put(Message.WSDL_OPERATION, boi.getName());
+            }
 
             QName serviceQName = endpointInfo.getService().getName();
             exchange.put(Message.WSDL_SERVICE, serviceQName);

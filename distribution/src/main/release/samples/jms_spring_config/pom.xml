@@ -95,6 +95,7 @@
                             <wsdlOptions>
                                 <wsdlOption>
                                     <wsdl>${wsdl.dir}/CustomerService.wsdl</wsdl>
+                                    <frontEnd>jaxws21</frontEnd>
                                     <bindingFiles>
                                         <bindingFile>${wsdl.dir}/binding.xml</bindingFile>
                                     </bindingFiles>
@@ -166,8 +167,8 @@
                 <plugins>
                     <plugin>
                         <groupId>org.apache.activemq.tooling</groupId>
-                        <artifactId>maven-activemq-plugin</artifactId>
-                        <version>5.4.2</version>
+                        <artifactId>activemq-maven-plugin</artifactId>
+                        <version>5.8.0</version>
                         <executions>
                             <execution>
                                 <phase>test</phase>
@@ -200,7 +201,11 @@
         </dependency>
         <dependency>
             <groupId>org.apache.activemq</groupId>
-            <artifactId>activemq-core</artifactId>
+            <artifactId>activemq-broker</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>activemq-kahadb-store</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>

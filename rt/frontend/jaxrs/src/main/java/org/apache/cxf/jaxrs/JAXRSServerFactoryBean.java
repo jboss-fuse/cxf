@@ -193,7 +193,12 @@ public class JAXRSServerFactoryBean extends AbstractJAXRSFactoryBean {
             
             
             if (start) {
-                server.start();
+                try {
+                    server.start();
+                } catch (RuntimeException re) {
+                    server.destroy(); // prevent resource leak
+                    throw re;
+                }
             }
         } catch (EndpointException e) {
             throw new ServiceConstructionException(e);
@@ -212,6 +217,15 @@ public class JAXRSServerFactoryBean extends AbstractJAXRSFactoryBean {
         return server;
     }
 
+
+    protected void setBeanInfo(ProviderFactory factory) {
+        List<ClassResourceInfo> cris = serviceFactory.getClassResourceInfo();
+        for (ClassResourceInfo cri : cris) {
+            cri.initBeanParamInfo(factory);
+        }
+        
+    }
+    
     protected void applyFeatures() {
         if (getFeatures() != null) {
             for (Feature feature : getFeatures()) {

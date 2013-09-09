@@ -76,7 +76,6 @@ import org.apache.cxf.common.jaxb.JAXBContextProxy;
 import org.apache.cxf.common.jaxb.JAXBUtils;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.PackageUtils;
-import org.apache.cxf.common.util.ReflectionInvokationHandler;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.common.util.XmlSchemaPrimitiveUtils;
 import org.apache.cxf.common.xmlschema.SchemaCollection;
@@ -262,7 +261,7 @@ public class WadlGenerator implements RequestHandler {
             return entity;
         }
         try {
-            return DOMUtils.readXml(new StringReader(entity));
+            return StaxUtils.read(new StringReader(entity));
         } catch (Exception ex) {
             throw new InternalServerErrorException(ex);
         }
@@ -832,7 +831,7 @@ public class WadlGenerator implements RequestHandler {
                 try {
                     InputStream is = ResourceUtils.getResourceStream(loc, (Bus)ep.get(Bus.class.getName()));
                     if (is != null) {
-                        Element appEl = DOMUtils.readXml(is).getDocumentElement();
+                        Element appEl = StaxUtils.read(is).getDocumentElement();
 
                         List<Element> grammarEls = DOMUtils.getChildrenWithName(appEl, WadlGenerator.WADL_NS,
                                                                                 "grammars");
@@ -878,7 +877,7 @@ public class WadlGenerator implements RequestHandler {
                 }
                 InputStream is = ResourceUtils.getResourceStream(loc, (Bus)ep.get(Bus.class.getName()));
                 if (is != null) {
-                    Element docEl = DOMUtils.readXml(is).getDocumentElement();
+                    Element docEl = StaxUtils.read(is).getDocumentElement();
                     if (fragmentIndex != -1) {
                         List<Element> grammarEls = DOMUtils.getChildrenWithName(docEl, WadlGenerator.WADL_NS,
                                                                                 "grammars");
@@ -1327,8 +1326,7 @@ public class WadlGenerator implements RequestHandler {
         }
         if (useJaxbContextForQnames) {
             if (context != null) {
-                JAXBContextProxy proxy = ReflectionInvokationHandler
-                    .createProxyWrapper(context, JAXBContextProxy.class);
+                JAXBContextProxy proxy = JAXBUtils.createJAXBContextProxy(context);
                 return new JaxbContextQNameResolver(proxy);
             } else {
                 return null;
