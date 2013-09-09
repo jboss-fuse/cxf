@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.concurrent.Future;
 
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -65,7 +64,6 @@ import org.apache.cxf.transport.http.Headers;
 import org.apache.cxf.transport.http.URLConnectionHTTPConduit;
 import org.apache.cxf.transport.http.asyncclient.AsyncHTTPConduitFactory.UseAsyncPolicy;
 import org.apache.cxf.transport.https.AliasedX509ExtendedKeyManager;
-import org.apache.cxf.transport.https.CertificateHostnameVerifier;
 import org.apache.cxf.transport.https.HttpsURLConnectionInfo;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 import org.apache.cxf.version.Version;
@@ -258,12 +256,16 @@ public class AsyncHTTPConduit extends URLConnectionHTTPConduit {
                                         int chunkThreshold, 
                                         String conduitName,
                                         URI uri) {
-            super(message, needToCacheRequest, isChunking,
-                  chunkThreshold, conduitName,
+            super(message, 
+                  needToCacheRequest,
+                  isChunking,
+                  chunkThreshold, 
+                  conduitName,
                   uri);
             csPolicy = getClient(message);
             entity = message.get(CXFHttpRequest.class);
             basicEntity = (BasicHttpEntity)entity.getEntity();
+            basicEntity.setChunked(isChunking);
             HeapByteBufferAllocator allocator = new HeapByteBufferAllocator();
             int bufSize = csPolicy.getChunkLength() > 0 ? csPolicy.getChunkLength() : 16320;
             inbuf = new SharedInputBuffer(bufSize, allocator);
@@ -312,7 +314,7 @@ public class AsyncHTTPConduit extends URLConnectionHTTPConduit {
             basicEntity.setContentLength(i);
         }
         public void thresholdReached() throws IOException {
-            basicEntity.setChunked(true);
+            basicEntity.setChunked(chunking);
         }
 
         protected void handleNoOutput() throws IOException {
@@ -375,8 +377,25 @@ public class AsyncHTTPConduit extends URLConnectionHTTPConduit {
         
         @Override
         public void close() throws IOException {
+            if (!chunking && wrappedStream != null) {
+                CachedOutputStream out = (CachedOutputStream)wrappedStream;
+                this.basicEntity.setContentLength(out.size());
+                wrappedStream = null;
+                handleHeadersTrustCaching();
+                out.writeCacheTo(wrappedStream);
+            }
             super.close();
         }
+        
+        @Override
+        protected void onFirstWrite() throws IOException {
+            if (chunking) {
+                super.onFirstWrite();
+            } else {
+                wrappedStream = new CachedOutputStream();
+            }
+        }
+        
         protected void setupWrappedStream() throws IOException {
             connect(true);
             wrappedStream = new OutputStream() {
@@ -620,14 +639,8 @@ public class AsyncHTTPConduit extends URLConnectionHTTPConduit {
                     throw new IOException("No SSLSession detected");
                 }
             }
-            HostnameVerifier verifier;
-            if (tlsClientParameters.isUseHttpsURLConnectionDefaultHostnameVerifier()) {
-                verifier = HttpsURLConnection.getDefaultHostnameVerifier();
-            } else if (tlsClientParameters.isDisableCNCheck()) {
-                verifier = CertificateHostnameVerifier.ALLOW_ALL;
-            } else {
-                verifier = CertificateHostnameVerifier.DEFAULT;
-            }
+            HostnameVerifier verifier = org.apache.cxf.transport.https.SSLUtils
+                .getHostnameVerifier(tlsClientParameters);
             if (!verifier.verify(url.getHost(), session)) {
                 throw new IOException("Could not verify host " + url.getHost());
             }

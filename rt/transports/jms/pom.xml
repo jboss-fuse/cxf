@@ -56,13 +56,23 @@
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-wsdl</artifactId>
+            <version>${project.version}</version>
+            <optional>true</optional>
+        </dependency>
+
+        
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-management</artifactId>
             <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-bindings-soap</artifactId>
             <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
@@ -83,13 +93,17 @@
         </dependency>
         <dependency>
             <groupId>org.apache.activemq</groupId>
-            <artifactId>activemq-core</artifactId>
+            <artifactId>activemq-broker</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.activemq</groupId>
             <artifactId>activemq-pool</artifactId>
-            <version>${cxf.activemq.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>activemq-kahadb-store</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -162,9 +176,6 @@
                                 <xsdOption>
                                     <xsd>${basedir}/src/main/resources/schemas/wsdl/spec/jms-spec-wsdl.xsd</xsd>
                                     <bindingFile>${basedir}/src/main/resources/schemas/wsdl/spec/jms-spec-wsdl.xjb</bindingFile>
-                                    <extensionArgs>
-                                         <extensionArg>-Xwsdlextension</extensionArg>
-                                     </extensionArgs>
                                 </xsdOption>
                             </xsdOptions>
                         </configuration>
@@ -176,7 +187,6 @@
                 <configuration>
                      <extensions>
                          <extension>org.apache.cxf.xjcplugins:cxf-xjc-dv:${cxf.xjc-utils.version}</extension>
-                         <extension>org.apache.cxf.xjcplugins:cxf-xjc-wsdlextension:${cxf.xjc-utils.version}</extension>
                      </extensions>
                  </configuration>
             </plugin>

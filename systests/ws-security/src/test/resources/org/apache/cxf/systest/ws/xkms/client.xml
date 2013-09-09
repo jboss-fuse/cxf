@@ -44,27 +44,33 @@
     </cxf:bus>
     
     <!-- Begin Symmetric -->
+    <!--
+    <bean id="additionalClasses"
+        class="org.apache.cxf.xkms.model.extensions.AdditionalClassesFactory" />
+    
     <jaxws:client id="xkmsClient"
         serviceClass="org.w3._2002._03.xkms_wsdl.XKMSPortType"
         name="{http://www.w3.org/2002/03/xkms#wsdl}XKMSPort" 
         address="https://localhost:${testutil.ports.XKMSServer}/XKMS">
         <jaxws:properties>
             <entry key="jaxb.additionalContextClasses">
-                <bean
-                    class="org.apache.cxf.xkms.model.extensions.ClassArrayFactoryBean">
-                    <property name="classNames">
-                        <list>
-                            <value>org.apache.cxf.xkms.model.extensions.ResultDetails</value>
-                        </list>
-                    </property>
-                </bean>
+                 <bean factory-bean="additionalClasses" factory-method="create" />
             </entry>
         </jaxws:properties>
     </jaxws:client>
+    -->
+    
+    <bean id="xkmsInvoker" class="org.apache.cxf.xkms.client.XKMSInvoker">
+        <constructor-arg>
+            <value>https://localhost:${testutil.ports.XKMSServer}/XKMS</value>
+        </constructor-arg>
+        <constructor-arg ref="cxf"/>
+    </bean>
     
     <bean id="xkmsCrypto" class="org.apache.cxf.xkms.crypto.XkmsCryptoProvider">
         <constructor-arg>
-            <ref bean="xkmsClient" />
+            <!-- <ref bean="xkmsClient" /> -->
+            <ref bean="xkmsInvoker" />
         </constructor-arg>
     </bean>
     
@@ -88,7 +94,8 @@
     
     <bean id="xkmsAsymmetricCrypto" class="org.apache.cxf.xkms.crypto.XkmsCryptoProvider">
         <constructor-arg>
-            <ref bean="xkmsClient" />
+            <!-- <ref bean="xkmsClient" /> -->
+            <ref bean="xkmsInvoker" />
         </constructor-arg>
         <constructor-arg>
              <ref bean="crypto" />

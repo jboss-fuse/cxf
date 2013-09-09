@@ -56,6 +56,9 @@ import org.apache.cxf.sts.request.RequestParser;
 import org.apache.cxf.sts.request.TokenRequirements;
 import org.apache.cxf.sts.service.EncryptionProperties;
 import org.apache.cxf.sts.service.ServiceMBean;
+import org.apache.cxf.sts.token.delegation.TokenDelegationHandler;
+import org.apache.cxf.sts.token.delegation.TokenDelegationParameters;
+import org.apache.cxf.sts.token.delegation.TokenDelegationResponse;
 import org.apache.cxf.sts.token.provider.TokenProvider;
 import org.apache.cxf.sts.token.provider.TokenProviderParameters;
 import org.apache.cxf.sts.token.provider.TokenReference;
@@ -102,6 +105,7 @@ public abstract class AbstractOperation {
     protected TokenStore tokenStore;
     protected ClaimsManager claimsManager = new ClaimsManager();
     protected STSEventListener eventPublisher;
+    protected List<TokenDelegationHandler> delegationHandlers = new ArrayList<TokenDelegationHandler>();
     
     public boolean isReturnReferences() {
         return returnReferences;
@@ -135,6 +139,14 @@ public abstract class AbstractOperation {
         this.tokenProviders = tokenProviders;
     }
     
+    public List<TokenDelegationHandler> getDelegationHandlers() {
+        return delegationHandlers;
+    }
+
+    public void setDelegationHandlers(List<TokenDelegationHandler> delegationHandlers) {
+        this.delegationHandlers = delegationHandlers;
+    }
+
     public List<TokenProvider> getTokenProviders() {
         return tokenProviders;
     }
@@ -570,6 +582,48 @@ public abstract class AbstractOperation {
         return tokenResponse;
     }
     
+    protected void performDelegationHandling(
+        RequestParser requestParser, WebServiceContext context, ReceivedToken token
+    ) {
+        TokenDelegationParameters delegationParameters = new TokenDelegationParameters();
+        delegationParameters.setStsProperties(stsProperties);
+        delegationParameters.setPrincipal(context.getUserPrincipal());
+        delegationParameters.setWebServiceContext(context);
+        delegationParameters.setTokenStore(getTokenStore());
+        
+        KeyRequirements keyRequirements = requestParser.getKeyRequirements();
+        TokenRequirements tokenRequirements = requestParser.getTokenRequirements();
+        delegationParameters.setKeyRequirements(keyRequirements);
+        delegationParameters.setTokenRequirements(tokenRequirements);
+        
+        // Extract AppliesTo
+        String address = extractAddressFromAppliesTo(tokenRequirements.getAppliesTo());
+        delegationParameters.setAppliesToAddress(address);
+        
+        delegationParameters.setToken(token);
+
+        TokenDelegationResponse tokenResponse = null;
+        for (TokenDelegationHandler delegationHandler : delegationHandlers) {
+            if (delegationHandler.canHandleToken(token)) {
+                try {
+                    tokenResponse = delegationHandler.isDelegationAllowed(delegationParameters);
+                } catch (RuntimeException ex) {
+                    LOG.log(Level.WARNING, "", ex);
+                    throw new STSException("Error in delegation handling", ex, STSException.REQUEST_FAILED);
+                }
+                break;
+            }
+        }
+        
+        if (tokenResponse == null || !tokenResponse.isDelegationAllowed()) {
+            LOG.log(Level.WARNING, "No matching token delegation handler found");
+            throw new STSException(
+                "No matching token delegation handler found", 
+                STSException.REQUEST_FAILED
+            );
+        }
+    }
+    
     protected void checkClaimsSupport(RequestClaimCollection requestedClaims) {
         if (requestedClaims != null) {
             List<URI> unhandledClaimTypes = new ArrayList<URI>();
@@ -609,7 +663,6 @@ public abstract class AbstractOperation {
                                 Relationship.class.getName(), relationship);
                     }
                 }
-    
                 if (relationship == null || relationship.getType().equals(Relationship.FED_TYPE_IDENTITY)) {
                     // federate identity
                     IdentityMapper identityMapper = null;

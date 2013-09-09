@@ -33,6 +33,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 
+import org.apache.cxf.jaxrs.client.ClientProviderFactory;
 import org.apache.cxf.jaxrs.impl.AbstractRequestContextImpl;
 import org.apache.cxf.jaxrs.impl.MetadataMap;
 import org.apache.cxf.jaxrs.utils.InjectionUtils;
@@ -50,14 +51,13 @@ public class ClientRequestContextImpl extends AbstractRequestContextImpl
     
     @Override
     public Client getClient() {
-        // TODO Auto-generated method stub
-        return null;
+        return (Client)m.getContextualProperty(Client.class.getName());
     }
 
     @Override
     public Configuration getConfiguration() {
-        // TODO Auto-generated method stub
-        return null;
+        ClientProviderFactory cpf = ClientProviderFactory.getInstance(m);
+        return cpf.getDynamicConfiguration();
     }
     
     private Object getMessageContent() {
@@ -93,7 +93,7 @@ public class ClientRequestContextImpl extends AbstractRequestContextImpl
     
     @Override
     public OutputStream getEntityStream() {
-        return m.get(OutputStream.class);
+        return m.getContent(OutputStream.class);
     }
 
     @Override
@@ -144,7 +144,7 @@ public class ClientRequestContextImpl extends AbstractRequestContextImpl
 
     @Override
     public void setEntityStream(OutputStream os) {
-        m.put(OutputStream.class, os);
+        m.setContent(OutputStream.class, os);
 
     }
 

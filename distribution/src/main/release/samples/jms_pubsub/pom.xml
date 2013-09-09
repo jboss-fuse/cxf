@@ -53,6 +53,7 @@
                             <wsdlOptions>
                                 <wsdlOption>
                                     <wsdl>${wsdl.file}</wsdl>
+                                    <frontEnd>jaxws21</frontEnd>
                                 </wsdlOption>
                             </wsdlOptions>
                         </configuration>
@@ -154,7 +155,11 @@
         </dependency>
         <dependency>
             <groupId>org.apache.activemq</groupId>
-            <artifactId>activemq-core</artifactId>
+            <artifactId>activemq-broker</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>activemq-kahadb-store</artifactId>
         </dependency>
     </dependencies>
 </project>

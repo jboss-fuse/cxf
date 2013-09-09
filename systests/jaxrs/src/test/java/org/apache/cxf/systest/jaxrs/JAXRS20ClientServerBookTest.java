@@ -114,8 +114,10 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
     @Test
     public void testGetBookSpec() {
         String address = "http://localhost:" + PORT + "/bookstore/bookheaders/simple";
-        Book book = ClientBuilder.newClient().target(address)
-            .request("application/xml").get(Book.class);
+        Client client = ClientBuilder.newClient();
+        client.register(new ClientFilterClientAndConfigCheck());
+        client.property("clientproperty", "somevalue");
+        Book book = client.target(address).request("application/xml").get(Book.class);
         assertEquals(124L, book.getId());
     }
     
@@ -271,6 +273,30 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
                                         Collections.singletonList(new ReplaceBodyFilter()));
         wc.accept("text/xml").type("application/xml");
         Book book = wc.post(new Book("book", 555L), Book.class);
+        assertEquals(561L, book.getId());
+    }
+    
+    @Test
+    public void testPostReplaceBookMistypedCT() throws Exception {
+        
+        String endpointAddress = "http://localhost:" + PORT + "/bookstore/books2"; 
+        WebClient wc = WebClient.create(endpointAddress,
+                                        Collections.singletonList(new ReplaceBodyFilter()));
+        WebClient.getConfig(wc).getHttpConduit().getClient().setReceiveTimeout(1000000L);
+        wc.accept("text/mistypedxml").type("text/xml");
+        Book book = wc.post(new Book("book", 555L), Book.class);
+        assertEquals(561L, book.getId());
+    }
+    
+    @Test
+    public void testReplaceBookMistypedCTAndHttpVerb() throws Exception {
+        
+        String endpointAddress = "http://localhost:" + PORT + "/bookstore/books2"; 
+        WebClient wc = WebClient.create(endpointAddress,
+                                        Collections.singletonList(new ReplaceBodyFilter()));
+        WebClient.getConfig(wc).getHttpConduit().getClient().setReceiveTimeout(1000000L);
+        wc.accept("text/mistypedxml").type("text/xml");
+        Book book = wc.put(new Book("book", 555L), Book.class);
         assertEquals(561L, book.getId());
     }
     
@@ -560,6 +586,19 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         @Override
         public void filter(ClientRequestContext context) throws IOException {
             context.getHeaders().putSingle("Simple", "simple");
+        }
+    }
+    
+    private static class ClientFilterClientAndConfigCheck implements ClientRequestFilter {
+
+        @Override
+        public void filter(ClientRequestContext context) throws IOException {
+            String prop = context.getClient().getConfiguration().getProperty("clientproperty").toString();
+            String prop2 = context.getConfiguration().getProperty("clientproperty").toString();
+            if (!prop2.equals(prop) || !"somevalue".equals(prop2)) {
+                throw new RuntimeException();
+            }
+            
         }
     }
     

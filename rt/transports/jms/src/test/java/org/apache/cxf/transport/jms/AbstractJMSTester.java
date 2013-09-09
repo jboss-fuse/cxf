@@ -55,6 +55,7 @@ public abstract class AbstractJMSTester extends Assert {
     protected EndpointReferenceType target;
     protected MessageObserver observer;
     protected Message inMessage;
+    protected String wsdlURL;
 
     public static void startBroker(JMSBrokerSetup b) throws Exception {
         assertNotNull(b);
@@ -81,13 +82,15 @@ public abstract class AbstractJMSTester extends Assert {
         if (System.getProperty("cxf.config.file") != null) {
             System.clearProperty("cxf.config.file");
         }
+        wsdlURL = null;
     }
 
     protected void setupServiceInfo(String ns, String wsdl, String serviceName, String portName) {
         URL wsdlUrl = getClass().getResource(wsdl);
+        wsdlURL = wsdlUrl.toString();
         assertNotNull(wsdlUrl);
-        EmbeddedJMSBrokerLauncher.updateWsdlExtensors(bus, wsdlUrl.toString());
-        WSDLServiceFactory factory = new WSDLServiceFactory(bus, wsdlUrl, new QName(ns, serviceName));
+        EmbeddedJMSBrokerLauncher.updateWsdlExtensors(bus, wsdlURL);
+        WSDLServiceFactory factory = new WSDLServiceFactory(bus, wsdlURL, new QName(ns, serviceName));
 
         Service service = factory.create();
         endpointInfo = service.getEndpointInfo(new QName(ns, portName));
@@ -104,7 +107,7 @@ public abstract class AbstractJMSTester extends Assert {
         try {
             conduit.prepare(message);
         } catch (IOException ex) {
-            assertFalse("JMSConduit can't perpare to send out message", false);
+            assertFalse("JMSConduit can't prepare to send out message", false);
             ex.printStackTrace();
         }
         OutputStream os = message.getContent(OutputStream.class);
@@ -146,6 +149,9 @@ public abstract class AbstractJMSTester extends Assert {
 
         JMSConfiguration jmsConfig = new JMSOldConfigHolder()
             .createJMSConfigurationFromEndpointInfo(bus, endpointInfo, null, true);
+        if (jmsConfig != null && jmsConfig.getReceiveTimeout() == null) {
+            jmsConfig.setReceiveTimeout(5000L);
+        }
         JMSConduit jmsConduit = new JMSConduit(endpointInfo, target, jmsConfig, bus);
         if (send) {
             // setMessageObserver

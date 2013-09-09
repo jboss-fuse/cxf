@@ -27,20 +27,24 @@ import java.util.Set;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Configurable;
 import javax.ws.rs.core.Configuration;
+import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriBuilderException;
 
+import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.jaxrs.client.ClientProviderFactory;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactoryBean;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.jaxrs.model.FilterProviderInfo;
+import org.apache.cxf.transport.https.SSLUtils;
 
 public class ClientImpl implements Client {
     private Configurable<Client> configImpl;
@@ -68,7 +72,12 @@ public class ClientImpl implements Client {
     @Override
     public Builder invocation(Link link) {
         checkClosed();
-        return target(link.getUriBuilder()).request();
+        Builder builder = target(link.getUriBuilder()).request();
+        String type = link.getType();
+        if (type != null) {
+            builder.accept(type);
+        }
+        return builder;
     }
 
     @Override
@@ -97,13 +106,23 @@ public class ClientImpl implements Client {
     @Override
     public HostnameVerifier getHostnameVerifier() {
         checkClosed();
-        return secConfig.getVerifier();
+        return secConfig.getTlsClientParams().getHostnameVerifier();
     }
 
     @Override
     public SSLContext getSslContext() {
         checkClosed();
-        return secConfig.getSslContext();
+        if (secConfig.getSslContext() != null) {
+            return secConfig.getSslContext();
+        } else if (secConfig.getTlsClientParams().getTrustManagers() != null) {
+            try {
+                return SSLUtils.getSSLContext(secConfig.getTlsClientParams());
+            } catch (Exception ex) {
+                throw new ProcessingException(ex);
+            }
+        } else {
+            return null;
+        }
     }
     
     private void checkClosed() {
@@ -192,18 +211,27 @@ public class ClientImpl implements Client {
             List<Object> providers = new LinkedList<Object>();
             Configuration cfg = configImpl.getConfiguration();
             for (Object p : cfg.getInstances()) {
-                Map<Class<?>, Integer> contracts = cfg.getContracts(p.getClass());
-                if (contracts == null || contracts.isEmpty()) {
-                    providers.add(p);
-                } else {
-                    providers.add(
-                        new FilterProviderInfo<Object>(p, pf.getBus(), null, contracts));
+                if (!(p instanceof Feature)) {
+                    Map<Class<?>, Integer> contracts = cfg.getContracts(p.getClass());
+                    if (contracts == null || contracts.isEmpty()) {
+                        providers.add(p);
+                    } else {
+                        providers.add(
+                            new FilterProviderInfo<Object>(p, pf.getBus(), contracts));
+                    }
                 }
             }
             
             pf.setUserProviders(providers);
             pf.setDynamicConfiguration(getConfiguration());
             WebClient.getConfig(targetClient).getRequestContext().putAll(getConfiguration().getProperties());
+            WebClient.getConfig(targetClient).getRequestContext().put(Client.class.getName(), ClientImpl.this);
+            // TLS
+            TLSClientParameters tlsParams = secConfig.getTlsClientParams();
+            if (tlsParams.getSSLSocketFactory() != null 
+                || tlsParams.getTrustManagers() != null) {
+                WebClient.getConfig(targetClient).getHttpConduit().setTlsClientParameters(tlsParams);
+            }
             
             // start building the invocation
             return new InvocationBuilderImpl(WebClient.fromClient(targetClient));

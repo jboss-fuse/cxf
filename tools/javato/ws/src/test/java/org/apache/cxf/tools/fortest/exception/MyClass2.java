@@ -16,14 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.tools.fortest.exception;
 
-package org.apache.cxf.tools.wsdlto.frontend.jaxws.generators;
+public class MyClass2 {
+    private String file;
 
-/**
- * 
- */
-public class JAXWS21ServiceGenerator extends ServiceGenerator {
-    public boolean isJaxws22() {
-        return false;
+    public String getFile() {
+        return this.file;
+    }
+
+    public void setFile(String file) {
+        this.file = file;
     }
 }

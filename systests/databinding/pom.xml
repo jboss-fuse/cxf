@@ -89,45 +89,33 @@
                             <wsdlOptions>
                                 <wsdlOption>
                                     <wsdl>${basedir}/src/test/resources/wsdl_systest_databinding/xmlbeans/hello_world.wsdl</wsdl>
-                                    <extraargs>
-                                        <extraarg>-db</extraarg>
-                                        <extraarg>xmlbeans</extraarg>
-                                    </extraargs>
+                                    <frontEnd>cxf</frontEnd>
+                                    <dataBinding>xmlbeans</dataBinding>
                                 </wsdlOption>
                                 <wsdlOption>
                                     <wsdl>${basedir}/src/test/resources/wsdl_systest_databinding/xmlbeans/doc_lit_bare.wsdl</wsdl>
-                                    <extraargs>
-                                        <extraarg>-db</extraarg>
-                                        <extraarg>xmlbeans</extraarg>
-                                    </extraargs>
+                                    <frontEnd>cxf</frontEnd>
+                                    <dataBinding>xmlbeans</dataBinding>
                                 </wsdlOption>
                                 <wsdlOption>
                                     <wsdl>${basedir}/src/test/resources/wsdl_systest_databinding/jibx/hello_world.wsdl</wsdl>
-                                    <extraargs>
-                                        <extraarg>-db</extraarg>
-                                        <extraarg>jibx</extraarg>
-                                    </extraargs>
+                                    <frontEnd>cxf</frontEnd>
+                                    <dataBinding>jibx</dataBinding>
                                 </wsdlOption>
                                 <wsdlOption>
                                     <wsdl>${basedir}/src/test/resources/wsdl_systest_databinding/jibx/doc_lit_bare.wsdl</wsdl>
-                                    <extraargs>
-                                        <extraarg>-db</extraarg>
-                                        <extraarg>jibx</extraarg>
-                                    </extraargs>
+                                    <frontEnd>cxf</frontEnd>
+                                    <dataBinding>jibx</dataBinding>
                                 </wsdlOption>
                                 <wsdlOption>
                                     <wsdl>${basedir}/src/test/resources/wsdl_systest_databinding/source/hello_world.wsdl</wsdl>
-                                    <extraargs>
-                                        <extraarg>-db</extraarg>
-                                        <extraarg>domsource</extraarg>
-                                    </extraargs>
+                                    <frontEnd>cxf</frontEnd>
+                                    <dataBinding>domsource</dataBinding>
                                 </wsdlOption>
                                 <wsdlOption>
                                     <wsdl>${basedir}/src/test/resources/wsdl_systest_databinding/source/doc_lit_bare.wsdl</wsdl>
-                                    <extraargs>
-                                        <extraarg>-db</extraarg>
-                                        <extraarg>domsource</extraarg>
-                                    </extraargs>
+                                    <frontEnd>cxf</frontEnd>
+                                    <dataBinding>domsource</dataBinding>
                                 </wsdlOption>
                             </wsdlOptions>
                         </configuration>
@@ -400,48 +388,16 @@
             <groupId>org.jibx</groupId>
             <artifactId>jibx-tools</artifactId>
         </dependency>
-        <!-- Added the below eclipse dependency to make CI happy -->
         <dependency>
-            <groupId>org.eclipse.equinox</groupId>
-            <artifactId>app</artifactId>
-            <version>1.0.0-v20070606</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.core</groupId>
-            <artifactId>resources</artifactId>
+            <groupId>net.java.dev.msv</groupId>
+            <artifactId>msv-core</artifactId>
             <exclusions>
                 <exclusion>
-                    <groupId>org.eclipse.equinox</groupId>
-                    <artifactId>app</artifactId>
+                    <groupId>net.java.dev.msv</groupId>
+                    <artifactId>msv-testharness</artifactId>
                 </exclusion>
             </exclusions>
-            <version>3.3.0-v20070604</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.core</groupId>
-            <artifactId>runtime</artifactId>
-            <version>3.3.100-v20070530</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.eclipse.equinox</groupId>
-                    <artifactId>app</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.core</groupId>
-            <artifactId>commands</artifactId>
-            <version>3.3.0-I20070605-0010</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.equinox</groupId>
-            <artifactId>registry</artifactId>
-            <version>3.3.0-v20070522</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.core</groupId>
-            <artifactId>jobs</artifactId>
-            <version>3.3.0-v20070423</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

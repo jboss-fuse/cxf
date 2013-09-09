@@ -35,7 +35,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import org.apache.cxf.common.util.Base64Exception;
-import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.jaxrs.utils.HttpUtils;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageUtils;
@@ -47,9 +46,9 @@ import org.apache.cxf.rs.security.oauth2.common.ServerAccessToken;
 import org.apache.cxf.rs.security.oauth2.common.UserSubject;
 import org.apache.cxf.rs.security.oauth2.grants.AbstractGrantHandler;
 import org.apache.cxf.rs.security.oauth2.provider.OAuthServiceException;
-import org.apache.cxf.rs.security.oauth2.saml.Base64UrlUtility;
 import org.apache.cxf.rs.security.oauth2.saml.Constants;
 import org.apache.cxf.rs.security.oauth2.saml.SamlOAuthValidator;
+import org.apache.cxf.rs.security.oauth2.utils.Base64UrlUtility;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthUtils;
 import org.apache.cxf.rs.security.saml.authorization.JAXRSSAMLSecurityContext;
@@ -57,6 +56,7 @@ import org.apache.cxf.rs.security.saml.authorization.SecurityContextProvider;
 import org.apache.cxf.rs.security.saml.authorization.SecurityContextProviderImpl;
 import org.apache.cxf.security.SecurityContext;
 import org.apache.cxf.security.transport.TLSSessionInfo;
+import org.apache.cxf.staxutils.StaxUtils;
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.wss4j.common.saml.SAMLKeyInfo;
 import org.apache.wss4j.common.saml.SAMLUtil;
@@ -163,7 +163,7 @@ public class Saml2BearerGrantHandler extends AbstractGrantHandler {
     protected Element readToken(InputStream tokenStream) {
         
         try {
-            Document doc = DOMUtils.readXml(new InputStreamReader(tokenStream, "UTF-8"));
+            Document doc = StaxUtils.read(new InputStreamReader(tokenStream, "UTF-8"));
             return doc.getDocumentElement();
         } catch (Exception ex) {
             throw new OAuthServiceException(OAuthConstants.INVALID_GRANT);

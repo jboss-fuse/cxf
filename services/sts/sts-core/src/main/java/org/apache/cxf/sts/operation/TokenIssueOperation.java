@@ -143,6 +143,16 @@ public class TokenIssueOperation extends AbstractOperation implements IssueOpera
                     providerParameters.setPrincipal(wssecToken.getPrincipal());
                 }
             }
+            
+            // See whether OnBehalfOf/ActAs is allowed or not
+            if (providerParameters.getTokenRequirements().getOnBehalfOf() != null) {
+                performDelegationHandling(requestParser, context,
+                                    providerParameters.getTokenRequirements().getOnBehalfOf());
+            }
+            if (providerParameters.getTokenRequirements().getActAs() != null) {
+                performDelegationHandling(requestParser, context,
+                                    providerParameters.getTokenRequirements().getActAs());
+            }
 
             // Validate OnBehalfOf token if present
             if (providerParameters.getTokenRequirements().getOnBehalfOf() != null) {
