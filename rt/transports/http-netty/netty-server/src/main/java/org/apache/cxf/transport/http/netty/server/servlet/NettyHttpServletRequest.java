@@ -85,6 +85,7 @@ public class NettyHttpServletRequest implements HttpServletRequest {
         this.contextPath = contextPath;
         this.uriParser = new URIParser(contextPath);
         this.inputStream = new NettyServletInputStream(request);
+        uriParser.parse(request.getUri());
         this.reader = new BufferedReader(new InputStreamReader(inputStream));
         this.queryStringDecoder = new QueryStringDecoder(request.getUri());
         // setup the SSL security attributes
