@@ -18,35 +18,33 @@
  */
 package org.apache.cxf.transport.http.netty.server.integration;
 
-
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.net.URL;
 import javax.xml.ws.Endpoint;
-import org.apache.cxf.Bus;
-import org.apache.cxf.BusFactory;
-import org.apache.cxf.helpers.IOUtils;
-import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
-import org.apache.hello_world_soap_http.Greeter;
 import org.apache.hello_world_soap_http.SOAPService;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Test;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-public class NettyServerTest extends AbstractBusClientServerTestBase {
-    public static final String PORT = allocatePort(NettyServerTest.class);
+/**
+ * publish the service with SSL configuraiton with Spring
+ */
+public class SSLNettySpringServerTest extends SSLNettyServerTest {
+    public static final String PORT = allocatePort(SSLNettySpringServerTest.class);
 
-    static Endpoint ep;
-
-    static Greeter g;
+    static {
+        System.setProperty("SSLNettySpringServerTest.port", PORT);
+    }
+    static ConfigurableApplicationContext context;
 
     @BeforeClass
     public static void start() throws Exception {
-        Bus b = createStaticBus();
-        BusFactory.setThreadDefaultBus(b);
-        ep = Endpoint.publish("netty://http://localhost:" + PORT + "/SoapContext/SoapPort",
-                new org.apache.hello_world_soap_http.GreeterImpl());
-        
+        context = new ClassPathXmlApplicationContext(
+                "/org/apache/cxf/transport/http/netty/server/integration/ApplicationContext.xml");
+
+        address = "https://localhost:" + PORT + "/SoapContext/SoapPort";
+        ep = context.getBean("myEndpoint", Endpoint.class);
+
         URL wsdl = NettyServerTest.class.getResource("/wsdl/hello_world.wsdl");
         assertNotNull("WSDL is null", wsdl);
 
@@ -66,25 +64,7 @@ public class NettyServerTest extends AbstractBusClientServerTestBase {
             ep.stop();
         }
         ep = null;
-    }
-
-    @Test
-    public void testInvocation() throws Exception {
-        
-        updateAddressPort(g, PORT);
-        String response = g.greetMe("test");
-        assertEquals("Get a wrong response", "Hello test", response);
-    }
-    
-    @Test
-    public void testGetWsdl() throws Exception {
-        URL url = new URL("http://localhost:" + PORT + "/SoapContext/SoapPort?wsdl");
-
-        InputStream in = url.openStream();
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        IOUtils.copyAndCloseInput(in, bos);
-        String result = bos.toString();
-        assertTrue("Expect the SOAPService", result.indexOf("<service name=\"SOAPService\">") > 0);
+        context.close();
     }
 
 }

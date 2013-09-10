@@ -19,6 +19,7 @@
 
 package org.apache.cxf.xkms.crypto;
 
+
 public class MissingPrincipalException extends CryptoProviderException {
 
     private static final long serialVersionUID = 7177198444823997289L;
