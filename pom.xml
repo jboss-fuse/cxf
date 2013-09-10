@@ -93,6 +93,18 @@
                  <enabled>true</enabled>
              </releases>
          </repository>
+         <repository>
+             <id>wss4j.1.6.12.m2</id>
+             <name>WSS4J 1.6.12 stage Repository</name>
+             <url>https://repository.apache.org/content/repositories/orgapachews-014/</url>
+             <snapshots>
+                 <enabled>false</enabled>
+             </snapshots>
+             <releases>
+                 <enabled>true</enabled>
+             </releases>
+         </repository>
+
      </repositories>
     <pluginRepositories>
          <pluginRepository>
