@@ -21,9 +21,39 @@ package org.apache.cxf.xkms.crypto;
 
 import org.apache.cxf.message.Message;
 import org.apache.wss4j.common.crypto.Crypto;
+import org.w3._2002._03.xkms_wsdl.XKMSPortType;
 
 public interface CryptoProviderFactory {
 
+    /**
+     * Create with merlin fallback settings retrieved from cxf message
+     * @param message
+     * @return
+     */
     Crypto create(Message message);
 
+    /**
+     * Create without fallback crypto 
+     * 
+     * @param cryptoProperties
+     * @return xkms crypto
+     */
+    Crypto create();
+    
+    /**
+     * Create with fallback crypto
+     * 
+     * @param fallbackCrypto
+     * @return
+     */
+    Crypto create(Crypto fallbackCrypto);
+    
+    /**
+     * Create with overridden XKMSPortType and fallbackCrypto
+     * 
+     * @param xkmsClient
+     * @param fallbackCrypto
+     * @return
+     */
+    Crypto create(XKMSPortType xkmsClient, Crypto fallbackCrypto);
 }
