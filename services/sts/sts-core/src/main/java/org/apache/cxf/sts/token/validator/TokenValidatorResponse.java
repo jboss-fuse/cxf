@@ -64,5 +64,5 @@ public class TokenValidatorResponse {
     public String getTokenRealm() {
         return realm;
     }
-    
+
 }
