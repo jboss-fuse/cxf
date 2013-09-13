@@ -32,7 +32,6 @@ import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.xkms.cache.EHCacheXKMSClientCache;
 import org.apache.cxf.xkms.cache.XKMSCacheToken;
 import org.apache.cxf.xkms.cache.XKMSClientCache;
-import org.apache.cxf.xkms.client.XKMSInvoker;
 import org.apache.cxf.xkms.crypto.CryptoProviderException;
 import org.apache.cxf.xkms.handlers.Applications;
 import org.apache.ws.security.WSSecurityException;
@@ -63,23 +62,6 @@ public class XkmsCryptoProvider extends CryptoBase {
             throw new IllegalArgumentException("xkmsConsumer may not be null");
         }
         this.xkmsInvoker = new XKMSInvoker(xkmsConsumer);
-        this.defaultCrypto = defaultCrypto;
-        this.xkmsClientCache = xkmsClientCache;
-    }
-    
-    public XkmsCryptoProvider(XKMSInvoker xkmsInvoker) {
-        this(xkmsInvoker, null);
-    }
-    
-    public XkmsCryptoProvider(XKMSInvoker xkmsInvoker, Crypto defaultCrypto) {
-        this(xkmsInvoker, defaultCrypto, new EHCacheXKMSClientCache());
-    }
-    
-    public XkmsCryptoProvider(XKMSInvoker xkmsInvoker, Crypto defaultCrypto, XKMSClientCache xkmsClientCache) {
-        if (xkmsInvoker == null) {
-            throw new IllegalArgumentException("xkmsInvoker may not be null");
-        }
-        this.xkmsInvoker = xkmsInvoker;
         this.defaultCrypto = defaultCrypto;
         this.xkmsClientCache = xkmsClientCache;
     }
@@ -180,8 +162,14 @@ public class XkmsCryptoProvider extends CryptoBase {
         } else if (type == TYPE.ALIAS) {
             return getX509CertificatesFromXKMS(cryptoType);
         } else if (type == TYPE.ISSUER_SERIAL) {
+            // Try local Crypto first
+            X509Certificate[] localCerts = getCertificateLocally(cryptoType);
+            if (localCerts != null) {
+                return localCerts;
+            }
+            
             String key = getKeyForIssuerSerial(cryptoType.getIssuer(), cryptoType.getSerial());
-            // Try local cache first
+            // Try local cache next
             if (xkmsClientCache != null) {
                 XKMSCacheToken cachedToken = xkmsClientCache.get(key);
                 if (cachedToken != null && cachedToken.getX509Certificate() != null) {
@@ -244,18 +232,41 @@ public class XkmsCryptoProvider extends CryptoBase {
     }
 
     /**
-     * Try to get certificate locally
+     * Try to get certificate locally. First try using the supplied CryptoType. If this
+     * does not work, and if the supplied CryptoType is a ALIAS, then try again with SUBJECT_DN
+     * in case the supplied Alias is actually a Certificate's Subject DN
      * 
      * @param cryptoType
      * @return if found certificate otherwise null returned
      */
     private X509Certificate[] getCertificateLocally(CryptoType cryptoType) {
+        // This only applies if we've configured a local Crypto instance...
+        if (defaultCrypto == null) {
+            return null;
+        }
+        
+        // First try using the supplied CryptoType instance
         X509Certificate[] localCerts = null;
         try {
             localCerts = defaultCrypto.getX509Certificates(cryptoType);
         } catch (Exception e) {
-            LOG.info("Certificate is not found in local keystore and will be requested from "
-                + "XKMS (first trying the cache): " + cryptoType.getAlias());
+            LOG.info("Certificate is not found in local keystore using desired CryptoType: " 
+                     + cryptoType.getType().name());
+        }
+        
+        if (localCerts == null && cryptoType.getType() == CryptoType.TYPE.ALIAS) {
+            // If none found then try using either the Subject DN. This is because an 
+            // Encryption username in CXF is configured as an Alias in WSS4J, but may in fact 
+            // be a Subject DN
+            CryptoType newCryptoType = new CryptoType(CryptoType.TYPE.SUBJECT_DN);
+            newCryptoType.setSubjectDN(cryptoType.getAlias());
+            
+            try {
+                localCerts = defaultCrypto.getX509Certificates(newCryptoType);
+            } catch (Exception e) {
+                LOG.info("Certificate is not found in local keystore and will be requested from "
+                    + "XKMS (first trying the cache): " + cryptoType.getAlias());
+            }
         }
         return localCerts;
     }

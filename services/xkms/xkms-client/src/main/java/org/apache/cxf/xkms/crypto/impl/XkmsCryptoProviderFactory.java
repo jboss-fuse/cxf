@@ -30,6 +30,10 @@ import org.apache.ws.security.components.crypto.Crypto;
 import org.apache.ws.security.components.crypto.CryptoFactory;
 import org.w3._2002._03.xkms_wsdl.XKMSPortType;
 
+/**
+ * For usage in OSGi this factory will be published as a service.
+ * Outside OSGi it can be used directly 
+ */
 public class XkmsCryptoProviderFactory implements CryptoProviderFactory {
     
     private final XKMSPortType xkmsConsumer;
@@ -38,6 +42,7 @@ public class XkmsCryptoProviderFactory implements CryptoProviderFactory {
         this.xkmsConsumer = xkmsConsumer;
     }
 
+    @Override
     public Crypto create(Message message) {
         Properties keystoreProps = CryptoProviderUtils
             .loadKeystoreProperties(message,
@@ -49,5 +54,20 @@ public class XkmsCryptoProviderFactory implements CryptoProviderFactory {
             throw new CryptoProviderException("Cannot instantiate crypto factory: "
                                               + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public Crypto create() {
+        return new XkmsCryptoProvider(xkmsConsumer);
+    }
+
+    @Override
+    public Crypto create(Crypto fallbackCrypto) {
+        return new XkmsCryptoProvider(xkmsConsumer, fallbackCrypto);
+    }
+
+    @Override
+    public Crypto create(XKMSPortType xkmsClient, Crypto fallbackCrypto) {
+        return new XkmsCryptoProvider(xkmsClient, fallbackCrypto);
     }
 }
