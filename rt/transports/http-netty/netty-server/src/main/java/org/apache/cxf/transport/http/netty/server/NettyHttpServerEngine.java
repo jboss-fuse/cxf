@@ -136,6 +136,7 @@ public class NettyHttpServerEngine implements ServerEngine {
         final ServerBootstrap bootstrap = new ServerBootstrap(
                 new NioServerSocketChannelFactory(Executors
                         .newCachedThreadPool(), Executors.newCachedThreadPool()));
+        bootstrap.setOption("reuseAddress", true);
         // Set up the idle handler
         IdleStateHandler idleStateHandler = 
             new IdleStateHandler(this.timer, getReadIdleTime(), getWriteIdleTime(), 0);
