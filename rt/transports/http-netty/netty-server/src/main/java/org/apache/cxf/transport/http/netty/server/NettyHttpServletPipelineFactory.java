@@ -111,7 +111,7 @@ public class NettyHttpServletPipelineFactory implements ChannelPipelineFactory {
     
     public void shutdown() {
         this.watchdog.stopWatching();
-        this.allChannels.close().awaitUninterruptibly();
+        this.allChannels.close();
     }
 
     @Override

@@ -205,12 +205,12 @@ public class NettyHttpServerEngine implements ServerEngine {
     public void shutdown() {
         // stop the timer
         timer.stop();
+        if (servletPipeline != null) {
+            servletPipeline.shutdown();
+        }
         // just unbind the channel
         if (serverChannel != null) {
             serverChannel.close();
-        }
-        if (servletPipeline != null) {
-            servletPipeline.shutdown();
         }
     }
 
