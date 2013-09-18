@@ -188,8 +188,6 @@ cxf.schema.version = ${os}
 
     <modules>
         <module>all</module>
-        <module>minimal</module>
-        <module>jaxrs</module>
         <module>compatible</module>
     </modules>
 
