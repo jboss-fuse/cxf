@@ -187,10 +187,12 @@ public class WSS4JStaxInInterceptor extends AbstractWSS4JStaxInterceptor {
         Map<String, Object> config = getProperties();
         
         // Configure replay caching
-        ReplayCache nonceCache = 
-            WSS4JUtils.getReplayCache(
+        ReplayCache nonceCache = null;
+        if (isNonceCacheRequired(msg)) {
+            nonceCache = WSS4JUtils.getReplayCache(
                 msg, SecurityConstants.ENABLE_NONCE_CACHE, SecurityConstants.NONCE_CACHE_INSTANCE
             );
+        }
         if (nonceCache == null) {
             if (config != null) {
                 config.put(ConfigurationConstants.ENABLE_NONCE_CACHE, "false");
@@ -209,10 +211,12 @@ public class WSS4JStaxInInterceptor extends AbstractWSS4JStaxInterceptor {
             }
         }
         
-        ReplayCache timestampCache = 
-            WSS4JUtils.getReplayCache(
+        ReplayCache timestampCache = null;
+        if (isTimestampCacheRequired(msg)) {
+            timestampCache = WSS4JUtils.getReplayCache(
                 msg, SecurityConstants.ENABLE_TIMESTAMP_CACHE, SecurityConstants.TIMESTAMP_CACHE_INSTANCE
             );
+        }
         if (timestampCache == null) {
             if (config != null) {
                 config.put(ConfigurationConstants.ENABLE_TIMESTAMP_CACHE, "false");
@@ -228,6 +232,31 @@ public class WSS4JStaxInInterceptor extends AbstractWSS4JStaxInterceptor {
             } else {
                 securityProperties.setEnableTimestampReplayCache(true);
                 securityProperties.setTimestampReplayCache(timestampCache);
+            }
+        }
+        
+        ReplayCache samlCache = null;
+        if (isSamlCacheRequired(msg)) {
+            samlCache = WSS4JUtils.getReplayCache(
+                msg, SecurityConstants.ENABLE_SAML_ONE_TIME_USE_CACHE, 
+                SecurityConstants.SAML_ONE_TIME_USE_CACHE_INSTANCE
+            );
+        }
+        if (samlCache == null) {
+            if (config != null) {
+                config.put(ConfigurationConstants.ENABLE_SAML_ONE_TIME_USE_CACHE, "false");
+                config.remove(ConfigurationConstants.SAML_ONE_TIME_USE_CACHE_INSTANCE);
+            } else {
+                securityProperties.setEnableSamlOneTimeUseReplayCache(false);
+                securityProperties.setSamlOneTimeUseReplayCache(null);
+            }
+        } else {
+            if (config != null) {
+                config.put(ConfigurationConstants.ENABLE_SAML_ONE_TIME_USE_CACHE, "true");
+                config.put(ConfigurationConstants.SAML_ONE_TIME_USE_CACHE_INSTANCE, samlCache);
+            } else {
+                securityProperties.setEnableSamlOneTimeUseReplayCache(true);
+                securityProperties.setSamlOneTimeUseReplayCache(samlCache);
             }
         }
         
@@ -272,6 +301,67 @@ public class WSS4JStaxInInterceptor extends AbstractWSS4JStaxInterceptor {
                 config.put("RefId-" + decCrypto.hashCode(), decCrypto);
             }
         }
+    }
+    
+    /**
+     * Is a Nonce Cache required, i.e. are we expecting a UsernameToken 
+     */
+    protected boolean isNonceCacheRequired(SoapMessage msg) {
+        WSSSecurityProperties securityProperties = getSecurityProperties();
+        
+        if (securityProperties != null && securityProperties.getOutAction() != null) {
+            for (WSSConstants.Action action : securityProperties.getOutAction()) {
+                if (action == WSSConstants.USERNAMETOKEN) {
+                    return true;
+                }
+            }
+        } else if (actions != null 
+            && (actions.contains(ConfigurationConstants.USERNAME_TOKEN)
+                || actions.contains(ConfigurationConstants.USERNAME_TOKEN_NO_PASSWORD))) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Is a Timestamp cache required, i.e. are we expecting a Timestamp 
+     */
+    protected boolean isTimestampCacheRequired(SoapMessage msg) {
+        WSSSecurityProperties securityProperties = getSecurityProperties();
+        
+        if (securityProperties != null && securityProperties.getOutAction() != null) {
+            for (WSSConstants.Action action : securityProperties.getOutAction()) {
+                if (action == WSSConstants.TIMESTAMP) {
+                    return true;
+                }
+            }
+        } else if (actions != null && actions.contains(ConfigurationConstants.TIMESTAMP)) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Is a SAML Cache required, i.e. are we expecting a SAML Token 
+     */
+    protected boolean isSamlCacheRequired(SoapMessage msg) {
+        WSSSecurityProperties securityProperties = getSecurityProperties();
+        
+        if (securityProperties != null && securityProperties.getOutAction() != null) {
+            for (WSSConstants.Action action : securityProperties.getOutAction()) {
+                if (action == WSSConstants.SAML_TOKEN_UNSIGNED 
+                    || action == WSSConstants.SAML_TOKEN_SIGNED) {
+                    return true;
+                }
+            }
+        } else if (actions != null && (actions.contains(ConfigurationConstants.SAML_TOKEN_UNSIGNED)
+            || actions.contains(ConfigurationConstants.SAML_TOKEN_SIGNED))) {
+            return true;
+        }
+        
+        return false;
     }
     
     /**
