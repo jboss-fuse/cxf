@@ -166,9 +166,9 @@ public class BookStore {
                                        @QueryParam("loop") boolean loop) {
         if (done == null) {
             if (loop) {
-                return Response.status(303).header("Location", "/?a").build();                
+                return Response.status(303).header("Location", "relative?loop=true").build();                
             } else {
-                return Response.status(303).header("Location", "/?redirect=true").build();    
+                return Response.status(303).header("Location", "relative?redirect=true").build();    
             }
         } else {
             return Response.ok(new Book("CXF", 124L), "application/xml").build();
@@ -493,6 +493,18 @@ public class BookStore {
     @Path("post401")
     public Response get401WithText() throws Exception {
         return Response.status(401).entity("This is 401").build();
+    }
+    
+    @GET
+    @Path("infault")
+    public Response infault() {
+        throw new RuntimeException();
+    }
+    
+    @GET
+    @Path("outfault")
+    public Response outfault() {
+        return Response.ok().build();
     }
     
     @POST

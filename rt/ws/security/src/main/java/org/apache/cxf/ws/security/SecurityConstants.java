@@ -170,7 +170,9 @@ public final class SecurityConstants {
     /**
      * Whether to cache UsernameToken nonces. The default value is "true" for message recipients, and 
      * "false" for message initiators. Set it to true to cache for both cases. Set this to "false" to
-     * not cache UsernameToken nonces. 
+     * not cache UsernameToken nonces. Note that caching only applies when either a UsernameToken
+     * WS-SecurityPolicy is in effect, or else that a UsernameToken action has been configured
+     * for the non-security-policy case.
      */
     public static final String ENABLE_NONCE_CACHE = "ws-security.enable.nonce.cache";
     
@@ -178,8 +180,19 @@ public final class SecurityConstants {
      * Whether to cache Timestamp Created Strings (these are only cached in conjunction with a message 
      * Signature).The default value is "true" for message recipients, and "false" for message initiators.
      * Set it to true to cache for both cases. Set this to "false" to not cache Timestamp Created Strings.
+     * Note that caching only applies when either a "IncludeTimestamp" policy is in effect, or
+     * else that a Timestamp action has been configured for the non-security-policy case.
      */
     public static final String ENABLE_TIMESTAMP_CACHE = "ws-security.enable.timestamp.cache";
+    
+    /**
+     * Whether to cache SAML2 Token Identifiers, if the token contains a "OneTimeUse" Condition.
+     * The default value is "true" for message recipients, and "false" for message initiators.
+     * Set it to true to cache for both cases. Set this to "false" to not cache SAML2 Token Identifiers.
+     * Note that caching only applies when either a "SamlToken" policy is in effect, or
+     * else that a SAML action has been configured for the non-security-policy case.
+     */
+    public static final String ENABLE_SAML_ONE_TIME_USE_CACHE = "ws-security.enable.saml.cache";
     
     /**
      * Whether to validate the SubjectConfirmation requirements of a received SAML Token
@@ -258,6 +271,13 @@ public final class SecurityConstants {
      */
     public static final String TIMESTAMP_CACHE_INSTANCE = 
         "ws-security.timestamp.cache.instance";
+    
+    /**
+     * This holds a reference to a ReplayCache instance used to cache SAML2 Token Identifiers, when
+     * the token has a "OneTimeUse" Condition. The default instance that is used is the EHCacheReplayCache.
+     */
+    public static final String SAML_ONE_TIME_USE_CACHE_INSTANCE = 
+        "ws-security.saml.cache.instance";
     
     /**
      * Set this property to point to a configuration file for the underlying caching implementation.
@@ -489,7 +509,7 @@ public final class SecurityConstants {
             DISABLE_STS_CLIENT_WSMEX_CALL_USING_EPR_ADDRESS, STS_TOKEN_CRYPTO,
             STS_TOKEN_PROPERTIES, STS_TOKEN_USERNAME, STS_TOKEN_ACT_AS, STS_TOKEN_ON_BEHALF_OF,
             TOKEN, TOKEN_ID, SUBJECT_ROLE_CLASSIFIER, SUBJECT_ROLE_CLASSIFIER_TYPE, MUST_UNDERSTAND,
-            ASYMMETRIC_SIGNATURE_ALGORITHM
+            ASYMMETRIC_SIGNATURE_ALGORITHM, ENABLE_SAML_ONE_TIME_USE_CACHE, SAML_ONE_TIME_USE_CACHE_INSTANCE
         }));
         ALL_PROPERTIES = Collections.unmodifiableSet(s);
     }

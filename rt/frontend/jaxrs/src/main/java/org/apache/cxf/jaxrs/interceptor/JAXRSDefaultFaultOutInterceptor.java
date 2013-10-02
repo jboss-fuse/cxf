@@ -16,19 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.binding.xml.interceptor;
+package org.apache.cxf.jaxrs.interceptor;
 
 import java.util.ResourceBundle;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import org.apache.cxf.binding.xml.XMLConstants;
-import org.apache.cxf.binding.xml.XMLFault;
 import org.apache.cxf.common.i18n.BundleUtils;
+import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.helpers.NSStack;
 import org.apache.cxf.interceptor.AbstractOutDatabindingInterceptor;
 import org.apache.cxf.interceptor.Fault;
@@ -36,14 +34,14 @@ import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.Phase;
 import org.apache.cxf.staxutils.StaxUtils;
 
-public class XMLFaultOutInterceptor extends AbstractOutDatabindingInterceptor {
+public class JAXRSDefaultFaultOutInterceptor extends AbstractOutDatabindingInterceptor {
 
-    private static final ResourceBundle BUNDLE = BundleUtils.getBundle(XMLFaultOutInterceptor.class);
+    private static final ResourceBundle BUNDLE = BundleUtils.getBundle(JAXRSDefaultFaultOutInterceptor.class);
 
-    public XMLFaultOutInterceptor() {
+    public JAXRSDefaultFaultOutInterceptor() {
         super(Phase.MARSHAL);
     }
-    public XMLFaultOutInterceptor(String phase) {
+    public JAXRSDefaultFaultOutInterceptor(String phase) {
         super(phase);
     }
 
@@ -59,30 +57,23 @@ public class XMLFaultOutInterceptor extends AbstractOutDatabindingInterceptor {
         nsStack.push();
 
         XMLStreamWriter writer = message.getContent(XMLStreamWriter.class);
-        XMLFault xmlFault = XMLFault.createFault(f);
         try {
-            nsStack.add(XMLConstants.NS_XML_FORMAT);
-            String prefix = nsStack.getPrefix(XMLConstants.NS_XML_FORMAT);
-            StaxUtils.writeStartElement(writer, prefix, XMLFault.XML_FAULT_ROOT, 
-                    XMLConstants.NS_XML_FORMAT);
-            StaxUtils.writeStartElement(writer, prefix, XMLFault.XML_FAULT_STRING, 
-                    XMLConstants.NS_XML_FORMAT);
-            Throwable t = xmlFault.getCause();
-            writer.writeCharacters(t == null ? xmlFault.getMessage() : t.toString());
+            nsStack.add("http://cxf.apache.org/bindings/xformat");
+            String prefix = nsStack.getPrefix("http://cxf.apache.org/bindings/xformat");
+            StaxUtils.writeStartElement(writer, prefix, "XMLFault", 
+                                        "http://cxf.apache.org/bindings/xformat");
+            StaxUtils.writeStartElement(writer, prefix, "faultstring", 
+                                        "http://cxf.apache.org/bindings/xformat");
+            Throwable t = f.getCause();
+            writer.writeCharacters(t == null ? f.getMessage() : t.toString());
             // fault string
             writer.writeEndElement();
             // call StaxUtils to write Fault detail.
             
-            if (xmlFault.getDetail() != null) {
-                Element detail = xmlFault.getDetail();
-                StaxUtils.writeStartElement(writer, prefix, XMLFault.XML_FAULT_DETAIL,
-                        XMLConstants.NS_XML_FORMAT);
-                
-                Node node = detail.getFirstChild();
-                while (node != null) {
-                    StaxUtils.writeNode(node, writer, false);
-                    node = node.getNextSibling();
-                }
+            if (f.getDetail() != null) {
+                StaxUtils.writeStartElement(writer, prefix, "detail", "http://cxf.apache.org/bindings/xformat");
+                StaxUtils.writeNode(DOMUtils.getChild(f.getDetail(), Node.ELEMENT_NODE), 
+                                    writer, false);
                 writer.writeEndElement();
             }
             // fault root
