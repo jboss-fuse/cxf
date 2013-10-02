@@ -100,6 +100,7 @@ public class ClaimsAttributeStatementProvider implements AttributeStatementProvi
                 attributeBean.setQualifiedName(namespace);
             }
             attributeBean.setAttributeValues(claim.getValues());
+            
             attributeList.add(attributeBean);
         }
         attrBean.setSamlAttributes(attributeList);

@@ -123,11 +123,15 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
     public void testGetBookRelativeUriAutoRedirect() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/redirect/relative?loop=false";
         WebClient wc = WebClient.create(address);
+        assertEquals(address, wc.getCurrentURI().toString());
         WebClient.getConfig(wc).getRequestContext().put("http.redirect.relative.uri", "true");
         WebClient.getConfig(wc).getHttpConduit().getClient().setAutoRedirect(true);
         Response r = wc.get();
         Book book = r.readEntity(Book.class);
         assertEquals(124L, book.getId());
+        
+        String newAddress = "http://localhost:" + PORT + "/bookstore/redirect/relative?redirect=true";
+        assertEquals(newAddress, wc.getCurrentURI().toString());
     }
     
     @Test
@@ -427,6 +431,27 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
         Response r = wc.post(null);
         assertEquals(401, r.getStatus());
         assertEquals("This is 401", getStringFromInputStream((InputStream)r.getEntity()));
+    }
+    
+    @Test
+    public void testCapturedServerInFault() throws Exception {
+        
+        String endpointAddress =
+            "http://localhost:" + PORT + "/bookstore/infault"; 
+        WebClient wc = WebClient.create(endpointAddress);
+        Response r = wc.get();
+        assertEquals(401, r.getStatus());
+    }
+    
+    @Test
+    public void testCapturedServerOutFault() throws Exception {
+        
+        String endpointAddress =
+            "http://localhost:" + PORT + "/bookstore/outfault"; 
+        WebClient wc = WebClient.create(endpointAddress);
+        WebClient.getConfig(wc).getHttpConduit().getClient().setReceiveTimeout(1000000L);
+        Response r = wc.get();
+        assertEquals(403, r.getStatus());
     }
 
     @Test
@@ -1193,8 +1218,9 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
     
     @Test
     public void testNoMessageWriterFound() throws Exception {
-        String msg1 = "No message body writer has been found for response class GregorianCalendar.";
-        String msg2 = "No message body writer has been found for response class Calendar.";
+        String msg1 = 
+            "No message body writer has been found for class java.util.GregorianCalendar, ContentType: */*";
+        String msg2 = "No message body writer has been found for class java.util.Calendar, ContentType: */*";
         
         getAndCompareStrings("http://localhost:" + PORT + "/bookstore/timetable", 
                              new String[]{msg1, msg2}, "*/*", 500);

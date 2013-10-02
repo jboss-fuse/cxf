@@ -166,6 +166,7 @@ public abstract class HTTPConduit
     
     private static final String AUTO_REDIRECT_SAME_HOST_ONLY = "http.redirect.same.host.only";
     private static final String AUTO_REDIRECT_ALLOW_REL_URI = "http.redirect.relative.uri";
+    private static final String AUTO_REDIRECT_ALLOWED_URI = "http.redirect.allowed.uri";
     
     
     private static final String HTTP_POST_METHOD = "POST";
@@ -1192,7 +1193,7 @@ public abstract class HTTPConduit
         
         protected void retransmit(String newURL) throws IOException {
             setupNewConnection(newURL);
-            outMessage.put("http.retransmit.url", newURL);
+            outMessage.put("transport.retransmit.url", newURL);
             if (cachedStream != null && cachedStream.size() < Integer.MAX_VALUE) {
                 setFixedLengthStreamingMode((int)cachedStream.size());
             }
@@ -1411,9 +1412,9 @@ public abstract class HTTPConduit
             String urlString = url.toString();
             
             try {
-                detectRedirectLoop(conduitName, urlString, newURL, outMessage);
                 newURL = convertToAbsoluteUrlIfNeeded(conduitName, urlString, newURL, outMessage);
-                checkSameBaseUriRedirect(conduitName, urlString, newURL, outMessage);
+                detectRedirectLoop(conduitName, urlString, newURL, outMessage);
+                checkAllowedRedirectUri(conduitName, urlString, newURL, outMessage);
             } catch (IOException ex) {
                 // Consider introducing ClientRedirectException instead - it will require
                 // those client runtimes which want to check for it have a direct link to it
@@ -1726,24 +1727,36 @@ public abstract class HTTPConduit
         }
     }
 
-    private static void checkSameBaseUriRedirect(String conduitName,
-                                                 String lastURL, 
-                                                 String newURL,
-                                                 Message message) throws IOException {
-        if (newURL != null 
-            && MessageUtils.isTrue(message.getContextualProperty(AUTO_REDIRECT_SAME_HOST_ONLY))) {
+    private static void checkAllowedRedirectUri(String conduitName,
+                                                String lastURL, 
+                                                String newURL,
+                                                Message message) throws IOException {
+        if (newURL != null) { 
             URI newUri = URI.create(newURL);
-            URI lastUri = URI.create(lastURL);
-            // This can be further restricted to make sure newURL completely contains lastURL
-            // though making sure the same HTTP scheme and host are preserved should be enough
             
-            if (!newUri.getScheme().equals(lastUri.getScheme())
-                || !newUri.getHost().equals(lastUri.getHost())) {
-                String msg = "Different HTTP Scheme or Host Redirect detected on Conduit '" 
-                    + conduitName + "' on '" + newURL + "'";
+            if (MessageUtils.isTrue(message.getContextualProperty(AUTO_REDIRECT_SAME_HOST_ONLY))) {
+            
+                URI lastUri = URI.create(lastURL);
+                
+                // This can be further restricted to make sure newURL completely contains lastURL
+                // though making sure the same HTTP scheme and host are preserved should be enough
+                
+                if (!newUri.getScheme().equals(lastUri.getScheme())
+                    || !newUri.getHost().equals(lastUri.getHost())) {
+                    String msg = "Different HTTP Scheme or Host Redirect detected on Conduit '" 
+                        + conduitName + "' on '" + newURL + "'";
+                    LOG.log(Level.INFO, msg);
+                    throw new IOException(msg);
+                }
+            }
+            
+            String allowedRedirectURI = (String)message.getContextualProperty(AUTO_REDIRECT_ALLOWED_URI);
+            if (allowedRedirectURI != null && !newURL.startsWith(allowedRedirectURI)) {
+                String msg = "Forbidden Redirect URI " + newURL + "detected on Conduit '" + conduitName;
                 LOG.log(Level.INFO, msg);
                 throw new IOException(msg);
             }
+            
         }
     }
     
@@ -1756,22 +1769,7 @@ public abstract class HTTPConduit
         if (newURL != null && !newURL.startsWith("http")) {
             
             if (MessageUtils.isTrue(message.getContextualProperty(AUTO_REDIRECT_ALLOW_REL_URI))) {
-                
-                int queryInd = lastURL.lastIndexOf('?');
-                String query = queryInd == -1 ? null : lastURL.substring(queryInd); 
-                String newAbsURL = queryInd == -1 ? lastURL : lastURL.substring(0, queryInd);
-                if (newAbsURL.endsWith("/")) {
-                    newAbsURL = newAbsURL.substring(0, newAbsURL.length() - 1);
-                }
-                newAbsURL = newAbsURL + newURL;
-                if (query != null) {
-                    if (newAbsURL.lastIndexOf("?") != -1) {
-                        newAbsURL += "&";
-                        query = query.substring(1);
-                    }
-                    newAbsURL += query;
-                }    
-                return newAbsURL;
+                return URI.create(lastURL).resolve(newURL).toString(); 
             } else {
                 String msg = "Relative Redirect detected on Conduit '" 
                     + conduitName + "' on '" + newURL + "'";
@@ -1793,22 +1791,16 @@ public abstract class HTTPConduit
         if (visitedURLs == null) {
             visitedURLs = new HashSet<String>();
             message.put(KEY_VISITED_URLS, visitedURLs);
-        }
+        } 
         visitedURLs.add(lastURL);
-        if (newURL != null) {
-            if (visitedURLs.contains(newURL)) {
-                // See if we are being redirected in a loop as best we can,
-                // using string equality on URL.
-                // We are in a redirect loop; -- bail
-                String msg = "Redirect loop detected on Conduit '" 
-                    + conduitName + "' on '" + newURL + "'";
-                LOG.log(Level.INFO, msg);
-                throw new IOException(msg);
-            }
-            // Important to prevent looping on relative URIs
-            if (!newURL.startsWith("http")) {
-                visitedURLs.add(newURL);
-            }
+        if (newURL != null && visitedURLs.contains(newURL)) {
+            // See if we are being redirected in a loop as best we can,
+            // using string equality on URL.
+            // We are in a redirect loop; -- bail
+            String msg = "Redirect loop detected on Conduit '" 
+                + conduitName + "' on '" + newURL + "'";
+            LOG.log(Level.INFO, msg);
+            throw new IOException(msg);
         }
     }   
     private static void detectAuthorizationLoop(String conduitName, Message message, 
