@@ -112,7 +112,7 @@ public class AsyncHTTPConduitTest extends AbstractBusClientServerTestBase {
         ep.stop();
         ep = null;
     }
-    @Test
+    @Test(timeout = 60000)
     public void testTimeout() throws Exception {
         updateAddressPort(g, PORT);
         HTTPConduit c = (HTTPConduit)ClientProxy.getClient(g).getConduit();
@@ -124,7 +124,8 @@ public class AsyncHTTPConduitTest extends AbstractBusClientServerTestBase {
             //expected!!!
         }
     }
-    @Test
+
+    @Test(timeout = 60 * 1000)
     public void testConnectIssue() throws Exception {
         updateAddressPort(g, PORT_INV);
         try {
@@ -135,7 +136,7 @@ public class AsyncHTTPConduitTest extends AbstractBusClientServerTestBase {
         }
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testInovationWithHCAddress() throws Exception {
         String address =  "hc://http://localhost:" + PORT + "/SoapContext/SoapPort";
         JaxWsProxyFactoryBean factory = new JaxWsProxyFactoryBean();
@@ -146,7 +147,7 @@ public class AsyncHTTPConduitTest extends AbstractBusClientServerTestBase {
         assertEquals("Get a wrong response", "Hello test", response);
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testInvocationWithTransportId() throws Exception {
         String address =  "http://localhost:" + PORT + "/SoapContext/SoapPort";
         JaxWsProxyFactoryBean factory = new JaxWsProxyFactoryBean();
@@ -157,7 +158,7 @@ public class AsyncHTTPConduitTest extends AbstractBusClientServerTestBase {
         String response = greeter.greetMe("test");
         assertEquals("Get a wrong response", "Hello test", response);
     }
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testCall() throws Exception {
         updateAddressPort(g, PORT);
         assertEquals("Hello " + request, g.greetMe(request));
@@ -167,7 +168,7 @@ public class AsyncHTTPConduitTest extends AbstractBusClientServerTestBase {
         c.setClient(cp);
         assertEquals("Hello " + request, g.greetMe(request));
     }
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testCallAsync() throws Exception {
         updateAddressPort(g, PORT);
         GreetMeResponse resp = (GreetMeResponse)g.greetMeAsync(request, new AsyncHandler<GreetMeResponse>() {
@@ -191,7 +192,6 @@ public class AsyncHTTPConduitTest extends AbstractBusClientServerTestBase {
         }).get();
     }
         
-    @Test
     @Ignore("peformance test")
     public void testCalls() throws Exception {
         updateAddressPort(g, PORT);
@@ -227,7 +227,6 @@ public class AsyncHTTPConduitTest extends AbstractBusClientServerTestBase {
         */
     }
     
-    @Test
     @Ignore("peformance test")
     public void testCallsAsync() throws Exception {
         updateAddressPort(g, PORT);
