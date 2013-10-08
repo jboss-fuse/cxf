@@ -41,7 +41,7 @@ public class AutomaticWorkQueueTest extends Assert {
     public static final int DEFAULT_LOW_WATER_MARK = 1;
     public static final long DEFAULT_DEQUEUE_TIMEOUT = 2 * 60 * 1000L;
 
-    public static final int TIMEOUT = 100;
+    public static final int TIMEOUT = 1000;
 
     AutomaticWorkQueueImpl workqueue;
     
@@ -315,7 +315,7 @@ public class AutomaticWorkQueueTest extends Assert {
         int i = 0;
         while (workqueue.getPoolSize() > 10 && i++ < 50) {
             try {
-                Thread.sleep(100);
+                Thread.sleep(TIMEOUT);
             } catch (InterruptedException ie) {
                 // ignore
             }
