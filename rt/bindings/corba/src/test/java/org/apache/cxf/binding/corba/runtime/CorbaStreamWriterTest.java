@@ -16,28 +16,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jaxrs.model;
+package org.apache.cxf.binding.corba.runtime;
 
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
+import javax.xml.stream.XMLStreamException;
 
-import javax.xml.namespace.QName;
+import org.apache.cxf.binding.corba.types.AbstractCorbaTypeListener;
+import org.junit.Assert;
+import org.junit.Test;
 
-public class ResourceTypes {
-    private Map<Class<?>, Type> allTypes = new HashMap<Class<?>, Type>();
-    private Map<Class<?>, QName> collectionMap = new HashMap<Class<?>, QName>();
-    private Map<Class<?>, QName> xmlNameMap = new HashMap<Class<?>, QName>();
-    public Map<Class<?>, Type> getAllTypes() {
-        return allTypes;
+public class CorbaStreamWriterTest extends Assert {
+
+    @Test
+    public void writeCharactersTest() throws XMLStreamException {
+        CorbaStreamWriter writer = new CorbaStreamWriter(null, null, null);
+        final String[] pointer = new String[1];
+
+        writer.currentTypeListener = new AbstractCorbaTypeListener(null) {
+            @Override
+            public void processCharacters(String text) {
+                pointer[0] = text;
+            }
+        };
+
+        writer.writeCharacters("abcdefghijklmnopqrstuvwxyz".toCharArray(), 0, 4);
+        assertEquals("abcd", pointer[0]);
     }
-    public void setAllTypes(Map<Class<?>, Type> allTypes) {
-        this.allTypes = allTypes;
-    }
-    public Map<Class<?>, QName> getCollectionMap() {
-        return collectionMap;
-    }
-    public Map<Class<?>, QName> getXmlNameMap() {
-        return xmlNameMap;
-    }
+
 }

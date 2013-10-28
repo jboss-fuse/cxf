@@ -20,6 +20,7 @@
 package org.apache.cxf.systest.jaxrs;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -252,12 +253,12 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
     @Test
     public void testReplaceBookMistypedCTAndHttpVerb() throws Exception {
         
-        String endpointAddress = "http://localhost:" + PORT + "/bookstore/books2"; 
+        String endpointAddress = "http://localhost:" + PORT + "/bookstore/books2/mistyped"; 
         WebClient wc = WebClient.create(endpointAddress,
                                         Collections.singletonList(new ReplaceBodyFilter()));
         WebClient.getConfig(wc).getHttpConduit().getClient().setReceiveTimeout(1000000L);
-        wc.accept("text/mistypedxml").type("text/xml");
-        Book book = wc.put(new Book("book", 555L), Book.class);
+        wc.accept("text/mistypedxml").type("text/xml").header("THEMETHOD", "PUT");
+        Book book = wc.invoke("DELETE", new Book("book", 555L), Book.class);
         assertEquals(561L, book.getId());
     }
     
@@ -453,6 +454,7 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         assertEquals("OK", response.getHeaderString("Response"));
         assertEquals("OK2", response.getHeaderString("Response2"));
         assertEquals("Dynamic", response.getHeaderString("DynamicResponse"));
+        assertEquals("Dynamic2", response.getHeaderString("DynamicResponse2"));
         assertEquals("custom", response.getHeaderString("Custom"));
         assertEquals("simple", response.getHeaderString("Simple"));
         assertEquals("serverWrite", response.getHeaderString("ServerWriterInterceptor"));
@@ -493,6 +495,17 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
     }
     
     @Test
+    public void testPostBookNewMediaType() {
+        String address = "http://localhost:" + PORT + "/bookstore/bookheaders/simple";
+        WebClient wc = createWebClientPost(address);
+        wc.header("newmediatype", "application/v1+xml");
+        Book book = wc.post(new Book("Book", 126L), Book.class);
+        assertEquals(124L, book.getId());
+        validatePostResponse(wc);
+        assertEquals("application/v1+xml", wc.getResponse().getHeaderString("newmediatypeused"));
+    }
+    
+    @Test
     public void testBookExistsServerStreamReplace() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/books/check2";
         WebClient wc = WebClient.create(address);
@@ -527,6 +540,21 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
 
         @Override
         public void filter(ClientRequestContext rc) throws IOException {
+            String method = rc.getMethod();
+            String expectedMethod = null; 
+            if (rc.getAcceptableMediaTypes().contains(MediaType.valueOf("text/mistypedxml"))
+                && rc.getHeaders().getFirst("THEMETHOD") != null) {
+                expectedMethod = "DELETE";
+                rc.setUri(URI.create("http://localhost:" + PORT + "/bookstore/books2"));
+                rc.setMethod(rc.getHeaders().getFirst("THEMETHOD").toString());
+            } else {
+                expectedMethod = "POST";
+            }
+            
+                
+            if (!expectedMethod.equals(method)) {
+                throw new RuntimeException();
+            }
             rc.setEntity(new Book("book", ((Book)rc.getEntity()).getId() + 5), null, null);
         }
 

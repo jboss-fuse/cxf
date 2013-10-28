@@ -16,28 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cxf.jaxrs.model;
+package org.apache.cxf.binding.corba.types;
 
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
+import org.apache.cxf.service.model.ServiceInfo;
+import org.omg.CORBA.ORB;
 
-import javax.xml.namespace.QName;
-
-public class ResourceTypes {
-    private Map<Class<?>, Type> allTypes = new HashMap<Class<?>, Type>();
-    private Map<Class<?>, QName> collectionMap = new HashMap<Class<?>, QName>();
-    private Map<Class<?>, QName> xmlNameMap = new HashMap<Class<?>, QName>();
-    public Map<Class<?>, Type> getAllTypes() {
-        return allTypes;
-    }
-    public void setAllTypes(Map<Class<?>, Type> allTypes) {
-        this.allTypes = allTypes;
-    }
-    public Map<Class<?>, QName> getCollectionMap() {
-        return collectionMap;
-    }
-    public Map<Class<?>, QName> getXmlNameMap() {
-        return xmlNameMap;
+public class CorbaPrimitiveArrayEventProducer extends AbstractNoStartEndEventProducer {
+    
+    // No start and end elements for the array
+    public CorbaPrimitiveArrayEventProducer(CorbaObjectHandler h,
+                                               ServiceInfo service,
+                                               ORB orbRef) {
+        CorbaArrayHandler handler = (CorbaArrayHandler)h;
+        iterator = handler.getElements().iterator();
+        orb = orbRef;
+        serviceInfo = service;
     }
 }

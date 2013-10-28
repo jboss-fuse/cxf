@@ -147,6 +147,20 @@ public class BookStore {
     }
     
     @GET
+    @Path("/bookindexintarray")
+    @Produces("text/plain")
+    public int[] getBookIndexAsIntArray() {
+        return new int[]{1, 2, 3};
+    }
+    
+    @GET
+    @Path("/bookindexdoublearray")
+    @Produces("text/plain")
+    public double[] getBookIndexAsDoubleArray() {
+        return new double[]{1, 2, 3};
+    }
+        
+    @GET
     @Path("/redirect")
     public Response getBookRedirect(@QueryParam("redirect") Boolean done,
                                     @QueryParam("sameuri") Boolean sameuri) {
@@ -212,6 +226,14 @@ public class BookStore {
     @Produces("application/xml")
     @Consumes("application/xml")
     public Book retrieveBook(Book book) {
+        return book;
+    }
+    
+    @DELETE
+    @Path("/deletebody")
+    @Produces("application/xml")
+    @Consumes("application/xml")
+    public Book deleteBodyBook(Book book) {
         return book;
     }
     
@@ -502,6 +524,12 @@ public class BookStore {
     }
     
     @GET
+    @Path("infault2")
+    public Response infault2() {
+        throw new RuntimeException();
+    }
+
+    @GET
     @Path("outfault")
     public Response outfault() {
         return Response.ok().build();
@@ -629,12 +657,16 @@ public class BookStore {
     @Path("/bookheaders/simple/")
     @CustomHeaderAdded
     @PostMatchMode
+    @Consumes("application/xml")
     public Response echoBookByHeaderSimple(Book book,
+        @HeaderParam("Content-type") String ct,
         @HeaderParam("BOOK") String headerBook,
         @HeaderParam("Simple") String headerSimple,
         @HeaderParam("ServerReaderInterceptor") String serverInterceptorHeader,
         @HeaderParam("ClientWriterInterceptor") String clientInterceptorHeader) throws Exception {
-        
+        if (!"application/xml".equals(ct)) {
+            throw new RuntimeException();
+        }
         ResponseBuilder builder = getBookByHeaderSimpleBuilder(headerBook, headerSimple);
         if (serverInterceptorHeader != null) {
             builder.header("ServerReaderInterceptor", serverInterceptorHeader);
@@ -642,6 +674,31 @@ public class BookStore {
         if (clientInterceptorHeader != null) {
             builder.header("ClientWriterInterceptor", clientInterceptorHeader);
         }
+        return builder.build();
+    }
+    
+    @POST
+    @Path("/bookheaders/simple/")
+    @CustomHeaderAdded
+    @PostMatchMode
+    @Consumes("application/v1+xml")
+    public Response echoBookByHeaderSimple2(Book book,
+        @HeaderParam("Content-type") String ct,                                    
+        @HeaderParam("BOOK") String headerBook,
+        @HeaderParam("Simple") String headerSimple,
+        @HeaderParam("ServerReaderInterceptor") String serverInterceptorHeader,
+        @HeaderParam("ClientWriterInterceptor") String clientInterceptorHeader) throws Exception {
+        if (!"application/v1+xml".equals(ct)) {
+            throw new RuntimeException();
+        }
+        ResponseBuilder builder = getBookByHeaderSimpleBuilder(headerBook, headerSimple);
+        if (serverInterceptorHeader != null) {
+            builder.header("ServerReaderInterceptor", serverInterceptorHeader);
+        }
+        if (clientInterceptorHeader != null) {
+            builder.header("ClientWriterInterceptor", clientInterceptorHeader);
+        }
+        builder.header("newmediatypeused", ct);
         return builder.build();
     }
     
@@ -1593,6 +1650,90 @@ public class BookStore {
             arg6.write(arg0.get(0).getBytes());
         }
 
+    }
+    
+    public static class PrimitiveIntArrayReaderWriter 
+        implements MessageBodyReader<int[]>, MessageBodyWriter<int[]> {
+        public boolean isReadable(Class<?> arg0, Type arg1, Annotation[] arg2, MediaType arg3) {
+            return int[].class.isAssignableFrom(arg0);
+        }
+    
+        public int[] readFrom(Class<int[]> arg0, Type arg1,
+            Annotation[] arg2, MediaType arg3, MultivaluedMap<String, String> arg4, InputStream arg5)
+            throws IOException, WebApplicationException {
+            String[] stringArr = IOUtils.readStringFromStream(arg5).split(",");
+            int[] intArr = new int[stringArr.length];
+            for (int i = 0; i < stringArr.length; i++) {
+                intArr[i] = Integer.valueOf(stringArr[i]);
+            }
+            return intArr;
+            
+        }
+    
+        public long getSize(int[] arg0, Class<?> arg1, Type arg2, Annotation[] arg3, MediaType arg4) {
+            return -1;
+        }
+    
+        public boolean isWriteable(Class<?> arg0, Type arg1, Annotation[] arg2, MediaType arg3) {
+            return int[].class.isAssignableFrom(arg0);
+        }
+    
+        public void writeTo(int[] arg0, Class<?> arg1, Type arg2, Annotation[] arg3, MediaType arg4,
+                            MultivaluedMap<String, Object> arg5, OutputStream arg6) throws IOException,
+            WebApplicationException {
+            
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < arg0.length; i++) {
+                sb.append(Integer.toString(arg0[i]));
+                if (i + 1 < arg0.length) {
+                    sb.append(",");
+                }
+            }
+            arg6.write(sb.toString().getBytes());
+        }
+    
+    }
+    public static class PrimitiveDoubleArrayReaderWriter 
+        implements MessageBodyReader<Object>, MessageBodyWriter<Object> {
+        public boolean isReadable(Class<?> arg0, Type arg1, Annotation[] arg2, MediaType arg3) {
+            return double[].class.isAssignableFrom(arg0);
+        }
+    
+        public Object readFrom(Class<Object> arg0, Type arg1,
+            Annotation[] arg2, MediaType arg3, MultivaluedMap<String, String> arg4, InputStream arg5)
+            throws IOException, WebApplicationException {
+            String[] stringArr = IOUtils.readStringFromStream(arg5).split(",");
+            double[] intArr = new double[stringArr.length];
+            for (int i = 0; i < stringArr.length; i++) {
+                intArr[i] = Double.valueOf(stringArr[i]);
+            }
+            return intArr;
+            
+        }
+    
+        public long getSize(Object arg0, Class<?> arg1, Type arg2, Annotation[] arg3, MediaType arg4) {
+            return -1;
+        }
+    
+        public boolean isWriteable(Class<?> arg0, Type arg1, Annotation[] arg2, MediaType arg3) {
+            return double[].class.isAssignableFrom(arg0);
+        }
+    
+        public void writeTo(Object arg0, Class<?> arg1, Type arg2, Annotation[] arg3, MediaType arg4,
+                            MultivaluedMap<String, Object> arg5, OutputStream arg6) throws IOException,
+            WebApplicationException {
+            
+            double[] arr = (double[])arg0;
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < arr.length; i++) {
+                sb.append(Double.toString(arr[i]));
+                if (i + 1 < arr.length) {
+                    sb.append(",");
+                }
+            }
+            arg6.write(sb.toString().getBytes());
+        }
+    
     }    
 }
 

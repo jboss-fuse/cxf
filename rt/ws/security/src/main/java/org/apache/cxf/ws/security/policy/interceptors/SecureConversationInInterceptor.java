@@ -27,6 +27,7 @@ import org.w3c.dom.Element;
 
 import org.apache.cxf.binding.soap.SoapBindingConstants;
 import org.apache.cxf.binding.soap.SoapMessage;
+import org.apache.cxf.binding.soap.interceptor.SoapActionInInterceptor;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.helpers.DOMUtils;
@@ -141,7 +142,11 @@ class SecureConversationInInterceptor extends AbstractPhaseInterceptor<SoapMessa
                     SymmetricBinding binding = new SymmetricBinding(SP12Constants.INSTANCE, pbuilder);
                     binding.setIncludeTimestamp(true);
                     ProtectionToken token = new ProtectionToken(SP12Constants.INSTANCE, pbuilder);
-                    token.setToken(new SecureConversationToken(SP12Constants.INSTANCE));
+                    
+                    SecureConversationToken scToken = 
+                        new SecureConversationToken(SP12Constants.INSTANCE);
+                    scToken.setInclusion(SP12Constants.IncludeTokenType.INCLUDE_TOKEN_ALWAYS_TO_RECIPIENT);
+                    token.setToken(scToken);
                     binding.setProtectionToken(token);
                     binding.setEntireHeadersAndBodySignatures(true);
                     
@@ -184,6 +189,8 @@ class SecureConversationInInterceptor extends AbstractPhaseInterceptor<SoapMessa
                 NegotiationUtils.recalcEffectivePolicy(message, ns, pol, 
                                                        new SecureConversationSTSInvoker(),
                                                        true);
+                //recalc based on new endpoint
+                SoapActionInInterceptor.getAndSetOperation(message, s);
             } else {
                 message.getInterceptorChain().add(SecureConversationTokenFinderInterceptor.INSTANCE);
             }
