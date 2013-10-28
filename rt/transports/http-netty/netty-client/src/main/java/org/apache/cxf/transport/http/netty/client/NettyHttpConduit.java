@@ -41,6 +41,7 @@ import javax.net.ssl.SSLSession;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.common.util.StringUtils;
+import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.helpers.HttpHeaderHelper;
 import org.apache.cxf.io.CacheAndWriteOutputStream;
 import org.apache.cxf.message.Message;
@@ -266,7 +267,24 @@ public class NettyHttpConduit extends URLConnectionHTTPConduit {
             }
         }
 
+        protected TLSClientParameters findTLSClientParameters() {
+            TLSClientParameters clientParameters = outMessage.get(TLSClientParameters.class);
+            if (clientParameters == null) {
+                clientParameters = getTlsClientParameters();
+            }
+            if (clientParameters == null) {
+                clientParameters = new TLSClientParameters();
+            }
+            return clientParameters;
+        }
+
         protected void connect(boolean output) {
+            if (url.getScheme().equals("https")) {
+                TLSClientParameters clientParameters = findTLSClientParameters();
+                bootstrap.setPipelineFactory(new NettyHttpClientPipelineFactory(clientParameters));
+            } else {
+                bootstrap.setPipelineFactory(new NettyHttpClientPipelineFactory(null));
+            }
 
             ChannelFuture connFuture = 
                 bootstrap.connect(new InetSocketAddress(url.getHost(), url.getPort()));
@@ -315,6 +333,7 @@ public class NettyHttpConduit extends URLConnectionHTTPConduit {
             connect(true);
            
             HostnameVerifier verifier;
+            TLSClientParameters tlsClientParameters = findTLSClientParameters();
             if (tlsClientParameters.isUseHttpsURLConnectionDefaultHostnameVerifier()) {
                 verifier = HttpsURLConnection.getDefaultHostnameVerifier();
             } else if (tlsClientParameters.isDisableCNCheck()) {
