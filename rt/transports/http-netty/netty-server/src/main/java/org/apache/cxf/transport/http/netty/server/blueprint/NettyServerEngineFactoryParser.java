@@ -62,7 +62,7 @@ public class NettyServerEngineFactoryParser extends AbstractBPBeanDefinitionPars
             ef.setId("netty.engine.factory-holder-" + UUID.randomUUID().toString());
         }
         ef.setRuntimeClass(NettyHttpServerEngineFactoryHolder.class);
-
+        
         try {
 
             TransformerFactory transfac = TransformerFactory.newInstance();
@@ -80,7 +80,7 @@ public class NettyServerEngineFactoryParser extends AbstractBPBeanDefinitionPars
             ef.addProperty("parsedElement", createValue(context, xmlString));
             ef.setInitMethod("init");
             ef.setActivation(ComponentMetadata.ACTIVATION_EAGER);
-
+            ef.setDestroyMethod("destroy");
             return ef;
         } catch (Exception e) {
             throw new RuntimeException("Could not process configuration.", e);
