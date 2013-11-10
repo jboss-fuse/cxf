@@ -19,13 +19,13 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf</artifactId>
-        <version>2.7.0.redhat-610-SNAPSHOT</version>
+        <version>2.7.0.redhat-610155</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.cxf</groupId>
     <artifactId>cxf-parent</artifactId>
-    <version>2.7.0.redhat-610-SNAPSHOT</version>
+    <version>2.7.0.redhat-610155</version>
     <name>Apache CXF Parent</name>
     <description>Apache CXF Parent POM</description>
     <url>http://cxf.apache.org</url>
@@ -171,7 +171,7 @@
         <cxf.aries.version>1.0.0</cxf.aries.version>
         <cxf.aries.version.range>[0.3,2)</cxf.aries.version.range>
         <cxf.osgi.version>4.2.0</cxf.osgi.version>
-        <cxf.karaf.version>2.3.0.redhat-610-SNAPSHOT</cxf.karaf.version>
+        <cxf.karaf.version>2.3.0.redhat-610155</cxf.karaf.version>
 
         <cxf.pax.logging.version>1.6.0</cxf.pax.logging.version>
         <cxf.felix.framework.version>2.0.5</cxf.felix.framework.version>
