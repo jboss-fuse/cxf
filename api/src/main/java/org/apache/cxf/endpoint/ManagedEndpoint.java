@@ -19,16 +19,27 @@
 
 package org.apache.cxf.endpoint;
 
+import java.io.IOException;
+import java.util.Dictionary;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import javax.management.JMException;
 import javax.management.ObjectName;
 
 import org.apache.cxf.Bus;
+import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.management.ManagedComponent;
 import org.apache.cxf.management.ManagementConstants;
 import org.apache.cxf.management.annotation.ManagedAttribute;
 import org.apache.cxf.management.annotation.ManagedOperation;
 import org.apache.cxf.management.annotation.ManagedResource;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
+import org.osgi.service.cm.Configuration;
+import org.osgi.service.cm.ConfigurationAdmin;
 
 @ManagedResource(componentName = "Endpoint", 
                  description = "Responsible for managing server instances.")
@@ -36,12 +47,16 @@ import org.apache.cxf.management.annotation.ManagedResource;
 public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListener {
     public static final String ENDPOINT_NAME = "managed.endpoint.name";
     public static final String SERVICE_NAME = "managed.service.name";
+    
+    private static final Logger LOG = LogUtils.getL7dLogger(ManagedEndpoint.class);
 
     private Bus bus;
     private Endpoint endpoint;
     private Server server;
     private enum State { CREATED, STARTED, STOPPED };
     private State state = State.CREATED;
+    
+    private ConfigurationAdmin configurationAdmin;
     
     public ManagedEndpoint(Bus b, Endpoint ep, Server s) {
         bus = b;
@@ -84,6 +99,61 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
     @ManagedAttribute(description = "Server State")
     public String getState() {
         return state.toString();
+    }
+    
+    @ManagedAttribute(description = "The cxf servlet context", currencyTimeLimit = 60)
+    public String getServletContext() {
+        if (!isInOSGi()) {
+            LOG.log(Level.FINE, "Not In OSGi.");
+            return null; //not in OSGi container
+        }
+        String ret = "/cxf"; //if can't get it from configAdmin use the default value
+        if (getConfigurationAdmin() != null) {
+            try {
+                Configuration configuration = getConfigurationAdmin().getConfiguration("org.apache.cxf.osgi");
+                if (configuration != null) {
+                    Dictionary properties = configuration.getProperties();
+                    if (properties != null) {
+                        String servletContext = (String)configuration.getProperties().
+                            get("org.apache.cxf.servlet.context");
+                        if (servletContext != null) {
+                            ret = servletContext;
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "getServletContext failed.", e);
+            }
+        }
+        return ret;
+    }
+    
+    private boolean isInOSGi() {
+        if (FrameworkUtil.getBundle(ManagedEndpoint.class) != null) {
+            return true;
+        }
+        return false;
+        
+    }
+    
+    private ConfigurationAdmin getConfigurationAdmin() {
+        try {
+            if (isInOSGi() && (configurationAdmin == null)) {
+                BundleContext bundleContext = FrameworkUtil.getBundle(ManagedEndpoint.class)
+                    .getBundleContext();
+                if (bundleContext != null) {
+                    ServiceReference serviceReference = bundleContext
+                        .getServiceReference(ConfigurationAdmin.class.getName());
+                    if (serviceReference != null) {
+                        configurationAdmin = (ConfigurationAdmin)bundleContext.getService(serviceReference);
+                    }
+                }
+
+            }
+        } catch (Exception e) {
+            LOG.log(Level.WARNING, "getConfigurationAdmin failed.", e);
+        }
+        return configurationAdmin;
     }
         
     public ObjectName getObjectName() throws JMException {
