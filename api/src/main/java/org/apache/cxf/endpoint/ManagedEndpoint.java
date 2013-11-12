@@ -132,6 +132,9 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
     
     @ManagedAttribute(description = "if the endpoint has swagger doc or not", currencyTimeLimit = 60)
     public boolean isSwagger() {
+        if (!isWADL()) {
+            return false;
+        }
         List<Feature> features = server.getEndpoint().getActiveFeatures();
         for (Feature feature : features) {
             if (feature.getClass().getName().endsWith("SwaggerFeature")) {
