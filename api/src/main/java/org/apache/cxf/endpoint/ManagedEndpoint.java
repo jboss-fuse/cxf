@@ -21,6 +21,7 @@ package org.apache.cxf.endpoint;
 
 import java.io.IOException;
 import java.util.Dictionary;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,6 +31,7 @@ import javax.management.ObjectName;
 import org.apache.cxf.Bus;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.StringUtils;
+import org.apache.cxf.feature.Feature;
 import org.apache.cxf.management.ManagedComponent;
 import org.apache.cxf.management.ManagementConstants;
 import org.apache.cxf.management.annotation.ManagedAttribute;
@@ -126,6 +128,31 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
             }
         }
         return ret;
+    }
+    
+    @ManagedAttribute(description = "if the endpoint has swagger doc or not", currencyTimeLimit = 60)
+    public boolean isSwagger() {
+        List<Feature> features = server.getEndpoint().getActiveFeatures();
+        for (Feature feature : features) {
+            if (feature.getClass().getName().endsWith("SwaggerFeature")) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    @ManagedAttribute(description = "if the endpoint has wsdl doc or not", currencyTimeLimit = 60)
+    public boolean isWSDL() {
+        return !isWADL();
+    }
+    
+    @ManagedAttribute(description = "if the endpoint has WADL doc or not", currencyTimeLimit = 60)
+    public boolean isWADL() {
+        if (endpoint.getEndpointInfo().getBinding().
+            getBindingId().equals("http://apache.org/cxf/binding/jaxrs")) {
+            return true;
+        }
+        return false;
     }
     
     private boolean isInOSGi() {
