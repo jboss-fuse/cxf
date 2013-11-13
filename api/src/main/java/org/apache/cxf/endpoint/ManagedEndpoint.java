@@ -37,6 +37,10 @@ import org.apache.cxf.management.ManagementConstants;
 import org.apache.cxf.management.annotation.ManagedAttribute;
 import org.apache.cxf.management.annotation.ManagedOperation;
 import org.apache.cxf.management.annotation.ManagedResource;
+import org.apache.cxf.service.model.BindingInfo;
+import org.apache.cxf.service.model.BindingOperationInfo;
+import org.apache.cxf.service.model.MessagePartInfo;
+import org.apache.cxf.service.model.ServiceInfo;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
@@ -156,6 +160,42 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
             return true;
         }
         return false;
+    }
+    
+    @ManagedAttribute(description = "get the JSON schema from a given soap endpoint", currencyTimeLimit = 60)
+    public String getJSONSchema() {
+        if (!isWSDL()) {
+            return null;
+        }
+        String ret = "";
+        
+        for (ServiceInfo serviceInfo : endpoint.getService().getServiceInfos()) {
+            for (BindingInfo bindingInfo : serviceInfo.getBindings()) {
+                for (BindingOperationInfo boi : bindingInfo.getOperations()) {
+                    ret = ret + "[operationName:" + boi.getOperationInfo().getName() + "\n";
+                    if (boi.getInput() != null && boi.getInput().getMessageParts() != null) {
+                        ret = ret + "[Input:" + boi.getOperationInfo().getInputName() + "]\n";
+                        for (MessagePartInfo mpi : boi.getInput().getMessageParts()) {
+                            Class<?> partClass = mpi.getTypeClass();
+                            if (partClass != null) {
+                                ret = ret + JsonSchemaLookup.getSingleton().getSchemaForClass(partClass) + "\n";
+                            }
+                        }
+                    }
+                    if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null) {
+                        ret = ret + "[Output:" + boi.getOperationInfo().getOutputName() + "]\n";
+                        for (MessagePartInfo mpi : boi.getOutput().getMessageParts()) {
+                            Class<?> partClass = mpi.getTypeClass();
+                            if (partClass != null) {
+                                ret = ret + JsonSchemaLookup.getSingleton().getSchemaForClass(partClass) + "\n";
+                            }
+                        }
+                    }
+                    ret = ret + "]\n";
+                }
+            }
+        }
+        return ret;
     }
     
     private boolean isInOSGi() {

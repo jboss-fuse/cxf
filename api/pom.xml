@@ -34,6 +34,9 @@
     </parent>
         
     <properties>
+        <jackson-version>2.2.1</jackson-version>
+        <jackson-module-jsonSchema-version>2.2.1</jackson-module-jsonSchema-version>
+        <jackson-module-jaxb-annotations-version>2.2.1</jackson-module-jaxb-annotations-version>
         <buildnumber.connection.url>${project.scm.developerConnection}</buildnumber.connection.url>
         <cxf.osgi.export>
             !org.apache.cxf.internal,
@@ -167,6 +170,41 @@
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.compendium</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-jaxb-annotations</artifactId>
+            <version>${jackson-module-jaxb-annotations-version}</version>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson-version}</version>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson-version}</version>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson-version}</version>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+            <version>1.1.0.Final</version>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 
