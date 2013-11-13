@@ -140,9 +140,11 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
             return false;
         }
         List<Feature> features = server.getEndpoint().getActiveFeatures();
-        for (Feature feature : features) {
-            if (feature.getClass().getName().endsWith("SwaggerFeature")) {
-                return true;
+        if (features != null) {
+            for (Feature feature : features) {
+                if (feature.getClass().getName().endsWith("SwaggerFeature")) {
+                    return true;
+                }
             }
         }
         return false;
