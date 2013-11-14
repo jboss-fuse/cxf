@@ -174,31 +174,79 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
         for (ServiceInfo serviceInfo : endpoint.getService().getServiceInfos()) {
             for (BindingInfo bindingInfo : serviceInfo.getBindings()) {
                 for (BindingOperationInfo boi : bindingInfo.getOperations()) {
-                    ret = ret + "[operationName:" + boi.getOperationInfo().getName() + "\n";
+                    ret = ret + "{\n" + "\"" + boi.getOperationInfo().getName().getLocalPart() + "\" " + " = {\n";
                     if (boi.getInput() != null && boi.getInput().getMessageParts() != null) {
-                        ret = ret + "[Input:" + boi.getOperationInfo().getInputName() + "]\n";
+                        ret = ret + "\"input:" + boi.getOperationInfo().getInputName() + "\" " + " = {\n";
                         for (MessagePartInfo mpi : boi.getInput().getMessageParts()) {
                             Class<?> partClass = mpi.getTypeClass();
                             if (partClass != null) {
                                 ret = ret + JsonSchemaLookup.getSingleton().getSchemaForClass(partClass) + "\n";
                             }
                         }
+                        ret = ret + "}\n";
                     }
                     if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null) {
-                        ret = ret + "[Output:" + boi.getOperationInfo().getOutputName() + "]\n";
+                        ret = ret + "\"output:" + boi.getOperationInfo().getOutputName() + "\" " + " = {\n";
                         for (MessagePartInfo mpi : boi.getOutput().getMessageParts()) {
                             Class<?> partClass = mpi.getTypeClass();
                             if (partClass != null) {
                                 ret = ret + JsonSchemaLookup.getSingleton().getSchemaForClass(partClass) + "\n";
                             }
                         }
+                        ret = ret + "}\n";
                     }
-                    ret = ret + "]\n";
+                    ret = ret + "}\n";
+                }
+                if (ret.length() > 0) {
+                    ret = ret + "}\n";
                 }
             }
         }
         return ret;
     }
+    
+    @ManagedOperation(description = "get the JSON schema from a given soap endpoint for a given operation", 
+                        currencyTimeLimit = 60)
+    public String getJSONSchemaForOperation(String operationName) {
+        if (!isWSDL()) {
+            return null;
+        }
+        String ret = "";
+        
+        for (ServiceInfo serviceInfo : endpoint.getService().getServiceInfos()) {
+            for (BindingInfo bindingInfo : serviceInfo.getBindings()) {
+                for (BindingOperationInfo boi : bindingInfo.getOperations()) {
+                    if (operationName.equals(boi.getOperationInfo().getName().getLocalPart())) {
+                        if (boi.getInput() != null && boi.getInput().getMessageParts() != null) {
+                            ret = ret + "\"input:" + boi.getOperationInfo().getInputName() + "\" " + " = {\n";
+                            for (MessagePartInfo mpi : boi.getInput().getMessageParts()) {
+                                Class<?> partClass = mpi.getTypeClass();
+                                if (partClass != null) {
+                                    ret = ret + JsonSchemaLookup.getSingleton().getSchemaForClass(partClass)
+                                          + "\n";
+                                }
+                            }
+                            ret = ret + "}\n";
+                        }
+                        if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null) {
+                            ret = ret + "\"output:" + boi.getOperationInfo().getOutputName() + "\" " + " = {\n";
+                            for (MessagePartInfo mpi : boi.getOutput().getMessageParts()) {
+                                Class<?> partClass = mpi.getTypeClass();
+                                if (partClass != null) {
+                                    ret = ret + JsonSchemaLookup.getSingleton().getSchemaForClass(partClass)
+                                          + "\n";
+                                }
+                            }
+                            ret = ret + "}\n";
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        return ret;
+    }
+    
     
     private boolean isInOSGi() {
         if (FrameworkUtil.getBundle(ManagedEndpoint.class) != null) {
