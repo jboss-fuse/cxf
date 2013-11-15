@@ -19,9 +19,13 @@
 
 package org.apache.cxf.endpoint;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.Dictionary;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -53,8 +57,10 @@ import org.osgi.service.cm.ConfigurationAdmin;
 public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListener {
     public static final String ENDPOINT_NAME = "managed.endpoint.name";
     public static final String SERVICE_NAME = "managed.service.name";
-    
+    public static final String INDENTION = "    ";
     private static final Logger LOG = LogUtils.getL7dLogger(ManagedEndpoint.class);
+    
+    private final String eol = System.getProperty("line.separator");
 
     private Bus bus;
     private Endpoint endpoint;
@@ -174,31 +180,75 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
         for (ServiceInfo serviceInfo : endpoint.getService().getServiceInfos()) {
             for (BindingInfo bindingInfo : serviceInfo.getBindings()) {
                 for (BindingOperationInfo boi : bindingInfo.getOperations()) {
-                    ret = ret + "{\n" + "\"" + boi.getOperationInfo().getName().getLocalPart() + "\" " + " = {\n";
+                    ret = ret + getBeginIndentionWithReturn(1) + "\"operations\" : "
+                            + getBeginIndentionWithReturn(2)
+                            + "\"" + boi.getOperationInfo().getName().getLocalPart() 
+                            + "\" " + " : " + getBeginIndentionWithReturn(3);
                     if (boi.getInput() != null && boi.getInput().getMessageParts() != null) {
-                        ret = ret + "\"input:" + boi.getOperationInfo().getInputName() + "\" " + " = {\n";
+                        ret = ret + "\"input\" : " +  getBeginIndentionWithReturn(4)
+                            + "\"type\" : \"" 
+                            + boi.getOperationInfo().getInputName() 
+                            + "\"" + getEndIndentionWithReturn(3) + getEol();
+                        
+                    }
+                    if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null) {
+                        ret = ret + getIndention(3) + "\"output\" : " +  getBeginIndentionWithReturn(4)
+                            + "\"type\" : \"" 
+                            + boi.getOperationInfo().getOutputName() 
+                            + "\"" + getEndIndentionWithReturn(3) + getEol();
+                    }
+                    ret = ret + getEndIndentionWithReturn(2);
+                }
+                if (ret.length() > 0) {
+                    ret = ret + getEndIndentionWithReturn(1);
+                }
+                Set<String> addedType = new HashSet<String>();
+                for (BindingOperationInfo boi : bindingInfo.getOperations()) {
+                    ret = ret + getEol() + getIndention(1) + "\"definitions\" : "
+                            + getBeginIndentionWithReturn(2);
+                    if (boi.getInput() != null && boi.getInput().getMessageParts() != null
+                        && !addedType.contains(boi.getOperationInfo().getInputName())) {
+                        
+                        ret = ret + "\"" + boi.getOperationInfo().getInputName() + "\" : "
+                              + getBeginIndentionWithReturn(0);
                         for (MessagePartInfo mpi : boi.getInput().getMessageParts()) {
                             Class<?> partClass = mpi.getTypeClass();
                             if (partClass != null) {
-                                ret = ret + JsonSchemaLookup.getSingleton().getSchemaForClass(partClass) + "\n";
+                                ret = ret
+                                      + reformatIndent(JsonSchemaLookup.getSingleton()
+                                                           .getSchemaForClass(partClass), 3);
                             }
                         }
-                        ret = ret + "}\n";
+                        ret = ret + getEndIndentionWithReturn(2) + getEol();
+                        addedType.add(boi.getOperationInfo().getInputName());
+                        
+                        
                     }
-                    if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null) {
-                        ret = ret + "\"output:" + boi.getOperationInfo().getOutputName() + "\" " + " = {\n";
+                    if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null
+                        && !addedType.contains(boi.getOperationInfo().getOutputName())) {
+                        
+                        ret = ret + getIndention(2) + "\"" + boi.getOperationInfo().getOutputName() + "\" : "
+                              + getBeginIndentionWithReturn(0);
+
                         for (MessagePartInfo mpi : boi.getOutput().getMessageParts()) {
                             Class<?> partClass = mpi.getTypeClass();
                             if (partClass != null) {
-                                ret = ret + JsonSchemaLookup.getSingleton().getSchemaForClass(partClass) + "\n";
+                                ret = ret
+                                      + reformatIndent(JsonSchemaLookup.getSingleton()
+                                                           .getSchemaForClass(partClass), 3);
                             }
                         }
-                        ret = ret + "}\n";
+                        ret = ret + getEndIndentionWithReturn(2);
+                        addedType.add(boi.getOperationInfo().getOutputName());
+                        
                     }
-                    ret = ret + "}\n";
                 }
                 if (ret.length() > 0) {
-                    ret = ret + "}\n";
+                    ret = ret + getEndIndentionWithReturn(1);
+                }
+                
+                if (ret.length() > 0) {
+                    ret = ret + getEndIndentionWithReturn(0);
                 }
             }
         }
@@ -217,29 +267,59 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
             for (BindingInfo bindingInfo : serviceInfo.getBindings()) {
                 for (BindingOperationInfo boi : bindingInfo.getOperations()) {
                     if (operationName.equals(boi.getOperationInfo().getName().getLocalPart())) {
+                        ret = ret + getBeginIndentionWithReturn(1) + "\""
+                              + boi.getOperationInfo().getName().getLocalPart() + "\" " + " : "
+                              + getBeginIndentionWithReturn(2);
                         if (boi.getInput() != null && boi.getInput().getMessageParts() != null) {
-                            ret = ret + "\"input:" + boi.getOperationInfo().getInputName() + "\" " + " = {\n";
+                            ret = ret + "\"input\" : " + getBeginIndentionWithReturn(4) + "\"type\" : \""
+                                  + boi.getOperationInfo().getInputName() + "\""
+                                  + getEndIndentionWithReturn(2) + getEol();
+
+                        }
+                        if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null) {
+                            ret = ret + getIndention(2) + "\"output\" : " + getBeginIndentionWithReturn(4)
+                                  + "\"type\" : \"" + boi.getOperationInfo().getOutputName() + "\""
+                                  + getEndIndentionWithReturn(2) + getEol();
+                        }
+                        ret = ret + getEndIndentionWithReturn(1);
+                        
+                        ret = ret + getEol() + getIndention(1) + "\"definitions\" : "
+                              + getBeginIndentionWithReturn(2);
+                        if (boi.getInput() != null && boi.getInput().getMessageParts() != null) {
+                            ret = ret + "\"" + boi.getOperationInfo().getInputName() + "\" : "
+                                  + getBeginIndentionWithReturn(0);
                             for (MessagePartInfo mpi : boi.getInput().getMessageParts()) {
                                 Class<?> partClass = mpi.getTypeClass();
                                 if (partClass != null) {
-                                    ret = ret + JsonSchemaLookup.getSingleton().getSchemaForClass(partClass)
-                                          + "\n";
+                                    ret = ret
+                                          + reformatIndent(JsonSchemaLookup.getSingleton()
+                                                               .getSchemaForClass(partClass), 3);
                                 }
                             }
-                            ret = ret + "}\n";
+                            ret = ret + getEndIndentionWithReturn(2) + getEol();
                         }
                         if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null) {
-                            ret = ret + "\"output:" + boi.getOperationInfo().getOutputName() + "\" " + " = {\n";
+                            ret = ret + getIndention(2) + "\"" + boi.getOperationInfo().getOutputName()
+                                  + "\" : " + getBeginIndentionWithReturn(0);
+
                             for (MessagePartInfo mpi : boi.getOutput().getMessageParts()) {
                                 Class<?> partClass = mpi.getTypeClass();
                                 if (partClass != null) {
-                                    ret = ret + JsonSchemaLookup.getSingleton().getSchemaForClass(partClass)
-                                          + "\n";
+                                    ret = ret
+                                          + reformatIndent(JsonSchemaLookup.getSingleton()
+                                                               .getSchemaForClass(partClass), 3);
                                 }
                             }
-                            ret = ret + "}\n";
+                            ret = ret + getEndIndentionWithReturn(2);
                         }
-                        break;
+                        
+                    }
+                    if (ret.length() > 0) {
+                        ret = ret + getEndIndentionWithReturn(1);
+                    }
+                    
+                    if (ret.length() > 0) {
+                        ret = ret + getEndIndentionWithReturn(0);
                     }
                 }
             }
@@ -247,6 +327,19 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
         return ret;
     }
     
+    private String reformatIndent(String input, int startIndent) {
+        String ret = "";
+        BufferedReader reader = new BufferedReader(new StringReader(input));
+        try {
+            String oneLine;
+            while ((oneLine = reader.readLine()) != null) {
+                ret = ret + getIndention(startIndent) + oneLine + getEol();
+            }
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "reformatIndent failed.", e);
+        }
+        return ret;
+    }
     
     private boolean isInOSGi() {
         if (FrameworkUtil.getBundle(ManagedEndpoint.class) != null) {
@@ -254,6 +347,31 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
         }
         return false;
         
+    }
+    
+    
+    private String getBeginIndentionWithReturn(int n) {
+        return "{" + getEol() + getIndention(n);           
+    }
+    
+    private String getEndIndentionWithReturn(int n) {
+        return getEol() + getIndention(n) + "}";           
+    }
+    
+    private String getIndention(int n) {
+        String ret = "";
+        for (int i = 0; i < n; i++) {
+            ret = ret + INDENTION;
+        }
+        return ret;     
+    }
+    
+    private String getEol() {
+        if (eol == null) {
+            return "\n";
+        } else {
+            return this.eol;
+        }
     }
     
     private ConfigurationAdmin getConfigurationAdmin() {

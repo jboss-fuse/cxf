@@ -81,7 +81,7 @@ public class JsonSchemaLookup {
         LOG.info("Looking up schema for " + clazz.getCanonicalName());
         String name = clazz.getName();
         try {
-            ObjectWriter writer = mapper.writer().withDefaultPrettyPrinter();
+            ObjectWriter writer = mapper.writer().with(new FourSpacePrettyPrinter());
             return writer.writeValueAsString(mapper.generateJsonSchema(clazz));
         } catch (Exception e) {
             LOG.log(Level.WARNING, "Failed to generate JSON schema for class " + name, e);
