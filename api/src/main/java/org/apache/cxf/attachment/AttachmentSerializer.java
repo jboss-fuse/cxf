@@ -164,7 +164,7 @@ public class AttachmentSerializer {
                 .append(encoding)
                 .append("; type=\"")
                 .append(bodyCt)
-                .append("\";");
+                .append("\"");
         } else {
             mimeBodyCt.append(bodyType);
         }
