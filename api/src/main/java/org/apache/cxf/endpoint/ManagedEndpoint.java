@@ -187,10 +187,10 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                         ret = ret
                             + reformatIndent(JsonSchemaLookup.getSingleton()
                                                  .getSchemaForClass(cls), 3);
-                        ret = ret + getEndIndentionWithReturn(2) + getEol();
+                        ret = ret + getEndIndentionWithoutReturn(2) + getEol();
                     }
-                    ret = ret + getEndIndentionWithReturn(1) + getEol();
-                    ret = ret + getEndIndentionWithReturn(0) + getEol();
+                    ret = ret + getEndIndentionWithoutReturn(1);
+                    ret = ret + getEndIndentionWithReturn(0);
                 } catch (Throwable e) {
                     LOG.log(Level.WARNING, "getJSONSchema failed.", e);
                 }
@@ -213,7 +213,7 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                         if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null) {
                             ret = ret + getIndention(3) + "\"output\" : " + getBeginIndentionWithReturn(4)
                                   + "\"type\" : \"" + boi.getOperationInfo().getOutputName() + "\""
-                                  + getEndIndentionWithReturn(3) + getEol();
+                                  + getEndIndentionWithReturn(3);
                         }
                         ret = ret + getEndIndentionWithReturn(2);
                     }
@@ -237,7 +237,7 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                                                                .getSchemaForClass(partClass), 3);
                                 }
                             }
-                            ret = ret + getEndIndentionWithReturn(2) + getEol();
+                            ret = ret + getEndIndentionWithoutReturn(2) + getEol();
                             addedType.add(boi.getOperationInfo().getInputName());
 
                         }
@@ -255,7 +255,7 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                                                                .getSchemaForClass(partClass), 3);
                                 }
                             }
-                            ret = ret + getEndIndentionWithReturn(2);
+                            ret = ret + getEndIndentionWithoutReturn(2);
                             addedType.add(boi.getOperationInfo().getOutputName());
 
                         }
@@ -267,6 +267,79 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                     if (ret.length() > 0) {
                         ret = ret + getEndIndentionWithReturn(0);
                     }
+                }
+            }
+            
+        }
+        return ret;
+    }
+    
+    @ManagedOperation(description = "get the JSON schema from a given class", currencyTimeLimit = 60)
+    public String getJSONSchemaForClass(String clsName) {
+        String ret = "";
+        if (!isWSDL()) {
+            Set<Class<?>> resourceTypes = (Set<Class<?>>)endpoint.get("jaxrs.resource.types");
+            if (resourceTypes != null) {
+                try {
+                    ret = ret + getBeginIndentionWithReturn(1) + "\""
+                        + "definitions" + "\" " + " : {"
+                        + getEol();
+                    for (Class<?> cls : resourceTypes) {
+                        if (cls.getName().endsWith(clsName)) {
+                            ret = ret + getIndention(2) + "\"" + cls.getName() + "\" : "
+                                  + getBeginIndentionWithReturn(0);
+
+                            ret = ret
+                                  + reformatIndent(JsonSchemaLookup.getSingleton().getSchemaForClass(cls), 3);
+                            ret = ret + getEndIndentionWithoutReturn(2) + getEol();
+                        }
+                    }
+                    ret = ret + getEndIndentionWithReturn(1);
+                    ret = ret + getEndIndentionWithReturn(0);
+                } catch (Throwable e) {
+                    LOG.log(Level.WARNING, "getJSONSchemaForClass failed.", e);
+                }
+            }
+        } else {
+
+            for (ServiceInfo serviceInfo : endpoint.getService().getServiceInfos()) {
+                for (BindingInfo bindingInfo : serviceInfo.getBindings()) {
+                    for (BindingOperationInfo boi : bindingInfo.getOperations()) {
+                        ret = ret + getBeginIndentionWithReturn(1) + "\""
+                            + "definitions" + "\" " + " : {"
+                            + getEol();
+                        if (boi.getInput() != null && boi.getInput().getMessageParts() != null) {
+                            for (MessagePartInfo mpi : boi.getInput().getMessageParts()) {
+                                Class<?> partClass = mpi.getTypeClass();
+                                if (partClass != null && partClass.getName().endsWith(clsName)) {
+                                    ret = ret + getIndention(2) + "\"" + partClass.getName() + "\" : "
+                                        + getBeginIndentionWithReturn(0);
+                                    
+                                    ret = ret
+                                        + reformatIndent(JsonSchemaLookup.getSingleton()
+                                                             .getSchemaForClass(partClass), 3);
+                                    ret = ret + getEndIndentionWithoutReturn(2);
+                                }
+                            }
+                            
+                        }
+                        if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null) {
+                            for (MessagePartInfo mpi : boi.getOutput().getMessageParts()) {
+                                Class<?> partClass = mpi.getTypeClass();
+                                if (partClass != null && partClass.getName().endsWith(clsName)) {
+                                    ret = ret + getIndention(2) + "\"" + partClass.getName() + "\" : "
+                                        + getBeginIndentionWithReturn(0);
+                                    
+                                    ret = ret
+                                        + reformatIndent(JsonSchemaLookup.getSingleton()
+                                                             .getSchemaForClass(partClass), 3);
+                                    ret = ret + getEndIndentionWithoutReturn(2);
+                                }
+                            }
+                        }
+                    }
+                    ret = ret + getEndIndentionWithReturn(1);
+                    ret = ret + getEndIndentionWithReturn(0);
                 }
             }
             
@@ -298,7 +371,7 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                         if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null) {
                             ret = ret + getIndention(2) + "\"output\" : " + getBeginIndentionWithReturn(4)
                                   + "\"type\" : \"" + boi.getOperationInfo().getOutputName() + "\""
-                                  + getEndIndentionWithReturn(2) + getEol();
+                                  + getEndIndentionWithReturn(2);
                         }
                         ret = ret + getEndIndentionWithReturn(1);
                         
@@ -315,7 +388,7 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                                                                .getSchemaForClass(partClass), 3);
                                 }
                             }
-                            ret = ret + getEndIndentionWithReturn(2) + getEol();
+                            ret = ret + getEndIndentionWithoutReturn(2) + getEol();
                         }
                         if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null) {
                             ret = ret + getIndention(2) + "\"" + boi.getOperationInfo().getOutputName()
@@ -329,7 +402,7 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                                                                .getSchemaForClass(partClass), 3);
                                 }
                             }
-                            ret = ret + getEndIndentionWithReturn(2);
+                            ret = ret + getEndIndentionWithoutReturn(2);
                         }
                         
                     }
@@ -375,6 +448,10 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
     
     private String getEndIndentionWithReturn(int n) {
         return getEol() + getIndention(n) + "}";           
+    }
+    
+    private String getEndIndentionWithoutReturn(int n) {
+        return getIndention(n) + "}";           
     }
     
     private String getIndention(int n) {
