@@ -34,9 +34,9 @@
     </parent>
         
     <properties>
-        <jackson-version>2.2.1</jackson-version>
-        <jackson-module-jsonSchema-version>2.2.1</jackson-module-jsonSchema-version>
-        <jackson-module-jaxb-annotations-version>2.2.1</jackson-module-jaxb-annotations-version>
+        <jackson-version>2.3.0-rc1</jackson-version>
+        <jackson-module-jsonSchema-version>2.3.0-rc1</jackson-module-jsonSchema-version>
+        <jackson-module-jaxb-annotations-version>2.3.0-rc1</jackson-module-jaxb-annotations-version>
         <buildnumber.connection.url>${project.scm.developerConnection}</buildnumber.connection.url>
         <cxf.osgi.export>
             !org.apache.cxf.internal,

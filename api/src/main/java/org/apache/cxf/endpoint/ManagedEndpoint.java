@@ -170,87 +170,106 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
         return false;
     }
     
-    @ManagedAttribute(description = "get the JSON schema from a given soap endpoint", currencyTimeLimit = 60)
+    @ManagedOperation(description = "get the JSON schema from a given endpoint", currencyTimeLimit = 60)
     public String getJSONSchema() {
-        if (!isWSDL()) {
-            return null;
-        }
         String ret = "";
-        
-        for (ServiceInfo serviceInfo : endpoint.getService().getServiceInfos()) {
-            for (BindingInfo bindingInfo : serviceInfo.getBindings()) {
-                for (BindingOperationInfo boi : bindingInfo.getOperations()) {
-                    ret = ret + getBeginIndentionWithReturn(1) + "\"operations\" : "
-                            + getBeginIndentionWithReturn(2)
-                            + "\"" + boi.getOperationInfo().getName().getLocalPart() 
-                            + "\" " + " : " + getBeginIndentionWithReturn(3);
-                    if (boi.getInput() != null && boi.getInput().getMessageParts() != null) {
-                        ret = ret + "\"input\" : " +  getBeginIndentionWithReturn(4)
-                            + "\"type\" : \"" 
-                            + boi.getOperationInfo().getInputName() 
-                            + "\"" + getEndIndentionWithReturn(3) + getEol();
+        if (!isWSDL()) {
+            Set<Class<?>> resourceTypes = (Set<Class<?>>)endpoint.get("jaxrs.resource.types");
+            if (resourceTypes != null) {
+                try {
+                    ret = ret + getBeginIndentionWithReturn(1) + "\""
+                        + "definitions" + "\" " + " : {"
+                        + getEol();
+                    for (Class<?> cls : resourceTypes) {
+                        ret = ret + getIndention(2) + "\"" + cls.getName() + "\" : "
+                            + getBeginIndentionWithReturn(0);
                         
-                    }
-                    if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null) {
-                        ret = ret + getIndention(3) + "\"output\" : " +  getBeginIndentionWithReturn(4)
-                            + "\"type\" : \"" 
-                            + boi.getOperationInfo().getOutputName() 
-                            + "\"" + getEndIndentionWithReturn(3) + getEol();
-                    }
-                    ret = ret + getEndIndentionWithReturn(2);
-                }
-                if (ret.length() > 0) {
-                    ret = ret + getEndIndentionWithReturn(1);
-                }
-                Set<String> addedType = new HashSet<String>();
-                for (BindingOperationInfo boi : bindingInfo.getOperations()) {
-                    ret = ret + getEol() + getIndention(1) + "\"definitions\" : "
-                            + getBeginIndentionWithReturn(2);
-                    if (boi.getInput() != null && boi.getInput().getMessageParts() != null
-                        && !addedType.contains(boi.getOperationInfo().getInputName())) {
-                        
-                        ret = ret + "\"" + boi.getOperationInfo().getInputName() + "\" : "
-                              + getBeginIndentionWithReturn(0);
-                        for (MessagePartInfo mpi : boi.getInput().getMessageParts()) {
-                            Class<?> partClass = mpi.getTypeClass();
-                            if (partClass != null) {
-                                ret = ret
-                                      + reformatIndent(JsonSchemaLookup.getSingleton()
-                                                           .getSchemaForClass(partClass), 3);
-                            }
-                        }
+                        ret = ret
+                            + reformatIndent(JsonSchemaLookup.getSingleton()
+                                                 .getSchemaForClass(cls), 3);
                         ret = ret + getEndIndentionWithReturn(2) + getEol();
-                        addedType.add(boi.getOperationInfo().getInputName());
-                        
-                        
                     }
-                    if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null
-                        && !addedType.contains(boi.getOperationInfo().getOutputName())) {
-                        
-                        ret = ret + getIndention(2) + "\"" + boi.getOperationInfo().getOutputName() + "\" : "
-                              + getBeginIndentionWithReturn(0);
-
-                        for (MessagePartInfo mpi : boi.getOutput().getMessageParts()) {
-                            Class<?> partClass = mpi.getTypeClass();
-                            if (partClass != null) {
-                                ret = ret
-                                      + reformatIndent(JsonSchemaLookup.getSingleton()
-                                                           .getSchemaForClass(partClass), 3);
-                            }
-                        }
-                        ret = ret + getEndIndentionWithReturn(2);
-                        addedType.add(boi.getOperationInfo().getOutputName());
-                        
-                    }
-                }
-                if (ret.length() > 0) {
-                    ret = ret + getEndIndentionWithReturn(1);
-                }
-                
-                if (ret.length() > 0) {
-                    ret = ret + getEndIndentionWithReturn(0);
+                    ret = ret + getEndIndentionWithReturn(1) + getEol();
+                    ret = ret + getEndIndentionWithReturn(0) + getEol();
+                } catch (Throwable e) {
+                    LOG.log(Level.WARNING, "getJSONSchema failed.", e);
                 }
             }
+        } else {
+
+            for (ServiceInfo serviceInfo : endpoint.getService().getServiceInfos()) {
+                for (BindingInfo bindingInfo : serviceInfo.getBindings()) {
+                    for (BindingOperationInfo boi : bindingInfo.getOperations()) {
+                        ret = ret + getBeginIndentionWithReturn(1) + "\"operations\" : "
+                              + getBeginIndentionWithReturn(2) + "\""
+                              + boi.getOperationInfo().getName().getLocalPart() + "\" " + " : "
+                              + getBeginIndentionWithReturn(3);
+                        if (boi.getInput() != null && boi.getInput().getMessageParts() != null) {
+                            ret = ret + "\"input\" : " + getBeginIndentionWithReturn(4) + "\"type\" : \""
+                                  + boi.getOperationInfo().getInputName() + "\""
+                                  + getEndIndentionWithReturn(3) + getEol();
+
+                        }
+                        if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null) {
+                            ret = ret + getIndention(3) + "\"output\" : " + getBeginIndentionWithReturn(4)
+                                  + "\"type\" : \"" + boi.getOperationInfo().getOutputName() + "\""
+                                  + getEndIndentionWithReturn(3) + getEol();
+                        }
+                        ret = ret + getEndIndentionWithReturn(2);
+                    }
+                    if (ret.length() > 0) {
+                        ret = ret + getEndIndentionWithReturn(1);
+                    }
+                    Set<String> addedType = new HashSet<String>();
+                    for (BindingOperationInfo boi : bindingInfo.getOperations()) {
+                        ret = ret + getEol() + getIndention(1) + "\"definitions\" : "
+                              + getBeginIndentionWithReturn(2);
+                        if (boi.getInput() != null && boi.getInput().getMessageParts() != null
+                            && !addedType.contains(boi.getOperationInfo().getInputName())) {
+
+                            ret = ret + "\"" + boi.getOperationInfo().getInputName() + "\" : "
+                                  + getBeginIndentionWithReturn(0);
+                            for (MessagePartInfo mpi : boi.getInput().getMessageParts()) {
+                                Class<?> partClass = mpi.getTypeClass();
+                                if (partClass != null) {
+                                    ret = ret
+                                          + reformatIndent(JsonSchemaLookup.getSingleton()
+                                                               .getSchemaForClass(partClass), 3);
+                                }
+                            }
+                            ret = ret + getEndIndentionWithReturn(2) + getEol();
+                            addedType.add(boi.getOperationInfo().getInputName());
+
+                        }
+                        if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null
+                            && !addedType.contains(boi.getOperationInfo().getOutputName())) {
+
+                            ret = ret + getIndention(2) + "\"" + boi.getOperationInfo().getOutputName()
+                                  + "\" : " + getBeginIndentionWithReturn(0);
+
+                            for (MessagePartInfo mpi : boi.getOutput().getMessageParts()) {
+                                Class<?> partClass = mpi.getTypeClass();
+                                if (partClass != null) {
+                                    ret = ret
+                                          + reformatIndent(JsonSchemaLookup.getSingleton()
+                                                               .getSchemaForClass(partClass), 3);
+                                }
+                            }
+                            ret = ret + getEndIndentionWithReturn(2);
+                            addedType.add(boi.getOperationInfo().getOutputName());
+
+                        }
+                    }
+                    if (ret.length() > 0) {
+                        ret = ret + getEndIndentionWithReturn(1);
+                    }
+
+                    if (ret.length() > 0) {
+                        ret = ret + getEndIndentionWithReturn(0);
+                    }
+                }
+            }
+            
         }
         return ret;
     }

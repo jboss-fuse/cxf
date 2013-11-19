@@ -52,7 +52,8 @@ public class IgnorePropertiesBackedByTransientFields implements
         boolean answer = defaultChecker.isGetterVisible(method);
         if (answer) {
             answer = isGetterMethodWithFieldVisible(method, getGetterFieldName(
-                     method.getName()), method.getDeclaringClass());
+                     method.getName()), method.getDeclaringClass())
+                     && isGetterMethodRetItselfVisible(method.getMember(), method.getDeclaringClass());
         }
         return answer;
     }
@@ -62,7 +63,8 @@ public class IgnorePropertiesBackedByTransientFields implements
         boolean answer = defaultChecker.isGetterVisible(method);
         if (answer) {
             answer = isGetterMethodWithFieldVisible(method, getGetterFieldName(
-                     method.getName()), method.getDeclaringClass());
+                     method.getName()), method.getDeclaringClass())
+                     && isGetterMethodRetItselfVisible(method, method.getDeclaringClass());
         }
         return answer;
     }
@@ -72,7 +74,8 @@ public class IgnorePropertiesBackedByTransientFields implements
         boolean answer = defaultChecker.isIsGetterVisible(method);
         if (answer) {
             answer = isGetterMethodWithFieldVisible(method, getIsGetterFieldName(
-                     method.getName()), method.getDeclaringClass());
+                     method.getName()), method.getDeclaringClass())
+                     && isGetterMethodRetItselfVisible(method.getMember(), method.getDeclaringClass());
         }
         return answer;
     }
@@ -82,7 +85,8 @@ public class IgnorePropertiesBackedByTransientFields implements
         boolean answer = defaultChecker.isIsGetterVisible(method);
         if (answer) {
             answer = isGetterMethodWithFieldVisible(method, getIsGetterFieldName(
-                     method.getName()), method.getDeclaringClass());
+                     method.getName()), method.getDeclaringClass())
+                     && isGetterMethodRetItselfVisible(method, method.getDeclaringClass());
         }
         return answer;
     }
@@ -115,6 +119,23 @@ public class IgnorePropertiesBackedByTransientFields implements
         return true;
     }
 
+    
+    /**
+     * Returns false if the getter method just return the declaringClass itself to avoid the
+     * recusive dead loop
+     * @return
+     */
+    protected boolean isGetterMethodRetItselfVisible(Method method, 
+                                                     Class<?> declaringClass) {
+        if (method != null && method.getReturnType().getName().equals(declaringClass.getName())) {
+            if (LOG.isLoggable(Level.FINE)) {
+                LOG.fine("Ignoring getter " + method + " due to return same type as declaringClass itself");
+            }
+            return false;
+        }
+        return true;
+    }
+    
 
     // Delegated methods
     //-------------------------------------------------------------------------
