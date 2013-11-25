@@ -182,14 +182,14 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                         + getEol();
                     for (Class<?> cls : resourceTypes) {
                         ret = ret + getIndention(2) + "\"" + cls.getName() + "\" : "
-                            + getBeginIndentionWithReturn(0);
+                            + getEol();
                         
                         ret = ret
-                            + reformatIndent(JsonSchemaLookup.getSingleton()
-                                                 .getSchemaForClass(cls), 3);
-                        ret = ret + getEndIndentionWithoutReturn(2) + getEol();
+                            + rollbackEol(reformatIndent(JsonSchemaLookup.getSingleton()
+                                                 .getSchemaForClass(cls), 3)) + "," + getEol();
+                        
                     }
-                    ret = ret + getEndIndentionWithoutReturn(1);
+                    ret = rollbackColon(rollbackEol(ret)) + getEndIndentionWithReturn(1);
                     ret = ret + getEndIndentionWithReturn(0);
                 } catch (Throwable e) {
                     LOG.log(Level.WARNING, "getJSONSchema failed.", e);
@@ -207,7 +207,7 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                         if (boi.getInput() != null && boi.getInput().getMessageParts() != null) {
                             ret = ret + "\"input\" : " + getBeginIndentionWithReturn(4) + "\"type\" : \""
                                   + boi.getOperationInfo().getInputName() + "\""
-                                  + getEndIndentionWithReturn(3) + getEol();
+                                  + getEndIndentionWithReturn(3) + "," + getEol();
 
                         }
                         if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null) {
@@ -215,10 +215,10 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                                   + "\"type\" : \"" + boi.getOperationInfo().getOutputName() + "\""
                                   + getEndIndentionWithReturn(3);
                         }
-                        ret = ret + getEndIndentionWithReturn(2);
+                        ret = rollbackColon(rollbackEol(ret)) + getEndIndentionWithReturn(2);
                     }
                     if (ret.length() > 0) {
-                        ret = ret + getEndIndentionWithReturn(1);
+                        ret = ret + getEndIndentionWithReturn(1) + ",";
                     }
                     Set<String> addedType = new HashSet<String>();
                     for (BindingOperationInfo boi : bindingInfo.getOperations()) {
@@ -228,16 +228,17 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                             && !addedType.contains(boi.getOperationInfo().getInputName())) {
 
                             ret = ret + "\"" + boi.getOperationInfo().getInputName() + "\" : "
-                                  + getBeginIndentionWithReturn(0);
+                                  + getBeginIndentionWithReturnForList(0);
                             for (MessagePartInfo mpi : boi.getInput().getMessageParts()) {
                                 Class<?> partClass = mpi.getTypeClass();
                                 if (partClass != null) {
                                     ret = ret
-                                          + reformatIndent(JsonSchemaLookup.getSingleton()
-                                                               .getSchemaForClass(partClass), 3);
+                                          + rollbackEol(reformatIndent(JsonSchemaLookup.getSingleton()
+                                                               .getSchemaForClass(partClass), 3)) + "," + getEol();
                                 }
                             }
-                            ret = ret + getEndIndentionWithoutReturn(2) + getEol();
+                            ret = rollbackColon(rollbackEol(ret)) + getEndIndentionWithReturnForList(2) 
+                                + "," + getEol();
                             addedType.add(boi.getOperationInfo().getInputName());
 
                         }
@@ -245,27 +246,27 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                             && !addedType.contains(boi.getOperationInfo().getOutputName())) {
 
                             ret = ret + getIndention(2) + "\"" + boi.getOperationInfo().getOutputName()
-                                  + "\" : " + getBeginIndentionWithReturn(0);
+                                  + "\" : " + getBeginIndentionWithReturnForList(0);
 
                             for (MessagePartInfo mpi : boi.getOutput().getMessageParts()) {
                                 Class<?> partClass = mpi.getTypeClass();
                                 if (partClass != null) {
                                     ret = ret
-                                          + reformatIndent(JsonSchemaLookup.getSingleton()
-                                                               .getSchemaForClass(partClass), 3);
+                                          + rollbackEol(reformatIndent(JsonSchemaLookup.getSingleton()
+                                                               .getSchemaForClass(partClass), 3)) + "," + getEol();
                                 }
                             }
-                            ret = ret + getEndIndentionWithoutReturn(2);
+                            ret = rollbackColon(rollbackEol(ret)) + getEndIndentionWithReturnForList(2) + ",";
                             addedType.add(boi.getOperationInfo().getOutputName());
 
                         }
                     }
                     if (ret.length() > 0) {
-                        ret = ret + getEndIndentionWithReturn(1);
+                        ret = rollbackColon(ret) + getEndIndentionWithReturn(1);
                     }
 
                     if (ret.length() > 0) {
-                        ret = ret + getEndIndentionWithReturn(0);
+                        ret = rollbackColon(ret) + getEndIndentionWithReturn(0);
                     }
                 }
             }
@@ -287,11 +288,11 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                     for (Class<?> cls : resourceTypes) {
                         if (cls.getName().endsWith(clsName)) {
                             ret = ret + getIndention(2) + "\"" + cls.getName() + "\" : "
-                                  + getBeginIndentionWithReturn(0);
+                                  + getEol();
 
                             ret = ret
                                   + reformatIndent(JsonSchemaLookup.getSingleton().getSchemaForClass(cls), 3);
-                            ret = ret + getEndIndentionWithoutReturn(2) + getEol();
+                            ret = ret + getEol();
                         }
                     }
                     ret = ret + getEndIndentionWithReturn(1);
@@ -313,12 +314,11 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                                 Class<?> partClass = mpi.getTypeClass();
                                 if (partClass != null && partClass.getName().endsWith(clsName)) {
                                     ret = ret + getIndention(2) + "\"" + partClass.getName() + "\" : "
-                                        + getBeginIndentionWithReturn(0);
+                                        + getEol();
                                     
                                     ret = ret
                                         + reformatIndent(JsonSchemaLookup.getSingleton()
                                                              .getSchemaForClass(partClass), 3);
-                                    ret = ret + getEndIndentionWithoutReturn(2);
                                 }
                             }
                             
@@ -328,12 +328,11 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                                 Class<?> partClass = mpi.getTypeClass();
                                 if (partClass != null && partClass.getName().endsWith(clsName)) {
                                     ret = ret + getIndention(2) + "\"" + partClass.getName() + "\" : "
-                                        + getBeginIndentionWithReturn(0);
+                                        + getEol();
                                     
                                     ret = ret
                                         + reformatIndent(JsonSchemaLookup.getSingleton()
                                                              .getSchemaForClass(partClass), 3);
-                                    ret = ret + getEndIndentionWithoutReturn(2);
                                 }
                             }
                         }
@@ -365,7 +364,7 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                         if (boi.getInput() != null && boi.getInput().getMessageParts() != null) {
                             ret = ret + "\"input\" : " + getBeginIndentionWithReturn(4) + "\"type\" : \""
                                   + boi.getOperationInfo().getInputName() + "\""
-                                  + getEndIndentionWithReturn(2) + getEol();
+                                  + getEndIndentionWithReturn(2) + "," + getEol();
 
                         }
                         if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null) {
@@ -373,45 +372,46 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                                   + "\"type\" : \"" + boi.getOperationInfo().getOutputName() + "\""
                                   + getEndIndentionWithReturn(2);
                         }
-                        ret = ret + getEndIndentionWithReturn(1);
+                        ret = rollbackColon(ret) + getEndIndentionWithReturn(1) + ",";
                         
                         ret = ret + getEol() + getIndention(1) + "\"definitions\" : "
                               + getBeginIndentionWithReturn(2);
                         if (boi.getInput() != null && boi.getInput().getMessageParts() != null) {
                             ret = ret + "\"" + boi.getOperationInfo().getInputName() + "\" : "
-                                  + getBeginIndentionWithReturn(0);
+                                  + getBeginIndentionWithReturnForList(0);
                             for (MessagePartInfo mpi : boi.getInput().getMessageParts()) {
                                 Class<?> partClass = mpi.getTypeClass();
                                 if (partClass != null) {
                                     ret = ret
-                                          + reformatIndent(JsonSchemaLookup.getSingleton()
-                                                               .getSchemaForClass(partClass), 3);
+                                          + rollbackEol(reformatIndent(JsonSchemaLookup.getSingleton()
+                                                               .getSchemaForClass(partClass), 3)) + "," + getEol();
                                 }
                             }
-                            ret = ret + getEndIndentionWithoutReturn(2) + getEol();
+                            ret = rollbackColon(rollbackEol(ret)) + getEndIndentionWithReturnForList(2) 
+                                      + "," + getEol();
                         }
                         if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null) {
                             ret = ret + getIndention(2) + "\"" + boi.getOperationInfo().getOutputName()
-                                  + "\" : " + getBeginIndentionWithReturn(0);
+                                  + "\" : " + getBeginIndentionWithReturnForList(0);
 
                             for (MessagePartInfo mpi : boi.getOutput().getMessageParts()) {
                                 Class<?> partClass = mpi.getTypeClass();
                                 if (partClass != null) {
                                     ret = ret
-                                          + reformatIndent(JsonSchemaLookup.getSingleton()
-                                                               .getSchemaForClass(partClass), 3);
+                                          + rollbackEol(reformatIndent(JsonSchemaLookup.getSingleton()
+                                                               .getSchemaForClass(partClass), 3)) + "," + getEol();
                                 }
                             }
-                            ret = ret + getEndIndentionWithoutReturn(2);
+                            ret = rollbackColon(rollbackEol(ret)) + getEndIndentionWithReturnForList(2) + ",";
                         }
                         
                     }
                     if (ret.length() > 0) {
-                        ret = ret + getEndIndentionWithReturn(1);
+                        ret = rollbackColon(ret) + getEndIndentionWithReturn(1);
                     }
                     
                     if (ret.length() > 0) {
-                        ret = ret + getEndIndentionWithReturn(0);
+                        ret = rollbackColon(ret) + getEndIndentionWithReturn(0);
                     }
                 }
             }
@@ -433,6 +433,22 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
         return ret;
     }
     
+    private String rollbackEol(String input) {
+        String ret = input;
+        if (ret.endsWith(getEol())) {
+            ret = ret.substring(0, ret.length() - getEol().length());
+        }
+        return ret;
+    }
+    
+    private String rollbackColon(String input) {
+        String ret = input;
+        if (ret.endsWith(",")) {
+            ret = ret.substring(0, ret.length() - 1);
+        }
+        return ret;
+    }
+    
     private boolean isInOSGi() {
         if (FrameworkUtil.getBundle(ManagedEndpoint.class) != null) {
             return true;
@@ -450,9 +466,21 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
         return getEol() + getIndention(n) + "}";           
     }
     
+    private String getBeginIndentionWithReturnForList(int n) {
+        return "[" + getEol() + getIndention(n);           
+    }
+    
+    private String getEndIndentionWithReturnForList(int n) {
+        return getEol() + getIndention(n) + "]";           
+    }
+    
+    /*private String getEndIndentionWithoutReturnForList(int n) {
+        return getIndention(n) + "]";           
+    }
+    
     private String getEndIndentionWithoutReturn(int n) {
         return getIndention(n) + "}";           
-    }
+    }*/
     
     private String getIndention(int n) {
         String ret = "";
