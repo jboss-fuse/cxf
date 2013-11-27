@@ -418,13 +418,14 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                         }
                         
                     }
-                    if (ret.length() > 0) {
-                        ret = rollbackColon(ret) + getEndIndentionWithReturn(1);
-                    }
                     
-                    if (ret.length() > 0) {
-                        ret = rollbackColon(ret) + getEndIndentionWithReturn(0);
-                    }
+                }
+                if (ret.length() > 0) {
+                    ret = rollbackColon(ret) + getEndIndentionWithReturn(1);
+                }
+                
+                if (ret.length() > 0) {
+                    ret = rollbackColon(ret) + getEndIndentionWithReturn(0);
                 }
             }
         }
