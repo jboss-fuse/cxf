@@ -22,7 +22,6 @@ package org.apache.cxf.systest.jaxws;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.MBeanServerConnection;
@@ -32,6 +31,9 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 import javax.xml.ws.Endpoint;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
     
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
@@ -66,25 +68,34 @@ public class JsonSchemaJMXTest extends Assert {
         BusFactory.setDefaultBus(bus);
         Endpoint ep = Endpoint.publish("http://localhost:" + PORT + "/SoapContext/SoapPort",
                                        new GreeterImpl());
+        String json = "";
         try {
             connectToMBserver();
-            String json = invokeEndpoint("getJSONSchema");
-            System.out.println("the json is \n" + json);
+            //test getJSONSchema 
+            json = invokeEndpoint("getJSONSchema", null);
+            parseJson(json);
+            //test getJSONSchemaForClass
+            json = invokeEndpoint("getJSONSchemaForClass", "SayHi");
+            parseJson(json);
+            //test getJSONSchemaForOperation
+            json = invokeEndpoint("getJSONSchemaForOperation", "greetMe");
+            parseJson(json);
         } catch (Throwable e) {
-            LOG.log(Level.SEVERE, "FAIL_TO_INVOKE_OPERATION", new Object[]{e});
+            e.printStackTrace();
+            fail("invalid json for " + json);
         } finally {
             ep.stop();
         }
     }
     
-    void connectToMBserver() throws IOException {
+    private void connectToMBserver() throws IOException {
         jmxServerURL = jmxServerURL == null ? DEFAULT_JMXSERVICE_URL : jmxServerURL; 
         JMXServiceURL url = new JMXServiceURL(jmxServerURL);
         JMXConnector jmxc = JMXConnectorFactory.connect(url, null);
         mbsc = jmxc.getMBeanServerConnection();
     }
     
-    ObjectName getEndpointObjectName() 
+    private ObjectName getEndpointObjectName() 
         throws MalformedObjectNameException, NullPointerException {
         StringBuilder buffer = new StringBuilder();
         String serviceName = "{http://apache.org/hello_world/services}SOAPService";
@@ -95,34 +106,41 @@ public class JsonSchemaJMXTest extends Assert {
         return new ObjectName(buffer.toString());
     }
     
-    private String invokeEndpoint(String operation) {
+    private String invokeEndpoint(String operation, String operationPara) 
+        throws Exception {
         ObjectName endpointName = null;
         ObjectName queryEndpointName;
         String ret = "";
-        try {
-            queryEndpointName = getEndpointObjectName();
-            Set<ObjectName> endpointNames = CastUtils.cast(mbsc.queryNames(queryEndpointName, null));
-            // now get the ObjectName with the busId
-            Iterator<ObjectName> it = endpointNames.iterator();
-        
-            if (it.hasNext()) {
-                // only deal with the first endpoint object which retrun from the list.
-                endpointName = it.next();
-                ret = (String)mbsc.invoke(endpointName, operation, new Object[0], new String[0]);
-                System.out.println("invoke endpoint " + endpointName 
-                                   + " operation " + operation + " succeed!");
-            }
-            
-        } catch (Exception e) {
-            if (null == endpointName) {
-                LOG.log(Level.SEVERE, "FAIL_TO_CREATE_ENDPOINT_OBEJCTNAME", new Object[]{e});
-                
-            } else {
-                LOG.log(Level.SEVERE, "FAIL_TO_INVOKE_MANAGED_OBJECT_OPERATION",
-                    new Object[]{endpointName, operation, e.toString()});
-            }
-        } 
+        Object[] jmxPara = null;
+        String[] jmxSig = null;
+        if (operationPara != null) {
+            jmxPara = new Object[]{operationPara};
+            jmxSig = new String[] {String.class.getName()};
+        } else {
+            jmxPara = new Object[0];
+            jmxSig = new String[0];
+        }
+        queryEndpointName = getEndpointObjectName();
+        Set<ObjectName> endpointNames = CastUtils.cast(mbsc.queryNames(queryEndpointName, null));
+        // now get the ObjectName with the busId
+        Iterator<ObjectName> it = endpointNames.iterator();
+    
+        if (it.hasNext()) {
+            // only deal with the first endpoint object which retrun from the list.
+            endpointName = it.next();
+            ret = (String)mbsc.invoke(endpointName, operation, jmxPara, jmxSig);
+            LOG.info("invoke endpoint " + endpointName 
+                               + " operation " + operation + " succeed!");
+        }
         return ret;
+    }
+    
+    private void parseJson(String json) throws Exception {
+        JsonParser parser = new JsonFactory().createParser(json);
+        while (parser.nextToken() != null) {
+            //if it's an invalidate json will throw exception 
+            //which could be caught by the test
+        }
     }
 
 }
