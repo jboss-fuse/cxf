@@ -181,12 +181,15 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                         + "definitions" + "\" " + " : {"
                         + getEol();
                     for (Class<?> cls : resourceTypes) {
-                        ret = ret + getIndention(2) + "\"" + cls.getName() + "\" : "
-                            + getEol();
+                        if (JsonSchemaLookup.getSingleton()
+                            .getSchemaForClass(cls).length() > 0) {
+                            ret = ret + getIndention(2) + "\"" + cls.getName() + "\" : "
+                                + getEol();
                         
-                        ret = ret
-                            + rollbackEol(reformatIndent(JsonSchemaLookup.getSingleton()
+                            ret = ret
+                                + rollbackEol(reformatIndent(JsonSchemaLookup.getSingleton()
                                                  .getSchemaForClass(cls), 3)) + "," + getEol();
+                        }
                         
                     }
                     ret = rollbackColon(rollbackEol(ret)) + getEndIndentionWithReturn(1);
@@ -296,7 +299,8 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
                         + "definitions" + "\" " + " : {"
                         + getEol();
                     for (Class<?> cls : resourceTypes) {
-                        if (cls.getName().endsWith(clsName)) {
+                        if (cls.getName().endsWith(clsName)
+                            && JsonSchemaLookup.getSingleton().getSchemaForClass(cls).length() > 0) {
                             ret = ret + getIndention(2) + "\"" + cls.getName() + "\" : "
                                   + getEol();
 
