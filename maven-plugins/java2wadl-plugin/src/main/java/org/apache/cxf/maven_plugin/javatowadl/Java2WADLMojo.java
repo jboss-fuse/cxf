@@ -1,0 +1,1787 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+package org.apache.cxf.maven_plugin.javatowadl;
+
+import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.namespace.QName;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
+import javax.xml.transform.dom.DOMResult;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamSource;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
+import org.apache.cxf.Bus;
+import org.apache.cxf.BusFactory;
+import org.apache.cxf.common.WSDLConstants;
+import org.apache.cxf.common.jaxb.JAXBBeanInfo;
+import org.apache.cxf.common.jaxb.JAXBContextProxy;
+import org.apache.cxf.common.jaxb.JAXBUtils;
+import org.apache.cxf.common.util.ClassHelper;
+import org.apache.cxf.common.util.PackageUtils;
+import org.apache.cxf.common.util.StringUtils;
+import org.apache.cxf.common.util.XmlSchemaPrimitiveUtils;
+import org.apache.cxf.common.xmlschema.SchemaCollection;
+import org.apache.cxf.common.xmlschema.XmlSchemaConstants;
+import org.apache.cxf.endpoint.Endpoint;
+import org.apache.cxf.helpers.CastUtils;
+import org.apache.cxf.helpers.DOMUtils;
+import org.apache.cxf.helpers.FileUtils;
+import org.apache.cxf.helpers.IOUtils;
+import org.apache.cxf.helpers.XMLUtils;
+import org.apache.cxf.jaxrs.ext.Oneway;
+import org.apache.cxf.jaxrs.ext.multipart.Multipart;
+import org.apache.cxf.jaxrs.ext.xml.XMLSource;
+import org.apache.cxf.jaxrs.lifecycle.SingletonResourceProvider;
+import org.apache.cxf.jaxrs.model.ClassResourceInfo;
+import org.apache.cxf.jaxrs.model.OperationResourceInfo;
+import org.apache.cxf.jaxrs.model.Parameter;
+import org.apache.cxf.jaxrs.model.ParameterType;
+import org.apache.cxf.jaxrs.model.ResourceTypes;
+import org.apache.cxf.jaxrs.model.URITemplate;
+import org.apache.cxf.jaxrs.model.wadl.Description;
+import org.apache.cxf.jaxrs.model.wadl.Descriptions;
+import org.apache.cxf.jaxrs.model.wadl.DocTarget;
+import org.apache.cxf.jaxrs.model.wadl.ElementQNameResolver;
+import org.apache.cxf.jaxrs.model.wadl.WadlGenerator;
+import org.apache.cxf.jaxrs.model.wadl.XMLName;
+import org.apache.cxf.jaxrs.utils.AnnotationUtils;
+import org.apache.cxf.jaxrs.utils.InjectionUtils;
+import org.apache.cxf.jaxrs.utils.JAXRSUtils;
+import org.apache.cxf.jaxrs.utils.ResourceUtils;
+import org.apache.cxf.jaxrs.utils.schemas.SchemaHandler;
+import org.apache.cxf.message.Message;
+import org.apache.cxf.staxutils.DelegatingXMLStreamWriter;
+import org.apache.cxf.staxutils.StaxUtils;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.MavenProjectHelper;
+import org.apache.ws.commons.schema.XmlSchema;
+
+/**
+ * @goal java2wadl
+ * @description CXF Java To WADL Tool
+ * @requiresDependencyResolution test
+ * @threadSafe
+*/
+public class Java2WADLMojo extends AbstractMojo {
+    
+    public static final String WADL_NS = "http://wadl.dev.java.net/2009/02";
+    private static final String JAXB_DEFAULT_NAMESPACE = "##default";
+    private static final String JAXB_DEFAULT_NAME = "##default";
+    private static final String CLASSPATH_PREFIX = "classpath:";
+    private static final String DEFAULT_NS_PREFIX = "prefix";
+    
+    private ConcurrentHashMap<String, String> docLocationMap = new ConcurrentHashMap<String, String>();
+    private Map<String, List<String>> externalQnamesMap;
+    private ElementQNameResolver resolver;
+    private String nsPrefix = DEFAULT_NS_PREFIX;
+    
+    private List<ClassResourceInfo> classResourceInfos = new ArrayList<ClassResourceInfo>();
+    
+        
+    /**
+     * @parameter
+     */
+    private String outputFile;
+
+   
+    
+    /**
+     * @parameter
+     */
+    private String address;
+    
+    
+    /**
+     * Attach the generated wadl file to the list of files to be deployed
+     * on install. This means the wadl file will be copied to the repository
+     * with groupId, artifactId and version of the project and type "wadl".
+     *
+     * With this option you can use the maven repository as a Service Repository.
+     *
+     * @parameter default-value="true"
+     */
+    private Boolean attachWadl;
+    
+    
+    /**
+     * @parameter
+     */
+    private String classifier;
+
+    /**
+     * @parameter
+     * @required
+     */
+    private List<String> classResourceNames;
+    
+    /**
+     * @parameter
+     */
+    private List<String> privateAddresses;
+
+    /**
+     * @parameter expression="${project}"
+     * @required
+     */
+    private MavenProject project;
+    
+    
+    /**
+     * Maven ProjectHelper.
+     *
+     * @component
+     * @readonly
+     */
+    private MavenProjectHelper projectHelper;
+
+
+    /**
+     * @parameter default-value="false"
+     */
+    private boolean useJson;
+
+    /**
+     * @parameter
+     */
+    private String wadlNamespace;
+    
+    
+    /**
+     * @parameter default-value="true"
+     */
+    private boolean useJaxbContextForQnames;
+    
+    /**
+     * @parameter default-value="false"
+     */
+    private boolean ignoreForwardSlash;
+    
+    /**
+     * @parameter default-value="false"
+     */
+    private boolean addResourceAndMethodIds;
+    
+    /**
+     * @parameter default-value="true"
+     */
+    private boolean singleResourceMultipleMethods;
+    
+    /**
+     * @parameter default-value="false"
+     */
+    private boolean useSingleSlashResource;
+    
+    /**
+     * @parameter default-value="true"
+     */
+    private boolean supportCollections;
+    
+    /**
+     * @parameter default-value="true"
+     */
+    //private boolean ignoreMessageWriters;
+    
+    /**
+     * @parameter default-value="false"
+     */
+    private boolean linkJsonToXmlSchema;
+    
+        
+    /**
+     * @parameter
+     */
+    private String applicationTitle;
+    
+    /**
+     * @parameter
+     */
+    private List<String> externalSchemasCache;
+    
+    /**
+     * @parameter
+     */
+    private List<URI> externalSchemaLinks;
+    
+   
+
+    /**
+     * Attach the generated wadl file to the list of files to be deployed
+     * on install. This means the wadl file will be copied to the repository
+     * with groupId, artifactId and version of the project and type "wadl".
+     *
+     * With this option you can use the maven repository as a Service Repository.
+     *
+     * @parameter default-value="true"
+     */
+    //private Boolean attachWadl;
+
+    
+    public void execute() throws MojoExecutionException {
+        StringBuilder sbMain = new StringBuilder();
+        sbMain.append("<application");
+        if (!useJson) {
+            sbMain.append(" xmlns=\"").append(getNamespace()).append("\" xmlns:xs=\"")
+                .append(XmlSchemaConstants.XSD_NAMESPACE_URI).append("\"");
+        }
+        StringBuilder sbGrammars = new StringBuilder();
+        sbGrammars.append("<grammars>");
+
+        StringBuilder sbResources = new StringBuilder();
+        sbResources.append("<resources base=\"").append(getBaseURI()).append("\">");
+
+        getResourcesList();
+
+        ResourceTypes resourceTypes = 
+            ResourceUtils.getAllRequestResponseTypes(classResourceInfos, useJaxbContextForQnames);
+        Set<Class<?>> allTypes = resourceTypes.getAllTypes().keySet();
+
+        JAXBContext jaxbContext = useJaxbContextForQnames ? ResourceUtils
+            .createJaxbContext(new HashSet<Class<?>>(allTypes), null, null) : null;
+
+        SchemaWriter schemaWriter = createSchemaWriter(resourceTypes, jaxbContext, null);
+        ElementQNameResolver qnameResolver = schemaWriter == null
+            ? null : createElementQNameResolver(jaxbContext);
+
+        Map<Class<?>, QName> clsMap = new IdentityHashMap<Class<?>, QName>();
+        Set<ClassResourceInfo> visitedResources = new LinkedHashSet<ClassResourceInfo>();
+        for (ClassResourceInfo cri : classResourceInfos) {
+            startResourceTag(sbResources, cri.getServiceClass(), cri.getURITemplate().getValue());
+            Annotation[] anns = cri.getServiceClass().getAnnotations();
+            if (anns.length == 0) {
+                Annotation ann = AnnotationUtils.getClassAnnotation(cri.getServiceClass(), Description.class);
+                if (ann != null) {
+                    anns = new Annotation[] {
+                        ann
+                    };
+                }
+            }
+            handleDocs(anns, sbResources, DocTarget.RESOURCE, true, useJson);
+            handleResource(sbResources, allTypes, qnameResolver, clsMap, cri, visitedResources, useJson);
+            sbResources.append("</resource>");
+        }
+        sbResources.append("</resources>");
+
+        handleGrammars(sbMain, sbGrammars, schemaWriter, clsMap);
+
+        sbGrammars.append("</grammars>");
+        sbMain.append(">");
+        handleApplicationDocs(sbMain);
+        sbMain.append(sbGrammars.toString());
+        sbMain.append(sbResources.toString());
+        sbMain.append("</application>");
+        getLog().debug("the wadl is =====> \n" + sbMain.toString());
+        generateWadl(sbMain.toString());
+    }
+    
+    private void generateWadl(String wadl) throws MojoExecutionException {
+     
+        if (outputFile == null && project != null) {
+            // Put the wadl in target/generated/wadl
+            String className = classResourceNames.get(0);
+            int i = className.lastIndexOf('.');
+            String name = className.substring(i + 1);
+            outputFile = (project.getBuild().getDirectory() + "/generated/wadl/" + name + ".wadl")
+                .replace("/", File.separator);
+        }
+        
+        BufferedWriter writer = null;
+        try {
+            FileUtils.mkDir(new File(outputFile).getParentFile());
+            /*File wadlFile = new File(outputFile);
+            if (!wadlFile.exists()) {
+                wadlFile.createNewFile();
+            }*/
+            writer = new BufferedWriter(new FileWriter(outputFile));
+            writer.write(wadl);
+
+        } catch (IOException e) {
+            throw new MojoExecutionException(e.getMessage(), e);
+        } finally {
+            try {
+                if (writer != null) {
+                    writer.close();
+                }
+            } catch (IOException e) {
+                throw new MojoExecutionException(e.getMessage(), e);
+            }
+        }
+        // Attach the generated wadl file to the artifacts that get deployed
+        // with the enclosing project
+        if (attachWadl && outputFile != null) {
+            File wadlFile = new File(outputFile);
+            if (wadlFile.exists()) {
+                if (classifier != null) {
+                    projectHelper.attachArtifact(project, "wadl", classifier, wadlFile);
+                } else {
+                    projectHelper.attachArtifact(project, "wadl", wadlFile);
+                }
+                
+            }
+        }
+    }
+
+    private String getBaseURI() {
+        if (address != null) {
+            return address;
+        } else {
+            return "http://localhost:8181/cxf/";
+        }
+    }
+
+    protected void handleGrammars(StringBuilder sbApp, StringBuilder sbGrammars, SchemaWriter writer,
+                                  Map<Class<?>, QName> clsMap) {
+        if (writer == null) {
+            return;
+        }
+
+        Map<String, String> map = new HashMap<String, String>();
+        for (QName qname : clsMap.values()) {
+            map.put(qname.getPrefix(), qname.getNamespaceURI());
+        }
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            sbApp.append(" xmlns:").append(entry.getKey()).append("=\"").append(entry.getValue())
+                .append("\"");
+        }
+
+        writer.write(sbGrammars);
+    }
+
+    protected void handleResource(StringBuilder sb, Set<Class<?>> jaxbTypes,
+                                  ElementQNameResolver qnameResolver, Map<Class<?>, QName> clsMap,
+                                  ClassResourceInfo cri, Set<ClassResourceInfo> visitedResources,
+                                  boolean isJsonFormat) {
+        visitedResources.add(cri);
+        Map<Parameter, Object> classParams = getClassParameters(cri);
+
+        List<OperationResourceInfo> sortedOps = sortOperationsByPath(cri.getMethodDispatcher()
+            .getOperationResourceInfos());
+
+        boolean resourceTagOpened = false;
+        for (int i = 0; i < sortedOps.size(); i++) {
+            OperationResourceInfo ori = sortedOps.get(i);
+
+            if (ori.getHttpMethod() == null) {
+                Class<?> cls = getMethod(ori).getReturnType();
+                ClassResourceInfo subcri = cri.findResource(cls, cls);
+                if (subcri != null && !visitedResources.contains(subcri)) {
+                    startResourceTag(sb, subcri.getServiceClass(), ori.getURITemplate().getValue());
+                    handleDocs(subcri.getServiceClass().getAnnotations(), sb, DocTarget.RESOURCE, true,
+                               isJsonFormat);
+                    handlePathAndMatrixParams(sb, ori, isJsonFormat);
+                    handleResource(sb, jaxbTypes, qnameResolver, clsMap, subcri, visitedResources, isJsonFormat);
+                    sb.append("</resource>");
+                } else {
+                    handleDynamicSubresource(sb, jaxbTypes, qnameResolver, clsMap, ori, subcri, isJsonFormat);
+                }
+                continue;
+            }
+            OperationResourceInfo nextOp = i + 1 < sortedOps.size() ? sortedOps.get(i + 1) : null;
+            resourceTagOpened = handleOperation(sb, jaxbTypes, qnameResolver, clsMap, ori, classParams,
+                                                nextOp, resourceTagOpened, isJsonFormat, i);
+        }
+    }
+
+    private Map<Parameter, Object> getClassParameters(ClassResourceInfo cri) {
+        Map<Parameter, Object> classParams = new LinkedHashMap<Parameter, Object>();
+        List<Method> paramMethods = cri.getParameterMethods();
+        for (Method m : paramMethods) {
+            classParams.put(ResourceUtils.getParameter(0, m.getAnnotations(), m.getParameterTypes()[0]), m);
+        }
+        List<Field> fieldParams = cri.getParameterFields();
+        for (Field f : fieldParams) {
+            classParams.put(ResourceUtils.getParameter(0, f.getAnnotations(), f.getType()), f);
+        }
+        return classParams;
+    }
+
+    private void startResourceTag(StringBuilder sb, Class<?> serviceClass, String path) {
+        sb.append("<resource path=\"").append(getPath(path)).append("\"");
+        if (addResourceAndMethodIds) {
+            QName jaxbQname = null;
+            if (useJaxbContextForQnames) {
+                jaxbQname = getJaxbQName(null, serviceClass, new HashMap<Class<?>, QName>(0));
+            }
+            String pName = jaxbQname == null ? PackageUtils.getPackageName(serviceClass) : jaxbQname
+                .getNamespaceURI();
+            String localName = jaxbQname == null ? serviceClass.getSimpleName() : jaxbQname.getLocalPart();
+            String finalName = jaxbQname == null ? pName + "." : "{" + pName + "}";
+            sb.append(" id=\"").append(finalName + localName).append("\"");
+        }
+        sb.append(">");
+    }
+
+    protected String getPath(String path) {
+        String thePath = null;
+        if (ignoreForwardSlash && path.startsWith("/") && path.length() > 0) {
+            thePath = path.substring(1);
+        } else {
+            thePath = path;
+        }
+        
+        return xmlEncodeIfNeeded(thePath);
+    }
+
+    private String xmlEncodeIfNeeded(String value) {
+        return XMLUtils.xmlEncode(value);
+    }
+    
+    private void startMethodTag(StringBuilder sb, OperationResourceInfo ori) {
+        sb.append("<method name=\"").append(ori.getHttpMethod()).append("\"");
+        if (addResourceAndMethodIds) {
+            sb.append(" id=\"").append(getMethod(ori).getName()).append("\"");
+        }
+        sb.append(">");
+    }
+
+    // CHECKSTYLE:OFF
+    protected boolean handleOperation(StringBuilder sb, Set<Class<?>> jaxbTypes,
+                                      ElementQNameResolver qnameResolver, Map<Class<?>, QName> clsMap,
+                                      OperationResourceInfo ori, Map<Parameter, Object> classParams,
+                                      OperationResourceInfo nextOp, boolean resourceTagOpened,
+                                      boolean isJson, int index) {
+        Annotation[] anns = getMethod(ori).getAnnotations();
+        // CHECKSTYLE:ON
+        boolean samePathOperationFollows = singleResourceMultipleMethods && compareOperations(ori, nextOp);
+
+        String path = ori.getURITemplate().getValue();
+        if (!resourceTagOpened && openResource(path)) {
+            resourceTagOpened = true;
+            URITemplate template = ori.getClassResourceInfo().getURITemplate();
+            if (template != null) {
+                String parentPath = template.getValue();
+                if (parentPath.endsWith("/") && path.startsWith("/") && path.length() > 1) {
+                    path = path.substring(1);
+                }
+            }
+            sb.append("<resource path=\"").append(getPath(path)).append("\">");
+            handleDocs(anns, sb, DocTarget.RESOURCE, false, isJson);
+            handlePathAndMatrixClassParams(sb, classParams, isJson);
+            handlePathAndMatrixParams(sb, ori, isJson);
+        } else if (index == 0) {
+            handlePathAndMatrixClassParams(sb, classParams, isJson);
+            handlePathAndMatrixParams(sb, ori, isJson);
+        }
+
+        startMethodTag(sb, ori);
+        handleDocs(anns, sb, DocTarget.METHOD, true, isJson);
+        if (getMethod(ori).getParameterTypes().length != 0 || classParams.size() != 0) {
+            sb.append("<request>");
+            handleDocs(anns, sb, DocTarget.REQUEST, false, isJson);
+
+            boolean isForm = isFormRequest(ori);
+
+            doHandleClassParams(sb, classParams, isJson, ParameterType.QUERY, ParameterType.HEADER);
+            for (Parameter p : ori.getParameters()) {
+                if (isForm && p.getType() == ParameterType.REQUEST_BODY) {
+                    continue;
+                }
+                handleParameter(sb, jaxbTypes, qnameResolver, clsMap, ori, p, isJson);
+            }
+            if (isForm) {
+                handleFormRepresentation(sb, jaxbTypes, qnameResolver, clsMap, ori, getFormClass(ori), isJson);
+            }
+            sb.append("</request>");
+        }
+        sb.append("<response");
+        Class<?> returnType = getMethod(ori).getReturnType();
+        boolean isVoid = void.class == returnType;
+        if (isVoid) {
+            boolean oneway = getMethod(ori).getAnnotation(Oneway.class) != null;
+            sb.append(" status=\"" + (oneway ? 202 : 204) + "\"");
+        }
+        sb.append(">");
+        handleDocs(anns, sb, DocTarget.RESPONSE, false, isJson);
+        if (!isVoid) {
+            handleRepresentation(sb, jaxbTypes, qnameResolver, clsMap, ori, returnType, isJson, false);
+        }
+        sb.append("</response>");
+
+        sb.append("</method>");
+
+        if (resourceTagOpened && !samePathOperationFollows) {
+            sb.append("</resource>");
+            resourceTagOpened = false;
+        }
+        return resourceTagOpened;
+    }
+
+    protected boolean compareOperations(OperationResourceInfo ori1, OperationResourceInfo ori2) {
+        if (ori1 == null || ori2 == null
+            || !ori1.getURITemplate().getValue().equals(ori2.getURITemplate().getValue())
+            || ori1.getHttpMethod() != null && ori2.getHttpMethod() == null || ori2.getHttpMethod() != null
+            && ori1.getHttpMethod() == null) {
+            return false;
+        }
+        int ori1PathParams = 0;
+        int ori1MatrixParams = 0;
+        for (Parameter p : ori1.getParameters()) {
+            if (p.getType() == ParameterType.PATH) {
+                ori1PathParams++;
+            } else if (p.getType() == ParameterType.MATRIX) {
+                ori1MatrixParams++;
+            }
+        }
+
+        int ori2PathParams = 0;
+        int ori2MatrixParams = 0;
+        for (Parameter p : ori2.getParameters()) {
+            if (p.getType() == ParameterType.PATH) {
+                ori2PathParams++;
+            } else if (p.getType() == ParameterType.MATRIX) {
+                ori2MatrixParams++;
+            }
+        }
+
+        return ori1PathParams == ori2PathParams && ori1MatrixParams == ori2MatrixParams;
+    }
+
+    private boolean openResource(String path) {
+        if ("/".equals(path)) {
+            return useSingleSlashResource;
+        }
+        return true;
+    }
+
+    protected void handleDynamicSubresource(StringBuilder sb, Set<Class<?>> jaxbTypes,
+                                            ElementQNameResolver qnameResolver, Map<Class<?>, QName> clsMap,
+                                            OperationResourceInfo ori, ClassResourceInfo subcri,
+                                            boolean isJson) {
+        if (!isJson) {
+            if (subcri != null) {
+                sb.append("<!-- Recursive subresource -->");
+            } else {
+                sb.append("<!-- Dynamic subresource -->");
+            }
+        }
+        startResourceTag(sb, subcri != null ? subcri.getServiceClass() : Object.class, ori.getURITemplate()
+            .getValue());
+        handlePathAndMatrixParams(sb, ori, isJson);
+        sb.append("</resource>");
+    }
+
+    protected void handlePathAndMatrixClassParams(StringBuilder sb, Map<Parameter, Object> params,
+                                                  boolean isJson) {
+        doHandleClassParams(sb, params, isJson, ParameterType.PATH);
+        doHandleClassParams(sb, params, isJson, ParameterType.MATRIX);
+    }
+
+    protected void doHandleClassParams(StringBuilder sb, Map<Parameter, Object> params, boolean isJson,
+                                       ParameterType... pType) {
+        Set<ParameterType> pTypes = new LinkedHashSet<ParameterType>(Arrays.asList(pType));
+        for (Map.Entry<Parameter, Object> entry : params.entrySet()) {
+            Parameter pm = entry.getKey();
+            Object obj = entry.getValue();
+            if (pTypes.contains(pm.getType())) {
+                Class<?> cls = obj instanceof Method ? ((Method)obj).getParameterTypes()[0] : ((Field)obj)
+                    .getType();
+                Type type = obj instanceof Method
+                    ? ((Method)obj).getGenericParameterTypes()[0] : ((Field)obj).getGenericType();
+                Annotation[] ann = obj instanceof Method
+                    ? ((Method)obj).getParameterAnnotations()[0] : ((Field)obj).getAnnotations();
+                doWriteParam(sb, pm, cls, type, pm.getName(), ann, isJson);
+            }
+        }
+    }
+
+    protected void handlePathAndMatrixParams(StringBuilder sb, OperationResourceInfo ori, boolean isJson) {
+        handleParams(sb, ori, ParameterType.PATH, isJson);
+        handleParams(sb, ori, ParameterType.MATRIX, isJson);
+    }
+
+    protected void handleParameter(StringBuilder sb, Set<Class<?>> jaxbTypes,
+                                   ElementQNameResolver qnameResolver, Map<Class<?>, QName> clsMap,
+                                   OperationResourceInfo ori, Parameter pm, boolean isJson) {
+        Class<?> cls = getMethod(ori).getParameterTypes()[pm.getIndex()];
+        if (pm.getType() == ParameterType.REQUEST_BODY) {
+            handleRepresentation(sb, jaxbTypes, qnameResolver, clsMap, ori, cls, isJson, true);
+            return;
+        }
+        if (pm.getType() == ParameterType.PATH || pm.getType() == ParameterType.MATRIX) {
+            return;
+        }
+        if (pm.getType() == ParameterType.HEADER || pm.getType() == ParameterType.QUERY) {
+            writeParam(sb, pm, ori, isJson);
+        }
+
+    }
+
+    protected void handleParams(StringBuilder sb, OperationResourceInfo ori, ParameterType type,
+                                boolean isJson) {
+        for (Parameter pm : ori.getParameters()) {
+            if (pm.getType() == type) {
+                writeParam(sb, pm, ori, isJson);
+            }
+        }
+    }
+
+    private Annotation[] getBodyAnnotations(OperationResourceInfo ori, boolean inbound) {
+        Method opMethod = getMethod(ori);
+        if (inbound) {
+            for (Parameter pm : ori.getParameters()) {
+                if (pm.getType() == ParameterType.REQUEST_BODY) {
+                    return opMethod.getParameterAnnotations()[pm.getIndex()];
+                }
+            }
+            return new Annotation[] {};
+        } else {
+            return opMethod.getDeclaredAnnotations();
+        }
+    }
+
+    private void writeParam(StringBuilder sb, Parameter pm, OperationResourceInfo ori, boolean isJson) {
+        Method method = getMethod(ori);
+        Class<?> type = method.getParameterTypes()[pm.getIndex()];
+        if (!"".equals(pm.getName())) {
+            doWriteParam(sb, pm, type, method.getGenericParameterTypes()[pm.getIndex()], pm.getName(),
+                         method.getParameterAnnotations()[pm.getIndex()], isJson);
+        } else {
+            List<Class<?>> parentBeanClasses = new LinkedList<Class<?>>();
+            parentBeanClasses.add(type);
+            doWriteBeanParam(sb, type, pm, null, parentBeanClasses, isJson);
+        }
+    }
+
+    private void doWriteBeanParam(StringBuilder sb, Class<?> type, Parameter pm, String parentName,
+                                  List<Class<?>> parentBeanClasses, boolean isJson) {
+        Map<Parameter, Class<?>> pms = InjectionUtils.getParametersFromBeanClass(type, pm.getType(), true);
+        for (Map.Entry<Parameter, Class<?>> entry : pms.entrySet()) {
+            String name = entry.getKey().getName();
+            if (parentName != null) {
+                name = parentName + "." + name;
+            }
+            Class<?> paramCls = entry.getValue();
+            boolean isPrimitive = InjectionUtils.isPrimitive(paramCls) || paramCls.isEnum();
+            if (isPrimitive || InjectionUtils.isSupportedCollectionOrArray(paramCls)) {
+                doWriteParam(sb, entry.getKey(), paramCls, paramCls, name, new Annotation[] {}, isJson);
+            } else if (!parentBeanClasses.contains(paramCls)) {
+                parentBeanClasses.add(paramCls);
+                doWriteBeanParam(sb, paramCls, entry.getKey(), name, parentBeanClasses, isJson);
+            }
+        }
+    }
+
+    protected void doWriteParam(StringBuilder sb, Parameter pm, Class<?> type, Type genericType,
+                                String paramName, Annotation[] anns, boolean isJson) {
+        ParameterType pType = pm.getType();
+        boolean isForm = isFormParameter(pm, type, anns);
+        if (paramName == null && isForm) {
+            Multipart m = AnnotationUtils.getAnnotation(anns, Multipart.class);
+            if (m != null) {
+                paramName = m.value();
+            }
+        }
+        sb.append("<param name=\"").append(paramName).append("\" ");
+        String style = ParameterType.PATH == pType ? "template" : isForm
+            ? "query" : ParameterType.REQUEST_BODY == pType ? "plain" : pType.toString().toLowerCase();
+        sb.append("style=\"").append(style).append("\"");
+        if (pm.getDefaultValue() != null) {
+            sb.append(" default=\"").append(xmlEncodeIfNeeded(pm.getDefaultValue()))
+                .append("\"");
+        }
+        if (InjectionUtils.isSupportedCollectionOrArray(type)) {
+            type = InjectionUtils.getActualType(genericType);
+            sb.append(" repeating=\"true\"");
+        }
+
+        String value = XmlSchemaPrimitiveUtils.getSchemaRepresentation(type);
+        if (value == null && type.isEnum()) {
+            value = "xs:string";
+        }
+        if (value != null) {
+            if (isJson) {
+                value = value.substring(3);
+            }
+            sb.append(" type=\"").append(value).append("\"");
+        }
+        if (type.isEnum()) {
+            sb.append(">");
+            handleDocs(anns, sb, DocTarget.PARAM, true, isJson);
+            setEnumOptions(sb, type);
+            sb.append("</param>");
+        } else {
+            addDocsAndCloseElement(sb, anns, "param", DocTarget.PARAM, true, isJson);
+        }
+    }
+
+    private void setEnumOptions(StringBuilder sb, Class<?> enumClass) {
+        try {
+            Method m = enumClass.getMethod("values", new Class[] {});
+            Object[] values = (Object[])m.invoke(null, new Object[] {});
+            m = enumClass.getMethod("toString", new Class[] {});
+            for (Object o : values) {
+                String str = (String)m.invoke(o, new Object[] {});
+                sb.append("<option value=\"" + str + "\"/>");
+            }
+
+        } catch (Throwable ex) {
+            // ignore
+        }
+    }
+
+    private void addDocsAndCloseElement(StringBuilder sb, Annotation[] anns, String elementName,
+                                        String category, boolean allowDefault, boolean isJson) {
+        if (isDocAvailable(anns)) {
+            sb.append(">");
+            handleDocs(anns, sb, category, allowDefault, isJson);
+            sb.append("</" + elementName + ">");
+        } else {
+            sb.append("/>");
+        }
+    }
+
+    private boolean isDocAvailable(Annotation[] anns) {
+        return AnnotationUtils.getAnnotation(anns, Description.class) != null
+               || AnnotationUtils.getAnnotation(anns, Descriptions.class) != null;
+    }
+
+    // TODO: Collapse multiple parameters into a holder
+    // CHECKSTYLE:OFF
+    protected void handleRepresentation(StringBuilder sb, Set<Class<?>> jaxbTypes,
+                                        ElementQNameResolver qnameResolver, Map<Class<?>, QName> clsMap,
+                                        OperationResourceInfo ori, Class<?> type, boolean isJson,
+                                        boolean inbound) {
+        // CHECKSTYLE:ON
+        List<MediaType> types = inbound ? ori.getConsumeTypes() : ori.getProduceTypes();
+        if (MultivaluedMap.class.isAssignableFrom(type)) {
+            types = Collections.singletonList(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+        } else if (isWildcard(types)) {
+            types = Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        }
+
+        Method opMethod = getMethod(ori);
+        boolean isPrimitive = InjectionUtils.isPrimitive(type);
+        for (MediaType mt : types) {
+
+            sb.append("<representation");
+            sb.append(" mediaType=\"").append(JAXRSUtils.mediaTypeToString(mt)).append("\"");
+            if (isJson && !mt.getSubtype().contains("json")) {
+                sb.append("/>");
+                continue;
+            }
+
+            boolean allowDefault = true;
+            String docCategory;
+            Annotation[] anns;
+            if (inbound) {
+                int index = getRequestBodyParam(ori).getIndex();
+                anns = opMethod.getParameterAnnotations()[index];
+                if (!isDocAvailable(anns)) {
+                    anns = opMethod.getAnnotations();
+                }
+                docCategory = DocTarget.PARAM;
+            } else {
+                anns = opMethod.getAnnotations();
+                docCategory = DocTarget.RETURN;
+                allowDefault = false;
+            }
+            if (isPrimitive) {
+                sb.append(">");
+                Parameter p = inbound ? getRequestBodyParam(ori) : new Parameter(ParameterType.REQUEST_BODY,
+                                                                                 0, "result");
+                doWriteParam(sb, p, type, type, p.getName() == null ? "request" : p.getName(), anns, isJson);
+                sb.append("</representation>");
+            } else {
+                boolean isCollection = InjectionUtils.isSupportedCollectionOrArray(type);
+                if (isCollection) {
+                    type = InjectionUtils.getActualType(!inbound ? opMethod.getGenericReturnType() : opMethod
+                        .getGenericParameterTypes()[getRequestBodyParam(ori).getIndex()]);
+                } else {
+                    type = ResourceUtils.getActualJaxbType(type, opMethod, inbound);
+                }
+                if (isJson) {
+                    sb.append(" element=\"").append(type.getSimpleName()).append("\"");
+                } else if (qnameResolver != null
+                           && (mt.getSubtype().contains("xml") || linkJsonToXmlSchema
+                                                                  && mt.getSubtype().contains("json"))
+                           && jaxbTypes.contains(type)) {
+                    generateQName(sb, qnameResolver, clsMap, type, isCollection,
+                                  getBodyAnnotations(ori, inbound));
+                }
+                addDocsAndCloseElement(sb, anns, "representation", docCategory, allowDefault, isJson);
+            }
+        }
+
+    }
+
+    private Parameter getRequestBodyParam(OperationResourceInfo ori) {
+        for (Parameter p : ori.getParameters()) {
+            if (p.getType() == ParameterType.REQUEST_BODY) {
+                return p;
+            }
+        }
+        throw new IllegalStateException();
+    }
+
+    private boolean isWildcard(List<MediaType> types) {
+        return types.size() == 1 && types.get(0).equals(MediaType.WILDCARD_TYPE);
+    }
+
+    private void handleFormRepresentation(StringBuilder sb, Set<Class<?>> jaxbTypes,
+                                          ElementQNameResolver qnameResolver, Map<Class<?>, QName> clsMap,
+                                          OperationResourceInfo ori, Class<?> type, boolean isJson) {
+        if (type != null) {
+            handleRepresentation(sb, jaxbTypes, qnameResolver, clsMap, ori, type, false, true);
+        } else {
+            List<MediaType> types = ori.getConsumeTypes();
+            MediaType formType = isWildcard(types) ? MediaType.APPLICATION_FORM_URLENCODED_TYPE : types
+                .get(0);
+            sb.append("<representation");
+            sb.append(" mediaType=\"").append(formType).append("\"");
+            if (isJson) {
+                sb.append("/>");
+            } else {
+                sb.append(">");
+                List<Parameter> params = ori.getParameters();
+                for (int i = 0; i < params.size(); i++) {
+                    if (isFormParameter(params.get(i), getMethod(ori).getParameterTypes()[i], getMethod(ori)
+                        .getParameterAnnotations()[i])) {
+                        writeParam(sb, params.get(i), ori, false);
+                    }
+                }
+                sb.append("</representation>");
+            }
+        }
+    }
+
+    protected List<OperationResourceInfo> sortOperationsByPath(Set<OperationResourceInfo> ops) {
+        List<OperationResourceInfo> opsWithSamePath = new LinkedList<OperationResourceInfo>(ops);
+        Collections.sort(opsWithSamePath, new Comparator<OperationResourceInfo>() {
+
+            public int compare(OperationResourceInfo op1, OperationResourceInfo op2) {
+                boolean sub1 = op1.getHttpMethod() == null;
+                boolean sub2 = op2.getHttpMethod() == null;
+                if (sub1 && !sub2) {
+                    return 1;
+                } else if (!sub1 && sub2) {
+                    return -1;
+                }
+                URITemplate ut1 = op1.getURITemplate();
+                URITemplate ut2 = op2.getURITemplate();
+                int result = ut1.getValue().compareTo(ut2.getValue());
+                if (result == 0 && !(sub1 && sub2)) {
+                    result = op1.getHttpMethod().compareTo(op2.getHttpMethod());
+                }
+                return result;
+            }
+
+        });
+        return opsWithSamePath;
+    }
+
+    
+    private ClassLoader getClassLoader() throws MojoExecutionException {
+        try {
+            List<?> runtimeClasspathElements = project.getRuntimeClasspathElements();
+            URL[] runtimeUrls = new URL[runtimeClasspathElements.size()];
+            for (int i = 0; i < runtimeClasspathElements.size(); i++) {
+                String element = (String)runtimeClasspathElements.get(i);
+                runtimeUrls[i] = new File(element).toURI().toURL();
+            }
+            URLClassLoader newLoader = new URLClassLoader(runtimeUrls, Thread.currentThread()
+                .getContextClassLoader());
+            return newLoader;
+        } catch (Exception e) {
+            throw new MojoExecutionException(e.getMessage(), e);
+        }
+    }
+    
+    private void getResourcesList() throws MojoExecutionException {
+        for (String className : classResourceNames) {
+            Object bean = null;
+            try {
+                //bean = Class.forName(className).newInstance();
+                bean = getClassLoader().loadClass(className).newInstance();
+            } catch (Exception e) {
+                throw new MojoExecutionException(e.getMessage(), e);
+            } 
+            Class<?> realClass = ClassHelper.getRealClass(bean);
+            ClassResourceInfo cri = getCreatedFromModel(realClass);
+            if (cri != null) {
+                if (!InjectionUtils.isConcreteClass(cri.getServiceClass())) {
+                    cri = new ClassResourceInfo(cri);
+                    classResourceInfos.add(cri);
+                }
+                cri.setResourceClass(bean.getClass());
+                cri.setResourceProvider(new SingletonResourceProvider(bean));
+                continue;
+            }
+            
+            cri = ResourceUtils.createClassResourceInfo(bean.getClass(), realClass, true, true,
+                                                        getBus());
+            if (cri != null) {
+                classResourceInfos.add(cri);
+                cri.setResourceProvider(
+                                   new SingletonResourceProvider(bean));
+            }
+        }
+    }
+    
+    private Bus getBus() {
+        return null;
+    }
+
+    private ClassResourceInfo getCreatedFromModel(Class<?> realClass) {
+        
+        for (ClassResourceInfo cri : classResourceInfos) {
+            if (cri.isCreatedFromModel() 
+                && cri.isRoot() && cri.getServiceClass().isAssignableFrom(realClass)) {
+                return cri;
+            }
+        }
+        return null;
+    }
+
+    // TODO: deal with caching later on
+    public Response getExistingWadl(Message m, UriInfo ui, MediaType mt) {
+        Endpoint ep = m.getExchange().get(Endpoint.class);
+        if (ep != null) {
+            String loc = (String)ep.get(JAXRSUtils.DOC_LOCATION);
+            if (loc != null) {
+                try {
+                    InputStream is = ResourceUtils.getResourceStream(loc, (Bus)ep.get(Bus.class.getName()));
+                    if (is != null) {
+                        Element appEl = StaxUtils.read(is).getDocumentElement();
+
+                        List<Element> grammarEls = DOMUtils.getChildrenWithName(appEl, WadlGenerator.WADL_NS,
+                                                                                "grammars");
+                        if (grammarEls.size() == 1) {
+                            handleExistingDocRefs(DOMUtils.getChildrenWithName(grammarEls.get(0),
+                                                                               WadlGenerator.WADL_NS,
+                                                                               "include"), "href", loc, "",
+                                                  m, ui);
+                        }
+
+                        List<Element> resourcesEls = DOMUtils.getChildrenWithName(appEl,
+                                                                                  WadlGenerator.WADL_NS,
+                                                                                  "resources");
+                        if (resourcesEls.size() == 1) {
+                            DOMUtils.setAttribute(resourcesEls.get(0), "base", getBaseURI());
+
+                            List<Element> resourceEls = DOMUtils.getChildrenWithName(resourcesEls.get(0),
+                                                                                     WadlGenerator.WADL_NS,
+                                                                                     "resource");
+                            handleExistingDocRefs(resourceEls, "type", loc, "", m, ui);
+
+                            return Response.ok().type(mt).entity(new DOMSource(appEl)).build();
+                        }
+
+                    }
+                } catch (Exception ex) {
+                    throw new InternalServerErrorException(ex);
+                }
+            }
+        }
+        return null;
+    }
+
+    // TODO: deal with caching later on
+    public Response getExistingResource(Message m, UriInfo ui, String href) {
+        String loc = docLocationMap.get(href);
+        Endpoint ep = m.getExchange().get(Endpoint.class);
+        if (ep != null && loc != null) {
+            try {
+                int fragmentIndex = loc.lastIndexOf("#");
+                if (fragmentIndex != -1) {
+                    loc = loc.substring(0, fragmentIndex);
+                }
+                InputStream is = ResourceUtils.getResourceStream(loc, (Bus)ep.get(Bus.class.getName()));
+                if (is != null) {
+                    Element docEl = StaxUtils.read(is).getDocumentElement();
+                    if (fragmentIndex != -1) {
+                        List<Element> grammarEls = DOMUtils.getChildrenWithName(docEl, WadlGenerator.WADL_NS,
+                                                                                "grammars");
+                        if (grammarEls.size() == 1) {
+                            handleExistingDocRefs(DOMUtils.getChildrenWithName(grammarEls.get(0),
+                                                                               WadlGenerator.WADL_NS,
+                                                                               "include"), "href", loc, href,
+                                                  m, ui);
+                        }
+                    } else {
+                        handleExistingDocRefs(DOMUtils.getChildrenWithName(docEl,
+                                                                           XmlSchemaConstants.XSD_NAMESPACE_URI,
+                                                                           "import"), "schemaLocation", loc,
+                                              href, m, ui);
+                        handleExistingDocRefs(DOMUtils.getChildrenWithName(docEl,
+                                                                           XmlSchemaConstants.XSD_NAMESPACE_URI,
+                                                                           "include"), "schemaLocation", loc,
+                                              href, m, ui);
+                    }
+
+                    return Response.ok().type(MediaType.APPLICATION_XML_TYPE).entity(new DOMSource(docEl))
+                        .build();
+                }
+            } catch (Exception ex) {
+                throw new BadRequestException();
+            }
+
+        }
+        return null;
+    }
+
+    private void handleExistingDocRefs(List<Element> elements, String attrName, String parentDocLoc,
+                                       String parentRef, Message m, UriInfo ui) {
+        int index = parentDocLoc.lastIndexOf('/');
+        parentDocLoc = index == -1 ? parentDocLoc : parentDocLoc.substring(0, index + 1);
+
+        index = parentRef.lastIndexOf('/');
+        parentRef = index == -1 ? "" : parentRef.substring(0, index + 1);
+
+        for (Element element : elements) {
+            String href = element.getAttribute(attrName);
+            String originalRef = href;
+            if (!StringUtils.isEmpty(href) && !href.startsWith("#")) {
+                int fragmentIndex = href.lastIndexOf("#");
+                String fragment = null;
+                if (fragmentIndex != -1) {
+                    fragment = href.substring(fragmentIndex + 1);
+                    href = href.substring(0, fragmentIndex);
+                }
+
+                String actualRef = parentRef + href;
+                docLocationMap.put(actualRef, parentDocLoc + originalRef);
+                UriBuilder ub = UriBuilder.fromUri(getBaseURI()).path(actualRef).fragment(fragment);
+                URI schemaURI = ub.build();
+                DOMUtils.setAttribute(element, attrName, schemaURI.toString());
+            }
+        }
+    }
+
+    private void generateQName(StringBuilder sb, ElementQNameResolver qnameResolver,
+                               Map<Class<?>, QName> clsMap, Class<?> type, boolean isCollection,
+                               Annotation[] annotations) {
+        if (!isCollection) {
+            QName typeQName = clsMap.get(type);
+            if (typeQName != null) {
+                writeQName(sb, typeQName);
+                return;
+            }
+        }
+
+        QName qname = qnameResolver.resolve(type, annotations, Collections.unmodifiableMap(clsMap));
+
+        if (qname != null) {
+            if (!isCollection) {
+                writeQName(sb, qname);
+                clsMap.put(type, qname);
+            } else {
+                XMLName name = AnnotationUtils.getAnnotation(annotations, XMLName.class);
+                QName collectionName = null;
+                if (name != null) {
+                    QName tempQName = JAXRSUtils.convertStringToQName(name.value());
+                    collectionName = new QName(qname.getNamespaceURI(), tempQName.getLocalPart(),
+                                               qname.getPrefix());
+                    writeQName(sb, collectionName);
+                }
+            }
+        }
+    }
+
+    private void writeQName(StringBuilder sb, QName qname) {
+        sb.append(" element=\"").append(qname.getPrefix()).append(':').append(qname.getLocalPart())
+            .append("\"");
+    }
+
+    private SchemaCollection getSchemaCollection(ResourceTypes resourceTypes, JAXBContext context) 
+        throws MojoExecutionException {
+        if (context == null) {
+            return null;
+        }
+        SchemaCollection xmlSchemaCollection = new SchemaCollection();
+        Collection<DOMSource> schemas = new HashSet<DOMSource>();
+        List<String> targetNamespaces = new ArrayList<String>();
+        try {
+            for (DOMResult r : JAXBUtils.generateJaxbSchemas(context, CastUtils.cast(Collections.emptyMap(),
+                                                                                     String.class,
+                                                                                     DOMResult.class))) {
+                Document doc = (Document)r.getNode();
+                if (supportCollections && !resourceTypes.getCollectionMap().isEmpty()) {
+                    ElementQNameResolver theResolver = createElementQNameResolver(context);
+                    String tns = doc.getDocumentElement().getAttribute("targetNamespace");
+                    for (Map.Entry<Class<?>, QName> entry : resourceTypes.getCollectionMap().entrySet()) {
+                        if (tns.equals(entry.getValue().getNamespaceURI())) {
+                            QName typeName = theResolver.resolve(entry.getKey(), new Annotation[] {},
+                                                                 Collections.<Class<?>, QName> emptyMap());
+                            if (typeName != null) {
+                                Element newElement = doc
+                                    .createElementNS(XmlSchemaConstants.XSD_NAMESPACE_URI, "xs:element");
+                                newElement.setAttribute("name", entry.getValue().getLocalPart());
+                                Element ctElement = doc.createElementNS(XmlSchemaConstants.XSD_NAMESPACE_URI,
+                                                                        "xs:complexType");
+                                newElement.appendChild(ctElement);
+                                Element seqElement = doc
+                                    .createElementNS(XmlSchemaConstants.XSD_NAMESPACE_URI, "xs:sequence");
+                                ctElement.appendChild(seqElement);
+                                Element xsElement = doc.createElementNS(XmlSchemaConstants.XSD_NAMESPACE_URI,
+                                                                        "xs:element");
+                                seqElement.appendChild(xsElement);
+                                xsElement.setAttribute("ref", "tns:" + typeName.getLocalPart());
+                                xsElement.setAttribute("minOccurs", "0");
+                                xsElement.setAttribute("maxOccurs", "unbounded");
+
+                                doc.getDocumentElement().appendChild(newElement);
+                            }
+                        }
+                    }
+                }
+                DOMSource source = new DOMSource(doc, r.getSystemId());
+                schemas.add(source);
+                String tns = ((Document)source.getNode()).getDocumentElement()
+                    .getAttribute("targetNamespace");
+                if (!StringUtils.isEmpty(tns)) {
+                    targetNamespaces.add(tns);
+                }
+            }
+        } catch (IOException e) {
+            throw new MojoExecutionException(e.getMessage(), e);
+        }
+
+        boolean hackAroundEmptyNamespaceIssue = false;
+        for (DOMSource r : schemas) {
+            hackAroundEmptyNamespaceIssue = addSchemaDocument(xmlSchemaCollection, targetNamespaces,
+                                                              (Document)r.getNode(), r.getSystemId(),
+                                                              hackAroundEmptyNamespaceIssue);
+        }
+        return xmlSchemaCollection;
+    }
+
+    private QName getJaxbQName(JAXBContextProxy jaxbProxy, Class<?> type, Map<Class<?>, QName> clsMap) {
+
+        XmlRootElement root = type.getAnnotation(XmlRootElement.class);
+        if (root != null) {
+            QName qname = getQNameFromParts(root.name(), root.namespace(), type, clsMap);
+            if (qname != null) {
+                return qname;
+            }
+            String ns = JAXBUtils.getPackageNamespace(type);
+            if (ns != null) {
+                return getQNameFromParts(root.name(), ns, type, clsMap);
+            } else {
+                return null;
+            }
+        }
+
+        try {
+            JAXBBeanInfo jaxbInfo = jaxbProxy == null ? null : JAXBUtils.getBeanInfo(jaxbProxy, type);
+            if (jaxbInfo == null) {
+                return null;
+            }
+            Object instance = type.newInstance();
+            return getQNameFromParts(jaxbInfo.getElementLocalName(instance),
+                                     jaxbInfo.getElementNamespaceURI(instance), type, clsMap);
+        } catch (Exception ex) {
+            // ignore
+        }
+        return null;
+    }
+
+    private String getPrefix(String ns, Map<Class<?>, QName> clsMap) {
+        String prefix = null;
+        for (QName name : clsMap.values()) {
+            if (name.getNamespaceURI().equals(ns)) {
+                prefix = name.getPrefix();
+                break;
+            }
+        }
+        if (prefix == null) {
+            int size = new HashSet<QName>(clsMap.values()).size();
+            prefix = nsPrefix + (size + 1);
+        }
+        return prefix;
+    }
+
+    private boolean isFormRequest(OperationResourceInfo ori) {
+        for (Parameter p : ori.getParameters()) {
+            if (p.getType() == ParameterType.FORM
+                || p.getType() == ParameterType.REQUEST_BODY
+                && (getMethod(ori).getParameterTypes()[p.getIndex()] == MultivaluedMap.class || AnnotationUtils
+                    .getAnnotation(getMethod(ori).getParameterAnnotations()[p.getIndex()], Multipart.class) != null)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Class<?> getFormClass(OperationResourceInfo ori) {
+        List<Parameter> params = ori.getParameters();
+        for (int i = 0; i < params.size(); i++) {
+            if (isFormParameter(params.get(i), getMethod(ori).getParameterTypes()[i], getMethod(ori)
+                .getParameterAnnotations()[i])) {
+                return null;
+            }
+        }
+        return MultivaluedMap.class;
+    }
+
+    private boolean isFormParameter(Parameter pm, Class<?> type, Annotation[] anns) {
+        return ParameterType.FORM == pm.getType() || ParameterType.REQUEST_BODY == pm.getType()
+               && AnnotationUtils.getAnnotation(anns, Multipart.class) != null
+               && InjectionUtils.isPrimitive(type);
+    }
+
+    // TODO : can we reuse this block with JAXBBinding somehow ?
+    public boolean addSchemaDocument(SchemaCollection col, List<String> tnsList, Document d, String systemId,
+                                     boolean hackAroundEmptyNamespaceIssue) {
+        String ns = d.getDocumentElement().getAttribute("targetNamespace");
+
+        if (StringUtils.isEmpty(ns)) {
+            if (DOMUtils.getFirstElement(d.getDocumentElement()) == null) {
+                hackAroundEmptyNamespaceIssue = true;
+                return hackAroundEmptyNamespaceIssue;
+            }
+            // create a copy of the dom so we
+            // can modify it.
+            d = copy(d);
+            ns = tnsList.isEmpty() ? "" : tnsList.get(0);
+            d.getDocumentElement().setAttribute("targetNamespace", ns);
+        }
+
+        if (hackAroundEmptyNamespaceIssue) {
+            d = doEmptyNamespaceHack(d);
+        }
+
+        Node n = d.getDocumentElement().getFirstChild();
+        while (n != null) {
+            if (n instanceof Element) {
+                Element e = (Element)n;
+                if (e.getLocalName().equals("import")) {
+                    e.removeAttribute("schemaLocation");
+                }
+            }
+            n = n.getNextSibling();
+        }
+
+        synchronized (d) {
+            col.read(d, systemId);
+        }
+        return hackAroundEmptyNamespaceIssue;
+    }
+
+    private Document doEmptyNamespaceHack(Document d) {
+        boolean hasStuffToRemove = false;
+        Element el = DOMUtils.getFirstElement(d.getDocumentElement());
+        while (el != null) {
+            if ("import".equals(el.getLocalName()) && StringUtils.isEmpty(el.getAttribute("targetNamespace"))) {
+                hasStuffToRemove = true;
+                break;
+            }
+            el = DOMUtils.getNextElement(el);
+        }
+        if (hasStuffToRemove) {
+            // create a copy of the dom so we
+            // can modify it.
+            d = copy(d);
+            el = DOMUtils.getFirstElement(d.getDocumentElement());
+            while (el != null) {
+                if ("import".equals(el.getLocalName())
+                    && StringUtils.isEmpty(el.getAttribute("targetNamespace"))) {
+                    d.getDocumentElement().removeChild(el);
+                    el = DOMUtils.getFirstElement(d.getDocumentElement());
+                } else {
+                    el = DOMUtils.getNextElement(el);
+                }
+            }
+        }
+
+        return d;
+    }
+
+    private Document copy(Document doc) {
+        try {
+            return StaxUtils.copy(doc);
+        } catch (XMLStreamException e) {
+            // ignore
+        } catch (ParserConfigurationException e) {
+            // ignore
+        }
+        return doc;
+    }
+
+    private QName getQNameFromParts(String name, String namespace, Class<?> type, Map<Class<?>, QName> clsMap) {
+        if (namespace == null || JAXB_DEFAULT_NAMESPACE.equals(namespace) || namespace.length() == 0) {
+            return null;
+        }
+        if (name == null || name.length() == 0) {
+            return null;
+        }
+        if (JAXB_DEFAULT_NAME.equals(name)) {
+            name = type.getSimpleName();
+            StringBuilder sb = new StringBuilder();
+            sb.append(Character.toLowerCase(name.charAt(0)));
+            if (name.length() > 1) {
+                sb.append(name.substring(1));
+            }
+            name = sb.toString();
+        }
+        String prefix = getPrefix(namespace, clsMap);
+        return new QName(namespace, name, prefix);
+    }
+
+    private void handleApplicationDocs(StringBuilder sbApp) {
+        if (applicationTitle != null) {
+            sbApp.append("<doc title=\"" + xmlEncodeIfNeeded(applicationTitle) + "\"/>");
+        }
+    }
+
+    protected void handleDocs(Annotation[] anns, StringBuilder sb, String category, boolean allowDefault,
+                            boolean isJson) {
+        for (Annotation a : anns) {
+            if (a.annotationType() == Descriptions.class) {
+                Descriptions ds = (Descriptions)a;
+                handleDocs(ds.value(), sb, category, allowDefault, isJson);
+                return;
+            }
+            if (a.annotationType() == Description.class) {
+                Description d = (Description)a;
+                if (d.target().length() == 0 && !allowDefault || d.target().length() > 0
+                    && !d.target().equals(category)) {
+                    continue;
+                }
+
+                sb.append("<doc");
+                if (!isJson && d.lang().length() > 0) {
+                    sb.append(" xml:lang=\"" + d.lang() + "\"");
+                }
+                if (d.title().length() > 0) {
+                    sb.append(" title=\"" + xmlEncodeIfNeeded(d.title()) + "\"");
+                }
+                sb.append(">");
+                if (d.value().length() > 0) {
+                    sb.append(xmlEncodeIfNeeded(d.value()));
+                } else if (d.docuri().length() > 0) {
+                    InputStream is = null;
+                    if (d.docuri().startsWith(CLASSPATH_PREFIX)) {
+                        String path = d.docuri().substring(CLASSPATH_PREFIX.length());
+                        is = ResourceUtils.getClasspathResourceStream(path, SchemaHandler.class,
+                                                                      BusFactory.getDefaultBus());
+                        if (is != null) {
+                            try {
+                                sb.append(IOUtils.toString(is));
+                            } catch (IOException ex) {
+                                // ignore
+                            }
+                        }
+                    }
+                }
+                sb.append("</doc>");
+            }
+        }
+    }
+
+    private String getNamespace() {
+        return wadlNamespace != null ? wadlNamespace : WADL_NS;
+    }
+
+    public void setWadlNamespace(String namespace) {
+        this.wadlNamespace = namespace;
+    }
+
+    public void setSingleResourceMultipleMethods(boolean singleResourceMultipleMethods) {
+        this.singleResourceMultipleMethods = singleResourceMultipleMethods;
+    }
+
+    public void setUseSingleSlashResource(boolean useSingleSlashResource) {
+        this.useSingleSlashResource = useSingleSlashResource;
+    }
+
+    public void setLinkJsonToXmlSchema(boolean link) {
+        linkJsonToXmlSchema = link;
+    }
+
+    public void setSchemaLocations(List<String> locations) {
+
+        externalQnamesMap = new HashMap<String, List<String>>();
+        externalSchemasCache = new ArrayList<String>(locations.size());
+        for (int i = 0; i < locations.size(); i++) {
+            String loc = locations.get(i);
+            try {
+                loadSchemasIntoCache(loc);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                externalSchemasCache = null;
+                externalQnamesMap = null;
+                return;
+            }
+        }
+    }
+
+    private void loadSchemasIntoCache(String loc) throws Exception {
+        InputStream is = ResourceUtils.getResourceStream(loc, BusFactory.getDefaultBus());
+        if (is == null) {
+            return;
+        }
+        ByteArrayInputStream bis = IOUtils.loadIntoBAIS(is);
+        XMLSource source = new XMLSource(bis);
+        source.setBuffering();
+        String targetNs = source.getValue("/*/@targetNamespace");
+
+        Map<String, String> nsMap = Collections.singletonMap("xs", XmlSchemaConstants.XSD_NAMESPACE_URI);
+        String[] elementNames = source.getValues("/*/xs:element/@name", nsMap);
+        externalQnamesMap.put(targetNs, Arrays.asList(elementNames));
+        String schemaValue = source.getNode("/xs:schema", nsMap, String.class);
+        externalSchemasCache.add(schemaValue);
+    }
+
+    public void setUseJaxbContextForQnames(boolean checkJaxbOnly) {
+        this.useJaxbContextForQnames = checkJaxbOnly;
+    }
+
+    protected ElementQNameResolver createElementQNameResolver(JAXBContext context) {
+        if (resolver != null) {
+            return resolver;
+        }
+        if (useJaxbContextForQnames) {
+            if (context != null) {
+                JAXBContextProxy proxy = JAXBUtils.createJAXBContextProxy(context);
+                return new JaxbContextQNameResolver(proxy);
+            } else {
+                return null;
+            }
+        } else if (externalQnamesMap != null) {
+            return new SchemaQNameResolver(externalQnamesMap);
+        } else {
+            return new XMLNameQNameResolver();
+        }
+    }
+
+    protected SchemaWriter createSchemaWriter(ResourceTypes resourceTypes, JAXBContext context, UriInfo ui) 
+        throws MojoExecutionException {
+        // if neither externalSchemaLinks nor externalSchemasCache is set
+        // then JAXBContext will be used to generate the schema
+        if (externalSchemaLinks != null && externalSchemasCache == null) {
+            return new ExternalSchemaWriter(externalSchemaLinks, ui);
+        } else if (externalSchemasCache != null) {
+            return new StringSchemaWriter(externalSchemasCache, externalSchemaLinks, ui);
+        } else if (context != null) {
+            SchemaCollection coll = getSchemaCollection(resourceTypes, context);
+            if (coll != null) {
+                return new SchemaCollectionWriter(coll);
+            }
+        }
+        return null;
+    }
+
+    public void setExternalLinks(List<String> externalLinks) {
+        externalSchemaLinks = new LinkedList<URI>();
+        for (String s : externalLinks) {
+            try {
+                String href = s;
+                if (href.startsWith("classpath:")) {
+                    int index = href.lastIndexOf('/');
+                    href = index == -1 ? href.substring(9) : href.substring(index + 1);
+                    docLocationMap.put(href, s);
+                }
+                externalSchemaLinks.add(URI.create(href));
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                externalSchemaLinks = null;
+                break;
+            }
+        }
+    }
+
+    protected interface SchemaWriter {
+        void write(StringBuilder sb);
+    }
+
+    private class StringSchemaWriter implements SchemaWriter {
+
+        private List<String> theSchemas;
+
+        public StringSchemaWriter(List<String> schemas, List<URI> links, UriInfo ui) {
+
+            this.theSchemas = new LinkedList<String>();
+            // we'll need to do the proper schema caching eventually
+            for (String s : schemas) {
+                XMLSource source = new XMLSource(new ByteArrayInputStream(s.getBytes()));
+                source.setBuffering();
+                Map<String, String> locs = getLocationsMap(source, "import", links, ui);
+                locs.putAll(getLocationsMap(source, "include", links, ui));
+                String actualSchema = !locs.isEmpty() ? transformSchema(s, locs) : s;
+                theSchemas.add(actualSchema);
+            }
+        }
+
+        private Map<String, String> getLocationsMap(XMLSource source, String elementName, List<URI> links,
+                                                    UriInfo ui) {
+            Map<String, String> nsMap = Collections.singletonMap("xs", XmlSchemaConstants.XSD_NAMESPACE_URI);
+            String[] locations = source.getValues("/*/xs:" + elementName + "/@schemaLocation", nsMap);
+
+            Map<String, String> locs = new HashMap<String, String>();
+            if (locations == null) {
+                return locs;
+            }
+
+            for (String loc : locations) {
+                try {
+                    URI uri = URI.create(loc);
+                    if (!uri.isAbsolute()) {
+                        if (links != null) {
+                            for (URI overwriteURI : links) {
+                                if (overwriteURI.toString().endsWith(loc)) {
+                                    if (overwriteURI.isAbsolute()) {
+                                        locs.put(loc, overwriteURI.toString());
+                                    } else {
+                                        locs.put(loc, ui.getBaseUriBuilder().path(overwriteURI.toString())
+                                            .build().toString());
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        if (!locs.containsKey(loc)) {
+                            locs.put(loc, ui.getBaseUriBuilder().path(loc).build().toString());
+                        }
+                    }
+                } catch (Exception ex) {
+                    // continue
+                }
+            }
+            return locs;
+        }
+
+        private String transformSchema(String schema, Map<String, String> locs) {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            SchemaConverter sc = new SchemaConverter(StaxUtils.createXMLStreamWriter(bos), locs);
+            try {
+                StaxUtils.copy(new StreamSource(new StringReader(schema)), sc);
+                sc.flush();
+                sc.close();
+                return bos.toString();
+            } catch (Exception ex) {
+                return schema;
+            }
+
+        }
+
+        public void write(StringBuilder sb) {
+            for (String s : theSchemas) {
+                sb.append(s);
+            }
+        }
+    }
+
+    private class SchemaCollectionWriter implements SchemaWriter {
+
+        private SchemaCollection coll;
+
+        public SchemaCollectionWriter(SchemaCollection coll) {
+            this.coll = coll;
+        }
+
+        public void write(StringBuilder sb) {
+            for (XmlSchema xs : coll.getXmlSchemas()) {
+                if (xs.getItems().isEmpty() || WSDLConstants.NS_SCHEMA_XSD.equals(xs.getTargetNamespace())) {
+                    continue;
+                }
+                StringWriter writer = new StringWriter();
+                xs.write(writer);
+                sb.append(writer.toString());
+            }
+        }
+    }
+
+    private class ExternalSchemaWriter implements SchemaWriter {
+
+        private List<URI> links;
+        private UriInfo uriInfo;
+
+        public ExternalSchemaWriter(List<URI> links, UriInfo ui) {
+            this.links = links;
+            this.uriInfo = ui;
+        }
+
+        public void write(StringBuilder sb) {
+            for (URI link : links) {
+                try {
+                    URI value = link.isAbsolute() ? link : uriInfo.getBaseUriBuilder().path(link.toString())
+                        .build();
+                    sb.append("<include href=\"").append(value.toString()).append("\"/>");
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private class JaxbContextQNameResolver implements ElementQNameResolver {
+
+        private JAXBContextProxy proxy;
+
+        public JaxbContextQNameResolver(JAXBContextProxy proxy) {
+            this.proxy = proxy;
+        }
+
+        public QName resolve(Class<?> type, Annotation[] annotations, Map<Class<?>, QName> clsMap) {
+            return getJaxbQName(proxy, type, clsMap);
+        }
+
+    }
+
+    private class XMLNameQNameResolver implements ElementQNameResolver {
+
+        public QName resolve(Class<?> type, Annotation[] annotations, Map<Class<?>, QName> clsMap) {
+            XMLName name = AnnotationUtils.getAnnotation(annotations, XMLName.class);
+            if (name == null) {
+                name = type.getAnnotation(XMLName.class);
+            }
+            if (name != null) {
+                QName qname = XMLUtils.convertStringToQName(name.value(), name.prefix());
+                if (qname.getPrefix().length() > 0) {
+                    return qname;
+                } else {
+                    return getQNameFromParts(qname.getLocalPart(), qname.getNamespaceURI(), type, clsMap);
+                }
+            }
+            return null;
+        }
+
+    }
+
+    private class SchemaQNameResolver implements ElementQNameResolver {
+
+        private Map<String, List<String>> map;
+
+        public SchemaQNameResolver(Map<String, List<String>> map) {
+            this.map = map;
+        }
+
+        public QName resolve(Class<?> type, Annotation[] annotations, Map<Class<?>, QName> clsMap) {
+            String name = type.getSimpleName();
+            for (Map.Entry<String, List<String>> entry : map.entrySet()) {
+                String elementName = null;
+                if (entry.getValue().contains(name)) {
+                    elementName = name;
+                } else if (entry.getValue().contains(name.toLowerCase())) {
+                    elementName = name.toLowerCase();
+                }
+                if (elementName != null) {
+                    return getQNameFromParts(elementName, entry.getKey(), type, clsMap);
+                }
+            }
+            return null;
+        }
+
+    }
+
+    public void setResolver(ElementQNameResolver resolver) {
+        this.resolver = resolver;
+    }
+
+    public void setPrivateAddresses(List<String> privateAddresses) {
+        this.privateAddresses = privateAddresses;
+    }
+
+    public List<String> getPrivateAddresses() {
+        return privateAddresses;
+    }
+
+    public void setAddResourceAndMethodIds(boolean addResourceAndMethodIds) {
+        this.addResourceAndMethodIds = addResourceAndMethodIds;
+    }
+
+    private Method getMethod(OperationResourceInfo ori) {
+        Method annMethod = ori.getAnnotatedMethod();
+        return annMethod != null ? annMethod : ori.getMethodToInvoke();
+    }
+
+    public void setApplicationTitle(String applicationTitle) {
+        this.applicationTitle = applicationTitle;
+    }
+
+    public void setNamespacePrefix(String prefix) {
+        this.nsPrefix = prefix;
+    }
+
+    public void setIgnoreForwardSlash(boolean ignoreForwardSlash) {
+        this.ignoreForwardSlash = ignoreForwardSlash;
+    }
+
+  
+    public void setSupportCollections(boolean support) {
+        this.supportCollections = support;
+    }
+
+   
+    private static class SchemaConverter extends DelegatingXMLStreamWriter {
+        private static final String SCHEMA_LOCATION = "schemaLocation";
+        private Map<String, String> locsMap;
+
+        public SchemaConverter(XMLStreamWriter writer, Map<String, String> locsMap) {
+            super(writer);
+            this.locsMap = locsMap;
+        }
+
+        public void writeAttribute(String local, String value) throws XMLStreamException {
+            if (SCHEMA_LOCATION.equals(local) && locsMap.containsKey(value)) {
+                value = locsMap.get(value);
+            }
+            super.writeAttribute(local, value);
+        }
+    }
+
+}
+

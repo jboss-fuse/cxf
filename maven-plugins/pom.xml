@@ -40,6 +40,7 @@
         <module>wadl2java-plugin</module> 
         <module>corba</module>
         <module>archetypes</module>
+        <module>java2wadl-plugin</module>
     </modules>
 
     <build>
