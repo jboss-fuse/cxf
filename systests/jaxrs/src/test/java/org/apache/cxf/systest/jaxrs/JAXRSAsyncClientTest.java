@@ -59,7 +59,7 @@ public class JAXRSAsyncClientTest extends AbstractBusClientServerTestBase {
         createStaticBus();
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testRetrieveBookCustomMethodAsyncSync() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/retrieve";
         WebClient wc = WebClient.create(address);
@@ -69,7 +69,7 @@ public class JAXRSAsyncClientTest extends AbstractBusClientServerTestBase {
         assertEquals("Retrieve", book.getName());
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testRetrieveBookCustomMethodAsync() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/retrieve";
         WebClient wc = WebClient.create(address);
@@ -79,7 +79,7 @@ public class JAXRSAsyncClientTest extends AbstractBusClientServerTestBase {
         assertEquals("Retrieve", book.get().getName());
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testGetBookAsyncResponse404() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/bookheaders/404";
         WebClient wc = createWebClient(address);
@@ -87,7 +87,7 @@ public class JAXRSAsyncClientTest extends AbstractBusClientServerTestBase {
         assertEquals(404, future.get().getStatus());
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testGetBookAsync404() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/bookheaders/404";
         WebClient wc = createWebClient(address);
@@ -100,7 +100,7 @@ public class JAXRSAsyncClientTest extends AbstractBusClientServerTestBase {
         }
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testPostBookProcessingException() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/";
         List<Object> providers = new ArrayList<Object>();
@@ -116,7 +116,7 @@ public class JAXRSAsyncClientTest extends AbstractBusClientServerTestBase {
         }
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testGetBookResponseProcessingException() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/books/123";
         List<Object> providers = new ArrayList<Object>();
@@ -132,7 +132,7 @@ public class JAXRSAsyncClientTest extends AbstractBusClientServerTestBase {
         }
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testGetBookAsync404Callback() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/bookheaders/404";
         WebClient wc = createWebClient(address);

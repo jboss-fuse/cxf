@@ -60,13 +60,13 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
                    launchServer(BookServer20.class, true));
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testGetGenericBook() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/genericbooks/123";
         doTestGetGenericBook(address, 124L, false);
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testGetGenericBook2() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/genericbooks2/123";
         doTestGetGenericBook(address, 123L, true);
@@ -88,13 +88,13 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         }
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testGetBook() {
         String address = "http://localhost:" + PORT + "/bookstore/bookheaders/simple";
         doTestGetBook(address, false);
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testGetBookSyncLink() {
         String address = "http://localhost:" + PORT + "/bookstore/bookheaders/simple";
         WebClient wc = createWebClient(address);
@@ -103,19 +103,19 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         validateResponse(wc);
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testGetBookSyncWithAsync() {
         String address = "http://localhost:" + PORT + "/bookstore/bookheaders/simple";
         doTestGetBook(address, true);
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testGetBookAsync() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/bookheaders/simple";
         doTestGetBookAsync(address, false);
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testGetBookAsyncNoCallback() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/bookheaders/simple";
         WebClient wc = createWebClient(address);
@@ -125,19 +125,19 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         validateResponse(wc);
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testGetBookAsyncResponse() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/bookheaders/simple";
         doTestGetBookAsyncResponse(address, false);
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testGetBookAsyncInvoker() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/bookheaders/simple";
         doTestGetBookAsync(address, true);
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testPreMatchContainerFilterThrowsException() {
         String address = "http://localhost:" + PORT + "/throwException";
         WebClient wc = WebClient.create(address);
@@ -156,7 +156,7 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         assertEquals("text/plain;charset=us-ascii", response.getMediaType().toString());
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testPostMatchContainerFilterThrowsException() {
         String address = "http://localhost:" + PORT + "/bookstore/bookheaders/simple?throwException";
         WebClient wc = WebClient.create(address);
@@ -173,18 +173,18 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         assertEquals("text/plain;charset=us-ascii", response.getMediaType().toString());
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testGetBookWrongPath() {
         String address = "http://localhost:" + PORT + "/wrongpath";
         doTestGetBook(address, false);
     }
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testGetBookWrongPathAsync() throws Exception {
         String address = "http://localhost:" + PORT + "/wrongpath";
         doTestGetBookAsync(address, false);
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testPostCollectionGenericEntity() throws Exception {
         
         String endpointAddress =
@@ -204,7 +204,7 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         assertEquals(collectionEntity.getEntity().get(0).getName(), book.getName());
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testPostCollectionGenericEntityAsEntity() throws Exception {
         
         String endpointAddress =
@@ -226,7 +226,7 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         assertEquals(collectionEntity.getEntity().get(0).getName(), book.getName());
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testPostReplaceBook() throws Exception {
         
         String endpointAddress = "http://localhost:" + PORT + "/bookstore/books2"; 
@@ -237,7 +237,7 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         assertEquals(561L, book.getId());
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testPostReplaceBookMistypedCT() throws Exception {
         
         String endpointAddress = "http://localhost:" + PORT + "/bookstore/books2"; 
@@ -249,7 +249,7 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         assertEquals(561L, book.getId());
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testReplaceBookMistypedCTAndHttpVerb() throws Exception {
         
         String endpointAddress = "http://localhost:" + PORT + "/bookstore/books2"; 
@@ -261,7 +261,7 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         assertEquals(561L, book.getId());
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testPostGetCollectionGenericEntityAndType() throws Exception {
         
         String endpointAddress =
@@ -290,7 +290,7 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         assertEquals(200, wc.getResponse().getStatus());
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testPostGetCollectionGenericEntityAndType2() throws Exception {
         
         String endpointAddress =
@@ -468,7 +468,7 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         assertEquals("clientRead", response.getHeaderString("ClientReaderInterceptor"));
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testClientFiltersLocalResponse() {
         String address = "http://localhost:" + PORT + "/bookstores";
         List<Object> providers = new ArrayList<Object>();
@@ -483,7 +483,7 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         assertSame(theBook, responseBook);
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testPostBook() {
         String address = "http://localhost:" + PORT + "/bookstore/bookheaders/simple";
         WebClient wc = createWebClientPost(address);
@@ -492,7 +492,7 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         validatePostResponse(wc);
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testBookExistsServerStreamReplace() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/books/check2";
         WebClient wc = WebClient.create(address);
@@ -500,7 +500,7 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         assertTrue(wc.post("s", Boolean.class));
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testBookExistsServerAddressOverwrite() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/books/checkN";
         WebClient wc = WebClient.create(address);
@@ -508,7 +508,7 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         assertTrue(wc.post("s", Boolean.class));
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testPostBookAsync() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/bookheaders/simple";
         WebClient wc = createWebClientPost(address);
@@ -517,7 +517,7 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
         validatePostResponse(wc);
     }
     
-    @Test
+    @Test(timeout = 60 * 1000)
     public void testPostBookAsyncHandler() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/bookheaders/simple";
         doTestPostBookAsyncHandler(address);
