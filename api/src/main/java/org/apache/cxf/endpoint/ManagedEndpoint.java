@@ -34,6 +34,7 @@ import javax.management.ObjectName;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.common.logging.LogUtils;
+import org.apache.cxf.common.util.PackageUtils;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.feature.Feature;
 import org.apache.cxf.management.ManagedComponent;
@@ -435,6 +436,12 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
         }
         return ret;
     }
+    
+    @ManagedOperation(description = "get the package name for a given namespace URI", currencyTimeLimit = 60)
+    public String getPackageNameByNameSpaceURI(String nameSpaceURI) {
+        return PackageUtils.getPackageNameByNameSpaceURI(nameSpaceURI);
+    }
+    
     
     private String reformatIndent(String input, int startIndent) {
         String ret = "";
