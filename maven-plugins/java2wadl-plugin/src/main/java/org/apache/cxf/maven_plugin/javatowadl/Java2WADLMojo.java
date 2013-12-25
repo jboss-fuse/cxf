@@ -981,7 +981,7 @@ public class Java2WADLMojo extends AbstractMojo {
     }
     
     private Bus getBus() {
-        return null;
+        return BusFactory.getDefaultBus();
     }
 
     private ClassResourceInfo getCreatedFromModel(Class<?> realClass) {
