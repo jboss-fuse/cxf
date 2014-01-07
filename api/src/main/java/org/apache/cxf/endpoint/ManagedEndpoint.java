@@ -22,6 +22,7 @@ package org.apache.cxf.endpoint;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.Dictionary;
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +32,10 @@ import java.util.logging.Logger;
 
 import javax.management.JMException;
 import javax.management.ObjectName;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.common.logging.LogUtils;
@@ -442,6 +447,69 @@ public class ManagedEndpoint implements ManagedComponent, ServerLifeCycleListene
         return PackageUtils.getPackageNameByNameSpaceURI(nameSpaceURI);
     }
     
+    @ManagedOperation(description = "get xml payload from json payload", currencyTimeLimit = 60)
+    public String jsonToXml(String jsonText, String pojoType) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        StringWriter sw = new StringWriter();
+        try {
+            Object pojo = objectMapper.readValue(jsonText, findClass(pojoType));
+            JAXBContext jc = JAXBContext.newInstance(findClass(pojoType));
+            Marshaller marshaller = jc.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            marshaller.marshal(pojo, sw);
+        } catch (Exception e) {
+            LOG.log(Level.WARNING, "jsonToXml failed.", e);
+        } 
+        
+        return sw.toString();
+    }
+    
+    private Class<?> findClass(String clsName) {
+        if (!isWSDL()) {
+            Set<Class<?>> resourceTypes = (Set<Class<?>>)endpoint.get("jaxrs.resource.types");
+            if (resourceTypes != null) {
+                try {
+                    
+                    for (Class<?> cls : resourceTypes) {
+                        if (cls.getName().endsWith(clsName)) {
+                            return cls;
+                        }
+                    }
+                    
+                } catch (Throwable e) {
+                    LOG.log(Level.WARNING, "findClass failed.", e);
+                }
+            }
+        } else {
+
+            for (ServiceInfo serviceInfo : endpoint.getService().getServiceInfos()) {
+                for (BindingInfo bindingInfo : serviceInfo.getBindings()) {
+                    for (BindingOperationInfo boi : bindingInfo.getOperations()) {
+                        
+                        if (boi.getInput() != null && boi.getInput().getMessageParts() != null) {
+                            for (MessagePartInfo mpi : boi.getInput().getMessageParts()) {
+                                Class<?> partClass = mpi.getTypeClass();
+                                if (partClass != null && partClass.getName().endsWith(clsName)) {
+                                    return partClass;
+                                }
+                            }
+                            
+                        }
+                        if (boi.getOutput() != null && boi.getOutput().getMessageParts() != null) {
+                            for (MessagePartInfo mpi : boi.getOutput().getMessageParts()) {
+                                Class<?> partClass = mpi.getTypeClass();
+                                if (partClass != null && partClass.getName().endsWith(clsName)) {
+                                    return partClass;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+        }
+        return null;
+    }
     
     private String reformatIndent(String input, int startIndent) {
         String ret = "";
