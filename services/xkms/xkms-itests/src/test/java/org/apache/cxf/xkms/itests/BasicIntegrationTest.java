@@ -89,7 +89,7 @@ public class BasicIntegrationTest {
             editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg", "org.ops4j.pax.url.mvn.repositories", REPOS), 
             editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port", HTTP_PORT),
             editConfigurationFilePut("etc/org.apache.cxf.xkms.client.cfg", "xkms.endpoint", XKMS_ENDPOINT),
-            features(xkmsFeatures, "cxf-xkms-service", "cxf-xkms-client", "spring-dm"),
+            features(xkmsFeatures, "cxf-xkms-service", "cxf-xkms-client"),
             configureConsole().ignoreLocalConsole(),
             keepRuntimeFolder()
             //CoreOptions.vmOption("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005")
