@@ -23,6 +23,7 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.annotation.PostConstruct;
@@ -57,7 +58,9 @@ public class NettyHttpServerEngine implements ServerEngine {
     private volatile Channel serverChannel;
 
     private NettyHttpServletPipelineFactory servletPipeline;
-    
+
+    private ServerBootstrap bootstrap;
+
     private Timer timer = new HashedWheelTimer();
 
     private Map<String, NettyHttpContextHandler> handlerMap = new ConcurrentHashMap<String, NettyHttpContextHandler>();
@@ -78,9 +81,12 @@ public class NettyHttpServerEngine implements ServerEngine {
     private int maxChunkContentSize = 1048576; 
     
     private boolean sessionSupport;
+
+    private ExecutorService bossExecutor;
+    private ExecutorService workerExecutor;
     
     public NettyHttpServerEngine() {
-        
+
     }
 
     public NettyHttpServerEngine(
@@ -107,7 +113,7 @@ public class NettyHttpServerEngine implements ServerEngine {
     /**
      * This method is used to programmatically set the TLSServerParameters.
      * This method may only be called by the factory.
-     * @throws IOException 
+     *
      */
     public void setTlsServerParameters(TLSServerParameters params) {
         tlsServerParameters = params;
@@ -133,17 +139,19 @@ public class NettyHttpServerEngine implements ServerEngine {
       
     protected Channel startServer() {
         // TODO Configure the server.
-        final ServerBootstrap bootstrap = new ServerBootstrap(
-                new NioServerSocketChannelFactory(Executors
-                        .newCachedThreadPool(), Executors.newCachedThreadPool()));
+        bossExecutor = Executors.newCachedThreadPool();
+        workerExecutor = Executors.newCachedThreadPool();
+        bootstrap = new ServerBootstrap(
+                new NioServerSocketChannelFactory(bossExecutor, workerExecutor));
+
         bootstrap.setOption("reuseAddress", true);
         // Set up the idle handler
         IdleStateHandler idleStateHandler = 
             new IdleStateHandler(this.timer, getReadIdleTime(), getWriteIdleTime(), 0);
         // Set up the event pipeline factory.
-        servletPipeline = 
+        servletPipeline =
             new NettyHttpServletPipelineFactory(
-                 tlsServerParameters, sessionSupport, 
+                 tlsServerParameters, sessionSupport,
                  threadingParameters.getThreadPoolSize(),
                  maxChunkContentSize,
                  handlerMap, idleStateHandler);
@@ -205,13 +213,29 @@ public class NettyHttpServerEngine implements ServerEngine {
     public void shutdown() {
         // stop the timer
         timer.stop();
+
+        if (bootstrap != null) {
+            bootstrap.shutdown();
+        }
+
         if (servletPipeline != null) {
             servletPipeline.shutdown();
         }
+
         // just unbind the channel
         if (serverChannel != null) {
             serverChannel.close();
         }
+
+        // shutdown the executor service
+        if (bootstrap != null) {
+            bootstrap.shutdown();
+        }
+
+        if (workerExecutor != null) {
+            workerExecutor.shutdown();
+        }
+
     }
 
     public int getReadIdleTime() {

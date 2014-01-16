@@ -21,6 +21,7 @@ package org.apache.cxf.transport.http.netty.server;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -61,6 +62,8 @@ public class NettyHttpServletPipelineFactory implements ChannelPipelineFactory {
     private final TLSServerParameters tlsServerParameters;
     
     private final boolean supportSession;
+
+    private final ExecutorService applicationExecutor;
     
     private final ExecutionHandler executionHandler;
 
@@ -79,8 +82,8 @@ public class NettyHttpServletPipelineFactory implements ChannelPipelineFactory {
         this.tlsServerParameters = tlsServerParameters;
         this.maxChunkContentSize = maxChunkContentSize;
         // TODO need to check the if we need pass other setting
-        this.executionHandler = 
-            new ExecutionHandler(new OrderedMemoryAwareThreadPoolExecutor(threadPoolSize, 2048576, 204857600));
+        applicationExecutor = new OrderedMemoryAwareThreadPoolExecutor(threadPoolSize, 2048576, 204857600);
+        this.executionHandler = new ExecutionHandler(applicationExecutor);
     }
 
 
@@ -111,6 +114,7 @@ public class NettyHttpServletPipelineFactory implements ChannelPipelineFactory {
     
     public void shutdown() {
         this.watchdog.stopWatching();
+        applicationExecutor.shutdown();
         this.allChannels.close();
     }
 
