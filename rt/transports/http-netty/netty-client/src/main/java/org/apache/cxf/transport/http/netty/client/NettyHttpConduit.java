@@ -75,7 +75,8 @@ public class NettyHttpConduit extends URLConnectionHTTPConduit {
         throws IOException {
         super(b, ei, t);
         factory = conduitFactory;
-        bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory());
+        bootstrap = new ClientBootstrap(
+                new NioClientSocketChannelFactory(factory.getBossExecutor(), factory.getWorkExecutor()));
     }
 
     public NettyHttpConduitFactory getNettyHttpConduitFactory() {

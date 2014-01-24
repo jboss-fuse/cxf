@@ -20,6 +20,9 @@
 package org.apache.cxf.transport.http.netty.client;
 
 import java.io.IOException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.annotation.Resource;
 import org.apache.cxf.Bus;
 import org.apache.cxf.buslifecycle.BusLifeCycleListener;
@@ -35,8 +38,12 @@ import org.apache.cxf.ws.addressing.EndpointReferenceType;
 public class NettyHttpConduitFactory implements BusLifeCycleListener, HTTPConduitFactory {
 
     boolean isShutdown;
+    final ExecutorService bossExecutor;
+    final ExecutorService workerExecutor;
 
     public NettyHttpConduitFactory() {
+        bossExecutor = Executors.newCachedThreadPool();
+        workerExecutor = Executors.newCachedThreadPool();
     }
 
     public NettyHttpConduitFactory(Bus b) {
@@ -79,11 +86,21 @@ public class NettyHttpConduitFactory implements BusLifeCycleListener, HTTPCondui
 
     @Override
     public void postShutdown() {
-        // TODO Do we need to keep the track of the NettyHttpConduit?
+        // shutdown the thread pool
+        bossExecutor.shutdown();
+        workerExecutor.shutdown();
     }
 
     public boolean isShutdown() {
         return isShutdown;
+    }
+
+    public Executor getWorkExecutor() {
+        return workerExecutor;
+    }
+
+    public Executor getBossExecutor() {
+        return bossExecutor;
     }
 
 }
