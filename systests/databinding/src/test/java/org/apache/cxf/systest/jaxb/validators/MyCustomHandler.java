@@ -17,24 +17,21 @@
  * under the License.
  */
 
-package org.apache.cxf.sts.event;
+package org.apache.cxf.systest.jaxb.validators;
 
-public class StacktraceHtmlFormatter implements StacktraceFormatter {
+import javax.xml.bind.ValidationEvent;
+import javax.xml.bind.ValidationEventHandler;
 
-    public static final String NEW_LINE = "<br>";
+public class MyCustomHandler implements ValidationEventHandler {
+
+    private boolean used;
+    public boolean getUsed() {
+        return used;
+    }
     
-    @Override
-    public String format(Throwable t) {
-        final StringBuilder result = new StringBuilder("<html>");
-        result.append(t.toString());
-        result.append(NEW_LINE);
-
-        for (StackTraceElement element : t.getStackTrace()) {
-            result.append(element);
-            result.append(NEW_LINE);
-        }
-        result.append("</html>");
-        return result.toString();
+    public boolean handleEvent(ValidationEvent event) {
+        used = true;
+        return true;
     }
 
 }

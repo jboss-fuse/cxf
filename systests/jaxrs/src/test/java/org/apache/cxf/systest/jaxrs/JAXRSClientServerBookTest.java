@@ -426,6 +426,27 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
         assertEquals(401, r.getStatus());
         assertEquals("This is 401", getStringFromInputStream((InputStream)r.getEntity()));
     }
+    
+    @Test
+    public void testCapturedServerInFault() throws Exception {
+        
+        String endpointAddress =
+            "http://localhost:" + PORT + "/bookstore/infault"; 
+        WebClient wc = WebClient.create(endpointAddress);
+        Response r = wc.get();
+        assertEquals(401, r.getStatus());
+    }
+    
+    @Test
+    public void testCapturedServerOutFault() throws Exception {
+        
+        String endpointAddress =
+            "http://localhost:" + PORT + "/bookstore/outfault"; 
+        WebClient wc = WebClient.create(endpointAddress);
+        WebClient.getConfig(wc).getHttpConduit().getClient().setReceiveTimeout(1000000L);
+        Response r = wc.get();
+        assertEquals(403, r.getStatus());
+    }
 
     @Test
     public void testGetCollectionOfBooks() throws Exception {
@@ -1056,6 +1077,38 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
         String[] str = store.getBookStringArray();
         assertEquals("Good book", str[0]);
     }
+    
+    @Test
+    public void testGetPrimitiveIntArray() throws Exception {
+        String address = "http://localhost:" + PORT;
+        JAXRSClientFactoryBean bean = new JAXRSClientFactoryBean(); 
+        bean.setProvider(new BookStore.PrimitiveIntArrayReaderWriter());
+        bean.setAddress(address);
+        bean.setResourceClass(BookStore.class);
+        BookStore store = bean.create(BookStore.class);
+        int[] arr = store.getBookIndexAsIntArray();
+        assertEquals(3, arr.length);
+        assertEquals(1, arr[0]);
+        assertEquals(2, arr[1]);
+        assertEquals(3, arr[2]);
+    }
+    
+    @Test
+    public void testGetPrimitiveDoubleArray() throws Exception {
+        String address = "http://localhost:" + PORT;
+        JAXRSClientFactoryBean bean = new JAXRSClientFactoryBean(); 
+        bean.setProvider(new BookStore.PrimitiveDoubleArrayReaderWriter());
+        bean.setAddress(address);
+        bean.setResourceClass(BookStore.class);
+        BookStore store = bean.create(BookStore.class);
+        WebClient.getConfig(store).getHttpConduit().getClient().setReceiveTimeout(1000000L);
+        double[] arr = store.getBookIndexAsDoubleArray();
+        assertEquals(3, arr.length);
+        assertEquals(1, arr[0], 0.0);
+        assertEquals(2, arr[1], 0.0);
+        assertEquals(3, arr[2], 0.0);
+    }
+    
     
     @Test
     public void testGetStringList() throws Exception {

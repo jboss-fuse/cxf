@@ -45,7 +45,6 @@ import javax.xml.transform.dom.DOMSource;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-
 import org.apache.cxf.binding.soap.SoapFault;
 import org.apache.cxf.binding.soap.SoapMessage;
 import org.apache.cxf.binding.soap.SoapVersion;
@@ -68,6 +67,7 @@ import org.apache.cxf.phase.PhaseInterceptor;
 import org.apache.cxf.security.SecurityContext;
 import org.apache.cxf.staxutils.StaxUtils;
 import org.apache.cxf.ws.security.SecurityConstants;
+import org.apache.cxf.ws.security.policy.interceptors.NegotiationUtils;
 import org.apache.cxf.ws.security.tokenstore.SecurityToken;
 import org.apache.cxf.ws.security.tokenstore.TokenStore;
 import org.apache.ws.security.CustomTokenPrincipal;
@@ -249,17 +249,8 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
             }
             
             // Configure replay caching
-            ReplayCache nonceCache = 
-                getReplayCache(
-                    msg, SecurityConstants.ENABLE_NONCE_CACHE, SecurityConstants.NONCE_CACHE_INSTANCE
-                );
-            reqData.setNonceReplayCache(nonceCache);
-            ReplayCache timestampCache = 
-                getReplayCache(
-                    msg, SecurityConstants.ENABLE_TIMESTAMP_CACHE, SecurityConstants.TIMESTAMP_CACHE_INSTANCE
-                );
-            reqData.setTimestampReplayCache(timestampCache);
-
+            configureReplayCaches(reqData, doAction, msg);
+            
             /*
              * Get and check the Signature specific parameters first because
              * they may be used for encryption too.
@@ -430,6 +421,66 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
         if (sigCrypto != null) {
             reqData.setSigCrypto(sigCrypto);
         }
+    }
+    
+    protected void configureReplayCaches(RequestData reqData, int doAction, SoapMessage msg) 
+        throws WSSecurityException {
+        if (isNonceCacheRequired(doAction, msg)) {
+            ReplayCache nonceCache = 
+                getReplayCache(
+                    msg, SecurityConstants.ENABLE_NONCE_CACHE, SecurityConstants.NONCE_CACHE_INSTANCE
+                );
+            reqData.setNonceReplayCache(nonceCache);
+        }
+        
+        if (isTimestampCacheRequired(doAction, msg)) {
+            ReplayCache timestampCache = 
+                getReplayCache(
+                    msg, SecurityConstants.ENABLE_TIMESTAMP_CACHE, SecurityConstants.TIMESTAMP_CACHE_INSTANCE
+                );
+            reqData.setTimestampReplayCache(timestampCache);
+        }
+        
+        if (isSamlCacheRequired(doAction, msg)) {
+            ReplayCache samlCache = 
+                getReplayCache(
+                    msg, SecurityConstants.ENABLE_SAML_ONE_TIME_USE_CACHE, 
+                    SecurityConstants.SAML_ONE_TIME_USE_CACHE_INSTANCE
+                );
+            reqData.setSamlOneTimeUseReplayCache(samlCache);
+        }
+    }
+    
+    /**
+     * Is a Nonce Cache required, i.e. are we expecting a UsernameToken 
+     */
+    protected boolean isNonceCacheRequired(int doAction, SoapMessage msg) {
+        if ((doAction & WSConstants.UT) == WSConstants.UT
+            || (doAction & WSConstants.UT_NOPASSWORD) == WSConstants.UT_NOPASSWORD) {
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Is a Timestamp cache required, i.e. are we expecting a Timestamp 
+     */
+    protected boolean isTimestampCacheRequired(int doAction, SoapMessage msg) {
+        if ((doAction & WSConstants.TS) == WSConstants.TS) {
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Is a SAML Cache required, i.e. are we expecting a SAML Token 
+     */
+    protected boolean isSamlCacheRequired(int doAction, SoapMessage msg) {
+        if ((doAction & WSConstants.ST_UNSIGNED) == WSConstants.ST_UNSIGNED
+            || (doAction & WSConstants.ST_SIGNED) == WSConstants.ST_SIGNED) {
+            return true;
+        }
+        return false;
     }
     
     /**
@@ -679,8 +730,8 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
                 } catch (WSSecurityException sec) {
                     Endpoint ep = ((SoapMessage)reqData.getMsgContext()).getExchange().get(Endpoint.class);
                     if (ep != null && ep.getEndpointInfo() != null) {
-                        TokenStore store = (TokenStore)ep.getEndpointInfo()
-                            .getProperty(TokenStore.class.getName());
+                        TokenStore store = 
+                            NegotiationUtils.getTokenStore((SoapMessage)reqData.getMsgContext(), false);
                         if (store != null) {
                             return new TokenStoreCallbackHandler(null, store);
                         }
@@ -691,7 +742,8 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
         }
         Endpoint ep = ((SoapMessage)reqData.getMsgContext()).getExchange().get(Endpoint.class);
         if (ep != null && ep.getEndpointInfo() != null) {
-            TokenStore store = (TokenStore)ep.getEndpointInfo().getProperty(TokenStore.class.getName());
+            TokenStore store = 
+                NegotiationUtils.getTokenStore((SoapMessage)reqData.getMsgContext(), false);
             if (store != null) {
                 return new TokenStoreCallbackHandler(cbHandler, store);
             }

@@ -17,8 +17,22 @@
  * under the License.
  */
 
-package org.apache.cxf.sts.event;
+package org.apache.cxf.systest.jaxrs.security;
 
-public interface StacktraceFormatter {
-    String format(Throwable t);
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+
+import org.apache.cxf.systest.jaxrs.Book;
+import org.apache.cxf.systest.jaxrs.BookNotFoundFault;
+import org.springframework.security.annotation.Secured;
+
+public interface SecureBookInterfaceGenerics<T> {
+
+    @GET
+    @Path("/thosebooks/{bookId}/")
+    @Produces("application/xml")
+    @Secured({"ROLE_USER", "ROLE_ADMIN" })
+    Book getThatBook(@PathParam("bookId") T id) throws BookNotFoundFault;
 }

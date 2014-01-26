@@ -116,7 +116,12 @@ public class WSS4JOutInterceptor extends AbstractWSS4JInterceptor {
         //must turn off mtom when using WS-Sec so binary is inlined so it can
         //be properly signed/encrypted/etc...
         if (!mtomEnabled) {
-            mc.put(org.apache.cxf.message.Message.MTOM_ENABLED, false);
+            String mtomKey = org.apache.cxf.message.Message.MTOM_ENABLED;
+            if (mc.get(mtomKey) == Boolean.TRUE) {
+                LOG.warning("MTOM will be disabled as the WSS4JOutInterceptor.mtomEnabled property"
+                            + " is set to false");
+            }
+            mc.put(mtomKey, Boolean.FALSE);
         }
         
         if (mc.getContent(SOAPMessage.class) == null) {
@@ -217,8 +222,8 @@ public class WSS4JOutInterceptor extends AbstractWSS4JInterceptor {
                  * username is available and then get a passowrd.
                  */
                 if ((doAction & (WSConstants.SIGN | WSConstants.UT | WSConstants.UT_SIGN)) != 0
-                        && (reqData.getUsername() == null
-                        || reqData.getUsername().equals(""))) {
+                        && (reqData.getUsername() == null || reqData.getUsername().equals(""))
+                        && (String)getOption(WSHandlerConstants.SIGNATURE_USER) == null) {
                     /*
                      * We need a username - if none throw an SoapFault. For
                      * encryption there is a specific parameter to get a username.

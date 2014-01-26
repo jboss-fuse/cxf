@@ -44,6 +44,7 @@ import org.apache.cxf.service.model.OperationInfo;
 import org.apache.cxf.service.model.ServiceInfo;
 import org.apache.cxf.transport.ConduitInitiator;
 import org.apache.cxf.transport.ConduitInitiatorManager;
+import org.apache.cxf.ws.addressing.EndpointReferenceType;
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.cxf.ws.security.policy.model.IssuedToken;
 import org.apache.neethi.Policy;
@@ -102,13 +103,16 @@ public final class STSUtils {
             if (MessageUtils.getContextualBoolean(message, SecurityConstants.STS_CLIENT_SOAP12_BINDING, false)) {
                 client.setSoap12();
             }
-            if ((itok != null) && (itok.getIssuerEpr() != null)) {
-                //configure via mex
-                boolean useEPRWSAAddrAsMEXLocation = !Boolean.valueOf(
-                        (String)message.getContextualProperty(
-                         SecurityConstants.DISABLE_STS_CLIENT_WSMEX_CALL_USING_EPR_ADDRESS));
-                client.configureViaEPR(itok.getIssuerEpr(), useEPRWSAAddrAsMEXLocation);
-            }
+        }
+        
+        if (client.getLocation() == null && client.getWsdlLocation() == null 
+            && itok != null && itok.getIssuerEpr() != null) {
+            EndpointReferenceType epr = itok.getIssuerEpr();
+            //configure via mex
+            boolean useEPRWSAAddrAsMEXLocation = 
+                !Boolean.valueOf((String)message.getContextualProperty(
+                    SecurityConstants.DISABLE_STS_CLIENT_WSMEX_CALL_USING_EPR_ADDRESS));
+            client.configureViaEPR(epr, useEPRWSAAddrAsMEXLocation);
         }
         return client;
     }
@@ -189,7 +193,7 @@ public final class STSUtils {
             soi = new SoapOperationInfo();
             boi.addExtensor(soi);
         }
-        soi.setAction(namespace + "/RST/Cancel");
+        soi.setAction(namespace + (sc ? "/RST/SCT/Cancel" : "/RST/Cancel"));
         service.setDataBinding(new SourceDataBinding());
         return new EndpointImpl(bus, service, ei);
     }
@@ -225,14 +229,19 @@ public final class STSUtils {
                                            MessageInfo.Type.INPUT);
         oi.setInput("CancelSecurityTokenMsg", mii);
         MessagePartInfo mpi = mii.addMessagePart("request");
-        mpi.setElementQName(new QName(namespace, "CancelSecurityToken"));
+        mpi.setElementQName(new QName(namespace, "RequestSecurityToken"));
         
         MessageInfo mio = oi.createMessage(new QName(servNamespace, 
                                                      "CancelSecurityTokenResponseMsg"), 
                                            MessageInfo.Type.OUTPUT);
         oi.setOutput("CancelSecurityTokenResponseMsg", mio);
         mpi = mio.addMessagePart("response");
-        mpi.setElementQName(new QName(namespace, "CancelSecurityTokenResponse"));
+        
+        if (WST_NS_05_02.equals(namespace)) {
+            mpi.setElementQName(new QName(namespace, "RequestSecurityTokenResponse"));
+        } else {
+            mpi.setElementQName(new QName(namespace, "RequestSecurityTokenResponseCollection"));
+        }
         return oi;
     }
 }

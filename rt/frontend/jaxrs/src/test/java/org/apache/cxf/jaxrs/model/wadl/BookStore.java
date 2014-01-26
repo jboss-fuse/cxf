@@ -47,8 +47,7 @@ import org.apache.cxf.jaxrs.model.wadl.jaxb.Chapter;
 @Path("/bookstore/{id}")
 @Consumes({"application/xml", "application/json" })
 @Produces({"application/xml", "application/json" })
-@Description(lang = "en-us", title = "book store \"resource\"", value = "super resource")
-public class BookStore {
+public class BookStore implements BookDescription {
 
     @Descriptions({ 
         @Description(value = "Attachments, max < 10", target = DocTarget.PARAM)
@@ -66,6 +65,16 @@ public class BookStore {
         @Description(value = "Get Books", target = DocTarget.METHOD)
     })
     public List<Book> getBooks(@PathParam("id") Long id) {
+        return Collections.emptyList();
+    }
+
+    @GET
+    @Path("thebooks2")
+    @Produces("application/xml")
+    @Descriptions({ 
+        @Description(value = "Get Books2", target = DocTarget.METHOD)
+    })
+    public List<Book2> getBooks2(@PathParam("id") Long id) {
         return Collections.emptyList();
     }
     

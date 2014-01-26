@@ -414,7 +414,7 @@ public final class ProviderFactory {
                                      Class<?> providerClass,
                                      boolean injectContext) {
         
-        Class<?> mapperClass =  ClassHelper.getRealClass(em.getProvider());
+        Class<?> mapperClass = ClassHelper.getRealClass(em.getProvider());
         Type[] types = null;
         if (m != null && MessageUtils.isTrue(m.getContextualProperty(IGNORE_TYPE_VARIABLES))) {
             types = new Type[]{mapperClass};
@@ -454,7 +454,7 @@ public final class ProviderFactory {
                     if (expectedType.isArray() && !actualClass.isArray()) {
                         expectedType = expectedType.getComponentType();
                     }
-                    if (actualClass.isAssignableFrom(expectedType)) {
+                    if (actualClass.isAssignableFrom(expectedType) || actualClass == Object.class) {
                         if (injectContext) {
                             injectContextValues(em, m);
                         }
@@ -617,6 +617,9 @@ public final class ProviderFactory {
             if (entryName.equals(DEFAULT_FILTER_NAME_BINDING)) {
                 map.put(entry.getValue(), Collections.<String>emptyList());
             } else {
+                if (entryName.endsWith(":dynamic") && !names.contains(entryName)) {
+                    continue;
+                }
                 map.add(entry.getValue(), entryName);
             }
         }
@@ -1230,7 +1233,6 @@ public final class ProviderFactory {
             }
         }
     }
-
     public void initProviders(List<ClassResourceInfo> cris) {
         Set<Object> set = getReadersWriters();
         for (Object o : set) {
@@ -1409,7 +1411,8 @@ public final class ProviderFactory {
             nameBinding = DEFAULT_FILTER_NAME_BINDING 
                 + ori.getClassResourceInfo().getServiceClass().getName()
                 + "."
-                + ori.getMethodToInvoke().getName();
+                + ori.getMethodToInvoke().getName()
+                + ":dynamic";
         }
         
         @Override
@@ -1674,5 +1677,16 @@ public final class ProviderFactory {
         ParameterHandler<T> getHandler() {
             return handler;
         }
+    }
+    
+    public MessageBodyWriter<?> getRegisteredJaxbWriter() {
+        for (ProviderInfo<MessageBodyWriter<?>> pi : this.messageWriters) {    
+            Class<?> cls = pi.getProvider().getClass();
+            if (cls.getName().equals(JAXB_PROVIDER_NAME)
+                || cls.getSuperclass().getName().equals(JAXB_PROVIDER_NAME)) {
+                return pi.getProvider();
+            }
+        }
+        return null;
     }
 }

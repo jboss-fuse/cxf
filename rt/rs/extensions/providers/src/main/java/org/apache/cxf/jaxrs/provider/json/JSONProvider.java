@@ -32,9 +32,9 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -60,7 +60,6 @@ import javax.xml.stream.XMLStreamWriter;
 
 import org.w3c.dom.Document;
 
-import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.jaxrs.ext.MessageContext;
@@ -80,8 +79,8 @@ import org.codehaus.jettison.mapped.SimpleConverter;
 import org.codehaus.jettison.mapped.TypeConverter;
 import org.codehaus.jettison.util.StringIndenter;
 
-@Produces("application/json")
-@Consumes("application/json")
+@Produces({"application/json", "application/*+json" })
+@Consumes({"application/json", "application/*+json" })
 @Provider
 public class JSONProvider<T> extends AbstractJAXBProvider<T>  {
     
@@ -521,12 +520,20 @@ public class JSONProvider<T> extends AbstractJAXBProvider<T>  {
         if (!writeNullAsString) {
             config.setWriteNullAsString(writeNullAsString);
         }
-        if (dropRootElement && !dropElementsInXmlStream) {
+        
+        boolean dropRootInJsonStream = dropRootElement && !dropElementsInXmlStream;
+        if (dropRootInJsonStream) {
             config.setDropRootElement(true);
         }
-        if (ignoreNamespaces && serializeAsArray && arrayKeys == null) {
-            arrayKeys = CastUtils.cast((List<?>)Collections.singletonList(qname.getLocalPart()));
+        if (ignoreNamespaces && serializeAsArray && (arrayKeys == null || dropRootInJsonStream)) {
+            if (arrayKeys == null) {
+                arrayKeys = new LinkedList<String>();
+            } else if (dropRootInJsonStream) {
+                arrayKeys = new LinkedList<String>(arrayKeys);
+            }
+            arrayKeys.add(qname.getLocalPart());
         }
+        
         XMLStreamWriter writer = JSONUtils.createStreamWriter(os, qname, 
              writeXsiType && !ignoreNamespaces, config, serializeAsArray, arrayKeys,
              isCollection || dropRootNeeded);

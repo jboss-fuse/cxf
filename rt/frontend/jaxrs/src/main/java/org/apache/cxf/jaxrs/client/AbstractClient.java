@@ -66,6 +66,7 @@ import org.apache.cxf.endpoint.Retryable;
 import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.interceptor.AbstractOutDatabindingInterceptor;
 import org.apache.cxf.interceptor.Fault;
+import org.apache.cxf.interceptor.InFaultChainInitiatorObserver;
 import org.apache.cxf.interceptor.Interceptor;
 import org.apache.cxf.interceptor.StaxInEndingInterceptor;
 import org.apache.cxf.jaxrs.client.spec.ClientRequestFilterInterceptor;
@@ -888,6 +889,18 @@ public abstract class AbstractClient implements Client, Retryable {
         return chain;
     }
     
+    protected static MessageObserver setupInFaultObserver(final ClientConfiguration cfg) { 
+        if (!cfg.getInFaultInterceptors().isEmpty()) {
+            return new InFaultChainInitiatorObserver(cfg.getBus()) {
+                protected void initializeInterceptors(Exchange ex, PhaseInterceptorChain chain) {
+                    chain.add(cfg.getInFaultInterceptors());
+                }
+            };
+        } else {
+            return null;
+        }
+    }
+    
     protected Message createMessage(Object body,
                                     String httpMethod, 
                                     MultivaluedMap<String, String> headers,
@@ -924,6 +937,7 @@ public abstract class AbstractClient implements Client, Retryable {
         m.put(URITemplate.TEMPLATE_PARAMETERS, getState().getTemplates());
         
         PhaseInterceptorChain chain = setupOutInterceptorChain(cfg);
+        chain.setFaultObserver(setupInFaultObserver(cfg));
         m.setInterceptorChain(chain);
         
         exchange = createExchange(m, exchange);
@@ -959,7 +973,7 @@ public abstract class AbstractClient implements Client, Retryable {
         exchange.put(Bus.class, cfg.getBus());
         exchange.put(MessageObserver.class, new ClientMessageObserver(cfg));
         exchange.put(Endpoint.class, cfg.getConduitSelector().getEndpoint());
-        exchange.put("org.apache.cxf.http.no_io_exceptions", true);
+        exchange.put("org.apache.cxf.transport.no_io_exceptions", true);
         //REVISIT - when response handling is actually put onto the in chain, this will likely not be needed
         exchange.put(StaxInEndingInterceptor.STAX_IN_NOCLOSE, Boolean.TRUE);
         m.setExchange(exchange);

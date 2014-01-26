@@ -94,7 +94,7 @@ public class JAXRSSoapBookTest extends AbstractBusClientServerTestBase {
     @BeforeClass
     public static void startServers() throws Exception {
         assertTrue("server did not launch correctly", 
-                   launchServer(BookServerRestSoap.class));
+                   launchServer(BookServerRestSoap.class, true));
     }
     
     @Test
@@ -897,7 +897,7 @@ public class JAXRSSoapBookTest extends AbstractBusClientServerTestBase {
             assertTrue("Wrong exception caught", 
                        "fault from bad interceptor".equals(e.getCause().getMessage()));
             assertTrue("Client In Fault In Interceptor was invoked", 
-                    !testFeature.faultInInterceptorCalled());
+                    testFeature.faultInInterceptorCalled());
         }
     }
     
@@ -911,7 +911,7 @@ public class JAXRSSoapBookTest extends AbstractBusClientServerTestBase {
         features.add(testFeature);
         bean.setFeatures(features);
         BookStoreJaxrsJaxws proxy = (BookStoreJaxrsJaxws)bean.create();
-        WebClient.getConfig(proxy).getRequestContext().put("org.apache.cxf.http.no_io_exceptions", false);
+        WebClient.getConfig(proxy).getRequestContext().put("org.apache.cxf.transport.no_io_exceptions", false);
         try {
             //321 is special case - causes error code of 525
             proxy.getBook(new Long(param));

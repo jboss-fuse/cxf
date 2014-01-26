@@ -22,6 +22,7 @@ package org.apache.cxf.jaxrs;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,6 +43,7 @@ import org.apache.cxf.common.classloader.ClassLoaderUtils.ClassLoaderHolder;
 import org.apache.cxf.common.i18n.BundleUtils;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.ClassHelper;
+import org.apache.cxf.common.util.PropertyUtils;
 import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.interceptor.InterceptorChain.State;
@@ -105,7 +107,8 @@ public class JAXRSInvoker extends AbstractInvoker {
             }
             return handleFault(ex, exchange.getInMessage());
         } finally {
-            boolean suspended = exchange.getInMessage().getInterceptorChain().getState() == State.SUSPENDED;
+            boolean suspended = PropertyUtils.isTrue(exchange.get(Message.SUSPENDED_INVOCATION))
+                || exchange.getInMessage().getInterceptorChain().getState() == State.SUSPENDED;
             if (exchange.isOneWay() || suspended) {
                 ProviderFactory.getInstance(exchange.getInMessage()).clearThreadLocalProxies();
             }
@@ -168,8 +171,18 @@ public class JAXRSInvoker extends AbstractInvoker {
             }
         }
         
-        Method methodToInvoke = InjectionUtils.checkProxy(
-            cri.getMethodDispatcher().getMethod(ori), resourceObject);
+        Method resourceMethod = cri.getMethodDispatcher().getMethod(ori);
+        
+        Method methodToInvoke = null;
+        if (Proxy.class.isInstance(resourceObject)) {
+            methodToInvoke = cri.getMethodDispatcher().getProxyMethod(resourceMethod);
+            if (methodToInvoke == null) {
+                methodToInvoke = InjectionUtils.checkProxy(resourceMethod, resourceObject);
+                cri.getMethodDispatcher().addProxyMethod(resourceMethod, methodToInvoke);
+            }
+        } else {
+            methodToInvoke = resourceMethod;
+        }
         
         List<Object> params = null;
         if (request instanceof List) {

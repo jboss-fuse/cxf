@@ -21,6 +21,9 @@ package org.apache.cxf.jaxb.io;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.namespace.QName;
@@ -61,6 +64,35 @@ public class XMLStreamDataWriterTest extends Assert {
     @After
     public void tearDown() throws Exception {
         baos.close();
+    }
+    
+    @Test
+    public void testSetProperty() throws Exception {
+        JAXBDataBinding db = getTestWriterFactory();
+               
+        DataWriterImpl<XMLStreamWriter> dw = (DataWriterImpl)db.createWriter(XMLStreamWriter.class);
+        assertNotNull(dw);
+        
+        // Build message to set custom event handler
+        org.apache.cxf.message.Message message = new org.apache.cxf.message.MessageImpl();
+        message.put("jaxb-writer-validation-event-handler", new MyCustomHandler());
+    
+        dw.setProperty("org.apache.cxf.message.Message", message);     
+        
+        // Write Stuff
+        TradePriceData val = new TradePriceData();
+        val.setTickerSymbol("This is a symbol");
+        val.setTickerPrice(1.0f);
+        
+        QName elName = new QName("http://apache.org/hello_world_doc_lit_bare/types", "inout");
+        MessagePartInfo part = new MessagePartInfo(elName, null);
+        part.setElement(true);
+        part.setElementQName(elName);
+        dw.write(val, part, streamWriter);
+        streamWriter.flush();
+        
+        // Test MyCustomHandler
+        assertTrue(((MyCustomHandler)dw.veventHandler).getUsed());       
     }
 
     @Test
@@ -222,6 +254,71 @@ public class XMLStreamDataWriterTest extends Assert {
         StaxUtils.nextEvent(reader);
         StaxUtils.toNextText(reader);
         assertEquals("TESTOUTPUTMESSAGE", reader.getText());
+    }
+
+    @Test
+    public void testWriteWithNamespacePrefixMapping() throws Exception {
+        JAXBDataBinding db = getTestWriterFactory(GreetMe.class);
+        Map<String, String> nspref = new HashMap<String, String>();
+        nspref.put("http://apache.org/hello_world_soap_http/types", "x");
+        db.setNamespaceMap(nspref);
+        
+        // use the output stream instead of XMLStreamWriter to test
+        DataWriter<OutputStream> dw = db.createWriter(OutputStream.class);
+        assertNotNull(dw);
+
+        GreetMe val = new GreetMe();
+        val.setRequestType("Hello");
+        dw.write(val, baos);
+        
+        ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+        XMLStreamReader xr = inFactory.createXMLStreamReader(bais);
+        DepthXMLStreamReader reader = new DepthXMLStreamReader(xr);
+        StaxUtils.toNextElement(reader);
+        QName qname = reader.getName(); 
+        assertEquals(new QName("http://apache.org/hello_world_soap_http/types", "greetMe"), qname);
+        assertEquals("x", qname.getPrefix());
+        
+        assertEquals(1, reader.getNamespaceCount());
+        assertEquals("http://apache.org/hello_world_soap_http/types", reader.getNamespaceURI(0));
+        assertEquals("x", reader.getNamespacePrefix(0));
+        
+        StaxUtils.nextEvent(reader);
+        StaxUtils.toNextElement(reader);
+        qname = reader.getName();
+        assertEquals(new QName("http://apache.org/hello_world_soap_http/types", "requestType"), qname);
+        assertEquals("x", qname.getPrefix());
+        
+        StaxUtils.nextEvent(reader);
+        StaxUtils.toNextText(reader);
+        assertEquals("Hello", reader.getText());
+    }
+
+    @Test
+    public void testWriteWithContextualNamespaceDecls() throws Exception {
+        JAXBDataBinding db = getTestWriterFactory(GreetMe.class);
+        Map<String, String> nspref = new HashMap<String, String>();
+        nspref.put("http://apache.org/hello_world_soap_http/types", "x");
+        db.setNamespaceMap(nspref);
+        db.setContextualNamespaceMap(nspref);
+        
+        // use the output stream instead of XMLStreamWriter to test
+        DataWriter<OutputStream> dw = db.createWriter(OutputStream.class);
+        assertNotNull(dw);
+
+        GreetMe val = new GreetMe();
+        val.setRequestType("Hello");
+        dw.write(val, baos);
+        
+        String xstr = new String(baos.toByteArray());
+        
+        // there should be no namespace decls
+        if (!db.getContext().getClass().getName().contains("eclipse")) {
+            //bug in eclipse moxy
+            //https://bugs.eclipse.org/bugs/show_bug.cgi?id=421463
+            
+            assertEquals("<x:greetMe><x:requestType>Hello</x:requestType></x:greetMe>", xstr);
+        }
     }
 
     private JAXBDataBinding getTestWriterFactory(Class<?>... clz) throws Exception {

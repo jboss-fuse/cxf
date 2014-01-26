@@ -31,6 +31,7 @@ import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
  */
 public abstract class AbstractGrant implements AccessTokenGrant {
     
+    private static final long serialVersionUID = 3586571576928674560L;
     private String grantType;
     private String scope;
     private String audience;
@@ -59,7 +60,7 @@ public abstract class AbstractGrant implements AccessTokenGrant {
     
     public MultivaluedMap<String, String> toMap() {
         MultivaluedMap<String, String> map = new MetadataMap<String, String>();
-        map.putSingle(OAuthConstants.GRANT_TYPE, OAuthConstants.CLIENT_CREDENTIALS_GRANT);
+        map.putSingle(OAuthConstants.GRANT_TYPE, getType());
         if (scope != null) {
             map.putSingle(OAuthConstants.SCOPE, scope);
         }
