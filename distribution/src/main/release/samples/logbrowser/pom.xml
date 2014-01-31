@@ -21,13 +21,13 @@
     <groupId>org.apache.cxf.samples</groupId>
     <artifactId>logbrowser</artifactId>
     <name>LogBrowser</name>
-    <version>2.6.x-fuse-SNAPSHOT</version>
+    <version>2.6.0.redhat-60061</version>
     <description>LogBrowser</description>
 
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
         <artifactId>cxf-samples</artifactId>
-        <version>2.6.x-fuse-SNAPSHOT</version>
+        <version>2.6.0.redhat-60061</version>
         <relativePath>..</relativePath>
     </parent>
 
