@@ -50,7 +50,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.apache.cxf.Bus;
+import org.apache.cxf.BusFactory;
 import org.apache.cxf.bus.spring.SpringBusFactory;
+import org.apache.cxf.common.classloader.ClassLoaderUtils;
+import org.apache.cxf.common.classloader.ClassLoaderUtils.ClassLoaderHolder;
 import org.apache.cxf.feature.Feature;
 import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.interceptor.Fault;
@@ -378,7 +381,7 @@ public class WebClient extends AbstractClient {
         @SuppressWarnings("unchecked")
         Class<T> responseClass = (Class<T>)responseType.getRawType();
         Response r = doInvoke(httpMethod, body, null, responseClass, responseType.getType());
-        return responseClass.cast(responseClass == Response.class ? r : r.getEntity());
+        return castResponse(r, responseClass);
     }
     
 
@@ -392,7 +395,7 @@ public class WebClient extends AbstractClient {
      */
     public <T> T invoke(String httpMethod, Object body, Class<T> responseClass) {
         Response r = doInvoke(httpMethod, body, null, responseClass, responseClass);
-        return responseClass.cast(responseClass == Response.class ? r : r.getEntity());
+        return castResponse(r, responseClass);
     }
     
     /**
@@ -406,9 +409,14 @@ public class WebClient extends AbstractClient {
      */
     public <T> T invoke(String httpMethod, Object body, Class<?> requestClass, Class<T> responseClass) {
         Response r = doInvoke(httpMethod, body, requestClass, null, responseClass, responseClass);
-        return responseClass.cast(responseClass == Response.class ? r : r.getEntity());
+        return castResponse(r, responseClass);
     }
     
+    @SuppressWarnings("unchecked")
+    private <T> T castResponse(Response r, Class<T> responseClass) {
+        return (T)(responseClass == Response.class ? r : r.getEntity());
+    }
+
     /**
      * Does HTTP POST invocation and returns typed response object
      * @param body request body, can be null
@@ -1037,10 +1045,26 @@ public class WebClient extends AbstractClient {
                                            Exchange exchange,
                                            Map<String, Object> invContext) {
     //CHECKSTYLE:ON    
-        Message m = finalizeMessage(httpMethod, headers, body, requestClass, inType, 
-                                    respClass, outType, exchange, invContext);
-        doRunInterceptorChain(m);
-        return doResponse(m, respClass, outType);
+        Bus configuredBus = getConfiguration().getBus();
+        Bus origBus = BusFactory.getAndSetThreadDefaultBus(configuredBus);
+        ClassLoaderHolder origLoader = null;
+        try {
+            ClassLoader loader = configuredBus.getExtension(ClassLoader.class);
+            if (loader != null) {
+                origLoader = ClassLoaderUtils.setThreadContextClassloader(loader);
+            }
+            Message m = finalizeMessage(httpMethod, headers, body, requestClass, inType, 
+                                        respClass, outType, exchange, invContext);
+            doRunInterceptorChain(m);
+            return doResponse(m, respClass, outType);
+        } finally {
+            if (origLoader != null) {
+                origLoader.reset();
+            }
+            if (origBus != configuredBus) {
+                BusFactory.setThreadDefaultBus(origBus);
+            }
+        }    
     }
     
     //CHECKSTYLE:OFF
@@ -1513,7 +1537,7 @@ public class WebClient extends AbstractClient {
 
         @Override
         public <T> T post(Entity<?> entity, GenericType<T> genericType) {
-            return method(HttpMethod.POST, genericType);
+            return method(HttpMethod.POST, entity, genericType);
         }
 
         @Override

@@ -647,8 +647,9 @@ public abstract class AbstractBindingBuilder {
             if (tempTok instanceof WSSecSignature) {
                 WSSecSignature tempSig = (WSSecSignature) tempTok;
                 SecurityTokenReference secRef = tempSig.getSecurityTokenReference();
-                // TODO Add support for SAML2 here
-                if ((WSConstants.WSS_SAML_KI_VALUE_TYPE).equals(secRef.getKeyIdentifierValueType())) {
+               
+                if (WSConstants.WSS_SAML_KI_VALUE_TYPE.equals(secRef.getKeyIdentifierValueType())
+                    || WSConstants.WSS_SAML2_KI_VALUE_TYPE.equals(secRef.getKeyIdentifierValueType())) {
                     
                     Element secRefElement = cloneElement(secRef.getElement());
                     addSupportingElement(secRefElement);
@@ -1057,7 +1058,7 @@ public abstract class AbstractBindingBuilder {
             id = idAttr.getValue();
         } else {
             //Add an id
-            id = "Id-" + elem.hashCode();
+            id = wssConfig.getIdAllocator().createId("_", elem);
             String pfx = null;
             try {
                 pfx = elem.lookupPrefix(PolicyConstants.WSU_NAMESPACE_URI);
@@ -1590,6 +1591,12 @@ public abstract class AbstractBindingBuilder {
                                 && ((Wss11) wss).isMustSupportRefThumbprint()) {
                     secBase.setKeyIdentifierType(WSConstants.THUMBPRINT_IDENTIFIER);
                 }
+            } else if (token.getInclusion() == SPConstants.IncludeTokenType.INCLUDE_TOKEN_ALWAYS_TO_RECIPIENT
+                && !isRequestor() && token instanceof X509Token) {
+                secBase.setKeyIdentifierType(WSConstants.ISSUER_SERIAL);
+            } else if (token.getInclusion() == SPConstants.IncludeTokenType.INCLUDE_TOKEN_ALWAYS_TO_INITIATOR
+                && isRequestor() && token instanceof X509Token) {
+                secBase.setKeyIdentifierType(WSConstants.ISSUER_SERIAL);
             } else {
                 secBase.setKeyIdentifierType(WSConstants.BST_DIRECT_REFERENCE);
             }

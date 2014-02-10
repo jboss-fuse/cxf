@@ -19,6 +19,7 @@
 
 package org.apache.cxf.systest.jaxrs;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -92,6 +93,15 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
     }
     
     @Test
+    public void testGetBookQueryDefault() throws Exception {
+        String address = "http://localhost:" + PORT + "/bookstore/books/query/default";
+        WebClient wc = WebClient.create(address);
+        Response r = wc.get();
+        Book book = r.readEntity(Book.class);
+        assertEquals(123L, book.getId());
+    }
+    
+    @Test
     public void testGetBookSameUriAutoRedirect() throws Exception {
         String address = "http://localhost:" + PORT + "/bookstore/redirect?sameuri=true";
         WebClient wc = WebClient.create(address);
@@ -162,6 +172,16 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
         String address = "http://localhost:" + PORT + "/bookstore/emptyform";
         WebClient wc = WebClient.create(address);
         Response r = wc.form(new org.apache.cxf.jaxrs.ext.form.Form());
+        assertEquals("empty form", r.readEntity(String.class));
+    }
+    
+    @Test
+    public void testPostEmptyFormAsInStream() throws Exception {
+        String address = "http://localhost:" + PORT + "/bookstore/emptyform";
+        WebClient wc = WebClient.create(address);
+        WebClient.getConfig(wc).getRequestContext().put("org.apache.cxf.empty.request", true);
+        wc.type(MediaType.APPLICATION_FORM_URLENCODED);
+        Response r = wc.post(new ByteArrayInputStream("".getBytes()));
         assertEquals("empty form", r.readEntity(String.class));
     }
     
@@ -599,6 +619,7 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
         WebClient client = WebClient.create("http://localhost:" + PORT + "/bookstore/oneway");
         Response r = client.header("OnewayRequest", "true").post(null);
         assertEquals(202, r.getStatus());
+        assertFalse(r.getHeaders().isEmpty());
     }
     
     @Test
@@ -1042,6 +1063,16 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
     }
     
     @Test
+    public void testEmptyPostBytes() throws Exception {
+        WebClient wc = 
+            WebClient.create("http://localhost:" 
+                             + PORT + "/bookstore/emptypost");
+        Response response = wc.post(new byte[]{});
+        assertEquals(204, response.getStatus());
+        assertNull(response.getMetadata().getFirst("Content-Type"));
+    }
+    
+    @Test
     public void testEmptyPut() throws Exception {
         WebClient wc = 
             WebClient.create("http://localhost:" 
@@ -1295,6 +1326,26 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
     public void testBookExists() throws Exception {
         checkBook("http://localhost:" + PORT + "/bookstore/books/check/123", true);
         checkBook("http://localhost:" + PORT + "/bookstore/books/check/125", false);  
+    }
+    
+    @Test
+    public void testBookExistsWebClientPrimitiveBoolean() throws Exception {
+        WebClient wc = WebClient.create("http://localhost:" + PORT + "/bookstore/books/check/123");
+        wc.accept("text/plain");
+        assertTrue(wc.get(boolean.class));
+    }
+    
+    @Test
+    public void testBookExistsProxyPrimitiveBoolean() throws Exception {
+        BookStore store = JAXRSClientFactory.create("http://localhost:" + PORT, BookStore.class);
+        assertTrue(store.checkBook(123L));
+    }
+    
+    @Test
+    public void testBookExistsWebClientBooleanObject() throws Exception {
+        WebClient wc = WebClient.create("http://localhost:" + PORT + "/bookstore/books/check/123");
+        wc.accept("text/plain");
+        assertTrue(wc.get(Boolean.class));
     }
     
     @Test

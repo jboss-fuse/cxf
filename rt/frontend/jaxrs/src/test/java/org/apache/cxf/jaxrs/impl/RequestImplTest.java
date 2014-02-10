@@ -212,6 +212,16 @@ public class RequestImplTest extends Assert {
     }
     
     @Test
+    public void testIfNotMatchAndLastModified() {
+        metadata.putSingle(HttpHeaders.IF_NONE_MATCH, "1");
+        
+        ResponseBuilder rb = 
+            new RequestImpl(m).evaluatePreconditions(new Date(), new EntityTag("1"));
+        assertEquals("Precondition must not be met", 
+                     304, rb.build().getStatus());
+    }
+    
+    @Test
     public void testEtagsIfNotMatch() {
         metadata.putSingle(HttpHeaders.IF_NONE_MATCH, "\"123\"");
         
@@ -284,14 +294,14 @@ public class RequestImplTest extends Assert {
     @Test
     public void testIfNoneMatchAndDateWithNonMatchingTags() throws Exception {
         metadata.putSingle(HttpHeaders.IF_NONE_MATCH, "\"123\"");
-        metadata.putSingle("If-Modified-Since", "Tue, 21 Oct 2008 14:00:00 GMT");
+        metadata.putSingle("If-Modified-Since", "Tue, 20 Oct 2008 14:00:00 GMT");
         
         Date lastModified = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.ENGLISH)
-            .parse("Mon, 20 Oct 2008 14:00:00 GMT");
+            .parse("Mon, 21 Oct 2008 14:00:00 GMT");
         
         ResponseBuilder rb = 
             new RequestImpl(m).evaluatePreconditions(lastModified, new EntityTag("124"));
-        assertNotNull("Dates must not be checked if tags do not match", rb);
+        assertNull("Dates must not be checked if tags do not match", rb);
     }
    
 }

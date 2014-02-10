@@ -139,14 +139,13 @@ public class TransportBindingHandler extends AbstractBindingBuilder {
                         if (secToken == null) {
                             policyNotAsserted(transportToken, "No transport token id");
                             return;
-                        } else {
-                            policyAsserted(transportToken);
                         }
                         if (includeToken(transportToken.getInclusion())) {
                             Element el = secToken.getToken();
                             addEncryptedKeyElement(cloneElement(el));
                         } 
                     }
+                    policyAsserted(transportToken);
                 }
                     
                 handleNonEndorsingSupportingTokens();
@@ -154,12 +153,18 @@ public class TransportBindingHandler extends AbstractBindingBuilder {
                     handleEndorsingSupportingTokens();
                 }
             } else {
+                if (tbinding != null && tbinding.getTransportToken() != null) {
+                    policyAsserted(tbinding.getTransportToken().getToken());
+                }
                 addSignatureConfirmation(null);
             }
         } catch (Exception e) {
             LOG.log(Level.FINE, e.getMessage(), e);
             throw new Fault(e);
         }
+        
+        policyAsserted(SP12Constants.SIGNED_PARTS);
+        policyAsserted(SP12Constants.ENCRYPTED_PARTS);
     }
     
     /**

@@ -148,6 +148,23 @@ public class SAMLTokenValidator implements TokenValidator {
             SAMLTokenPrincipal samlPrincipal = new SAMLTokenPrincipal(assertion);
             response.setPrincipal(samlPrincipal);
             
+            if (!assertion.isSigned()) {
+                LOG.log(Level.WARNING, "The received assertion is not signed, and therefore not trusted");
+                return response;
+            }
+                
+            RequestData requestData = new RequestData();
+            requestData.setSigCrypto(sigCrypto);
+            WSSConfig wssConfig = WSSConfig.getNewInstance();
+            requestData.setWssConfig(wssConfig);
+            requestData.setCallbackHandler(callbackHandler);
+            requestData.setMsgContext(tokenParameters.getWebServiceContext().getMessageContext());
+
+            // Verify the signature
+            assertion.verifySignature(
+                requestData, new WSDocInfo(validateTargetElement.getOwnerDocument())
+            );
+                
             SecurityToken secToken = null;
             byte[] signatureValue = assertion.getSignatureValue();
             if (tokenParameters.getTokenStore() != null && signatureValue != null
@@ -164,22 +181,6 @@ public class SAMLTokenValidator implements TokenValidator {
             }
             
             if (secToken == null) {
-                if (!assertion.isSigned()) {
-                    LOG.log(Level.WARNING, "The received assertion is not signed, and therefore not trusted");
-                    return response;
-                }
-                
-                RequestData requestData = new RequestData();
-                requestData.setSigCrypto(sigCrypto);
-                WSSConfig wssConfig = WSSConfig.getNewInstance();
-                requestData.setWssConfig(wssConfig);
-                requestData.setCallbackHandler(callbackHandler);
-                
-                // Verify the signature
-                assertion.verifySignature(
-                    requestData, new WSDocInfo(validateTargetElement.getOwnerDocument())
-                );
-                
                 // Validate the assertion against schemas/profiles
                 validateAssertion(assertion);
 
@@ -200,7 +201,6 @@ public class SAMLTokenValidator implements TokenValidator {
                 if (!certConstraints.matches(cert)) {
                     return response;
                 }
-                
             }
             
             // Parse roles from the validated token

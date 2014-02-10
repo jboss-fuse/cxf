@@ -699,6 +699,21 @@ public class JSONProviderTest extends Assert {
     }
     
     @Test
+    public void testIgnoreNamespaces() throws Exception {
+        JSONProvider<TestBean> p = new JSONProvider<TestBean>();
+        p.setIgnoreNamespaces(true);
+        TestBean bean = new TestBean();
+        bean.setName("a");
+        bean.setId("b");
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        p.writeTo(bean, TestBean.class, TestBean.class, new Annotation[0], 
+                  MediaType.APPLICATION_JSON_TYPE, new MetadataMap<String, Object>(), os);
+        String s = os.toString();
+        assertEquals("{\"testBean\":{\"@id\":\"b\",\"name\":\"a\"}}", s);
+        
+    }
+    
+    @Test
     public void testWriteUnqualifiedCollection() throws Exception {
         JSONProvider<List<Book>> p = new JSONProvider<List<Book>>();
         List<Book> books = new ArrayList<Book>();
@@ -1012,6 +1027,32 @@ public class JSONProviderTest extends Assert {
         assertEquals(
             "{\"ManyTags\":{\"tags\":{\"list\":[{\"group\":\"b\",\"name\":\"a\"}]}}}",
             s);
+    }
+    
+    @Test
+    public void testManyTagsEmptyArray() throws Exception {
+        JSONProvider<ManyTags> p = new JSONProvider<ManyTags>() {
+            protected XMLStreamWriter createWriter(Object actualObject, Class<?> actualClass, 
+                Type genericType, String enc, OutputStream os, boolean isCollection) throws Exception {
+                return new EmptyListWriter(
+                    super.createWriter(actualObject, actualClass, genericType, enc, os, isCollection));
+            }
+        };
+        p.setSerializeAsArray(true);
+        p.setArrayKeys(Collections.singletonList("list"));
+        p.setIgnoreEmptyArrayValues(true);
+        Tags tags = new Tags();
+        tags.addTag(createTag("a", "b"));
+        ManyTags many = new ManyTags();
+        many.setTags(tags);
+        
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        
+        p.writeTo(many, ManyTags.class, ManyTags.class, ManyTags.class.getAnnotations(), 
+                  MediaType.APPLICATION_JSON_TYPE, new MetadataMap<String, Object>(), os);
+        
+        String s = os.toString();
+        assertEquals("{\"ManyTags\":{\"tags\":{\"list\":[]}}}", s);
     }
 
     @Test
@@ -1633,6 +1674,32 @@ public class JSONProviderTest extends Assert {
         }
     }
     
+    private static class EmptyListWriter extends DelegatingXMLStreamWriter {
+        private int count;
+        public EmptyListWriter(XMLStreamWriter writer) {
+            super(writer);
+        }
+
+        public void writeCharacters(String text) throws XMLStreamException {
+        }
+        
+        public void writeStartElement(String p, String local, String uri) throws XMLStreamException {
+            if ("group".equals(local) || "name".equals(local)) {
+                count++; 
+            } else {
+                super.writeStartElement(p, local, uri);
+            }
+        }
+        
+        public void writeEndElement() throws XMLStreamException {
+            if (count == 0) {
+                super.writeEndElement(); 
+            } else {
+                count--;
+            }
+        }
+    }
+    
     private static class NullWriter extends DelegatingXMLStreamWriter {
         public NullWriter(XMLStreamWriter writer) {
             super(writer);
@@ -1646,4 +1713,26 @@ public class JSONProviderTest extends Assert {
             }
         }
     }
+    
+    @XmlRootElement(namespace = "http://testbean")
+    public static class TestBean {
+        private String name;
+        private String id;
+        public TestBean() {
+            
+        }
+        public String getName() {
+            return name;
+        }
+        public void setName(String name) {
+            this.name = name;
+        }
+        public String getId() {
+            return id;
+        }
+        @XmlAttribute(namespace = "http://testbean")
+        public void setId(String id) {
+            this.id = id;
+        }
+    }    
 }

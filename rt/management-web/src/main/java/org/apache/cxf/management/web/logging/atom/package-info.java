@@ -23,5 +23,6 @@
  * Allows to configure <tt>java.util.logging</tt> (JUL) loggers to use
  * handlers producing ATOM feeds that are either pushed to or pulled by client.  
  */
+@Hold
 package org.apache.cxf.management.web.logging.atom;
 

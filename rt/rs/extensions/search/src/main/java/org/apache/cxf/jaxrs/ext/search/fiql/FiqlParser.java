@@ -18,6 +18,7 @@
  */
 package org.apache.cxf.jaxrs.ext.search.fiql;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ import org.apache.cxf.jaxrs.ext.search.AndSearchCondition;
 import org.apache.cxf.jaxrs.ext.search.Beanspector;
 import org.apache.cxf.jaxrs.ext.search.Beanspector.TypeInfo;
 import org.apache.cxf.jaxrs.ext.search.ConditionType;
+import org.apache.cxf.jaxrs.ext.search.InterfaceProxy;
 import org.apache.cxf.jaxrs.ext.search.OrSearchCondition;
 import org.apache.cxf.jaxrs.ext.search.PropertyNotFoundException;
 import org.apache.cxf.jaxrs.ext.search.SearchBean;
@@ -381,7 +383,12 @@ public class FiqlParser<T> implements SearchConditionParser<T> {
                 boolean lastTry = names.length == 2 
                     && (isPrimitive || returnType == Date.class || returnCollection);
                 
-                Object valueObject = lastTry && ownerBean != null ? ownerBean : actualType.newInstance();
+                Object valueObject = ownerBean != null ? ownerBean 
+                    : actualType.isInterface() 
+                    ? Proxy.newProxyInstance(this.getClass().getClassLoader(), 
+                                             new Class[]{actualType}, 
+                                             new InterfaceProxy())
+                    : actualType.newInstance();
                 Object nextObject;
                 
                 if (lastTry) {
@@ -404,18 +411,25 @@ public class FiqlParser<T> implements SearchConditionParser<T> {
                 Method setterM = actualType.getMethod("set" + nextPart, new Class[]{returnType});
                 setterM.invoke(valueObject, new Object[]{nextObject});
                 
-                lastCastedValue = lastCastedValue == null ? valueObject : lastCastedValue;
                 if (lastTry) {
+                    lastCastedValue = lastCastedValue == null ? valueObject : lastCastedValue;
                     return isCollection ? getCollectionSingleton(valueType, lastCastedValue) : lastCastedValue;
-                } 
+                } else {
+                    lastCastedValue = valueObject;
+                }
                 
                 TypeInfo nextTypeInfo = new TypeInfo(nextObject.getClass(), getterM.getGenericReturnType()); 
-                return parseType(originalPropName,
+                Object response = parseType(originalPropName,
                                  nextObject, 
                                  lastCastedValue, 
                                  setter.substring(index + 1), 
                                  nextTypeInfo, 
                                  value);
+                if (ownerBean == null) {
+                    return isCollection ? getCollectionSingleton(valueType, lastCastedValue) : lastCastedValue;
+                } else {
+                    return response;
+                }
             } catch (Throwable e) {
                 throw new SearchParseException("Cannot convert String value \"" + value
                                                + "\" to a value of class " + valueType.getName(), e);
@@ -582,9 +596,10 @@ public class FiqlParser<T> implements SearchConditionParser<T> {
             if (isPrimitive(cond)) {
                 return new SimpleSearchCondition<T>(ct, cond); 
             } else {
-                return new SimpleSearchCondition<T>(Collections.singletonMap(templateName.toLowerCase(), ct),
-                                                    Collections.singletonMap(templateName, name),
-                                                    Collections.singletonMap(templateName, tvalue.getTypeInfo()),
+                String templateNameLCase = templateName.toLowerCase();
+                return new SimpleSearchCondition<T>(Collections.singletonMap(templateNameLCase, ct),
+                                                    Collections.singletonMap(templateNameLCase, name),
+                                                    Collections.singletonMap(templateNameLCase, tvalue.getTypeInfo()),
                                                     cond);
             }
         }

@@ -66,7 +66,7 @@ public abstract class AbstractInvoker implements Invoker {
                 params = new MessageContentsList(o);
             }
             
-            m = adjustMethodAndParams(m, exchange, params);
+            m = adjustMethodAndParams(m, exchange, params, serviceObject.getClass());
             
             //Method m = (Method)bop.getOperationInfo().getProperty(Method.class.getName());
             m = matchMethod(m, serviceObject);
@@ -78,9 +78,17 @@ public abstract class AbstractInvoker implements Invoker {
         }
     }
 
+    // Kept for compatibility reasons
     protected Method adjustMethodAndParams(Method m,
                                            Exchange ex,
                                            List<Object> params) {
+        return adjustMethodAndParams(m, ex, params, null);
+    }
+
+    protected Method adjustMethodAndParams(Method m,
+                                           Exchange ex,
+                                           List<Object> params,
+                                           Class<?> serviceObjectClass) {
         //nothing to do
         return m;
     }

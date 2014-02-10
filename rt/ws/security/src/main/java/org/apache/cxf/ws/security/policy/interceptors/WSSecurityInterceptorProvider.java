@@ -41,6 +41,7 @@ public class WSSecurityInterceptorProvider extends AbstractPolicyInterceptorProv
         ASSERTION_TYPES.add(SP12Constants.TRANSPORT_BINDING);
         ASSERTION_TYPES.add(SP12Constants.ASYMMETRIC_BINDING);
         ASSERTION_TYPES.add(SP12Constants.SYMMETRIC_BINDING);
+        ASSERTION_TYPES.add(SP12Constants.SIGNED_PARTS);
     }
 
     public WSSecurityInterceptorProvider() {

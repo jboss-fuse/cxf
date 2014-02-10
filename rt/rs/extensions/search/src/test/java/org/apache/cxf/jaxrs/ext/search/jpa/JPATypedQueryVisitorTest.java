@@ -89,7 +89,7 @@ public class JPATypedQueryVisitorTest extends Assert {
             
             
             b1.setId(9);
-            b1.setTitle("num9");
+            b1.setBookTitle("num9");
             b1.setAddress(new OwnerAddress("Street1"));
             OwnerInfo info1 = new OwnerInfo();
             info1.setName(new Name("Fred"));
@@ -111,7 +111,7 @@ public class JPATypedQueryVisitorTest extends Assert {
             br2.setBook(b2);
             
             b2.setId(10);
-            b2.setTitle("num10");
+            b2.setBookTitle("num10");
             b2.setAddress(new OwnerAddress("Street2"));
             OwnerInfo info2 = new OwnerInfo();
             info2.setName(new Name("Barry"));
@@ -132,7 +132,7 @@ public class JPATypedQueryVisitorTest extends Assert {
             b3.getReviews().add(br3);
             br3.setBook(b3);
             b3.setId(11);
-            b3.setTitle("num11");
+            b3.setBookTitle("num11");
             b3.setAddress(new OwnerAddress("Street3"));
             b3.getAuthors().add("Barry");
             OwnerInfo info3 = new OwnerInfo();
@@ -186,9 +186,9 @@ public class JPATypedQueryVisitorTest extends Assert {
     
     @Test
     public void testAndQuery() throws Exception {
-        List<Book> books = queryBooks("id==10;title==num10");
+        List<Book> books = queryBooks("id==10;bookTitle==num10");
         assertEquals(1, books.size());
-        assertTrue(10 == books.get(0).getId() && "num10".equals(books.get(0).getTitle()));
+        assertTrue(10 == books.get(0).getId() && "num10".equals(books.get(0).getBookTitle()));
     }
     
     @Test
@@ -196,6 +196,20 @@ public class JPATypedQueryVisitorTest extends Assert {
         List<Book> books = 
             queryBooks("reviews.authors==Ted");
         assertEquals(3, books.size());
+    }
+    
+    @Test
+    public void testQueryCollection2() throws Exception {
+        List<Book> books = 
+            queryBooks("reviews.book.id==10");
+        assertEquals(1, books.size());
+    }
+    
+    @Test
+    public void testQueryCollection3() throws Exception {
+        List<Book> books = 
+            queryBooks("reviews.book.ownerInfo.name==Barry");
+        assertEquals(1, books.size());
     }
     
     @Test
@@ -259,12 +273,12 @@ public class JPATypedQueryVisitorTest extends Assert {
         List<Book> books = 
             queryBooks("id==10;authors==John;reviews.review==good;reviews.authors==Ted");
         assertEquals(1, books.size());
-        assertTrue(10 == books.get(0).getId() && "num10".equals(books.get(0).getTitle()));
+        assertTrue(10 == books.get(0).getId() && "num10".equals(books.get(0).getBookTitle()));
     }
     
     @Test
     public void testAndQueryNoMatch() throws Exception {
-        List<Book> books = queryBooks("id==10;title==num9");
+        List<Book> books = queryBooks("id==10;bookTitle==num9");
         assertEquals(0, books.size());
     }
     
@@ -337,21 +351,6 @@ public class JPATypedQueryVisitorTest extends Assert {
     }
     
     @Test
-    public void testIsMet() throws Exception {
-        SearchCondition<Book> filter = 
-            new FiqlParser<Book>(Book.class,
-                null,                          
-                Collections.singletonMap("address", "address.street")).parse("address==Street1");
-        
-        Book b = new Book();
-        b.setAddress(new OwnerAddress("Street1"));
-        assertTrue(filter.isMet(b));
-        
-        b.setAddress(new OwnerAddress("Street2"));
-        assertFalse(filter.isMet(b));
-    }
-    
-    @Test
     public void testEqualsAddressQuery2() throws Exception {
         List<Book> books = queryBooks("street==Street1",
             null,                          
@@ -408,7 +407,7 @@ public class JPATypedQueryVisitorTest extends Assert {
     
     @Test
     public void testFindBookInTownLibrary() throws Exception {
-        List<Book> books = queryBooks("libAddress==town;title==num10", null,
+        List<Book> books = queryBooks("libAddress==town;bookTitle==num10", null,
             Collections.singletonMap("libAddress", "library.address"));
         assertEquals(1, books.size());
         Book book = books.get(0);
@@ -435,7 +434,7 @@ public class JPATypedQueryVisitorTest extends Assert {
     
     @Test
     public void testEqualsWildcard() throws Exception {
-        List<Book> books = queryBooks("title==num1*");
+        List<Book> books = queryBooks("bookTitle==num1*");
         assertEquals(2, books.size());
         assertTrue(10 == books.get(0).getId() && 11 == books.get(1).getId()
             || 11 == books.get(0).getId() && 10 == books.get(1).getId());
@@ -552,7 +551,7 @@ public class JPATypedQueryVisitorTest extends Assert {
         List<SingularAttribute<Book, ?>> selections = 
             new ArrayList<SingularAttribute<Book, ?>>();
         selections.add(Book_.id);
-        selections.add(Book_.title);
+        selections.add(Book_.bookTitle);
         
         jpa.selectConstruct(selections);
         
@@ -570,7 +569,7 @@ public class JPATypedQueryVisitorTest extends Assert {
         List<SingularAttribute<Book, ?>> selections = 
             new ArrayList<SingularAttribute<Book, ?>>();
         selections.add(Book_.id);
-        selections.add(Book_.title);
+        selections.add(Book_.bookTitle);
         
         return jpa.getArrayTypedQuery(selections).getResultList();
     }
