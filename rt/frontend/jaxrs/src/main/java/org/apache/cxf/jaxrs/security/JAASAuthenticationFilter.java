@@ -77,16 +77,6 @@ public class JAASAuthenticationFilter implements RequestHandler {
         interceptor.setRoleClassifierType(rct);
     }
 
-    
-    public void setRoleClassifier(String rc) { 
-        interceptor.setRoleClassifier(rc); 
-    }
-
-    public void setRoleClassifierType(String rct) { 
-        interceptor.setRoleClassifierType(rct);
-    }  
-   
-  
     @Deprecated
     public void setRolePrefix(String name) {
         interceptor.setRolePrefix(name);
