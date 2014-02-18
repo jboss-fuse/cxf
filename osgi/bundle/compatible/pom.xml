@@ -271,7 +271,7 @@
                             org.apache.cxf.cxf-rt-bindings-soap;visibility:=reexport,
                             org.apache.cxf.cxf-rt-ws-security;visibility:=reexport,
                             org.apache.cxf.cxf-rt-ws-rm;visibility:=reexport,
-                            org.springframework.beans</Require-Bundle>
+                            org.apache.servicemix.bundles.spring-beans</Require-Bundle>
                         <_failok>true</_failok>
                         <_nouses>true</_nouses>
                         <_versionpolicy>[$(version;==;$(@)),$(version;+;$(@)))</_versionpolicy>
