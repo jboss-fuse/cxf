@@ -59,6 +59,7 @@ import org.apache.cxf.ws.addressing.MAPAggregator;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -180,6 +181,7 @@ public class InterceptorFaultTest extends AbstractBusClientServerTestBase {
     }
     
     @Test
+    @Ignore
     public void testRobustFailWithoutAddressingInUserLogicalPhase() throws Exception {
 
         setupGreeter("org/apache/cxf/systest/interceptor/no-addr.xml", false);
