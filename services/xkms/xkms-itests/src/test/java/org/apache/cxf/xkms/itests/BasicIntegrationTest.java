@@ -47,12 +47,10 @@ public class BasicIntegrationTest {
     
     // Adding apache snapshots as cxf trunk may contain snapshot dependencies
     private static final String REPOS = "http://repo1.maven.org/maven2@id=central, " 
-//        + "http://svn.apache.org/repos/asf/servicemix/m2-repo@id=servicemix, "
-        + "http://repository.apache.org/content/groups/snapshots-group@snapshots@noreleases@id=apache-snapshots ";
-//        + "http://repository.springsource.com/maven/bundles/release@id=springsource.release, "
-//        + "http://repository.springsource.com/maven/bundles/external@id=springsource.external, "
-//        + "http://oss.sonatype.org/content/repositories/releases/@id=sonatype"; 
-
+        + "http://repository.apache.org/content/groups/snapshots-group@snapshots@noreleases@id=apache-snapshots, "
+        + "http://repository.jboss.org/nexus/content/groups/fs-public-snapshots" 
+        + "@snapshots@noreleases@id=fuse-snapshots ";
+  
     @Inject
     @Filter(timeout = 20000)
     protected XKMSPortType xkmsService;
