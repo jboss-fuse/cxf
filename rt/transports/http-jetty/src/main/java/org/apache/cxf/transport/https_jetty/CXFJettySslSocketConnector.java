@@ -131,9 +131,6 @@ public class CXFJettySslSocketConnector extends SslSelectChannelConnector {
                 getSslContextFactory().addExcludeProtocols(p);
             }
         }
-        if (!"SSLv2Hello".equals(proto)) {
-            getSslContextFactory().addExcludeProtocols("SSLv2Hello");
-        }
 
         SSLContext context = getCxfSslContextFactory().getProvider() == null
             ? SSLContext.getInstance(proto)
