@@ -294,6 +294,19 @@ public final class SecurityConstants {
         "org.apache.cxf.ws.security.tokenstore.TokenStore";
 
     /**
+     * The Cache Identifier to use with the TokenStore. CXF uses the following key to retrieve a
+     * token store: "org.apache.cxf.ws.security.tokenstore.TokenStore-<identifier>". This key can be
+     * used to configure service-specific cache configuration. If the identifier does not match, then it
+     * falls back to a cache configuration with key "org.apache.cxf.ws.security.tokenstore.TokenStore".
+     *
+     * The default "<identifier>" is the QName of the service in question. However to pick up a
+     * custom cache configuration (for example, if you want to specify a TokenStore per-client proxy),
+     * it can be configured with this identifier instead.
+     */
+    public static final String CACHE_IDENTIFIER = "ws-security.cache.identifier";
+
+
+    /**
      * A comma separated String of regular expressions which will be applied to the subject DN of 
      * the certificate used for signature validation, after trust verification of the certificate 
      * chain associated with the  certificate. These constraints are not used when the certificate 
@@ -414,6 +427,16 @@ public final class SecurityConstants {
      */
     public static final String DISABLE_STS_CLIENT_WSMEX_CALL_USING_EPR_ADDRESS =
         "ws-security.sts.disable-wsmex-call-using-epr-address";
+
+    /**
+     * Whether to prefer to use WS-MEX over a STSClient's location/wsdlLocation properties
+     * when making an STS RequestSecurityToken call. This can be set to true for the scenario
+     * of making a WS-MEX call to an initial STS, and using the returned token to make another
+     * call to an STS (which is configured using the STSClient configuration). Default is
+     * "false".
+     */
+    public static final String PREFER_WSMEX_OVER_STS_CLIENT_CONFIG =
+        "ws-security.sts.prefer-wsmex";
     
     /**
      * Switch STS client to send Soap 1.2 messages
