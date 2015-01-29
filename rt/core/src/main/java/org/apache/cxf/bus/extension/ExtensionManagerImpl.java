@@ -328,7 +328,7 @@ public class ExtensionManagerImpl implements ExtensionManager, ConfiguredBeanLoc
     public <T> Collection<? extends T> getBeansOfType(Class<T> type) {
         List<T> ret = new LinkedList<T>();
         for (Extension ex : all.values()) {
-            synchronized (ex) {
+            synchronized (all) {
                 Class<?> cls = ex.getClassObject(loader);
                 if (cls != null && type.isAssignableFrom(cls)) {
                     if (ex.getLoadedObject() == null) {
