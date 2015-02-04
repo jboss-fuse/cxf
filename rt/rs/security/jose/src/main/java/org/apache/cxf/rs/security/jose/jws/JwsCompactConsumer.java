@@ -18,13 +18,13 @@
  */
 package org.apache.cxf.rs.security.jose.jws;
 
-import java.io.UnsupportedEncodingException;
+import java.security.interfaces.RSAPublicKey;
 
-import org.apache.cxf.common.util.Base64Exception;
-import org.apache.cxf.common.util.Base64UrlUtility;
+import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.rs.security.jose.JoseHeaders;
 import org.apache.cxf.rs.security.jose.JoseHeadersReader;
 import org.apache.cxf.rs.security.jose.JoseHeadersReaderWriter;
+import org.apache.cxf.rs.security.jose.JoseUtils;
 import org.apache.cxf.rs.security.jose.jwk.JsonWebKey;
 
 public class JwsCompactConsumer {
@@ -40,6 +40,9 @@ public class JwsCompactConsumer {
         if (r != null) {
             this.reader = r;
         }
+        if (encodedJws.startsWith("\"") && encodedJws.endsWith("\"")) {
+            encodedJws = encodedJws.substring(1, encodedJws.length() - 1);
+        }
         String[] parts = encodedJws.split("\\.");
         if (parts.length != 3) {
             if (parts.length == 2 && encodedJws.endsWith(".")) {
@@ -50,12 +53,12 @@ public class JwsCompactConsumer {
         } else {
             encodedSignature = parts[2];
         }
-        headersJson = decodeToString(parts[0]);
-        jwsPayload = decodeToString(parts[1]);
+        headersJson = JoseUtils.decodeToString(parts[0]);
+        jwsPayload = JoseUtils.decodeToString(parts[1]);
         encodedSequence = parts[0] + "." + parts[1];
         
     }
-    public String getUnsignedEncodedPayload() {
+    public String getUnsignedEncodedSequence() {
         return encodedSequence;
     }
     public String getEncodedSignature() {
@@ -68,25 +71,21 @@ public class JwsCompactConsumer {
         return jwsPayload;
     }
     public byte[] getDecodedJwsPayloadBytes() {
-        try {
-            return jwsPayload.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException ex) {
-            throw new SecurityException(ex);
-        }
+        return StringUtils.toBytesUTF8(jwsPayload);
     }
     public byte[] getDecodedSignature() {
-        return encodedSignature.isEmpty() ? new byte[]{} : decode(encodedSignature);
+        return encodedSignature.isEmpty() ? new byte[]{} : JoseUtils.decode(encodedSignature);
     }
-    public JwsHeaders getJwsHeaders() {
+    public JoseHeaders getJoseHeaders() {
         JoseHeaders joseHeaders = reader.fromJsonHeaders(headersJson);
-        if (joseHeaders.getHeaderUpdateCount() != null) { 
-            throw new SecurityException();
+        if (joseHeaders.getUpdateCount() != null) { 
+            throw new SecurityException("Duplicate headers have been detected");
         }
-        return new JwsHeaders(joseHeaders);
+        return joseHeaders;
     }
     public boolean verifySignatureWith(JwsSignatureVerifier validator) {
         try {
-            if (validator.verify(getJwsHeaders(), getUnsignedEncodedPayload(), getDecodedSignature())) {
+            if (validator.verify(getJoseHeaders(), getUnsignedEncodedSequence(), getDecodedSignature())) {
                 return true;
             }
         } catch (SecurityException ex) {
@@ -97,22 +96,17 @@ public class JwsCompactConsumer {
     public boolean verifySignatureWith(JsonWebKey key) {
         return verifySignatureWith(JwsUtils.getSignatureVerifier(key));
     }
-    private static String decodeToString(String encoded) {
-        try {
-            return new String(decode(encoded), "UTF-8");
-        } catch (UnsupportedEncodingException ex) {
-            throw new SecurityException(ex);
-        }
-        
+    public boolean verifySignatureWith(RSAPublicKey key, String algo) {
+        return verifySignatureWith(JwsUtils.getRSAKeySignatureVerifier(key, algo));
+    }
+    public boolean verifySignatureWith(byte[] key, String algo) {
+        return verifySignatureWith(JwsUtils.getHmacSignatureVerifier(key, algo));
+    }
+    public boolean validateCriticalHeaders() {
+        return JwsUtils.validateCriticalHeaders(getJoseHeaders());
     }
     protected JoseHeadersReader getReader() {
         return reader;
     }
-    private static byte[] decode(String encoded) {
-        try {
-            return Base64UrlUtility.decode(encoded);
-        } catch (Base64Exception ex) {
-            throw new SecurityException(ex);
-        }
-    }
+    
 }

@@ -21,74 +21,42 @@ package org.apache.cxf.rs.security.jose.jaxrs;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.security.interfaces.RSAPrivateKey;
-import java.util.Properties;
 
+import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.helpers.IOUtils;
-import org.apache.cxf.jaxrs.utils.JAXRSUtils;
-import org.apache.cxf.jaxrs.utils.ResourceUtils;
 import org.apache.cxf.message.Message;
-import org.apache.cxf.message.MessageUtils;
-import org.apache.cxf.rs.security.jose.jwk.JsonWebKey;
-import org.apache.cxf.rs.security.jose.jwk.JwkUtils;
+import org.apache.cxf.rs.security.jose.JoseHeaders;
 import org.apache.cxf.rs.security.jose.jws.JwsCompactProducer;
 import org.apache.cxf.rs.security.jose.jws.JwsSignatureProvider;
 import org.apache.cxf.rs.security.jose.jws.JwsUtils;
-import org.apache.cxf.rs.security.jose.jws.PrivateKeyJwsSignatureProvider;
-import org.apache.cxf.rs.security.jose.jwt.JwtHeaders;
 
 public class AbstractJwsWriterProvider {
-    private static final String RSSEC_SIGNATURE_OUT_PROPS = "rs.security.signature.out.properties";
-    private static final String RSSEC_SIGNATURE_PROPS = "rs.security.signature.properties";
-    private static final String JSON_WEB_SIGNATURE_ALGO_PROP = "rs.security.jws.content.signature.algorithm";
-    
+    private static final String JWS_CONTEXT_PROPERTY = "org.apache.cxf.jws.context";
     private JwsSignatureProvider sigProvider;
     
     public void setSignatureProvider(JwsSignatureProvider signatureProvider) {
         this.sigProvider = signatureProvider;
     }
     
-    protected JwsSignatureProvider getInitializedSigProvider(JwtHeaders headers) {
+    protected JwsSignatureProvider getInitializedSigProvider(JoseHeaders headers) {
         if (sigProvider != null) {
             return sigProvider;    
         } 
-        Message m = JAXRSUtils.getCurrentMessage();
-        String propLoc = 
-            (String)MessageUtils.getContextualProperty(m, RSSEC_SIGNATURE_OUT_PROPS, RSSEC_SIGNATURE_PROPS);
-        if (propLoc == null) {
-            throw new SecurityException();
-        }
-        try {
-            Properties props = ResourceUtils.loadProperties(propLoc, m.getExchange().getBus());
-            JwsSignatureProvider theSigProvider = null; 
-            String rsaSignatureAlgo = null;
-            if (JwkUtils.JWK_KEY_STORE_TYPE.equals(props.get(KeyManagementUtils.RSSEC_KEY_STORE_TYPE))) {
-                JsonWebKey jwk = JwkUtils.loadJsonWebKey(m, props, JsonWebKey.KEY_OPER_SIGN);
-                rsaSignatureAlgo = getSignatureAlgo(props, jwk.getAlgorithm());
-                theSigProvider = JwsUtils.getSignatureProvider(jwk, rsaSignatureAlgo);
-            } else {
-                rsaSignatureAlgo = getSignatureAlgo(props, null);
-                RSAPrivateKey pk = (RSAPrivateKey)KeyManagementUtils.loadPrivateKey(m, props, 
-                    KeyManagementUtils.RSSEC_SIG_KEY_PSWD_PROVIDER);
-                theSigProvider = new PrivateKeyJwsSignatureProvider(pk, rsaSignatureAlgo);
-            }
-            if (theSigProvider == null) {
-                throw new SecurityException();
-            }
-            headers.setAlgorithm(rsaSignatureAlgo);
-            return theSigProvider;
-        } catch (SecurityException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw new SecurityException(ex);
+        JwsSignatureProvider theSigProvider = JwsUtils.loadSignatureProvider(true); 
+        headers.setAlgorithm(theSigProvider.getAlgorithm());
+        return theSigProvider;
+    }
+    protected void setRequestContextProperty(Message m, JoseHeaders headers) {    
+        String context = (String)m.getContextualProperty(JWS_CONTEXT_PROPERTY);
+        if (context != null) {
+            headers.setHeader(JWS_CONTEXT_PROPERTY, context);
         }
     }
     protected void writeJws(JwsCompactProducer p, JwsSignatureProvider theSigProvider, OutputStream os) 
         throws IOException {
         p.signWith(theSigProvider);
-        IOUtils.copy(new ByteArrayInputStream(p.getSignedEncodedJws().getBytes("UTF-8")), os);
+        byte[] bytes = StringUtils.toBytesUTF8(p.getSignedEncodedJws());
+        IOUtils.copy(new ByteArrayInputStream(bytes), os);
     }
-    private String getSignatureAlgo(Properties props, String algo) {
-        return algo == null ? props.getProperty(JSON_WEB_SIGNATURE_ALGO_PROP) : algo;
-    }
+    
 }

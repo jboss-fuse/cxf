@@ -29,18 +29,18 @@
 <div id="output">
   <div id="config" style="float: left;">
     <strong>Service Endpoint URL:</strong><br />
-    <input id="wsUri" size="72" style="width: 450px" value="ws://localhost:9000/"/>
+    <input id="wsUri" size="72" style="width: 100%" value="ws://localhost:9000/"/>
     <br/>
     <button id="connect">Connect</button>
     <button id="disconnect">Disconnect</button>
     <br />
     <br />
     <strong>Request:</strong><br />
-    <textarea id="request" rows="10" cols="72" style="width: 450px;">GET /customerservice/customers/123</textarea>
+    <textarea id="request" rows="10" cols="72" style="width: 100%;">GET /customerservice/customers/123</textarea>
     <br/>
     <button id="send">Send</button>
   </div>
-  <div id="log" style="float: left; margin-left: 20px; padding-left: 20px; width: 450px; height: 500px; border-left: solid 1px #cccccc;">
+  <div id="log" style="float: left; margin-left: 20px; padding-left: 20px; width: 60%; height: 500px; border-left: solid 1px #cccccc;">
     <strong>Log:</strong><br />
     <button id="clearLogBut" style="position: relative; top: 3px;">Clear log</button>
     <div id="consoleLog" style="margin-top: 5px; border: solid 1px #aaaaaa; overflow-y: scroll; height:100%"></div>
@@ -122,7 +122,7 @@
     writeToLog('<span style="color:red; font-size:75%; font-style:italic">ERROR</span><span style="color: red;"><pre>' + evt.data + '</pre></span>');
   }
 
-  function doSend(message) {
+  function doSend(evt) {
     var reqmsg = document.getElementById("request");
     writeToLog('<span style="color:green; font-size:75%; font-style:italic">SENT</span><span style="color: green;"><pre>' + createMessage(reqmsg.value) + '</pre></span>');
     websocket.send(reqmsg.value);

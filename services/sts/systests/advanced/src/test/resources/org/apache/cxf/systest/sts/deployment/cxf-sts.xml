@@ -36,6 +36,7 @@
         <property name="claimsManager" ref="claimsManager"/>
         <property name="tokenStore" ref="defaultTokenStore"/>
         <property name="delegationHandlers" ref="utDelegationHandler"/>
+        <property name="tokenValidators" ref="transportTokenValidators"/>
     </bean>
     <bean id="transportValidateDelegate" class="org.apache.cxf.sts.operation.TokenValidateOperation">
         <property name="tokenProviders" ref="transportTokenProviders"/>
@@ -142,8 +143,6 @@
                     <sec:include>.*_EXPORT1024_.*</sec:include>
                     <sec:include>.*_WITH_DES_.*</sec:include>
                     <sec:include>.*_WITH_AES_.*</sec:include>
-                    <sec:include>.*_WITH_NULL_.*</sec:include>
-                    <sec:exclude>.*_DH_anon_.*</sec:exclude>
                 </sec:cipherSuitesFilter>
                 <sec:clientAuthentication want="true" required="true"/>
             </httpj:tlsServerParameters>

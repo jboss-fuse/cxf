@@ -27,6 +27,7 @@ import java.util.Map;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.ResponseProcessingException;
 import javax.ws.rs.core.Form;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
@@ -349,17 +350,28 @@ public final class OAuthClientUtils {
         appendTokenData(sb, accessToken, httpProps);  
         return sb.toString();
     }
+    public static void setAuthorizationHeader(WebClient wc, ClientAccessToken accessToken) {
+        setAuthorizationHeader(wc, accessToken, null);
+    }
+    public static void setAuthorizationHeader(WebClient wc,
+                                              ClientAccessToken accessToken,
+                                              String httpVerb) {
+        wc.replaceHeader(HttpHeaders.AUTHORIZATION, 
+                         createAuthorizationHeader(accessToken, 
+                                                   new HttpRequestProperties(wc, httpVerb)));
+    }
     
     private static void appendTokenData(StringBuilder sb, 
                                         ClientAccessToken token,
                                         HttpRequestProperties httpProps) 
         throws OAuthServiceException {
         // this should all be handled by token specific serializers
-        if (OAuthConstants.BEARER_TOKEN_TYPE.equals(token.getTokenType())) {
+        String tokenType = token.getTokenType().toLowerCase();
+        if (OAuthConstants.BEARER_TOKEN_TYPE.equals(tokenType)) {
             sb.append(OAuthConstants.BEARER_AUTHORIZATION_SCHEME);
             sb.append(" ");
             sb.append(token.getTokenKey());
-        } else if (OAuthConstants.HAWK_TOKEN_TYPE.equals(token.getTokenType())) {
+        } else if (OAuthConstants.HAWK_TOKEN_TYPE.equals(tokenType)) {
             if (httpProps == null) {
                 throw new IllegalArgumentException("MAC scheme requires HTTP Request properties");
             }

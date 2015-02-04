@@ -29,17 +29,17 @@ import javax.ws.rs.ext.WriterInterceptorContext;
 
 import org.apache.cxf.common.util.Base64UrlOutputStream;
 import org.apache.cxf.common.util.Base64UrlUtility;
+import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.jaxrs.utils.JAXRSUtils;
 import org.apache.cxf.rs.security.jose.JoseConstants;
+import org.apache.cxf.rs.security.jose.JoseHeaders;
 import org.apache.cxf.rs.security.jose.JoseHeadersReaderWriter;
 import org.apache.cxf.rs.security.jose.JoseHeadersWriter;
 import org.apache.cxf.rs.security.jose.jws.JwsCompactProducer;
-import org.apache.cxf.rs.security.jose.jws.JwsHeaders;
 import org.apache.cxf.rs.security.jose.jws.JwsOutputStream;
 import org.apache.cxf.rs.security.jose.jws.JwsSignature;
 import org.apache.cxf.rs.security.jose.jws.JwsSignatureProvider;
-import org.apache.cxf.rs.security.jose.jwt.JwtHeaders;
 
 @Priority(Priorities.JWS_WRITE_PRIORITY)
 public class JwsWriterInterceptor extends AbstractJwsWriterProvider implements WriterInterceptor {
@@ -48,21 +48,25 @@ public class JwsWriterInterceptor extends AbstractJwsWriterProvider implements W
     private JoseHeadersWriter writer = new JoseHeadersReaderWriter();
     @Override
     public void aroundWriteTo(WriterInterceptorContext ctx) throws IOException, WebApplicationException {
-        JwsHeaders headers = new JwsHeaders();
+        if (ctx.getEntity() == null) {
+            ctx.proceed();
+            return;
+        }
+        JoseHeaders headers = new JoseHeaders();
         JwsSignatureProvider sigProvider = getInitializedSigProvider(headers);
         setContentTypeIfNeeded(headers, ctx);
-        ctx.setMediaType(JAXRSUtils.toMediaType(JoseConstants.MEDIA_TYPE_JOSE_JSON));
         OutputStream actualOs = ctx.getOutputStream();
         if (useJwsOutputStream) {
             JwsSignature jwsSignature = sigProvider.createJwsSignature(headers);
             JwsOutputStream jwsStream = new JwsOutputStream(actualOs, jwsSignature);
-            byte[] headerBytes = writer.headersToJson(headers).getBytes("UTF-8");
+            byte[] headerBytes = StringUtils.toBytesUTF8(writer.headersToJson(headers));
             Base64UrlUtility.encodeAndStream(headerBytes, 0, headerBytes.length, jwsStream);
             jwsStream.write(new byte[]{'.'});
                         
             Base64UrlOutputStream base64Stream = new Base64UrlOutputStream(jwsStream);
             ctx.setOutputStream(base64Stream);
             ctx.proceed();
+            setJoseMediaType(ctx);
             base64Stream.flush();
             jwsStream.flush();
         } else {
@@ -70,6 +74,7 @@ public class JwsWriterInterceptor extends AbstractJwsWriterProvider implements W
             ctx.setOutputStream(cos);
             ctx.proceed();
             JwsCompactProducer p = new JwsCompactProducer(headers, new String(cos.getBytes(), "UTF-8"));
+            setJoseMediaType(ctx);
             writeJws(p, sigProvider, actualOs);
         }
     }
@@ -84,11 +89,11 @@ public class JwsWriterInterceptor extends AbstractJwsWriterProvider implements W
     public void setWriter(JoseHeadersWriter writer) {
         this.writer = writer;
     }
-    private void setContentTypeIfNeeded(JwtHeaders headers, WriterInterceptorContext ctx) {    
+    private void setContentTypeIfNeeded(JoseHeaders headers, WriterInterceptorContext ctx) {    
         if (contentTypeRequired) {
             MediaType mt = ctx.getMediaType();
             if (mt != null 
-                && !JAXRSUtils.mediaTypeToString(mt).equals(JoseConstants.MEDIA_TYPE_JOSE_JSON)) {
+                && !JAXRSUtils.mediaTypeToString(mt).equals(JoseConstants.MEDIA_TYPE_JOSE)) {
                 if ("application".equals(mt.getType())) {
                     headers.setContentType(mt.getSubtype());
                 } else {
@@ -96,5 +101,10 @@ public class JwsWriterInterceptor extends AbstractJwsWriterProvider implements W
                 }
             }
         }
+    }
+    
+    private void setJoseMediaType(WriterInterceptorContext ctx) {
+        MediaType joseMediaType = JAXRSUtils.toMediaType(JoseConstants.MEDIA_TYPE_JOSE);
+        ctx.setMediaType(joseMediaType);
     }
 }

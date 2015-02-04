@@ -525,6 +525,10 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
         WSHandlerResult rResult = new WSHandlerResult(actor, wsResult);
         results.add(0, rResult);
         
+        Boolean allowUnsignedSamlPrincipals = 
+                MessageUtils.getContextualBoolean(msg, 
+                        SecurityConstants.ENABLE_UNSIGNED_SAML_ASSERTION_PRINCIPAL, false);
+        
         for (int i = wsResult.size() - 1; i >= 0; i--) {
             WSSecurityEngineResult o = wsResult.get(i);
             
@@ -535,10 +539,13 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
                 .getContextualBoolean(msg, SecurityConstants.SC_FROM_JAAS_SUBJECT, true);
             final Object binarySecurity = o.get(WSSecurityEngineResult.TAG_BINARY_SECURITY_TOKEN);
             
-            // UsernameToken, Kerberos, Signed SAML token or XML Signature
+            final boolean isValidSamlToken = action == WSConstants.ST_SIGNED 
+                    || (allowUnsignedSamlPrincipals && action == WSConstants.ST_UNSIGNED);
+            
+            // UsernameToken, Kerberos, SAML token or XML Signature
             if (action == WSConstants.UT || action == WSConstants.UT_NOPASSWORD
                 || (action == WSConstants.BST && binarySecurity instanceof KerberosSecurity)
-                || action == WSConstants.ST_SIGNED || action == WSConstants.SIGN) {
+                || isValidSamlToken || action == WSConstants.SIGN) {
                 
                 if (action == WSConstants.SIGN) {
                     // Check we have a public key / certificate for the signing case
@@ -583,9 +590,9 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
             if (!utWithCallbacks) {
                 WSS4JTokenConverter.convertToken(msg, p);
             }
-            Object receivedAssertion = wsResult.get(WSSecurityEngineResult.TAG_SAML_ASSERTION);
+            Object receivedAssertion = wsResult.get(WSSecurityEngineResult.TAG_TRANSFORMED_TOKEN);
             if (receivedAssertion == null) {
-                receivedAssertion = wsResult.get(WSSecurityEngineResult.TAG_TRANSFORMED_TOKEN);
+                receivedAssertion = wsResult.get(WSSecurityEngineResult.TAG_SAML_ASSERTION);
             }
             if (wsResult.get(WSSecurityEngineResult.TAG_DELEGATION_CREDENTIAL) != null) {
                 msg.put(SecurityConstants.DELEGATED_CREDENTIAL, 
@@ -668,14 +675,16 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
         
         public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
             for (int i = 0; i < callbacks.length; i++) {
-                WSPasswordCallback pc = (WSPasswordCallback)callbacks[i];
-                
-                String id = pc.getIdentifier();
-                SecurityToken tok = store.getToken(id);
-                if (tok != null && !tok.isExpired()) {
-                    pc.setKey(tok.getSecret());
-                    pc.setCustomToken(tok.getToken());
-                    return;
+                if (callbacks[i] instanceof WSPasswordCallback) {
+                    WSPasswordCallback pc = (WSPasswordCallback)callbacks[i];
+                    
+                    String id = pc.getIdentifier();
+                    SecurityToken tok = store.getToken(id);
+                    if (tok != null && !tok.isExpired()) {
+                        pc.setKey(tok.getSecret());
+                        pc.setCustomToken(tok.getToken());
+                        return;
+                    }
                 }
             }
             if (internal != null) {

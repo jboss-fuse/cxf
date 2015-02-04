@@ -27,6 +27,7 @@ import java.security.Principal;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -71,14 +72,14 @@ public class AtmosphereWebSocketHandler implements WebSocketProtocol {
     /** {@inheritDoc}*/
     @Override
     public void configure(AtmosphereConfig config) {
-        LOG.info("configure(AtmosphereConfig)");
+        LOG.fine("configure(AtmosphereConfig)");
 
     }
 
     /** {@inheritDoc}*/
     @Override
     public List<AtmosphereRequest> onMessage(WebSocket webSocket, String data) {
-        LOG.info("onMessage(WebSocket, String)");
+        LOG.fine("onMessage(WebSocket, String)");
         //TODO may want to use string directly instead of converting it to byte[]
         byte[] bdata = null;
         try {
@@ -98,12 +99,12 @@ public class AtmosphereWebSocketHandler implements WebSocketProtocol {
     }
     
     protected List<AtmosphereRequest> invokeService(final WebSocket webSocket,  final InputStream stream) {
-        LOG.info("invokeService(WebSocket, InputStream)");
-        // invoke the service directly as onMessage is synchronously blocked (in jetty)
+        LOG.fine("invokeService(WebSocket, InputStream)");
+        // invoke the service asynchronously as onMessage is synchronously blocked (in jetty)
         // make sure the byte array passed to this method is immutable, as the websocket framework
         // may corrupt the byte array after this method is returned (i.e., before the data is returned in
         // the executor's thread.
-        destination.getExecutor().execute(new Runnable() {
+        executeServiceTask(new Runnable() {
             @Override
             public void run() {
                 HttpServletRequest request = null;
@@ -131,6 +132,17 @@ public class AtmosphereWebSocketHandler implements WebSocketProtocol {
         return null;
     }
 
+    private void executeServiceTask(Runnable r) {
+        try {
+            destination.getExecutor().execute(r);
+        } catch (RejectedExecutionException e) {
+            LOG.warning(
+                "Executor queue is full, run the service invocation task in caller thread." 
+                + "  Users can specify a larger executor queue to avoid this.");
+            r.run();
+        }
+    }
+    
     // may want to move this error reporting code to WebSocketServletHolder
     protected void reportErrorStatus(HttpServletResponse response, int status) {
         if (response != null) {
@@ -148,20 +160,20 @@ public class AtmosphereWebSocketHandler implements WebSocketProtocol {
     /** {@inheritDoc}*/
     @Override
     public void onOpen(WebSocket webSocket) {
-        LOG.info("onOpen(WebSocket)");
+        LOG.fine("onOpen(WebSocket)");
     }
 
     /** {@inheritDoc}*/
     @Override
     public void onClose(WebSocket webSocket) {
-        LOG.info("onClose(WebSocket)");
+        LOG.fine("onClose(WebSocket)");
         
     }
 
     /** {@inheritDoc}*/
     @Override
     public void onError(WebSocket webSocket, WebSocketException t) {
-        LOG.info("onError(WebSocket, WebSocketException)");
+        LOG.severe("onError(WebSocket, WebSocketException)");
     }
 
 //    protected WebSocketVirtualServletRequest createServletRequest(WebSocketServletHolder webSocketHolder, 

@@ -84,7 +84,7 @@ public class WebClient extends AbstractClient {
     private static final String REQUEST_ANNS = "request.annotations";
     private static final String RESPONSE_CLASS = "response.class";
     private static final String RESPONSE_TYPE = "response.type";
-    
+    private BodyWriter bodyWriter = new BodyWriter();
     protected WebClient(String baseAddress) {
         this(convertStringToURI(baseAddress));
     }
@@ -1122,8 +1122,8 @@ public class WebClient extends AbstractClient {
         
         if (body != null) {
             m.put(Type.class, inGenericType);
-            m.getInterceptorChain().add(new BodyWriter());
         }
+        m.getInterceptorChain().add(bodyWriter);
         setPlainOperationNameProperty(m, httpMethod + ":" + uri.toString());
         return m;
     }

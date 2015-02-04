@@ -81,10 +81,9 @@ public class JweCompactReaderWriterTest extends Assert {
     @BeforeClass
     public static void registerBouncyCastleIfNeeded() throws Exception {
         try {
-            // Java 8 apparently has it
             Cipher.getInstance(Algorithm.AES_GCM_ALGO_JAVA);
+            Cipher.getInstance(Algorithm.AES_CBC_ALGO_JAVA);
         } catch (Throwable t) {
-            // Oracle Java 7
             Security.addProvider(new BouncyCastleProvider());    
         }
     }
@@ -188,13 +187,16 @@ public class JweCompactReaderWriterTest extends Assert {
     private void decrypt(String jweContent, String plainContent, boolean unwrap) throws Exception {
         RSAPrivateKey privateKey = CryptoUtils.getRSAPrivateKey(RSA_MODULUS_ENCODED_A1, 
                                                                 RSA_PRIVATE_EXPONENT_ENCODED_A1);
+        String algo = Cipher.getMaxAllowedKeyLength("AES") > 128 
+            ? JoseConstants.A256GCM_ALGO : JoseConstants.A128GCM_ALGO; 
         JweDecryptionProvider decryptor = new WrappedKeyJweDecryption(new RSAOaepKeyDecryptionAlgorithm(privateKey),
-                                                                      new AesGcmContentDecryptionAlgorithm());
+                                              new AesGcmContentDecryptionAlgorithm(algo));
         String decryptedText = decryptor.decrypt(jweContent).getContentText();
         assertEquals(decryptedText, plainContent);
     }
     private void decryptDirect(SecretKey key, String jweContent, String plainContent) throws Exception {
-        DirectKeyJweDecryption decryptor = new DirectKeyJweDecryption(key, new AesGcmContentDecryptionAlgorithm());
+        DirectKeyJweDecryption decryptor = new DirectKeyJweDecryption(key, 
+                                               new AesGcmContentDecryptionAlgorithm(JoseConstants.A128GCM_ALGO));
         String decryptedText = decryptor.decrypt(jweContent).getContentText();
         assertEquals(decryptedText, plainContent);
     }

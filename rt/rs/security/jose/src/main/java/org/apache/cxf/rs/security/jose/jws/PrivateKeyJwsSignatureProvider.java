@@ -25,6 +25,7 @@ import java.security.SignatureException;
 import java.security.spec.AlgorithmParameterSpec;
 
 import org.apache.cxf.common.util.crypto.CryptoUtils;
+import org.apache.cxf.rs.security.jose.JoseHeaders;
 import org.apache.cxf.rs.security.jose.jwa.Algorithm;
 
 public class PrivateKeyJwsSignatureProvider extends AbstractJwsSignatureProvider {
@@ -45,32 +46,15 @@ public class PrivateKeyJwsSignatureProvider extends AbstractJwsSignatureProvider
         this.random = random;
         this.signatureSpec = spec;
     }
-    protected JwsSignature doCreateJwsSignature(JwsHeaders headers) {
+    protected JwsSignature doCreateJwsSignature(JoseHeaders headers) {
         final Signature s = CryptoUtils.getSignature(key, 
                                                      Algorithm.toJavaName(headers.getAlgorithm()),
                                                      random,
                                                      signatureSpec);
-        return new JwsSignature() {
-
-            @Override
-            public void update(byte[] src, int off, int len) {
-                try {
-                    s.update(src, off, len);
-                } catch (SignatureException ex) {
-                    throw new SecurityException();
-                }
-            }
-
-            @Override
-            public byte[] sign() {
-                try {
-                    return s.sign();
-                } catch (SignatureException ex) {
-                    throw new SecurityException();
-                }
-            }
-            
-        };
+        return doCreateJwsSignature(s);
+    }
+    protected JwsSignature doCreateJwsSignature(Signature s) {
+        return new PrivateKeyJwsSignature(s);
     }
     @Override
     protected void checkAlgorithm(String algo) {
@@ -84,4 +68,28 @@ public class PrivateKeyJwsSignatureProvider extends AbstractJwsSignatureProvider
         return Algorithm.isRsaShaSign(algo);
     }
 
+    protected static class PrivateKeyJwsSignature implements JwsSignature {
+        private Signature s;
+        public PrivateKeyJwsSignature(Signature s) {
+            this.s = s;
+        }
+        @Override
+        public void update(byte[] src, int off, int len) {
+            try {
+                s.update(src, off, len);
+            } catch (SignatureException ex) {
+                throw new SecurityException();
+            }
+        }
+
+        @Override
+        public byte[] sign() {
+            try {
+                return s.sign();
+            } catch (SignatureException ex) {
+                throw new SecurityException();
+            }
+        }
+        
+    }
 }

@@ -22,7 +22,7 @@ package org.apache.cxf.rs.security.oauth2.provider;
 import org.apache.cxf.jaxrs.ext.MessageContext;
 
 /**
- * ClientIdProvider responsible for providing a mapping between
+ * ClientIdProvider is responsible for providing a mapping between
  * the authenticated client and its id  
  */
 public interface ClientIdProvider {

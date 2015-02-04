@@ -83,10 +83,5 @@ public class HBaseVisitorTest extends Assert {
         if (table != null) {
             table.close();
         }
-        if (connection != null) {
-            connection.close();
-        }
-        
-        
     }
 }

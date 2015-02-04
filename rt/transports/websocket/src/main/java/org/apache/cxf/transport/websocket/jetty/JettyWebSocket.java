@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -66,24 +67,24 @@ class JettyWebSocket implements WebSocket.OnBinaryMessage, WebSocket.OnTextMessa
 
     @Override
     public void onClose(int closeCode, String message) {
-        if (LOG.isLoggable(Level.INFO)) {
-            LOG.log(Level.INFO, "onClose({0}, {1})", new Object[]{closeCode, message});
+        if (LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, "onClose({0}, {1})", new Object[]{closeCode, message});
         }
         this.webSocketConnection = null;
     }
 
     @Override
     public void onOpen(Connection connection) {
-        if (LOG.isLoggable(Level.INFO)) {
-            LOG.log(Level.INFO, "onOpen({0}))", connection);
+        if (LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, "onOpen({0}))", connection);
         }
         this.webSocketConnection = connection;
     }
 
     @Override
     public void onMessage(String data) {
-        if (LOG.isLoggable(Level.INFO)) {
-            LOG.log(Level.INFO, "onMessage({0})", data);
+        if (LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, "onMessage({0})", data);
         }
         try {
             //TODO may want use string directly instead of converting it to byte[]
@@ -96,8 +97,8 @@ class JettyWebSocket implements WebSocket.OnBinaryMessage, WebSocket.OnTextMessa
 
     @Override
     public void onMessage(byte[] data, int offset, int length) {
-        if (LOG.isLoggable(Level.INFO)) {
-            LOG.log(Level.INFO, "onMessage({0}, {1}, {2})", new Object[]{data, offset, length});
+        if (LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, "onMessage({0}, {1}, {2})", new Object[]{data, offset, length});
         }
         final byte[] safedata = new byte[length];
         System.arraycopy(data, offset, safedata, 0, length);
@@ -109,7 +110,7 @@ class JettyWebSocket implements WebSocket.OnBinaryMessage, WebSocket.OnTextMessa
         // make sure the byte array passed to this method is immutable, as the websocket framework
         // may corrupt the byte array after this method is returned (i.e., before the data is returned in
         // the executor's thread.
-        manager.getExecutor().execute(new Runnable() {
+        executeServiceTask(new Runnable() {
             @Override
             public void run() {
                 HttpServletRequest request = null;
@@ -133,7 +134,18 @@ class JettyWebSocket implements WebSocket.OnBinaryMessage, WebSocket.OnTextMessa
             }
         });
     }
-    
+
+    private void executeServiceTask(Runnable r) {
+        try {
+            manager.getExecutor().execute(r);
+        } catch (RejectedExecutionException e) {
+            LOG.warning(
+                "Executor queue is full, run the service invocation task in caller thread." 
+                + "  Users can specify a larger executor queue to avoid this.");
+            r.run();
+        }
+    }
+
     // may want to move this error reporting code to WebSocketServletHolder
     private void reportErrorStatus(HttpServletResponse response, int status) {
         if (response != null) {
@@ -165,7 +177,7 @@ class JettyWebSocket implements WebSocket.OnBinaryMessage, WebSocket.OnTextMessa
      * @param length
      */
     void write(byte[] data, int offset, int length) throws IOException {
-        LOG.log(Level.INFO, "write(byte[], offset, length)");
+        LOG.log(Level.FINE, "write(byte[], offset, length)");
         webSocketConnection.sendMessage(data, offset, length);
     }
     

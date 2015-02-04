@@ -21,18 +21,16 @@ package org.apache.cxf.rs.security.jose.jws;
 import java.security.PublicKey;
 import java.security.spec.AlgorithmParameterSpec;
 
+import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.common.util.crypto.CryptoUtils;
+import org.apache.cxf.rs.security.jose.JoseHeaders;
 import org.apache.cxf.rs.security.jose.jwa.Algorithm;
-import org.apache.cxf.rs.security.jose.jwt.JwtHeaders;
 
 public class PublicKeyJwsSignatureVerifier implements JwsSignatureVerifier {
     private PublicKey key;
     private AlgorithmParameterSpec signatureSpec;
     private String supportedAlgo;
     
-    public PublicKeyJwsSignatureVerifier(PublicKey key) {
-        this(key, null);
-    }
     public PublicKeyJwsSignatureVerifier(PublicKey key, String supportedAlgorithm) {
         this(key, null, supportedAlgorithm);
     }
@@ -42,9 +40,9 @@ public class PublicKeyJwsSignatureVerifier implements JwsSignatureVerifier {
         this.supportedAlgo = supportedAlgo;
     }
     @Override
-    public boolean verify(JwtHeaders headers, String unsignedText, byte[] signature) {
+    public boolean verify(JoseHeaders headers, String unsignedText, byte[] signature) {
         try {
-            return CryptoUtils.verifySignature(unsignedText.getBytes("UTF-8"), 
+            return CryptoUtils.verifySignature(StringUtils.toBytesUTF8(unsignedText), 
                                                signature, 
                                                key, 
                                                Algorithm.toJavaName(checkAlgorithm(headers.getAlgorithm())),
@@ -56,13 +54,17 @@ public class PublicKeyJwsSignatureVerifier implements JwsSignatureVerifier {
     protected String checkAlgorithm(String algo) {
         if (algo == null 
             || !isValidAlgorithmFamily(algo)
-            || supportedAlgo != null && !supportedAlgo.equals(algo)) {
+            || !algo.equals(supportedAlgo)) {
             throw new SecurityException();
         }
         return algo;
     }
     protected boolean isValidAlgorithmFamily(String algo) {
         return Algorithm.isRsaShaSign(algo);
+    }
+    @Override
+    public String getAlgorithm() {
+        return supportedAlgo;
     }
 
 }

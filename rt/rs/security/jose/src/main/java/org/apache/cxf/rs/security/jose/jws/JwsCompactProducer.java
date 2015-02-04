@@ -18,43 +18,45 @@
  */
 package org.apache.cxf.rs.security.jose.jws;
 
+import java.security.interfaces.RSAPrivateKey;
+
 import org.apache.cxf.common.util.Base64UrlUtility;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.rs.security.jose.JoseConstants;
+import org.apache.cxf.rs.security.jose.JoseHeaders;
 import org.apache.cxf.rs.security.jose.JoseHeadersReaderWriter;
 import org.apache.cxf.rs.security.jose.JoseHeadersWriter;
 import org.apache.cxf.rs.security.jose.jwk.JsonWebKey;
 
 public class JwsCompactProducer {
     private JoseHeadersWriter writer = new JoseHeadersReaderWriter();
-    private JwsHeaders headers;
+    private JoseHeaders headers;
     private String plainJwsPayload;
     private String signature;
     private String plainRep;
-    
     public JwsCompactProducer(String plainJwsPayload) {
         this(null, null, plainJwsPayload);
     }
-    public JwsCompactProducer(JwsHeaders headers, String plainJwsPayload) {
+    public JwsCompactProducer(JoseHeaders headers, String plainJwsPayload) {
         this(headers, null, plainJwsPayload);
     }
-    public JwsCompactProducer(JwsHeaders headers, JoseHeadersWriter w, String plainJwsPayload) {
+    public JwsCompactProducer(JoseHeaders headers, JoseHeadersWriter w, String plainJwsPayload) {
         this.headers = headers;
         if (w != null) {
             this.writer = w;
         }
         this.plainJwsPayload = plainJwsPayload;
     }
-    public JwsHeaders getHeaders() {
+    public JoseHeaders getJoseHeaders() {
         if (headers == null) {
-            headers = new JwsHeaders();
+            headers = new JoseHeaders();
         }
         return headers;
     }
     public String getUnsignedEncodedJws() {
         checkAlgorithm();
         if (plainRep == null) {
-            plainRep = Base64UrlUtility.encode(writer.headersToJson(getHeaders())) 
+            plainRep = Base64UrlUtility.encode(writer.headersToJson(getJoseHeaders())) 
                 + "." 
                 + Base64UrlUtility.encode(plainJwsPayload);
         }
@@ -71,27 +73,28 @@ public class JwsCompactProducer {
     }
     
     public String signWith(JsonWebKey jwk) {
-        return signWith(JwsUtils.getSignatureProvider(jwk));
+        return signWith(JwsUtils.getSignatureProvider(jwk, headers.getAlgorithm()));
     }
     
-    public String signWith(JwsSignatureProvider signer) { 
-        JwsSignature worker = signer.createJwsSignature(getHeaders());
-        try {
-            byte[] bytes = getUnsignedEncodedJws().getBytes("UTF-8");
-            worker.update(bytes, 0, bytes.length);
-            signWith(worker.sign());
-            return getSignedEncodedJws();
-        } catch (Exception ex) {
-            throw new SecurityException();
-        }
+    public String signWith(RSAPrivateKey key) {
+        return signWith(JwsUtils.getRSAKeySignatureProvider(key, headers.getAlgorithm()));
+    }
+    public String signWith(byte[] key) {
+        return signWith(JwsUtils.getHmacSignatureProvider(key, headers.getAlgorithm()));
     }
     
-    public String signWith(String signatureText) {
+    public String signWith(JwsSignatureProvider signer) {
+        byte[] bytes = StringUtils.toBytesUTF8(getUnsignedEncodedJws());
+        byte[] sig = signer.sign(getJoseHeaders(), bytes);
+        return setSignatureBytes(sig);
+    }
+    
+    public String setSignatureText(String signatureText) {
         setEncodedSignature(Base64UrlUtility.encode(signatureText));
         return getSignedEncodedJws();
     }
     
-    public String signWith(byte[] signatureOctets) {
+    public String setSignatureBytes(byte[] signatureOctets) {
         setEncodedSignature(Base64UrlUtility.encode(signatureOctets));
         return getSignedEncodedJws();
     }
@@ -103,7 +106,7 @@ public class JwsCompactProducer {
         return JoseConstants.PLAIN_TEXT_ALGO.equals(getAlgorithm());
     }
     private String getAlgorithm() {
-        return getHeaders().getAlgorithm();
+        return getJoseHeaders().getAlgorithm();
     }
     private void checkAlgorithm() {
         if (getAlgorithm() == null) {

@@ -21,47 +21,40 @@ package org.apache.cxf.rs.security.jose.jws;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Arrays;
 
-import org.apache.cxf.common.util.Base64Exception;
-import org.apache.cxf.common.util.Base64UrlUtility;
 import org.apache.cxf.common.util.crypto.HmacUtils;
+import org.apache.cxf.rs.security.jose.JoseConstants;
+import org.apache.cxf.rs.security.jose.JoseHeaders;
+import org.apache.cxf.rs.security.jose.JoseUtils;
 import org.apache.cxf.rs.security.jose.jwa.Algorithm;
-import org.apache.cxf.rs.security.jose.jwt.JwtHeaders;
 
 public class HmacJwsSignatureVerifier implements JwsSignatureVerifier {
     private byte[] key;
     private AlgorithmParameterSpec hmacSpec;
     private String supportedAlgo;
     
-    public HmacJwsSignatureVerifier(byte[] key) {
-        this(key, null);
+    public HmacJwsSignatureVerifier(String encodedKey) {
+        this(JoseUtils.decode(encodedKey), JoseConstants.HMAC_SHA_256_ALGO);
     }
-    public HmacJwsSignatureVerifier(byte[] key, AlgorithmParameterSpec spec) {
-        this(key, spec, null);
+    public HmacJwsSignatureVerifier(String encodedKey, String supportedAlgo) {
+        this(JoseUtils.decode(encodedKey), supportedAlgo);
+    }
+    public HmacJwsSignatureVerifier(byte[] key, String supportedAlgo) {
+        this(key, null, supportedAlgo);
     }
     public HmacJwsSignatureVerifier(byte[] key, AlgorithmParameterSpec spec, String supportedAlgo) {
         this.key = key;
         this.hmacSpec = spec;
         this.supportedAlgo = supportedAlgo;
     }
-    public HmacJwsSignatureVerifier(String encodedKey) {
-        this(encodedKey, null);
-    }
-    public HmacJwsSignatureVerifier(String encodedKey, String supportedAlgo) {
-        try {
-            this.key = Base64UrlUtility.decode(encodedKey);
-        } catch (Base64Exception ex) {
-            throw new SecurityException();
-        }
-        this.supportedAlgo = supportedAlgo;
-    }
+    
     
     @Override
-    public boolean verify(JwtHeaders headers, String unsignedText, byte[] signature) {
+    public boolean verify(JoseHeaders headers, String unsignedText, byte[] signature) {
         byte[] expected = computeMac(headers, unsignedText);
         return Arrays.equals(expected, signature);
     }
     
-    private byte[] computeMac(JwtHeaders headers, String text) {
+    private byte[] computeMac(JoseHeaders headers, String text) {
         return HmacUtils.computeHmac(key, 
                                      Algorithm.toJavaName(checkAlgorithm(headers.getAlgorithm())),
                                      hmacSpec,
@@ -71,9 +64,13 @@ public class HmacJwsSignatureVerifier implements JwsSignatureVerifier {
     protected String checkAlgorithm(String algo) {
         if (algo == null 
             || !Algorithm.isHmacSign(algo)
-            || supportedAlgo != null && !supportedAlgo.equals(algo)) {
+            || !algo.equals(supportedAlgo)) {
             throw new SecurityException();
         }
         return algo;
+    }
+    @Override
+    public String getAlgorithm() {
+        return supportedAlgo;
     }
 }

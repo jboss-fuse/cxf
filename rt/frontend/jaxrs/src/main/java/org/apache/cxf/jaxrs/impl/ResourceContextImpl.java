@@ -20,14 +20,16 @@ package org.apache.cxf.jaxrs.impl;
 
 import javax.ws.rs.container.ResourceContext;
 
+import org.apache.cxf.jaxrs.ext.ResourceContextProvider;
 import org.apache.cxf.jaxrs.lifecycle.PerRequestResourceProvider;
+import org.apache.cxf.jaxrs.lifecycle.ResourceProvider;
 import org.apache.cxf.jaxrs.model.ClassResourceInfo;
 import org.apache.cxf.jaxrs.model.OperationResourceInfo;
 import org.apache.cxf.jaxrs.provider.ServerProviderFactory;
 import org.apache.cxf.message.Message;
 
 public class ResourceContextImpl implements ResourceContext {
-
+    private static final String CONTEXT_PROVIDER_PROP = "org.apache.cxf.jaxrs.resource.context.provider";
     private ClassResourceInfo cri;
     private Class<?> subClass;
     private Message m;
@@ -39,7 +41,15 @@ public class ResourceContextImpl implements ResourceContext {
     
     @Override
     public <T> T getResource(Class<T> cls) {
-        T resource = cls.cast(new PerRequestResourceProvider(cls).getInstance(m));
+        ResourceProvider rp = null;
+        
+        Object propValue = m.getContextualProperty(CONTEXT_PROVIDER_PROP);
+        if (propValue instanceof ResourceContextProvider) {
+            rp = ((ResourceContextProvider)propValue).getResourceProvider(cls);
+        } else { 
+            rp = new PerRequestResourceProvider(cls);
+        }
+        T resource = cls.cast(rp.getInstance(m));
         return doInitResource(cls, resource);
     }
     

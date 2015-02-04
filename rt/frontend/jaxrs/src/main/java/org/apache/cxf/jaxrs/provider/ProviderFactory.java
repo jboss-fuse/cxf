@@ -79,12 +79,12 @@ import org.apache.cxf.message.MessageUtils;
 public abstract class ProviderFactory {
     public static final String DEFAULT_FILTER_NAME_BINDING = "org.apache.cxf.filter.binding";
     public static final String PROVIDER_SELECTION_PROPERTY_CHANGED = "provider.selection.property.changed";
+    public static final String ACTIVE_JAXRS_PROVIDER_KEY = "active.jaxrs.provider";
     
     protected static final String SERVER_FACTORY_NAME = "org.apache.cxf.jaxrs.provider.ServerProviderFactory";
     protected static final String CLIENT_FACTORY_NAME = "org.apache.cxf.jaxrs.client.ClientProviderFactory";
     protected static final String IGNORE_TYPE_VARIABLES = "org.apache.cxf.jaxrs.providers.ignore.typevars";
     
-    private static final String ACTIVE_JAXRS_PROVIDER_KEY = "active.jaxrs.provider";
     private static final Logger LOG = LogUtils.getL7dLogger(ProviderFactory.class);
     
     private static final String JAXB_PROVIDER_NAME = "org.apache.cxf.jaxrs.provider.JAXBElementProvider";
@@ -272,7 +272,7 @@ public abstract class ProviderFactory {
                                      Class<?> providerClass,
                                      boolean injectContext) {
         
-        Class<?> mapperClass = ClassHelper.getRealClass(em.getProvider());
+        Class<?> mapperClass = ClassHelper.getRealClass(bus, em.getProvider());
         Type[] types = null;
         if (m != null && MessageUtils.isTrue(m.getContextualProperty(IGNORE_TYPE_VARIABLES))) {
             types = new Type[]{mapperClass};
@@ -495,7 +495,7 @@ public abstract class ProviderFactory {
         List<ProviderInfo<WriterInterceptor>> writeInts = 
             new LinkedList<ProviderInfo<WriterInterceptor>>();
         for (ProviderInfo<? extends Object> provider : theProviders) {
-            Class<?> providerCls = ClassHelper.getRealClass(provider.getProvider());
+            Class<?> providerCls = ClassHelper.getRealClass(bus, provider.getProvider());
             
             if (MessageBodyReader.class.isAssignableFrom(providerCls)) {
                 addProviderToList(messageReaders, provider);
@@ -959,11 +959,11 @@ public abstract class ProviderFactory {
     protected static int compareClasses(Class<?> expectedCls, Object o1, Object o2) {
         Class<?> cl1 = ClassHelper.getRealClass(o1); 
         Class<?> cl2 = ClassHelper.getRealClass(o2);
-        
         Type[] types1 = getGenericInterfaces(cl1, expectedCls);
         Type[] types2 = getGenericInterfaces(cl2, expectedCls);
-        
-        if (types1.length == 0 && types2.length > 0) {
+        if (types1.length == 0 && types2.length == 0) {
+            return 0;
+        } else if (types1.length == 0 && types2.length > 0) {
             return 1;
         } else if (types1.length > 0 && types2.length == 0) {
             return -1;
@@ -989,9 +989,9 @@ public abstract class ProviderFactory {
             Type genericSuperType = cls.getGenericSuperclass();
             if (genericSuperType instanceof ParameterizedType) {       
                 Class<?> actualType = InjectionUtils.getActualType(genericSuperType);
-                if (expectedClass == actualType) {
+                if (actualType != null && actualType.isAssignableFrom(expectedClass)) {
                     return new Type[]{genericSuperType};
-                } else if (actualType != null && expectedClass.isAssignableFrom(actualType)) {
+                } else if (expectedClass.isAssignableFrom(actualType)) {
                     return new Type[]{};    
                 }
             }
