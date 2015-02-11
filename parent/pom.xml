@@ -107,7 +107,7 @@
         <cxf.geronimo.servlet.version>1.0</cxf.geronimo.servlet.version>
         <cxf.geronimo.servlet25.version>1.2</cxf.geronimo.servlet25.version>
         <cxf.geronimo.transaction.version>1.1.1</cxf.geronimo.transaction.version>
-        <cxf.jasypt.bundle.version>1.9.0_1</cxf.jasypt.bundle.version>
+        <cxf.jasypt.bundle.version>1.9.2_1</cxf.jasypt.bundle.version>
         <cxf.javax.ws.rs.version>2.0.1</cxf.javax.ws.rs.version>
         <cxf.jaxb21.version>2.1</cxf.jaxb21.version>
         <cxf.jaxb21.impl.version>2.1.14</cxf.jaxb21.impl.version>
@@ -131,7 +131,7 @@
         <cxf.junit.version>4.11</cxf.junit.version>
         <cxf.maven.core.version>2.2.1</cxf.maven.core.version>
         <cxf.msv.version>2011.1</cxf.msv.version>
-        <cxf.neethi.version>3.0.2</cxf.neethi.version>
+        <cxf.neethi.version>3.0.3</cxf.neethi.version>
         <cxf.netty.version>4.0.19.Final</cxf.netty.version>
         <cxf.netty3.version>3.9.1.Final</cxf.netty3.version>
         <cxf.netty.version.range>[4,5)</cxf.netty.version.range>
@@ -185,6 +185,9 @@
         <cxf.felix.configadmin.version>1.2.4</cxf.felix.configadmin.version>
         <cxf.xmlbeans.bundle.version>2.6.0_2</cxf.xmlbeans.bundle.version>
         <cxf.servicemix.specs.version>2.4.0</cxf.servicemix.specs.version>
+        <!-- aligned to pax-web 3.1.4 -->
+        <cxf.servicemix.specs.version.activation>2.2.0</cxf.servicemix.specs.version.activation>
+        <cxf.servicemix.specs.version.jaxb>2.2.0</cxf.servicemix.specs.version.jaxb>
         <cxf.servicemix.specs.version.jaxrs>2.4.0</cxf.servicemix.specs.version.jaxrs>
         <cxf.javax.mail.version>1.4.4</cxf.javax.mail.version>
         <cxf.jaxb.bundle.version>2.2.11_1</cxf.jaxb.bundle.version>
@@ -196,7 +199,7 @@
         <cxf.xmlresolver.bundle.version>1.2_5</cxf.xmlresolver.bundle.version>
         <cxf.xerces.bundle.version>2.11.0_1</cxf.xerces.bundle.version>
         <cxf.bcel.bundle.version>5.2_4</cxf.bcel.bundle.version>
-        <cxf.xalan.bundle.version>2.7.1_7</cxf.xalan.bundle.version>
+        <cxf.xalan.bundle.version>2.7.2_2</cxf.xalan.bundle.version>
         <cxf.oro.bundle.version>2.0.8_6</cxf.oro.bundle.version>
         <cxf.dom4j.bundle.version>1.6.1_5</cxf.dom4j.bundle.version>
         <cxf.jdom.bundle.version>1.1_4</cxf.jdom.bundle.version>
