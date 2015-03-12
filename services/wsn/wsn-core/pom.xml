@@ -28,7 +28,7 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>3.0.4</version>
+        <version>3.0.2.redhat-SNAPSHOT</version>
         <relativePath>../../../parent/pom.xml</relativePath>
     </parent>
     <properties>
@@ -162,7 +162,7 @@
                             javax.xml.bind*;version="[0.0,3)",
                             javax.jws*;version="[0.0,3)",
                             javax.xml.ws*;version="[0.0,3)",
-                            org.apache.cxf*;version="[3.0,4)",
+                            org.apache.cxf*;version="[3.0.2.redhat-SNAPSHOT)",
                             *
                         </Import-Package>
                         <Export-Package>
