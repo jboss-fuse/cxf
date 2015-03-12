@@ -24,79 +24,71 @@ import java.security.spec.AlgorithmParameterSpec;
 import org.apache.cxf.common.util.crypto.CryptoUtils;
 import org.apache.cxf.common.util.crypto.KeyProperties;
 import org.apache.cxf.rs.security.jose.JoseConstants;
-import org.apache.cxf.rs.security.jose.JoseHeadersReader;
-import org.apache.cxf.rs.security.jose.JoseHeadersReaderWriter;
 import org.apache.cxf.rs.security.jose.jwa.Algorithm;
 
 public abstract class AbstractJweDecryption implements JweDecryptionProvider {
     private KeyDecryptionAlgorithm keyDecryptionAlgo;
     private ContentDecryptionAlgorithm contentDecryptionAlgo;
-    private JoseHeadersReader reader = new JoseHeadersReaderWriter();
-    protected AbstractJweDecryption(JoseHeadersReader theReader,
-                                    KeyDecryptionAlgorithm keyDecryptionAlgo,
+    protected AbstractJweDecryption(KeyDecryptionAlgorithm keyDecryptionAlgo,
                                     ContentDecryptionAlgorithm contentDecryptionAlgo) {
-        if (theReader != null) {
-            reader = theReader;
-        }
         this.keyDecryptionAlgo = keyDecryptionAlgo;
         this.contentDecryptionAlgo = contentDecryptionAlgo;
     }
     
-    protected byte[] getContentEncryptionKey(JweCompactConsumer consumer) {
-        return this.keyDecryptionAlgo.getDecryptedContentEncryptionKey(consumer);
+    protected byte[] getContentEncryptionKey(JweDecryptionInput jweDecryptionInput) {
+        return keyDecryptionAlgo.getDecryptedContentEncryptionKey(jweDecryptionInput);
     }
     
     public JweDecryptionOutput decrypt(String content) {
-        JweCompactConsumer consumer = new JweCompactConsumer(content, reader);
-        return doDecrypt(consumer);
+        JweCompactConsumer consumer = new JweCompactConsumer(content);
+        byte[] cek = getContentEncryptionKey(consumer.getJweDecryptionInput());
+        return doDecrypt(consumer.getJweDecryptionInput(), cek);
     }
-    public byte[] decrypt(JweCompactConsumer consumer) {
-        return doDecrypt(consumer).getContent();
+    public byte[] decrypt(JweDecryptionInput jweDecryptionInput) {
+        byte[] cek = getContentEncryptionKey(jweDecryptionInput);
+        return doDecrypt(jweDecryptionInput, cek).getContent();
     }
-    
-    protected JweDecryptionOutput doDecrypt(JweCompactConsumer consumer) {
-        byte[] cek = getContentEncryptionKey(consumer);
-        return doDecrypt(consumer, cek);
-    }
-    protected JweDecryptionOutput doDecrypt(JweCompactConsumer consumer, byte[] cek) {
-        KeyProperties keyProperties = new KeyProperties(getContentEncryptionAlgorithm(consumer));
-        keyProperties.setAdditionalData(getContentEncryptionCipherAAD(consumer));
-        AlgorithmParameterSpec spec = getContentEncryptionCipherSpec(consumer);
+    protected JweDecryptionOutput doDecrypt(JweDecryptionInput jweDecryptionInput, byte[] cek) {
+        KeyProperties keyProperties = new KeyProperties(getContentEncryptionAlgorithm(jweDecryptionInput));
+        keyProperties.setAdditionalData(getContentEncryptionCipherAAD(jweDecryptionInput));
+        AlgorithmParameterSpec spec = getContentEncryptionCipherSpec(jweDecryptionInput);
         keyProperties.setAlgoSpec(spec);
         boolean compressionSupported = 
-            JoseConstants.DEFLATE_ZIP_ALGORITHM.equals(consumer.getJweHeaders().getZipAlgorithm());
+            JoseConstants.DEFLATE_ZIP_ALGORITHM.equals(jweDecryptionInput.getJweHeaders().getZipAlgorithm());
         keyProperties.setCompressionSupported(compressionSupported);
-        byte[] actualCek = getActualCek(cek, consumer.getJweHeaders().getContentEncryptionAlgorithm());
+        byte[] actualCek = getActualCek(cek, jweDecryptionInput.getJweHeaders().getContentEncryptionAlgorithm());
         Key secretKey = CryptoUtils.createSecretKeySpec(actualCek, keyProperties.getKeyAlgo());
         byte[] bytes = 
-            CryptoUtils.decryptBytes(getEncryptedContentWithAuthTag(consumer), secretKey, keyProperties);
-        return new JweDecryptionOutput(consumer.getJweHeaders(), bytes);
+            CryptoUtils.decryptBytes(getEncryptedContentWithAuthTag(jweDecryptionInput), secretKey, keyProperties);
+        return new JweDecryptionOutput(jweDecryptionInput.getJweHeaders(), bytes);
     }
     protected byte[] getEncryptedContentEncryptionKey(JweCompactConsumer consumer) {
         return consumer.getEncryptedContentEncryptionKey();
     }
-    protected AlgorithmParameterSpec getContentEncryptionCipherSpec(JweCompactConsumer consumer) {
-        return contentDecryptionAlgo.getAlgorithmParameterSpec(getContentEncryptionCipherInitVector(consumer));
+    protected AlgorithmParameterSpec getContentEncryptionCipherSpec(JweDecryptionInput jweDecryptionInput) {
+        return contentDecryptionAlgo.getAlgorithmParameterSpec(
+            getContentEncryptionCipherInitVector(jweDecryptionInput));
     }
-    protected String getContentEncryptionAlgorithm(JweCompactConsumer consumer) {
-        return Algorithm.toJavaName(consumer.getJweHeaders().getContentEncryptionAlgorithm());
+    protected String getContentEncryptionAlgorithm(JweDecryptionInput jweDecryptionInput) {
+        return Algorithm.toJavaName(jweDecryptionInput.getJweHeaders().getContentEncryptionAlgorithm());
     }
-    protected byte[] getContentEncryptionCipherAAD(JweCompactConsumer consumer) {
-        return contentDecryptionAlgo.getAdditionalAuthenticationData(consumer.getDecodedJsonHeaders());
+    protected byte[] getContentEncryptionCipherAAD(JweDecryptionInput jweDecryptionInput) {
+        return contentDecryptionAlgo.getAdditionalAuthenticationData(
+            jweDecryptionInput.getDecodedJsonHeaders(), jweDecryptionInput.getAad());
     }
-    protected byte[] getEncryptedContentWithAuthTag(JweCompactConsumer consumer) {
-        return contentDecryptionAlgo.getEncryptedSequence(consumer.getJweHeaders(),
-                                                          consumer.getEncryptedContent(), 
-                                                          getEncryptionAuthenticationTag(consumer));
+    protected byte[] getEncryptedContentWithAuthTag(JweDecryptionInput jweDecryptionInput) {
+        return contentDecryptionAlgo.getEncryptedSequence(jweDecryptionInput.getJweHeaders(),
+                                                          jweDecryptionInput.getEncryptedContent(), 
+                                                          getEncryptionAuthenticationTag(jweDecryptionInput));
     }
-    protected byte[] getContentEncryptionCipherInitVector(JweCompactConsumer consumer) { 
-        return consumer.getContentDecryptionCipherInitVector();
+    protected byte[] getContentEncryptionCipherInitVector(JweDecryptionInput jweDecryptionInput) { 
+        return jweDecryptionInput.getInitVector();
     }
-    protected byte[] getEncryptionAuthenticationTag(JweCompactConsumer consumer) {
-        return consumer.getEncryptionAuthenticationTag();
+    protected byte[] getEncryptionAuthenticationTag(JweDecryptionInput jweDecryptionInput) {
+        return jweDecryptionInput.getAuthTag();
     }
-    protected int getEncryptionAuthenticationTagLenBits(JweCompactConsumer consumer) {
-        return getEncryptionAuthenticationTag(consumer).length * 8;
+    protected int getEncryptionAuthenticationTagLenBits(JweDecryptionInput jweDecryptionInput) {
+        return getEncryptionAuthenticationTag(jweDecryptionInput).length * 8;
     }
     protected byte[] getActualCek(byte[] theCek, String algoJwt) {
         return theCek;

@@ -200,20 +200,24 @@ public final class StringUtils {
     }    
     
     public static byte[] toBytesUTF8(String str) {
-        try {
-            return toBytes(str, "UTF-8");
-        } catch (UnsupportedEncodingException ex) { 
-            throw new RuntimeException(ex);
-        }
+        return toBytes(str, "UTF-8");
     }
     public static byte[] toBytesASCII(String str) {
+        return toBytes(str, "US-ASCII");
+    }
+    public static byte[] toBytes(String str, String enc) {
         try {
-            return toBytes(str, "US-ASCII");
+            return str.getBytes(enc);
         } catch (UnsupportedEncodingException ex) { 
             throw new RuntimeException(ex);
         }
     }
-    public static byte[] toBytes(String str, String enc) throws UnsupportedEncodingException {
-        return str.getBytes(enc);
+
+    public static String toHexString(byte[] bytes) {
+        StringBuilder hexString = new StringBuilder();
+        for (int i = 0; i < bytes.length; i++) {
+            hexString.append(Integer.toHexString(0xFF & bytes[i]));
+        }
+        return hexString.toString();
     }
 }

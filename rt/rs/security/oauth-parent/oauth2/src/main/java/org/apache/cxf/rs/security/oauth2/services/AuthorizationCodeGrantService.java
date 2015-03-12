@@ -28,6 +28,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
 import org.apache.cxf.rs.security.oauth2.common.Client;
+import org.apache.cxf.rs.security.oauth2.common.OAuthAuthorizationData;
+import org.apache.cxf.rs.security.oauth2.common.OAuthPermission;
 import org.apache.cxf.rs.security.oauth2.common.OOBAuthorizationResponse;
 import org.apache.cxf.rs.security.oauth2.common.ServerAccessToken;
 import org.apache.cxf.rs.security.oauth2.common.UserSubject;
@@ -66,6 +68,19 @@ public class AuthorizationCodeGrantService extends RedirectionBasedGrantService 
         }
         return super.startAuthorization(params, userSubject, client);
     }
+    protected OAuthAuthorizationData createAuthorizationData(Client client, 
+                                                             MultivaluedMap<String, String> params,
+                                                             UserSubject subject,
+                                                             String redirectUri, 
+                                                             List<OAuthPermission> perms) {
+        
+        OAuthAuthorizationData secData = super.createAuthorizationData(client, params, subject, redirectUri, perms);
+        setCodeQualifier(secData, params);
+        return secData;
+    }
+    private static void setCodeQualifier(OAuthAuthorizationData data, MultivaluedMap<String, String> params) {
+        data.setClientCodeChallenge(params.getFirst(OAuthConstants.AUTHORIZATION_CODE_CHALLENGE));
+    }
     protected Response createGrant(MultivaluedMap<String, String> params,
                                    Client client,
                                    String redirectUri,
@@ -83,7 +98,7 @@ public class AuthorizationCodeGrantService extends RedirectionBasedGrantService 
         codeReg.setApprovedScope(approvedScope);
         codeReg.setSubject(userSubject);
         codeReg.setAudience(params.getFirst(OAuthConstants.CLIENT_AUDIENCE));
-        codeReg.setClientCodeVerifier(params.getFirst(OAuthConstants.AUTHORIZATION_CODE_VERIFIER));
+        codeReg.setClientCodeChallenge(params.getFirst(OAuthConstants.AUTHORIZATION_CODE_CHALLENGE));
         
         ServerAuthorizationCodeGrant grant = null;
         try {

@@ -37,9 +37,11 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.apache.cxf.aegis.type.java5.IgnoreProperty;
+import org.apache.cxf.jaxrs.ext.ResponseStatus;
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
 import org.apache.cxf.jaxrs.ext.xml.ElementClass;
 import org.apache.cxf.jaxrs.ext.xml.XMLName;
@@ -108,7 +110,7 @@ public class BookStore implements BookDescription {
         @Description(value = "Response", target = DocTarget.RESPONSE),
         @Description(value = "Resource books/{bookid}", target = DocTarget.RESOURCE)
     })
-    
+    @ResponseStatus({Status.CREATED, Status.OK })
     //CHECKSTYLE:OFF
     @POST
     @Path("books/{bookid}")

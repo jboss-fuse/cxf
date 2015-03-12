@@ -18,8 +18,10 @@
  */
 package org.apache.cxf.rs.security.oauth2.common;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -35,8 +37,9 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class AccessTokenValidation {
     private String clientId;
+    private String clientIpAddress;
     private UserSubject clientSubject;
-    
+    private boolean isClientConfidential;
     private String tokenKey;
     private String tokenType;
     private String tokenGrantType;
@@ -45,6 +48,7 @@ public class AccessTokenValidation {
     private UserSubject tokenSubject;
     private List<OAuthPermission> tokenScopes = new LinkedList<OAuthPermission>();
     private String audience;
+    private Map<String, String> extraProps = new HashMap<String, String>();
     
     public AccessTokenValidation() {
         
@@ -53,7 +57,8 @@ public class AccessTokenValidation {
     public AccessTokenValidation(ServerAccessToken token) {
         this.clientId = token.getClient().getClientId();
         this.clientSubject = token.getClient().getSubject();
-        
+        this.isClientConfidential = token.getClient().isConfidential();
+        this.clientIpAddress = token.getClient().getClientIpAddress();
         this.tokenKey = token.getTokenKey();
         this.tokenType = token.getTokenType();
         this.tokenGrantType = token.getGrantType();
@@ -128,6 +133,30 @@ public class AccessTokenValidation {
 
     public void setAudience(String audience) {
         this.audience = audience;
+    }
+
+    public String getClientIpAddress() {
+        return clientIpAddress;
+    }
+
+    public void setClientIpAddress(String clientIpAddress) {
+        this.clientIpAddress = clientIpAddress;
+    }
+
+    public Map<String, String> getExtraProps() {
+        return extraProps;
+    }
+
+    public void setExtraProps(Map<String, String> extraProps) {
+        this.extraProps = extraProps;
+    }
+
+    public boolean isClientConfidential() {
+        return isClientConfidential;
+    }
+
+    public void setClientConfidential(boolean isConfidential) {
+        this.isClientConfidential = isConfidential;
     }
     
 }

@@ -22,13 +22,15 @@ package org.apache.cxf.rs.security.jose.jwe;
 public class DirectKeyJweEncryption extends AbstractJweEncryption {
     
     public DirectKeyJweEncryption(ContentEncryptionAlgorithm ceAlgo) {
-        this(new JweHeaders(ceAlgo.getAlgorithm()), ceAlgo);
+        this(ceAlgo, new DirectKeyEncryptionAlgorithm());
     }
-    public DirectKeyJweEncryption(JweHeaders headers, ContentEncryptionAlgorithm ceAlgo) {
-        super(headers, ceAlgo, new DirectKeyEncryptionAlgorithm());
+    protected DirectKeyJweEncryption(ContentEncryptionAlgorithm ceAlgo,
+                                     DirectKeyEncryptionAlgorithm direct) {
+        super(ceAlgo, direct);
     }
-    protected byte[] getProvidedContentEncryptionKey() {
-        return validateCek(super.getProvidedContentEncryptionKey());
+    @Override
+    protected byte[] getProvidedContentEncryptionKey(JweHeaders headers) {
+        return validateCek(super.getProvidedContentEncryptionKey(headers));
     }
     private static byte[] validateCek(byte[] cek) {
         if (cek == null) {
@@ -37,5 +39,22 @@ public class DirectKeyJweEncryption extends AbstractJweEncryption {
             throw new NullPointerException("CEK must not be null");
         }
         return cek;
+    }
+    protected static class DirectKeyEncryptionAlgorithm implements KeyEncryptionAlgorithm {
+        public byte[] getEncryptedContentEncryptionKey(JweHeaders headers, byte[] theCek) {
+            if (headers.getKeyEncryptionAlgorithm() != null) {
+                throw new SecurityException();
+            }
+            return new byte[0];
+        }
+        protected void checkKeyEncryptionAlgorithm(JweHeaders headers) {
+            if (headers.getKeyEncryptionAlgorithm() != null) {
+                throw new SecurityException();
+            }
+        }
+        @Override
+        public String getAlgorithm() {
+            return null;
+        }
     }
 }

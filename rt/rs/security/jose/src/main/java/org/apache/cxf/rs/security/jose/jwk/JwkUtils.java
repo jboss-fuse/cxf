@@ -38,11 +38,12 @@ import org.apache.cxf.Bus;
 import org.apache.cxf.common.util.Base64UrlUtility;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.common.util.crypto.CryptoUtils;
+import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.jaxrs.utils.ResourceUtils;
 import org.apache.cxf.message.Message;
-import org.apache.cxf.message.MessageUtils;
 import org.apache.cxf.rs.security.jose.JoseConstants;
+import org.apache.cxf.rs.security.jose.JoseHeaders;
 import org.apache.cxf.rs.security.jose.JoseUtils;
 import org.apache.cxf.rs.security.jose.jaxrs.KeyManagementUtils;
 import org.apache.cxf.rs.security.jose.jaxrs.PrivateKeyPasswordProvider;
@@ -207,10 +208,13 @@ public final class JwkUtils {
     }
     public static JsonWebKeys loadJwkSet(Message m, Properties props, PrivateKeyPasswordProvider cb, 
                                          JwkReaderWriter reader) {
-        JsonWebKeys jwkSet = (JsonWebKeys)m.getExchange().get(props.get(KeyManagementUtils.RSSEC_KEY_STORE_FILE));
+        String key = (String)props.get(KeyManagementUtils.RSSEC_KEY_STORE_FILE);
+        JsonWebKeys jwkSet = key != null ? (JsonWebKeys)m.getExchange().get(key) : null;
         if (jwkSet == null) {
             jwkSet = loadJwkSet(props, m.getExchange().getBus(), cb, reader);
-            m.getExchange().put((String)props.get(KeyManagementUtils.RSSEC_KEY_STORE_FILE), jwkSet);
+            if (key != null) {
+                m.getExchange().put(key, jwkSet);
+            }
         }
         return jwkSet;
     }
@@ -256,9 +260,10 @@ public final class JwkUtils {
     }
 
     public static JsonWebKey loadJsonWebKey(Message m, Properties props, String keyOper, JwkReaderWriter reader) {
-        PrivateKeyPasswordProvider cb = loadPasswordProvider(m, props, keyOper);
+        PrivateKeyPasswordProvider cb = KeyManagementUtils.loadPasswordProvider(m, props, keyOper);
         JsonWebKeys jwkSet = loadJwkSet(m, props, cb, reader);
-        String kid = getKeyId(m, props, KeyManagementUtils.RSSEC_KEY_STORE_ALIAS, keyOper);
+        String kid = 
+            KeyManagementUtils.getKeyId(m, props, KeyManagementUtils.RSSEC_KEY_STORE_ALIAS, keyOper);
         if (kid != null) {
             return jwkSet.getKey(kid);
         } else if (keyOper != null) {
@@ -275,13 +280,13 @@ public final class JwkUtils {
 
     public static List<JsonWebKey> loadJsonWebKeys(Message m, Properties props, String keyOper, 
                                                    JwkReaderWriter reader) {
-        PrivateKeyPasswordProvider cb = loadPasswordProvider(m, props, keyOper);
+        PrivateKeyPasswordProvider cb = KeyManagementUtils.loadPasswordProvider(m, props, keyOper);
         JsonWebKeys jwkSet = loadJwkSet(m, props, cb, reader);
-        String kid = getKeyId(m, props, KeyManagementUtils.RSSEC_KEY_STORE_ALIAS, keyOper);
+        String kid = KeyManagementUtils.getKeyId(m, props, KeyManagementUtils.RSSEC_KEY_STORE_ALIAS, keyOper);
         if (kid != null) {
             return Collections.singletonList(jwkSet.getKey(kid));
         }
-        String kids = getKeyId(m, props, KeyManagementUtils.RSSEC_KEY_STORE_ALIASES, keyOper);
+        String kids = KeyManagementUtils.getKeyId(m, props, KeyManagementUtils.RSSEC_KEY_STORE_ALIASES, keyOper);
         if (kids != null) {
             String[] values = kids.split(",");
             List<JsonWebKey> keys = new ArrayList<JsonWebKey>(values.length);
@@ -315,6 +320,24 @@ public final class JwkUtils {
     public static List<X509Certificate> toX509CertificateChain(JsonWebKey jwk) {
         List<String> base64EncodedChain = jwk.getX509Chain();
         return KeyManagementUtils.toX509CertificateChain(base64EncodedChain);
+    }
+    public static JsonWebKey fromECPublicKey(ECPublicKey pk, String curve) {
+        JsonWebKey jwk = new JsonWebKey();
+        jwk.setKeyType(JsonWebKey.KEY_TYPE_ELLIPTIC);
+        jwk.setProperty(JsonWebKey.EC_CURVE, curve);
+        jwk.setProperty(JsonWebKey.EC_X_COORDINATE, 
+                        Base64UrlUtility.encode(pk.getW().getAffineX().toByteArray()));
+        jwk.setProperty(JsonWebKey.EC_Y_COORDINATE, 
+                        Base64UrlUtility.encode(pk.getW().getAffineY().toByteArray()));
+        return jwk;
+    }
+    public static JsonWebKey fromECPrivateKey(ECPrivateKey pk, String curve) {
+        JsonWebKey jwk = new JsonWebKey();
+        jwk.setKeyType(JsonWebKey.KEY_TYPE_ELLIPTIC);
+        jwk.setProperty(JsonWebKey.EC_CURVE, curve);
+        jwk.setProperty(JsonWebKey.EC_PRIVATE_KEY, 
+                        Base64UrlUtility.encode(pk.getS().toByteArray()));
+        return jwk;
     }
     public static JsonWebKey fromRSAPublicKey(RSAPublicKey pk, String algo) {
         JsonWebKey jwk = prepareRSAJwk(pk.getModulus(), algo);
@@ -386,40 +409,7 @@ public final class JwkUtils {
         return jwk;
     }
     
-    private static String getKeyId(Message m, Properties props, String preferredPropertyName, String keyOper) {
-        String kid = null;
-        String altPropertyName = null;
-        if (keyOper != null) {
-            if (keyOper.equals(JsonWebKey.KEY_OPER_ENCRYPT) || keyOper.equals(JsonWebKey.KEY_OPER_DECRYPT)) {
-                altPropertyName = preferredPropertyName + ".jwe";
-            } else if (keyOper.equals(JsonWebKey.KEY_OPER_SIGN) || keyOper.equals(JsonWebKey.KEY_OPER_VERIFY)) {
-                altPropertyName = preferredPropertyName + ".jws";
-            }
-            String direction = m.getExchange().getOutMessage() == m ? ".out" : ".in";
-            kid = (String)MessageUtils.getContextualProperty(m, altPropertyName, altPropertyName + direction);
-        }
-        
-        if (kid == null) {
-            kid = props.getProperty(preferredPropertyName);
-        }
-        if (kid == null && altPropertyName != null) {
-            kid = props.getProperty(altPropertyName);
-        }
-        return kid;
-    }
-    private static PrivateKeyPasswordProvider loadPasswordProvider(Message m, Properties props, String keyOper) {
-        PrivateKeyPasswordProvider cb = 
-            (PrivateKeyPasswordProvider)m.getContextualProperty(KeyManagementUtils.RSSEC_KEY_PSWD_PROVIDER);
-        if (cb == null && keyOper != null) {
-            String propName = keyOper.equals(JsonWebKey.KEY_OPER_SIGN) ? KeyManagementUtils.RSSEC_SIG_KEY_PSWD_PROVIDER
-                : keyOper.equals(JsonWebKey.KEY_OPER_DECRYPT) 
-                ? KeyManagementUtils.RSSEC_DECRYPT_KEY_PSWD_PROVIDER : null;
-            if (propName != null) {
-                cb = (PrivateKeyPasswordProvider)m.getContextualProperty(propName);
-            }
-        }
-        return cb;
-    }
+    
     private static JweEncryptionProvider createDefaultEncryption(char[] password) {
         KeyEncryptionAlgorithm keyEncryption = 
             new PbesHmacAesWrapKeyEncryptionAlgorithm(password, Algorithm.PBES2_HS256_A128KW.getJwtName());
@@ -449,5 +439,16 @@ public final class JwkUtils {
     }
     private static JweHeaders toJweHeaders(String ct) {
         return new JweHeaders(Collections.<String, Object>singletonMap(JoseConstants.HEADER_CONTENT_TYPE, ct));
+    }
+    public static void setPublicKeyInfo(JsonWebKey jwk, JoseHeaders headers, String algo) {
+        if (JsonWebKey.KEY_TYPE_RSA.equals(jwk.getKeyType())) {
+            List<String> chain = CastUtils.cast((List<?>)jwk.getProperty("x5c"));
+            if (chain != null) {
+                headers.setX509Chain(chain);
+            } else {
+                headers.setJsonWebKey(
+                    JwkUtils.fromRSAPublicKey(JwkUtils.toRSAPublicKey(jwk), algo));
+            }
+        }
     }
 }

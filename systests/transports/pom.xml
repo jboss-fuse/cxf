@@ -31,6 +31,21 @@
     <description>Apache CXF Transport System Tests</description>
     <url>http://cxf.apache.org</url>
     <build>
+        <testSourceDirectory>${basedir}/src/test/java</testSourceDirectory>
+        <testResources>
+            <testResource>
+                <directory>src/test/java</directory>
+                <excludes>
+                    <exclude>**/*.java</exclude>
+                </excludes>
+            </testResource>
+            <testResource>
+                <directory>src/test/resources</directory>
+                <includes>
+                    <include>**/*</include>
+                </includes>
+            </testResource>
+        </testResources>
         <plugins>
             <plugin>
                 <groupId>org.apache.cxf</groupId>
@@ -269,6 +284,12 @@
         <dependency>
             <groupId>org.apache.geronimo.specs</groupId>
             <artifactId>geronimo-j2ee-connector_1.5_spec</artifactId>
+        </dependency>
+        <!-- make http://java.sun.com/dtd/web-app_2_3.dtd et al locally available during the tests -->
+        <dependency>
+            <groupId>org.apache.geronimo.specs</groupId>
+            <artifactId>geronimo-servlet_3.0_spec</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.sun.xml.fastinfoset</groupId>

@@ -45,6 +45,12 @@ public class JsonMapObjectReaderWriter {
         return sb.toString();
     }
     
+    public String toJson(List<Object> list) {
+        StringBuilder sb = new StringBuilder();
+        toJsonInternal(new StringBuilderOutput(sb), list);
+        return sb.toString();
+    }
+    
     public void toJson(JsonMapObject obj, OutputStream os) {
         toJson(obj.asMap(), os);
     }
@@ -122,7 +128,13 @@ public class JsonMapObjectReaderWriter {
         readJsonObjectAsSettable(nextMap, theJson.substring(1, theJson.length() - 1));
         return nextMap.map;
     }
-    
+    public List<Object> fromJsonAsList(String json) {
+        return fromJsonAsList(null, json);
+    }
+    public List<Object> fromJsonAsList(String name, String json) {
+        String theJson = json.trim();
+        return internalFromJsonAsList(name, theJson.substring(1, theJson.length() - 1));
+    }
     protected void readJsonObjectAsSettable(Settable values, String json) {
         for (int i = 0; i < json.length(); i++) {
             if (isWhiteSpace(json.charAt(i))) {
@@ -148,7 +160,7 @@ public class JsonMapObjectReaderWriter {
             } else if (json.charAt(sepIndex + j) == '[') {
                 int closingIndex = getClosingIndex(json, '[', ']', sepIndex + j);
                 String newJson = json.substring(sepIndex + j + 1, closingIndex);
-                values.put(name, readJwtObjectAsList(name, newJson));
+                values.put(name, internalFromJsonAsList(name, newJson));
                 i = closingIndex + 1;
             } else {
                 int commaIndex = getCommaIndex(json, sepIndex + j);
@@ -159,7 +171,7 @@ public class JsonMapObjectReaderWriter {
             
         }
     }
-    protected List<Object> readJwtObjectAsList(String name, String json) {
+    protected List<Object> internalFromJsonAsList(String name, String json) {
         List<Object> values = new LinkedList<Object>();
         for (int i = 0; i < json.length(); i++) {
             if (isWhiteSpace(json.charAt(i))) {
@@ -188,7 +200,13 @@ public class JsonMapObjectReaderWriter {
             value = valueStr.substring(1, valueStr.length() - 1);
         } else if ("true".equals(value) || "false".equals(value)) {
             value = Boolean.valueOf(valueStr);
-        } 
+        } else {
+            try {
+                value = Long.valueOf(valueStr);
+            } catch (NumberFormatException ex) {
+                value = Double.valueOf(valueStr);
+            }
+        }
         return value;
     }
     

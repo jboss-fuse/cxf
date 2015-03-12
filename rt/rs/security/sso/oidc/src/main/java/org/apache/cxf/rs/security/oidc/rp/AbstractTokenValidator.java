@@ -41,7 +41,9 @@ public abstract class AbstractTokenValidator {
     private WebClient jwkSetClient;
     private ConcurrentHashMap<String, JsonWebKey> keyMap = new ConcurrentHashMap<String, JsonWebKey>(); 
     
-    protected JwtToken getJwtToken(String wrappedJwtToken, String clientId, String idTokenKid, 
+    protected JwtToken getJwtToken(String wrappedJwtToken, 
+                                   String clientId,
+                                   String idTokenKid, 
                                    boolean jweOnly) {
         if (wrappedJwtToken == null) {
             throw new SecurityException("ID Token is missing");
@@ -54,8 +56,11 @@ public abstract class AbstractTokenValidator {
             wrappedJwtToken = jweDecryptor.decrypt(wrappedJwtToken).getContentText();
         }
 
-        // validate token signature
-        return getTokenValidateSignature(wrappedJwtToken, idTokenKid);
+        JwsJwtCompactConsumer jwtConsumer = new JwsJwtCompactConsumer(wrappedJwtToken);
+        JwtToken jwt = jwtConsumer.getJwtToken(); 
+        JwsSignatureVerifier theSigVerifier = getInitializedSigVerifier(jwt, idTokenKid);
+        return validateToken(jwtConsumer, jwt, theSigVerifier);
+        
     }
     
     protected void validateJwtClaims(JwtClaims claims, String clientId, boolean validateClaimsAlways) {
@@ -71,38 +76,13 @@ public abstract class AbstractTokenValidator {
 
         // validate the provider
         String issuer = claims.getIssuer();
-        if (issuerId == null && validateClaimsAlways || issuerId != null && !issuerId.equals(issuer)) {
+        if (issuer == null && validateClaimsAlways || issuer != null && !issuer.equals(issuerId)) {
             throw new SecurityException("Invalid provider");
         }
         JwtUtils.validateJwtTimeClaims(claims, issuedAtRange, validateClaimsAlways);
     }
     
-    protected JwtToken getTokenValidateSignature(String wrappedJwtToken, String idTokenKid) {
-        // read id_token into JwtToken
-        JwsJwtCompactConsumer jwtConsumer = new JwsJwtCompactConsumer(wrappedJwtToken);
-        JwtToken jwt = jwtConsumer.getJwtToken(); 
-        JwsSignatureVerifier theSigVerifier = getInitializedSigVerifier();
-        if (theSigVerifier != null) {
-            return validateToken(jwtConsumer, jwt, theSigVerifier);
-        }
-        if (jwkSetClient == null) {
-            throw new SecurityException("Provider Jwk Set Client is not available");
-        }
-        String keyId = idTokenKid != null ? idTokenKid : jwtConsumer.getJwtToken().getHeaders().getKeyId();
-        if (keyId == null) {
-            throw new SecurityException("Provider JWK key id is null");
-        }
-        JsonWebKey key = keyMap.get(keyId);
-        if (key == null) {
-            JsonWebKeys keys = jwkSetClient.get(JsonWebKeys.class);
-            key = keys.getKey(keyId);
-            keyMap.putAll(keys.getKeyIdMap());
-        }
-        if (key == null) {
-            throw new SecurityException("JWK key with the key id: \"" + keyId + "\" is not available");
-        }
-        return validateToken(jwtConsumer, jwt, JwsUtils.getSignatureVerifier(key));
-    }
+    
     protected JwtToken validateToken(JwsJwtCompactConsumer consumer, JwtToken jwt, JwsSignatureVerifier jws) {
         if (!consumer.verifySignatureWith(jws)) {
             throw new SecurityException("Invalid Signature");
@@ -135,10 +115,35 @@ public abstract class AbstractTokenValidator {
         } 
         return JweUtils.loadDecryptionProvider(jweOnly);
     }
-    protected JwsSignatureVerifier getInitializedSigVerifier() {
+    protected JwsSignatureVerifier getInitializedSigVerifier(JwtToken jwt, String idTokenKid) {
         if (jwsVerifier != null) {
             return jwsVerifier;    
         } 
-        return JwsUtils.loadSignatureVerifier(false);
+        JwsSignatureVerifier theJwsVerifier = JwsUtils.loadSignatureVerifier(false);
+        if (theJwsVerifier != null) {
+            return theJwsVerifier;
+        }
+        if (jwkSetClient == null) {
+            throw new SecurityException("Provider Jwk Set Client is not available");
+        }
+        String keyId = idTokenKid != null ? idTokenKid : jwt.getHeaders().getKeyId();
+        JsonWebKey key = keyId != null ? keyMap.get(keyId) : null;
+        if (key == null) {
+            JsonWebKeys keys = jwkSetClient.get(JsonWebKeys.class);
+            if (keyId != null) {
+                key = keys.getKey(keyId);
+            } else if (keys.getKeys().size() == 1) {
+                key = keys.getKeys().get(0);
+            }
+            keyMap.putAll(keys.getKeyIdMap());
+        }
+        if (key == null) {
+            throw new SecurityException("JWK key with the key id: \"" + keyId + "\" is not available");
+        }
+        theJwsVerifier = JwsUtils.getSignatureVerifier(key);
+        if (jwkSetClient == null) {
+            throw new SecurityException();
+        }
+        return theJwsVerifier;
     }
 }

@@ -60,10 +60,14 @@ public class JAXRSJweJwsTest extends AbstractBusClientServerTestBase {
         "org/apache/cxf/systest/jaxrs/security/bob.rs.properties";
     private static final String SERVER_JWEJWS_PROPERTIES =
         "org/apache/cxf/systest/jaxrs/security/alice.rs.properties";
-    private static final String PUBLIC_JWEJWS_PROPERTIES =
-        "org/apache/cxf/systest/jaxrs/security/public.jwk.properties";
     private static final String ENCODED_MAC_KEY = "AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75"
         + "aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow";
+    private static final Boolean SKIP_AES_GCM_TESTS = isJava6();
+    
+    private static boolean isJava6() {
+        String version = System.getProperty("java.version");
+        return 1.6D == Double.parseDouble(version.substring(0, 3));    
+    }
     @BeforeClass
     public static void startServers() throws Exception {
         assertTrue("server did not launch correctly", 
@@ -86,6 +90,9 @@ public class JAXRSJweJwsTest extends AbstractBusClientServerTestBase {
     }
     @Test
     public void testJweJwkPlainTextRSA() throws Exception {
+        if (SKIP_AES_GCM_TESTS) {
+            return;
+        }
         String address = "https://localhost:" + PORT + "/jwejwkrsa";
         BookStore bs = createJweBookStore(address, null);
         String text = bs.echoText("book");
@@ -93,6 +100,9 @@ public class JAXRSJweJwsTest extends AbstractBusClientServerTestBase {
     }
     @Test
     public void testJweJwkBookBeanRSA() throws Exception {
+        if (SKIP_AES_GCM_TESTS) {
+            return;
+        }
         String address = "https://localhost:" + PORT + "/jwejwkrsa";
         BookStore bs = createJweBookStore(address,
                                        Collections.singletonList(new JacksonJsonProvider()));
@@ -127,6 +137,9 @@ public class JAXRSJweJwsTest extends AbstractBusClientServerTestBase {
     
     @Test
     public void testJweJwkAesWrap() throws Exception {
+        if (SKIP_AES_GCM_TESTS) {
+            return;
+        }
         String address = "https://localhost:" + PORT + "/jwejwkaeswrap";
         JAXRSClientFactoryBean bean = new JAXRSClientFactoryBean();
         SpringBusFactory bf = new SpringBusFactory();
@@ -179,6 +192,9 @@ public class JAXRSJweJwsTest extends AbstractBusClientServerTestBase {
     }
     @Test
     public void testJweRsaJwsRsa() throws Exception {
+        if (SKIP_AES_GCM_TESTS) {
+            return;
+        }
         String address = "https://localhost:" + PORT + "/jwejwsrsa";
         BookStore bs = createJweJwsBookStore(address, null, null);
         String text = bs.echoText("book");
@@ -186,6 +202,9 @@ public class JAXRSJweJwsTest extends AbstractBusClientServerTestBase {
     }
     @Test
     public void testJweRsaJwsRsaCert() throws Exception {
+        if (SKIP_AES_GCM_TESTS) {
+            return;
+        }
         String address = "https://localhost:" + PORT + "/jwejwsrsacert";
         
         JAXRSClientFactoryBean bean = new JAXRSClientFactoryBean();
@@ -206,10 +225,10 @@ public class JAXRSJweJwsTest extends AbstractBusClientServerTestBase {
         providers.add(new JwsClientResponseFilter());
         
         bean.setProviders(providers);
-        bean.getProperties(true).put("rs.security.encryption.out.properties", PUBLIC_JWEJWS_PROPERTIES);
+        bean.getProperties(true).put("rs.security.keystore.file", 
+                                     "org/apache/cxf/systest/jaxrs/security/certs/jwkPublicSet.txt");
         bean.getProperties(true).put("rs.security.signature.out.properties", CLIENT_JWEJWS_PROPERTIES);
         bean.getProperties(true).put("rs.security.encryption.in.properties", CLIENT_JWEJWS_PROPERTIES);
-        bean.getProperties(true).put("rs.security.signature.in.properties", PUBLIC_JWEJWS_PROPERTIES);
         PrivateKeyPasswordProvider provider = new PrivateKeyPasswordProviderImpl();
         bean.getProperties(true).put("rs.security.signature.key.password.provider", provider);
         bean.getProperties(true).put("rs.security.decryption.key.password.provider", provider);
@@ -217,11 +236,26 @@ public class JAXRSJweJwsTest extends AbstractBusClientServerTestBase {
         
         WebClient.getConfig(bs).getRequestContext().put("rs.security.keystore.alias.jwe.out", "AliceCert");
         WebClient.getConfig(bs).getRequestContext().put("rs.security.keystore.alias.jws.in", "AliceCert");
+        WebClient.getConfig(bs).getRequestContext().put("rs.security.default.algorithms", "true");
+        String text = bs.echoText("book");
+        assertEquals("book", text);
+    }
+    @Test
+    public void testJweRsaJwsRsaCertInHeaders() throws Exception {
+        if (SKIP_AES_GCM_TESTS) {
+            return;
+        }
+        String address = "https://localhost:" + PORT + "/jwejwsrsaCertInHeaders";
+        BookStore bs = createJweJwsBookStore(address, null, null);
+        WebClient.getConfig(bs).getRequestContext().put("rs.security.report.public.key", "true");
         String text = bs.echoText("book");
         assertEquals("book", text);
     }
     @Test
     public void testJweRsaJwsPlainTextHMac() throws Exception {
+        if (SKIP_AES_GCM_TESTS) {
+            return;
+        }
         String address = "https://localhost:" + PORT + "/jwejwshmac";
         HmacJwsSignatureProvider hmacProvider = 
             new HmacJwsSignatureProvider(ENCODED_MAC_KEY, Algorithm.HmacSHA256.getJwtName());
@@ -231,6 +265,9 @@ public class JAXRSJweJwsTest extends AbstractBusClientServerTestBase {
     }
     @Test
     public void testJweRsaJwsBookHMac() throws Exception {
+        if (SKIP_AES_GCM_TESTS) {
+            return;
+        }
         String address = "https://localhost:" + PORT + "/jwejwshmac";
         HmacJwsSignatureProvider hmacProvider = 
             new HmacJwsSignatureProvider(ENCODED_MAC_KEY, Algorithm.HmacSHA256.getJwtName());

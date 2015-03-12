@@ -26,10 +26,12 @@ import java.util.logging.Logger;
 
 import javax.jms.Connection;
 import javax.jms.Destination;
+import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
 import javax.jms.Session;
+import javax.jms.Topic;
 
 import org.apache.cxf.common.logging.LogUtils;
 
@@ -38,7 +40,7 @@ public class PollingMessageListenerContainer extends AbstractMessageListenerCont
 
     private ExecutorService pollers;
 
-    private int numListenerThreads = 1;
+    private int concurrentConsumers = 1;
 
     public PollingMessageListenerContainer(Connection connection, Destination destination,
                                            MessageListener listenerHandler) {
@@ -47,54 +49,105 @@ public class PollingMessageListenerContainer extends AbstractMessageListenerCont
         this.listenerHandler = listenerHandler;
     }
 
-    class Poller implements Runnable {
+    private class Poller implements Runnable {
 
         @Override
         public void run() {
-            ResourceCloser closer = new ResourceCloser();
             while (running) {
+                MessageConsumer consumer = null;
+                Session session = null;
                 try {
-                    if (transactionManager != null) {
-                        transactionManager.begin();
+                    // Create session early to optimize performance
+                    session = connection.createSession(transacted, acknowledgeMode);
+                    consumer = createConsumer(session);
+                    while (running) {
+                        Message message = consumer.receive(1000);
+                        try {
+                            if (message != null) {
+                                listenerHandler.onMessage(message);
+                            }
+                            if (session.getTransacted()) {
+                                session.commit();
+                            }
+                        } catch (Exception e) {
+                            LOG.log(Level.WARNING, "Exception while processing jms message in cxf. Rolling back", e);
+                            safeRollBack(session, e);
+                        }
                     }
-                    Session session = closer.register(connection.createSession(transacted, acknowledgeMode));
+                } catch (Exception e) {
+                    LOG.log(Level.WARNING, "Unexpected exception. Restarting session and consumer", e);
+                } finally {
+                    ResourceCloser.close(consumer);
+                    ResourceCloser.close(session);
+                }
+            }
 
-                    MessageConsumer consumer = closer.register(session.createConsumer(destination,
-                                                                                      messageSelector));
+        }
+        
+        private void safeRollBack(Session session, Exception e) {
+            try {
+                if (session.getTransacted()) {
+                    session.rollback();
+                }
+            } catch (Exception e1) {
+                LOG.log(Level.WARNING, "Rollback of Local transaction failed", e1);
+            }
+        }
+
+    }
+    
+    private class XAPoller implements Runnable {
+
+        @Override
+        public void run() {
+            while (running) {
+                MessageConsumer consumer = null;
+                Session session = null;
+                try {
+                    transactionManager.begin();
+                    /*
+                     * Create session inside transaction to give it the 
+                     * chance to enlist itself as a resource
+                     */
+                    session = connection.createSession(transacted, acknowledgeMode);
+                    consumer = createConsumer(session);
                     Message message = consumer.receive(1000);
                     try {
                         if (message != null) {
                             listenerHandler.onMessage(message);
                         }
-                        if (transactionManager != null) {
-                            transactionManager.commit();
-                        } else {
-                            session.commit();
-                        }
+                        transactionManager.commit();
                     } catch (Exception e) {
-                        safeRollBack(session, e);
+                        LOG.log(Level.WARNING, "Exception while processing jms message in cxf. Rolling back", e);
+                        safeRollBack(session);
+                    } finally {
+                        ResourceCloser.close(consumer);
+                        ResourceCloser.close(session);
                     }
                 } catch (Exception e) {
-                    LOG.log(Level.WARNING, "Unexpected exception", e);
-                } finally {
-                    closer.close();
+                    LOG.log(Level.WARNING, "Unexpected exception. Restarting session and consumer", e);
                 }
+
             }
 
         }
+        
+        private void safeRollBack(Session session) {
+            try {
+                transactionManager.rollback();
+            } catch (Exception e) {
+                LOG.log(Level.WARNING, "Rollback of XA transaction failed", e);
+            }
+        }
 
     }
-
-    private void safeRollBack(Session session, Exception e) {
-        LOG.log(Level.WARNING, "Exception while processing jms message in cxf. Rolling back", e);
-        try {
-            if (transactionManager != null) {
-                transactionManager.rollback();
-            } else {
-                session.rollback();
-            }
-        } catch (Exception e1) {
-            LOG.log(Level.WARNING, "Rollback of Local transaction failed", e1);
+    
+    private MessageConsumer createConsumer(Session session) throws JMSException {
+        if (durableSubscriptionName != null && destination instanceof Topic) {
+            return session.createDurableSubscriber((Topic)destination, durableSubscriptionName,
+                                                   messageSelector, pubSubNoLocal);
+        } else {
+            return session.createConsumer(destination, messageSelector);
         }
     }
 
@@ -104,14 +157,16 @@ public class PollingMessageListenerContainer extends AbstractMessageListenerCont
             return;
         }
         running = true;
-        pollers = Executors.newFixedThreadPool(numListenerThreads);
-        for (int c = 0; c < numListenerThreads; c++) {
-            pollers.execute(new Poller());
+        pollers = Executors.newFixedThreadPool(concurrentConsumers);
+        for (int c = 0; c < concurrentConsumers; c++) {
+            Runnable poller = (transactionManager != null) ? new XAPoller() : new Poller(); 
+            pollers.execute(poller);
         }
     }
 
     @Override
     public void stop() {
+        LOG.fine("Shuttting down " + this.getClass().getSimpleName());
         if (!running) {
             return;
         }
@@ -122,12 +177,16 @@ public class PollingMessageListenerContainer extends AbstractMessageListenerCont
         } catch (InterruptedException e) {
             // Ignore
         }
+        pollers.shutdownNow();
         pollers = null;
     }
 
     @Override
     public void shutdown() {
         stop();
-        ResourceCloser.close(connection);
+    }
+
+    public void setConcurrentConsumers(int concurrentConsumers) {
+        this.concurrentConsumers = concurrentConsumers;
     }
 }

@@ -25,13 +25,13 @@ import org.apache.cxf.common.util.Base64UrlUtility;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.rs.security.jose.JoseConstants;
 import org.apache.cxf.rs.security.jose.JoseHeaders;
-import org.apache.cxf.rs.security.jose.JoseHeadersWriter;
+import org.apache.cxf.rs.security.jose.JoseHeadersReaderWriter;
 
 
 
 
 public class JweHeaders extends JoseHeaders {
-    
+    private JweHeaders protectedHeaders;
     public JweHeaders() {
     }
     
@@ -92,12 +92,20 @@ public class JweHeaders extends JoseHeaders {
     public JoseHeaders setHeader(String name, Object value) {
         return (JoseHeaders)super.setHeader(name, value);
     }
-    public byte[] toCipherAdditionalAuthData(JoseHeadersWriter writer) { 
-        return toCipherAdditionalAuthData(writer.headersToJson(this));
+    public byte[] toCipherAdditionalAuthData() { 
+        return toCipherAdditionalAuthData(new JoseHeadersReaderWriter().headersToJson(this));
     }
     public static byte[] toCipherAdditionalAuthData(String headersJson) { 
         byte[] headerBytes = StringUtils.toBytesUTF8(headersJson);
         String base64UrlHeadersInJson = Base64UrlUtility.encode(headerBytes);
         return StringUtils.toBytesASCII(base64UrlHeadersInJson);
+    }
+
+    public JweHeaders getProtectedHeaders() {
+        return protectedHeaders;
+    }
+
+    public void setProtectedHeaders(JweHeaders protectedHeaders) {
+        this.protectedHeaders = protectedHeaders;
     }
 }

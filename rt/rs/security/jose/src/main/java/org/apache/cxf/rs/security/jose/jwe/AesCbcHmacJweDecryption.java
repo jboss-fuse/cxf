@@ -23,7 +23,6 @@ import java.util.Arrays;
 
 import javax.crypto.spec.IvParameterSpec;
 
-import org.apache.cxf.rs.security.jose.JoseHeadersReader;
 import org.apache.cxf.rs.security.jose.jwa.Algorithm;
 
 public class AesCbcHmacJweDecryption extends AbstractJweDecryption {
@@ -31,33 +30,30 @@ public class AesCbcHmacJweDecryption extends AbstractJweDecryption {
     public AesCbcHmacJweDecryption(KeyDecryptionAlgorithm keyDecryptionAlgo) {
         this(keyDecryptionAlgo, null);
     }
-    public AesCbcHmacJweDecryption(KeyDecryptionAlgorithm keyDecryptionAlgo, String supportedAlgo) {
-        this(keyDecryptionAlgo, supportedAlgo, null);
-    }
     public AesCbcHmacJweDecryption(KeyDecryptionAlgorithm keyDecryptionAlgo,
-                                   String supportedAlgo,
-                                   JoseHeadersReader reader) {
-        super(reader, keyDecryptionAlgo, new AesCbcContentDecryptionAlgorithm(supportedAlgo));
+                                   String supportedAlgo) {
+        super(keyDecryptionAlgo, new AesCbcContentDecryptionAlgorithm(supportedAlgo));
         this.supportedAlgo = supportedAlgo;
     }
-    protected JweDecryptionOutput doDecrypt(JweCompactConsumer consumer, byte[] cek) {
-        validateAuthenticationTag(consumer, cek);
-        return super.doDecrypt(consumer, cek);
+    protected JweDecryptionOutput doDecrypt(JweDecryptionInput jweDecryptionInput, byte[] cek) {
+        validateAuthenticationTag(jweDecryptionInput, cek);
+        return super.doDecrypt(jweDecryptionInput, cek);
     }
     @Override
     protected byte[] getActualCek(byte[] theCek, String algoJwt) {
         validateCekAlgorithm(algoJwt);
         return AesCbcHmacJweEncryption.doGetActualCek(theCek, algoJwt);
     }
-    protected void validateAuthenticationTag(JweCompactConsumer consumer, byte[] theCek) {
-        byte[] actualAuthTag = consumer.getEncryptionAuthenticationTag();
+    protected void validateAuthenticationTag(JweDecryptionInput jweDecryptionInput, byte[] theCek) {
+        byte[] actualAuthTag = jweDecryptionInput.getAuthTag();
         
         final AesCbcHmacJweEncryption.MacState macState = 
             AesCbcHmacJweEncryption.getInitializedMacState(theCek, 
-                                                           consumer.getContentDecryptionCipherInitVector(),
-                                                           consumer.getJweHeaders(),
-                                                           consumer.getDecodedJsonHeaders());
-        macState.mac.update(consumer.getEncryptedContent());
+                                                           jweDecryptionInput.getInitVector(),
+                                                           jweDecryptionInput.getAad(),
+                                                           jweDecryptionInput.getJweHeaders(),
+                                                           jweDecryptionInput.getDecodedJsonHeaders());
+        macState.mac.update(jweDecryptionInput.getEncryptedContent());
         byte[] expectedAuthTag = AesCbcHmacJweEncryption.signAndGetTag(macState);
         if (!Arrays.equals(actualAuthTag, expectedAuthTag)) {
             throw new SecurityException();
@@ -74,7 +70,7 @@ public class AesCbcHmacJweDecryption extends AbstractJweDecryption {
             return new IvParameterSpec(theIv);
         }
         @Override
-        public byte[] getAdditionalAuthenticationData(String headersJson) {
+        public byte[] getAdditionalAuthenticationData(String headersJson, byte[] aad) {
             return null;
         }
         @Override

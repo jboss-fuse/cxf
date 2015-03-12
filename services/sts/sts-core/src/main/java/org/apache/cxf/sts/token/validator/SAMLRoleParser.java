@@ -29,7 +29,7 @@ import org.apache.wss4j.common.saml.SamlAssertionWrapper;
 /**
  * This interface defines a way to extract roles from a SAML Assertion
  */
-public interface SAMLRoleParser {
+public interface SAMLRoleParser extends SubjectRoleParser {
     
     /**
      * Return the set of User/Principal roles from the Assertion.

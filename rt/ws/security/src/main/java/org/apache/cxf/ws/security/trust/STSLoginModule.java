@@ -40,10 +40,12 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.LoginException;
 import javax.security.auth.spi.LoginModule;
 
+
 import org.w3c.dom.Document;
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusException;
 import org.apache.cxf.BusFactory;
+import org.apache.cxf.bus.spring.SpringBusFactory;
 import org.apache.cxf.common.classloader.ClassLoaderUtils;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.security.SimplePrincipal;
@@ -60,6 +62,7 @@ import org.apache.cxf.ws.security.tokenstore.TokenStoreFactory;
 import org.apache.cxf.ws.security.trust.claims.RoleClaimsCallbackHandler;
 import org.apache.cxf.ws.security.wss4j.WSS4JInInterceptor;
 import org.apache.wss4j.common.saml.SamlAssertionWrapper;
+import org.apache.wss4j.common.util.Loader;
 import org.apache.wss4j.dom.WSConstants;
 import org.apache.wss4j.dom.handler.RequestData;
 import org.apache.wss4j.dom.message.token.UsernameToken;
@@ -75,10 +78,22 @@ public class STSLoginModule implements LoginModule {
     /**
      * Whether we require roles or not from the STS. If this is not set then the 
      * WS-Trust validate binding is used. If it is set then the issue binding is 
-     * used, where the Username + Password credentials are passed via "OnBehalfOf".
-     * In addition, claims are added to the request for the standard "role" ClaimType.
+     * used, where the Username + Password credentials are passed via "OnBehalfOf"
+     * (unless the DISABLE_ON_BEHALF_OF property is set to "true", see below). In addition, 
+     * claims are added to the request for the standard "role" ClaimType.
      */
     public static final String REQUIRE_ROLES = "require.roles";
+    
+    /**
+     * Whether to disable passing Username + Password credentials via "OnBehalfOf". If the
+     * REQUIRE_ROLES property (see above) is set to "true", then the Issue Binding is used
+     * and the credentials are passed via OnBehalfOf. If this (DISABLE_ON_BEHALF_OF) property
+     * is set to "true", then the credentials instead are passed through to the 
+     * WS-SecurityPolicy layer and used depending on the security policy of the STS endpoint.
+     * For example, if the STS endpoint requires a WS-Security UsernameToken, then the 
+     * credentials are inserted here.
+     */
+    public static final String DISABLE_ON_BEHALF_OF = "disable.on.behalf.of";
     
     /**
      * The WSDL Location of the STS
@@ -115,6 +130,13 @@ public class STSLoginModule implements LoginModule {
      */
     public static final String WS_TRUST_NAMESPACE = "ws.trust.namespace";
     
+    /**
+     * The location of a Spring configuration file that can be used to configure the
+     * STS client (for example, to configure the TrustStore if TLS is used). This is
+     * designed to be used if the service that is being secured is not CXF-based.
+     */
+    public static final String CXF_SPRING_CFG = "cxf.spring.config";
+    
     private static final Logger LOG = LogUtils.getL7dLogger(STSLoginModule.class);
     private static final String TOKEN_STORE_KEY = "sts.login.module.tokenstore";
     
@@ -123,9 +145,11 @@ public class STSLoginModule implements LoginModule {
     private Subject subject;
     private CallbackHandler callbackHandler;
     private boolean requireRoles;
+    private boolean disableOnBehalfOf;
     private String wsdlLocation;
     private String serviceName;
     private String endpointName;
+    private String cxfSpringCfg;
     private int keySize;
     private String keyType = "http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer";
     private String tokenType = "http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0";
@@ -139,6 +163,9 @@ public class STSLoginModule implements LoginModule {
         callbackHandler = cbHandler;
         if (options.containsKey(REQUIRE_ROLES)) {
             requireRoles = Boolean.parseBoolean((String)options.get(REQUIRE_ROLES));
+        }
+        if (options.containsKey(DISABLE_ON_BEHALF_OF)) {
+            disableOnBehalfOf = Boolean.parseBoolean((String)options.get(DISABLE_ON_BEHALF_OF));
         }
         if (options.containsKey(WSDL_LOCATION)) {
             wsdlLocation = (String)options.get(WSDL_LOCATION);
@@ -160,6 +187,9 @@ public class STSLoginModule implements LoginModule {
         }
         if (options.containsKey(WS_TRUST_NAMESPACE)) {
             namespace = (String)options.get(WS_TRUST_NAMESPACE);
+        }
+        if (options.containsKey(CXF_SPRING_CFG)) {
+            cxfSpringCfg = (String)options.get(CXF_SPRING_CFG);
         }
         
         stsClientProperties.clear();
@@ -199,6 +229,7 @@ public class STSLoginModule implements LoginModule {
         
         STSTokenValidator validator = new STSTokenValidator(true);
         validator.setUseIssueBinding(requireRoles);
+        validator.setUseOnBehalfOf(!disableOnBehalfOf);
         
         // Authenticate token
         try {
@@ -211,7 +242,7 @@ public class STSLoginModule implements LoginModule {
             
             STSClient stsClient = configureSTSClient(message);
             if (message != null) {
-                message.setContextualProperty(SecurityConstants.STS_CLIENT, stsClient);
+                message.put(SecurityConstants.STS_CLIENT, stsClient);
                 data.setMsgContext(message);
             } else {
                 TokenStore tokenStore = configureTokenStore(message);
@@ -236,7 +267,15 @@ public class STSLoginModule implements LoginModule {
     
     private STSClient configureSTSClient(Message msg) throws BusException, EndpointException {
         STSClient c = null;
-        if (msg == null) {
+        if (cxfSpringCfg != null) {
+            SpringBusFactory bf = new SpringBusFactory();
+            URL busFile = Loader.getResource(cxfSpringCfg);
+
+            Bus bus = bf.createBus(busFile.toString());
+            SpringBusFactory.setDefaultBus(bus);
+            SpringBusFactory.setThreadDefaultBus(bus);
+            c = new STSClient(bus);
+        } else if (msg == null) {
             Bus bus = BusFactory.getDefaultBus(true);
             c = new STSClient(bus);
         } else {

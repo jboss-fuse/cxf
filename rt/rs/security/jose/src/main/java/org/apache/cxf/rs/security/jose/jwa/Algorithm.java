@@ -56,7 +56,9 @@ public enum Algorithm {
     PBES2_HS256_A128KW(JoseConstants.PBES2_HS256_A128KW_ALGO, "AESWrap", 128),
     PBES2_HS384_A192KW(JoseConstants.PBES2_HS384_A192KW_ALGO, "AESWrap", 192),
     PBES2_HS512_A256KW(JoseConstants.PBES2_HS512_A256KW_ALGO, "AESWrap", 256),
-    
+    ECDH_ES_A128KW(JoseConstants.ECDH_ES_A128KW_ALGO, "AESWrap", 128),
+    ECDH_ES_A192KW(JoseConstants.ECDH_ES_A192KW_ALGO, "AESWrap", 192),
+    ECDH_ES_A256KW(JoseConstants.ECDH_ES_A256KW_ALGO, "AESWrap", 256),
     // Content Encryption
     A128GCM(JoseConstants.A128GCM_ALGO, "AES/GCM/NoPadding", 128),
     A192GCM(JoseConstants.A192GCM_ALGO, "AES/GCM/NoPadding", 192),
@@ -73,6 +75,9 @@ public enum Algorithm {
     public static final String RS_SHA_256_JAVA = "SHA256withRSA";
     public static final String RS_SHA_384_JAVA = "SHA384withRSA";
     public static final String RS_SHA_512_JAVA = "SHA512withRSA";
+    public static final String PS_SHA_256_JAVA = "SHA256withRSAandMGF1";
+    public static final String PS_SHA_384_JAVA = "SHA384withRSAandMGF1";
+    public static final String PS_SHA_512_JAVA = "SHA512withRSAandMGF1";
     public static final String ES_SHA_256_JAVA = "SHA256withECDSA";
     public static final String ES_SHA_384_JAVA = "SHA384withECDSA";
     public static final String ES_SHA_512_JAVA = "SHA512withECDSA";
@@ -90,15 +95,20 @@ public enum Algorithm {
     public static final Set<String> RSA_SHA_SIGN_SET = new HashSet<String>(Arrays.asList(JoseConstants.RS_SHA_256_ALGO,
                                                                         JoseConstants.RS_SHA_384_ALGO,
                                                                         JoseConstants.RS_SHA_512_ALGO));
+    public static final Set<String> RSA_SHA_PS_SIGN_SET = 
+        new HashSet<String>(Arrays.asList(JoseConstants.PS_SHA_256_ALGO,
+                                          JoseConstants.PS_SHA_384_ALGO,
+                                          JoseConstants.PS_SHA_512_ALGO));
     public static final Set<String> EC_SHA_SIGN_SET = new HashSet<String>(Arrays.asList(JoseConstants.ES_SHA_256_ALGO,
                                                                          JoseConstants.ES_SHA_384_ALGO,
                                                                          JoseConstants.ES_SHA_512_ALGO));
-    public static final Set<String> RSA_OAEP_CEK_SET = new HashSet<String>(Arrays.asList(JoseConstants.RSA_OAEP_ALGO,
-                                                                               JoseConstants.RSA_OAEP_256_ALGO));
+    public static final Set<String> RSA_CEK_SET = new HashSet<String>(Arrays.asList(JoseConstants.RSA_OAEP_ALGO,
+                                                                                    JoseConstants.RSA_OAEP_256_ALGO,
+                                                                                    JoseConstants.RSA_1_5_ALGO));
     public static final Set<String> AES_GCM_CEK_SET = new HashSet<String>(Arrays.asList(JoseConstants.A128GCM_ALGO,
                                                                                         JoseConstants.A192GCM_ALGO,
                                                                                         JoseConstants.A256GCM_ALGO));
-    public static final Set<String> AES_GCM_KW_SET = new HashSet<String>(Arrays.asList(JoseConstants.A192GCMKW_ALGO,
+    public static final Set<String> AES_GCM_KW_SET = new HashSet<String>(Arrays.asList(JoseConstants.A128GCMKW_ALGO,
                                                                                         JoseConstants.A192GCMKW_ALGO,
                                                                                         JoseConstants.A256GCMKW_ALGO));
     public static final Set<String> AES_KW_SET = new HashSet<String>(Arrays.asList(JoseConstants.A128KW_ALGO,
@@ -108,6 +118,14 @@ public enum Algorithm {
         new HashSet<String>(Arrays.asList(JoseConstants.A128CBC_HS256_ALGO,
                                           JoseConstants.A192CBC_HS384_ALGO,
                                           JoseConstants.A256CBC_HS512_ALGO));
+    public static final Set<String> PBES_HS_SET = 
+        new HashSet<String>(Arrays.asList(PBES2_HS256_A128KW.getJwtName(),
+                                          PBES2_HS384_A192KW.getJwtName(),
+                                          PBES2_HS512_A256KW.getJwtName()));
+    public static final Set<String> ECDH_ES_SET = 
+        new HashSet<String>(Arrays.asList(ECDH_ES_A128KW.getJwtName(),
+                                          ECDH_ES_A192KW.getJwtName(),
+                                          ECDH_ES_A256KW.getJwtName()));
     
     private static final Map<String, String> JAVA_TO_JWT_NAMES;
     private static final Map<String, String> JWT_TO_JAVA_NAMES;
@@ -119,6 +137,9 @@ public enum Algorithm {
         JAVA_TO_JWT_NAMES.put(RS_SHA_256_JAVA, JoseConstants.RS_SHA_256_ALGO);
         JAVA_TO_JWT_NAMES.put(RS_SHA_384_JAVA, JoseConstants.RS_SHA_384_ALGO);
         JAVA_TO_JWT_NAMES.put(RS_SHA_512_JAVA, JoseConstants.RS_SHA_512_ALGO);
+        JAVA_TO_JWT_NAMES.put(PS_SHA_256_JAVA, JoseConstants.PS_SHA_256_ALGO);
+        JAVA_TO_JWT_NAMES.put(PS_SHA_384_JAVA, JoseConstants.PS_SHA_384_ALGO);
+        JAVA_TO_JWT_NAMES.put(PS_SHA_512_JAVA, JoseConstants.PS_SHA_512_ALGO);
         JAVA_TO_JWT_NAMES.put(ES_SHA_256_JAVA, JoseConstants.ES_SHA_256_ALGO);
         JAVA_TO_JWT_NAMES.put(ES_SHA_384_JAVA, JoseConstants.ES_SHA_384_ALGO);
         JAVA_TO_JWT_NAMES.put(ES_SHA_512_JAVA, JoseConstants.ES_SHA_512_ALGO);
@@ -141,6 +162,9 @@ public enum Algorithm {
         JWT_TO_JAVA_NAMES.put(JoseConstants.RS_SHA_256_ALGO, RS_SHA_256_JAVA);
         JWT_TO_JAVA_NAMES.put(JoseConstants.RS_SHA_384_ALGO, RS_SHA_384_JAVA);
         JWT_TO_JAVA_NAMES.put(JoseConstants.RS_SHA_512_ALGO, RS_SHA_512_JAVA);
+        JWT_TO_JAVA_NAMES.put(JoseConstants.PS_SHA_256_ALGO, PS_SHA_256_JAVA);
+        JWT_TO_JAVA_NAMES.put(JoseConstants.PS_SHA_384_ALGO, PS_SHA_384_JAVA);
+        JWT_TO_JAVA_NAMES.put(JoseConstants.PS_SHA_512_ALGO, PS_SHA_512_JAVA);
         JWT_TO_JAVA_NAMES.put(JoseConstants.ES_SHA_256_ALGO, ES_SHA_256_JAVA);
         JWT_TO_JAVA_NAMES.put(JoseConstants.ES_SHA_384_ALGO, ES_SHA_384_JAVA);
         JWT_TO_JAVA_NAMES.put(JoseConstants.ES_SHA_512_ALGO, ES_SHA_512_JAVA);
@@ -162,6 +186,9 @@ public enum Algorithm {
         JWT_TO_JAVA_NAMES.put(JoseConstants.PBES2_HS256_A128KW_ALGO, AES_WRAP_ALGO_JAVA);
         JWT_TO_JAVA_NAMES.put(JoseConstants.PBES2_HS384_A192KW_ALGO, AES_WRAP_ALGO_JAVA);
         JWT_TO_JAVA_NAMES.put(JoseConstants.PBES2_HS512_A256KW_ALGO, AES_WRAP_ALGO_JAVA);
+        JWT_TO_JAVA_NAMES.put(JoseConstants.ECDH_ES_A128KW_ALGO, AES_WRAP_ALGO_JAVA);
+        JWT_TO_JAVA_NAMES.put(JoseConstants.ECDH_ES_A192KW_ALGO, AES_WRAP_ALGO_JAVA);
+        JWT_TO_JAVA_NAMES.put(JoseConstants.ECDH_ES_A256KW_ALGO, AES_WRAP_ALGO_JAVA);
     }
     private final String jwtName;
     private final String javaName;
@@ -216,16 +243,22 @@ public enum Algorithm {
         return javaName;
     }
     public static boolean isRsa(String algo) {
-        return isRsaOaep(algo) || isRsaShaSign(algo);
+        return isRsaKeyWrap(algo) || isRsaSign(algo);
     }
-    public static boolean isRsaOaep(String algo) {
-        return RSA_OAEP_CEK_SET.contains(algo);
+    public static boolean isRsaKeyWrap(String algo) {
+        return RSA_CEK_SET.contains(algo);
     }
     public static boolean isAesKeyWrap(String algo) {
         return AES_KW_SET.contains(algo);
     }
     public static boolean isAesGcmKeyWrap(String algo) {
         return AES_GCM_KW_SET.contains(algo);
+    }
+    public static boolean isPbesHsWrap(String algo) {
+        return PBES_HS_SET.contains(algo); 
+    }
+    public static boolean isEcdhEsWrap(String algo) {
+        return ECDH_ES_SET.contains(algo); 
     }
     public static boolean isAesGcm(String algo) {
         return AES_GCM_CEK_SET.contains(algo);
@@ -242,9 +275,15 @@ public enum Algorithm {
             || isAesGcm(algo)
             || isAesGcmKeyWrap(algo)
             || isAesKeyWrap(algo); 
-    } 
+    }
+    public static boolean isRsaSign(String algo) {
+        return isRsaShaSign(algo) || isRsaShaPsSign(algo); 
+    }
     public static boolean isRsaShaSign(String algo) {
         return RSA_SHA_SIGN_SET.contains(algo); 
+    }
+    public static boolean isRsaShaPsSign(String algo) {
+        return RSA_SHA_PS_SIGN_SET.contains(algo); 
     }
     public static boolean isEcDsaSign(String algo) {
         return EC_SHA_SIGN_SET.contains(algo); 

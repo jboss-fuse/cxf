@@ -216,6 +216,8 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
         }
         reqData.setWssConfig(config);
         
+        // Add Audience Restrictions for SAML
+        configureAudienceRestriction(msg, reqData);
                 
         SOAPMessage doc = getSOAPMessage(msg);
         
@@ -329,7 +331,7 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
             msg.put(SECURITY_PROCESSED, Boolean.TRUE);
 
         } catch (WSSecurityException e) {
-            throw createSoapFault(msg, version, e);
+            throw WSS4JUtils.createSoapFault(msg, version, e);
         } catch (XMLStreamException e) {
             throw new SoapFault(new Message("STAX_EX", LOG), e, version.getSender());
         } catch (SOAPException e) {
@@ -337,6 +339,24 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
         } finally {
             reqData.clear();
             reqData = null;
+        }
+    }
+    
+    private void configureAudienceRestriction(SoapMessage msg, RequestData reqData) {
+        // Add Audience Restrictions for SAML
+        boolean enableAudienceRestriction = 
+            MessageUtils.getContextualBoolean(msg, 
+                                              SecurityConstants.AUDIENCE_RESTRICTION_VALIDATION, 
+                                              true);
+        if (enableAudienceRestriction) {
+            List<String> audiences = new ArrayList<String>();
+            if (msg.getContextualProperty(org.apache.cxf.message.Message.REQUEST_URL) != null) {
+                audiences.add((String)msg.getContextualProperty(org.apache.cxf.message.Message.REQUEST_URL));
+            }
+            if (msg.getContextualProperty("javax.xml.ws.wsdl.service") != null) {
+                audiences.add(msg.getContextualProperty("javax.xml.ws.wsdl.service").toString());
+            }
+            reqData.setAudienceRestrictions(audiences);
         }
     }
 
@@ -779,10 +799,7 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
      *              (non-null) processor map, to be used to initialize the
      *              WSSecurityEngine instance.
      */
-    protected static WSSecurityEngine
-    createSecurityEngine(
-        final Map<QName, Object> map
-    ) {
+    protected static WSSecurityEngine createSecurityEngine(final Map<QName, Object> map) {
         assert map != null;
         final WSSConfig config = WSSConfig.getNewInstance();
         for (Map.Entry<QName, Object> entry : map.entrySet()) {
@@ -820,42 +837,6 @@ public class WSS4JInInterceptor extends AbstractWSS4JInterceptor {
         return WSS4JUtils.getReplayCache(message, booleanKey, instanceKey);
     }
 
-    /**
-     * Create a SoapFault from a WSSecurityException, following the SOAP Message Security
-     * 1.1 specification, chapter 12 "Error Handling".
-     * 
-     * When the Soap version is 1.1 then set the Fault/Code/Value from the fault code
-     * specified in the WSSecurityException (if it exists).
-     * 
-     * Otherwise set the Fault/Code/Value to env:Sender and the Fault/Code/Subcode/Value
-     * as the fault code from the WSSecurityException.
-     */
-    private SoapFault 
-    createSoapFault(SoapMessage message, SoapVersion version, WSSecurityException e) {
-        SoapFault fault;
-        
-        String errorMessage = null;
-        boolean returnSecurityError = 
-            MessageUtils.getContextualBoolean(message, SecurityConstants.RETURN_SECURITY_ERROR, false);
-        if (returnSecurityError || MessageUtils.isRequestor(message)) {
-            errorMessage = e.getMessage();
-        } else {
-            errorMessage = e.getSafeExceptionMessage();
-        }
-        
-        javax.xml.namespace.QName faultCode = e.getFaultCode();
-        if (version.getVersion() == 1.1 && faultCode != null) {
-            fault = new SoapFault(errorMessage, e, faultCode);
-        } else {
-            fault = new SoapFault(errorMessage, e, version.getSender());
-            if (version.getVersion() != 1.1 && faultCode != null) {
-                fault.setSubCode(faultCode);
-            }
-        }
-        return fault;
-    }
-    
-    
     static class CXFRequestData extends RequestData {
         public CXFRequestData() {
         }

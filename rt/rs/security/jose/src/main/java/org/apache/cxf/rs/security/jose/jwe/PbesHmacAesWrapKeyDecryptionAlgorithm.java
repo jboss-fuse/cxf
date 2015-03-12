@@ -44,20 +44,24 @@ public class PbesHmacAesWrapKeyDecryptionAlgorithm implements KeyDecryptionAlgor
         this.algo = algo;
     }
     @Override
-    public byte[] getDecryptedContentEncryptionKey(JweCompactConsumer consumer) {
-        byte[] saltInput = getDecodedBytes(consumer, "p2s");
-        int pbesCount = consumer.getJweHeaders().getIntegerHeader("p2c");
-        String keyAlgoJwt = consumer.getJweHeaders().getAlgorithm();
+    public byte[] getDecryptedContentEncryptionKey(JweDecryptionInput jweDecryptionInput) {
+        JweHeaders jweHeaders = jweDecryptionInput.getJweHeaders();
+        byte[] saltInput = getDecodedBytes(jweHeaders.getHeader("p2s"));
+        int pbesCount = jweHeaders.getIntegerHeader("p2c");
+        String keyAlgoJwt = jweHeaders.getAlgorithm();
         int keySize = PbesHmacAesWrapKeyEncryptionAlgorithm.getKeySize(keyAlgoJwt);
         byte[] derivedKey = PbesHmacAesWrapKeyEncryptionAlgorithm
             .createDerivedKey(keyAlgoJwt, keySize, password, saltInput, pbesCount);
-        KeyDecryptionAlgorithm aesWrap = new AesWrapKeyDecryptionAlgorithm(derivedKey);
-        return aesWrap.getDecryptedContentEncryptionKey(consumer);
+        KeyDecryptionAlgorithm aesWrap = new AesWrapKeyDecryptionAlgorithm(derivedKey) {
+            protected boolean isValidAlgorithmFamily(String wrapAlgo) {
+                return Algorithm.isPbesHsWrap(wrapAlgo);
+            }    
+        };
+        return aesWrap.getDecryptedContentEncryptionKey(jweDecryptionInput);
     }    
-    private byte[] getDecodedBytes(JweCompactConsumer consumer, String headerName) {
+    private byte[] getDecodedBytes(Object p2sHeader) {
         try {
-            Object headerValue = consumer.getJweHeaders().getHeader(headerName);
-            return Base64UrlUtility.decode(headerValue.toString());
+            return Base64UrlUtility.decode(p2sHeader.toString());
         } catch (Exception ex) {
             throw new SecurityException(ex);
         }

@@ -24,14 +24,13 @@ import java.io.OutputStream;
 
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.helpers.IOUtils;
-import org.apache.cxf.message.Message;
 import org.apache.cxf.rs.security.jose.JoseHeaders;
+import org.apache.cxf.rs.security.jose.JoseUtils;
 import org.apache.cxf.rs.security.jose.jws.JwsCompactProducer;
 import org.apache.cxf.rs.security.jose.jws.JwsSignatureProvider;
 import org.apache.cxf.rs.security.jose.jws.JwsUtils;
 
 public class AbstractJwsWriterProvider {
-    private static final String JWS_CONTEXT_PROPERTY = "org.apache.cxf.jws.context";
     private JwsSignatureProvider sigProvider;
     
     public void setSignatureProvider(JwsSignatureProvider signatureProvider) {
@@ -39,18 +38,14 @@ public class AbstractJwsWriterProvider {
     }
     
     protected JwsSignatureProvider getInitializedSigProvider(JoseHeaders headers) {
+        setRequestContextProperty(headers);
         if (sigProvider != null) {
             return sigProvider;    
         } 
-        JwsSignatureProvider theSigProvider = JwsUtils.loadSignatureProvider(true); 
-        headers.setAlgorithm(theSigProvider.getAlgorithm());
-        return theSigProvider;
+        return JwsUtils.loadSignatureProvider(headers, true); 
     }
-    protected void setRequestContextProperty(Message m, JoseHeaders headers) {    
-        String context = (String)m.getContextualProperty(JWS_CONTEXT_PROPERTY);
-        if (context != null) {
-            headers.setHeader(JWS_CONTEXT_PROPERTY, context);
-        }
+    protected void setRequestContextProperty(JoseHeaders headers) {    
+        JoseUtils.setJoseContextProperty(headers);
     }
     protected void writeJws(JwsCompactProducer p, JwsSignatureProvider theSigProvider, OutputStream os) 
         throws IOException {

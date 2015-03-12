@@ -19,6 +19,8 @@
 
 package org.apache.cxf.jaxrs.model;
 
+import java.io.InputStream;
+
 
 public class Parameter {
     private ParameterType type;
@@ -26,6 +28,7 @@ public class Parameter {
     private String aValue;
     private boolean isEncoded;
     private String defaultValue;
+    private Class<?> javaType;
     
     public Parameter() {
         
@@ -88,5 +91,15 @@ public class Parameter {
     
     public void setDefaultValue(String dValue) {
         defaultValue = dValue;
+    }
+    public void setJavaType(Class<?> jType) {
+        this.javaType = jType;
+    }
+    public Class<?> getJavaType() {
+        if (javaType == null) {
+            return type == ParameterType.REQUEST_BODY ? InputStream.class : String.class;
+        } else {
+            return javaType;
+        }
     }
 }

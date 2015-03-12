@@ -75,9 +75,11 @@ import org.apache.cxf.common.classloader.ClassLoaderUtils;
 import org.apache.cxf.common.i18n.BundleUtils;
 import org.apache.cxf.common.jaxb.JAXBUtils;
 import org.apache.cxf.common.logging.LogUtils;
+import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.jaxrs.JAXRSServerFactoryBean;
+import org.apache.cxf.jaxrs.ext.DefaultMethod;
 import org.apache.cxf.jaxrs.ext.xml.ElementClass;
 import org.apache.cxf.jaxrs.ext.xml.XMLName;
 import org.apache.cxf.jaxrs.lifecycle.PerRequestResourceProvider;
@@ -181,17 +183,13 @@ public final class ResourceUtils {
         return null;
     }
     
-    public static ClassResourceInfo createClassResourceInfo(Map<String, UserResource> resources, 
-                                                            UserResource model, boolean isRoot, boolean enableStatic) {
-        return createClassResourceInfo(resources, model, isRoot, enableStatic, 
-                                       BusFactory.getThreadDefaultBus());
-    }
-    
     public static ClassResourceInfo createClassResourceInfo(
-        Map<String, UserResource> resources, UserResource model, boolean isRoot, boolean enableStatic,
+        Map<String, UserResource> resources, UserResource model,
+        Class<?> defaultClass,
+        boolean isRoot, boolean enableStatic,
         Bus bus) {
-        
-        Class<?> sClass = loadClass(model.getName());
+        final boolean isDefaultClass = defaultClass != null;
+        Class<?> sClass = !isDefaultClass  ? loadClass(model.getName()) : defaultClass;
         return createServiceClassResourceInfo(resources, model, sClass, isRoot, enableStatic, bus);
     }
     
@@ -206,33 +204,50 @@ public final class ResourceUtils {
                                   model.getConsumes(), model.getProduces(), bus);
         URITemplate t = URITemplate.createTemplate(model.getPath());
         cri.setURITemplate(t);
+        
         MethodDispatcher md = new MethodDispatcher();
         Map<String, UserOperation> ops = model.getOperationsAsMap();
+        
+        Method defaultMethod = null;
+        Map<String, Method> methodNames = new HashMap<String, Method>();
         for (Method m : cri.getServiceClass().getMethods()) {
-            UserOperation op = ops.get(m.getName());
-            if (op == null || op.getName() == null) {
+            if (m.getAnnotation(DefaultMethod.class) != null) {
+                // if needed we can also support multiple default methods
+                defaultMethod = m;
+            }
+            methodNames.put(m.getName(), m);
+        }
+        
+        for (Map.Entry<String, UserOperation> entry : ops.entrySet()) {
+            UserOperation op = entry.getValue();
+            Method actualMethod = methodNames.get(op.getName());
+            if (actualMethod == null) {
+                actualMethod = defaultMethod; 
+            }
+            if (actualMethod == null) {
                 continue;
             }
             OperationResourceInfo ori = 
-                new OperationResourceInfo(m, cri, URITemplate.createTemplate(op.getPath()),
+                new OperationResourceInfo(actualMethod, cri, URITemplate.createTemplate(op.getPath()),
                                           op.getVerb(), op.getConsumes(), op.getProduces(),
                                           op.getParameters(),
                                           op.isOneway());
-            String rClassName = m.getReturnType().getName();
+            String rClassName = actualMethod.getReturnType().getName();
             if (op.getVerb() == null) {
                 if (resources.containsKey(rClassName)) {
                     ClassResourceInfo subCri = rClassName.equals(model.getName()) ? cri 
                         : createServiceClassResourceInfo(resources, resources.get(rClassName),
-                                                         m.getReturnType(), false, enableStatic, bus);
+                                                         actualMethod.getReturnType(), false, enableStatic, bus);
                     if (subCri != null) {
                         cri.addSubClassResourceInfo(subCri);
-                        md.bind(ori, m);
+                        md.bind(ori, actualMethod);
                     }
                 }
             } else {
-                md.bind(ori, m);
+                md.bind(ori, actualMethod);
             }
         }
+        
         cri.setMethodDispatcher(md);
         return checkMethodDispatcher(cri) ? cri : null;
 
@@ -690,6 +705,14 @@ public final class ResourceUtils {
             Parameter p = new Parameter(paramEl.getAttribute("type"), i, paramEl.getAttribute("name"));
             p.setEncoded(Boolean.valueOf(paramEl.getAttribute("encoded")));
             p.setDefaultValue(paramEl.getAttribute("defaultValue"));
+            String pClass = paramEl.getAttribute("class");
+            if (!StringUtils.isEmpty(pClass)) {
+                try { 
+                    p.setJavaType(ClassLoaderUtils.loadClass(pClass, ResourceUtils.class));
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
             params.add(p);
         }
         op.setParameters(params);
@@ -753,16 +776,7 @@ public final class ResourceUtils {
         for (Class<?> cls : app.getClasses()) {
             if (isValidApplicationClass(cls, singletons)) {
                 if (isValidProvider(cls)) {
-                    try {
-                        Constructor<?> c = ResourceUtils.findResourceConstructor(cls, false);
-                        if (c.getParameterTypes().length == 0) {
-                            providers.add(c.newInstance());
-                        } else {
-                            providers.add(c);
-                        }
-                    } catch (Throwable ex) {
-                        throw new RuntimeException("Provider " + cls.getName() + " can not be created", ex); 
-                    }
+                    providers.add(createProviderInstance(cls));
                 } else {
                     resourceClasses.add(cls);
                     map.put(cls, new PerRequestResourceProvider(cls));
@@ -805,6 +819,18 @@ public final class ResourceUtils {
         bean.setApplication(app);
         
         return bean;
+    }
+    public static Object createProviderInstance(Class<?> cls) {
+        try {
+            Constructor<?> c = ResourceUtils.findResourceConstructor(cls, false);
+            if (c.getParameterTypes().length == 0) {
+                return c.newInstance();
+            } else {
+                return c;
+            }
+        } catch (Throwable ex) {
+            throw new RuntimeException("Provider " + cls.getName() + " can not be created", ex); 
+        }
     }
     
     private static boolean isValidProvider(Class<?> c) {

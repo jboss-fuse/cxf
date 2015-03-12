@@ -96,7 +96,7 @@ public class UsernameTokenInterceptor extends AbstractTokenInterceptor {
                 && WSConstants.WSSE_NS.equals(child.getNamespaceURI())) {
                 try {
                     boolean bspCompliant = isWsiBSPCompliant(message);
-                    Principal principal = parseTokenAndCreatePrincipal(child, bspCompliant);
+                    Principal principal = null;
                     Subject subject = null;
                     Object transformedToken = null;
                     
@@ -104,6 +104,10 @@ public class UsernameTokenInterceptor extends AbstractTokenInterceptor {
                         final WSSecurityEngineResult result = validateToken(child, message);
                         subject = (Subject)result.get(WSSecurityEngineResult.TAG_SUBJECT);
                         transformedToken = result.get(WSSecurityEngineResult.TAG_TRANSFORMED_TOKEN);
+                        principal = (Principal)result.get(WSSecurityEngineResult.TAG_PRINCIPAL);
+                        if (principal == null) {
+                            principal = parseTokenAndCreatePrincipal(child, bspCompliant);
+                        }
                     } else {
                         principal = parseTokenAndCreatePrincipal(child, bspCompliant);
                         WSS4JTokenConverter.convertToken(message, principal);
@@ -224,8 +228,13 @@ public class UsernameTokenInterceptor extends AbstractTokenInterceptor {
             data.setDisableBSPEnforcement(true);
         }
         data.setMsgContext(message);
-        List<WSSecurityEngineResult> results = p.handleToken(tokenElement, data, wsDocInfo);
-        return results.get(0);
+        try {
+            List<WSSecurityEngineResult> results = 
+                p.handleToken(tokenElement, data, wsDocInfo);
+            return results.get(0);
+        } catch (WSSecurityException ex) {
+            throw WSS4JUtils.createSoapFault(message, message.getVersion(), ex);
+        }
     }
 
     protected UsernameTokenPrincipal parseTokenAndCreatePrincipal(Element tokenElement, boolean bspCompliant) 

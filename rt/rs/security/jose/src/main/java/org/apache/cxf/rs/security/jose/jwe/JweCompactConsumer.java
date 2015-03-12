@@ -24,21 +24,12 @@ import java.io.UnsupportedEncodingException;
 import org.apache.cxf.common.util.Base64Exception;
 import org.apache.cxf.common.util.Base64UrlUtility;
 import org.apache.cxf.rs.security.jose.JoseHeaders;
-import org.apache.cxf.rs.security.jose.JoseHeadersReader;
 import org.apache.cxf.rs.security.jose.JoseHeadersReaderWriter;
 
 
 public class JweCompactConsumer {
-    private String headersJson;
-    private byte[] encryptedCEK;
-    private byte[] initVector;
-    private byte[] encryptedContent;
-    private byte[] authTag;
-    private JweHeaders jweHeaders;
+    private JweDecryptionInput jweDecryptionInput;
     public JweCompactConsumer(String jweContent) {
-        this(jweContent, new JoseHeadersReaderWriter());
-    }
-    public JweCompactConsumer(String jweContent, JoseHeadersReader reader) {
         if (jweContent.startsWith("\"") && jweContent.endsWith("\"")) {
             jweContent = jweContent.substring(1, jweContent.length() - 1);
         }
@@ -47,17 +38,24 @@ public class JweCompactConsumer {
             throw new SecurityException("5 JWE parts are expected");
         }
         try {
-            headersJson = new String(Base64UrlUtility.decode(parts[0]));
-            encryptedCEK = Base64UrlUtility.decode(parts[1]);
-            initVector = Base64UrlUtility.decode(parts[2]);
-            
-            encryptedContent = Base64UrlUtility.decode(parts[3]);
-            authTag = Base64UrlUtility.decode(parts[4]);
+            String headersJson = new String(Base64UrlUtility.decode(parts[0]));
+            byte[] encryptedCEK = Base64UrlUtility.decode(parts[1]);
+            byte[] initVector = Base64UrlUtility.decode(parts[2]);
+            byte[] encryptedContent = Base64UrlUtility.decode(parts[3]);
+            byte[] authTag = Base64UrlUtility.decode(parts[4]);
+            JoseHeadersReaderWriter reader = new JoseHeadersReaderWriter();
             JoseHeaders joseHeaders = reader.fromJsonHeaders(headersJson);
             if (joseHeaders.getUpdateCount() != null) { 
                 throw new SecurityException("Duplicate headers have been detected");
             }
-            jweHeaders = new JweHeaders(joseHeaders);
+            JweHeaders jweHeaders = new JweHeaders(joseHeaders);
+            jweDecryptionInput = new JweDecryptionInput(encryptedCEK,
+                                                        initVector, 
+                                                        encryptedContent,
+                                                        authTag,
+                                                        null,
+                                                        headersJson,
+                                                        jweHeaders);
             
         } catch (Base64Exception ex) {
             throw new SecurityException(ex);
@@ -65,37 +63,39 @@ public class JweCompactConsumer {
     }
     
     public String getDecodedJsonHeaders() {
-        return headersJson;
+        return jweDecryptionInput.getDecodedJsonHeaders();
     }
     
     public JweHeaders getJweHeaders() {
-        return jweHeaders;
+        return jweDecryptionInput.getJweHeaders();
     }
     
     public byte[] getEncryptedContentEncryptionKey() {
-        return encryptedCEK;
+        return jweDecryptionInput.getEncryptedCEK();
     }
     
     public byte[] getContentDecryptionCipherInitVector() {
-        return initVector;
+        return jweDecryptionInput.getInitVector();
     }
     
     public byte[] getContentEncryptionCipherAAD() {
-        return JweHeaders.toCipherAdditionalAuthData(headersJson);
+        return JweHeaders.toCipherAdditionalAuthData(jweDecryptionInput.getDecodedJsonHeaders());
     }
     
     public byte[] getEncryptionAuthenticationTag() {
-        return authTag;
+        return jweDecryptionInput.getAuthTag();
     }
     
     public byte[] getEncryptedContent() {
-        return encryptedContent;
+        return jweDecryptionInput.getEncryptedContent();
     }
     
     public byte[] getEncryptedContentWithAuthTag() {
-        return getCipherWithAuthTag(encryptedContent, authTag);
+        return getCipherWithAuthTag(getEncryptedContent(), getEncryptionAuthenticationTag());
     }
-    
+    public JweDecryptionInput getJweDecryptionInput() {
+        return jweDecryptionInput;
+    }
     public static byte[] getCipherWithAuthTag(byte[] cipher, byte[] authTag) {
         byte[] encryptedContentWithTag = new byte[cipher.length + authTag.length];
         System.arraycopy(cipher, 0, encryptedContentWithTag, 0, cipher.length);
@@ -104,7 +104,8 @@ public class JweCompactConsumer {
     }
     
     public byte[] getDecryptedContent(JweDecryptionProvider decryption) {
-        return decryption.decrypt(this);
+        // temp workaround
+        return decryption.decrypt(jweDecryptionInput);
     }
     public String getDecryptedContentText(JweDecryptionProvider decryption) {
         try {

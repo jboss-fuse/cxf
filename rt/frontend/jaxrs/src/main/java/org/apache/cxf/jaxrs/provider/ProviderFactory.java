@@ -457,7 +457,7 @@ public abstract class ProviderFactory {
     
     protected void setBusProviders() {
         List<Object> extensions = new LinkedList<Object>(); 
-        final String alreadySetProp = "bus.providers.set";
+        final String alreadySetProp = "bus.providers.set." + this.hashCode();
         if (bus.getProperty(alreadySetProp) == null) {
             addBusExtension(extensions,
                             MessageBodyReader.class,
@@ -1225,14 +1225,18 @@ public abstract class ProviderFactory {
             if (o == null) {
                 continue;
             }
-            if (o instanceof Constructor) {
+            Object provider = o;
+            if (provider.getClass() == Class.class) {
+                provider = ResourceUtils.createProviderInstance((Class<?>)provider);
+            }
+            if (provider instanceof Constructor) {
                 Map<Class<?>, Object> values = CastUtils.cast(application == null ? null 
                     : Collections.singletonMap(Application.class, application.getProvider()));
-                theProviders.add(createProviderFromConstructor((Constructor<?>)o, values, getBus(), true));
-            } else if (o instanceof ProviderInfo) {
-                theProviders.add((ProviderInfo<?>)o);
+                theProviders.add(createProviderFromConstructor((Constructor<?>)provider, values, getBus(), true));
+            } else if (provider instanceof ProviderInfo) {
+                theProviders.add((ProviderInfo<?>)provider);
             } else {    
-                theProviders.add(new ProviderInfo<Object>(o, getBus()));
+                theProviders.add(new ProviderInfo<Object>(provider, getBus()));
             }
         }
         return theProviders;

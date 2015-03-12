@@ -25,22 +25,20 @@ import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.rs.security.jose.JoseConstants;
 import org.apache.cxf.rs.security.jose.JoseHeaders;
 import org.apache.cxf.rs.security.jose.JoseHeadersReaderWriter;
-import org.apache.cxf.rs.security.jose.JoseHeadersWriter;
 import org.apache.cxf.rs.security.jose.jwk.JsonWebKey;
 
 public class JwsCompactProducer {
-    private JoseHeadersWriter writer = new JoseHeadersReaderWriter();
+    private JoseHeadersReaderWriter writer = new JoseHeadersReaderWriter();
     private JoseHeaders headers;
     private String plainJwsPayload;
     private String signature;
-    private String plainRep;
     public JwsCompactProducer(String plainJwsPayload) {
         this(null, null, plainJwsPayload);
     }
     public JwsCompactProducer(JoseHeaders headers, String plainJwsPayload) {
         this(headers, null, plainJwsPayload);
     }
-    public JwsCompactProducer(JoseHeaders headers, JoseHeadersWriter w, String plainJwsPayload) {
+    protected JwsCompactProducer(JoseHeaders headers, JoseHeadersReaderWriter w, String plainJwsPayload) {
         this.headers = headers;
         if (w != null) {
             this.writer = w;
@@ -54,24 +52,28 @@ public class JwsCompactProducer {
         return headers;
     }
     public String getUnsignedEncodedJws() {
-        checkAlgorithm();
-        if (plainRep == null) {
-            plainRep = Base64UrlUtility.encode(writer.headersToJson(getJoseHeaders())) 
-                + "." 
-                + Base64UrlUtility.encode(plainJwsPayload);
-        }
-        return plainRep;
+        return getUnsignedEncodedJws(false);
     }
-    
+    private String getUnsignedEncodedJws(boolean detached) {
+        checkAlgorithm();
+        return Base64UrlUtility.encode(writer.headersToJson(getJoseHeaders())) 
+               + "." 
+               + (detached ? "" : Base64UrlUtility.encode(plainJwsPayload));
+    }
+    public String getEncodedSignature() {
+        return signature;
+    }
     public String getSignedEncodedJws() {
+        return getSignedEncodedJws(false);
+    }
+    public String getSignedEncodedJws(boolean detached) {
         checkAlgorithm();
         boolean noSignature = StringUtils.isEmpty(signature);
         if (noSignature && !isPlainText()) {
             throw new IllegalStateException("Signature is not available");
         }
-        return getUnsignedEncodedJws() + "." + (noSignature ? "" : signature);
+        return getUnsignedEncodedJws(detached) + "." + (noSignature ? "" : signature);
     }
-    
     public String signWith(JsonWebKey jwk) {
         return signWith(JwsUtils.getSignatureProvider(jwk, headers.getAlgorithm()));
     }

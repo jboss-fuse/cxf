@@ -48,8 +48,10 @@ public class JwsJsonSignatureEntry {
         this.encodedProtectedHeader = encodedProtectedHeader;
         this.encodedSignature = encodedSignature;
         this.unprotectedHeader = unprotectedHeader;
-        this.protectedHeader = new JwsJsonProtectedHeader(
-            new JoseHeadersReaderWriter().fromJsonHeaders(JoseUtils.decodeToString(encodedProtectedHeader)));
+        if (encodedProtectedHeader != null) {
+            this.protectedHeader = new JwsJsonProtectedHeader(
+                    new JoseHeadersReaderWriter().fromJsonHeaders(JoseUtils.decodeToString(encodedProtectedHeader)));
+        }
         prepare();
     }
     private void prepare() {
@@ -94,7 +96,11 @@ public class JwsJsonSignatureEntry {
         return JoseUtils.decode(getEncodedSignature());
     }
     public String getUnsignedEncodedSequence() {
-        return getEncodedProtectedHeader() + "." + getEncodedJwsPayload();
+        if (getEncodedProtectedHeader() != null) {
+            return getEncodedProtectedHeader() + "." + getEncodedJwsPayload();
+        } else {
+            return "." + getEncodedJwsPayload();
+        }
     }
     public String getKeyId() {
         return getUnionHeader().getKeyId();
@@ -119,8 +125,13 @@ public class JwsJsonSignatureEntry {
         return JwsUtils.validateCriticalHeaders(getUnionHeader());
     }
     public String toJson() {
+        return toJson(false);
+    }
+    public String toJson(boolean flattenedMode) {
         StringBuilder sb = new StringBuilder();
-        sb.append("{");
+        if (!flattenedMode) {
+            sb.append("{");
+        }
         if (protectedHeader != null) {
             sb.append("\"protected\":\"" + protectedHeader.getEncodedHeaderEntries() + "\"");
         }
@@ -128,11 +139,13 @@ public class JwsJsonSignatureEntry {
             if (protectedHeader != null) {
                 sb.append(",");
             }
-            sb.append("\"header\":\"" + unprotectedHeader.toJson());
+            sb.append("\"header\":" + unprotectedHeader.toJson());
         }
         sb.append(",");
         sb.append("\"signature\":\"" + encodedSignature + "\"");
-        sb.append("}");
+        if (!flattenedMode) {
+            sb.append("}");
+        }
         return sb.toString();
     }
 }

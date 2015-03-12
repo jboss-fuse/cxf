@@ -372,8 +372,7 @@ public class RMManagerTest extends Assert {
      
     @Test
     public void testGetExistingSequence() throws NoSuchMethodException, SequenceFault, RMException {
-        Method m = RMManager.class
-           .getDeclaredMethod("getSource", new Class[] {Message.class});
+        Method m = RMManager.class.getDeclaredMethod("getSource", new Class[] {Message.class});
         manager = control.createMock(RMManager.class, new Method[] {m});
         Message message = control.createMock(Message.class);
         Identifier inSid = control.createMock(Identifier.class);
@@ -531,7 +530,7 @@ public class RMManagerTest extends Assert {
         control.reset();
         setUpEndpointForRecovery(endpoint, ei, si, bi, ii);  
         RMMessage m = control.createMock(RMMessage.class);
-        Capture<Message> mc = new Capture<Message>();
+        Capture<Message> mc = Capture.newInstance();
         setUpRecoverReliableEndpoint(endpoint, conduit, ss, ds, m, mc);        
         control.replay();
         manager.recoverReliableEndpoint(endpoint, conduit);

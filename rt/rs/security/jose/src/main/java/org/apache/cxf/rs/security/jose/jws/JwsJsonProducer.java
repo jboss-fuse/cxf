@@ -30,37 +30,58 @@ import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.rs.security.jose.JoseHeaders;
 import org.apache.cxf.rs.security.jose.jwk.JsonWebKey;
 public class JwsJsonProducer {
+    private boolean supportFlattened;
     private String plainPayload;
     private String encodedPayload;
-    private StringBuilder jwsJsonSignedDocBuilder = new StringBuilder();
     private List<JwsJsonSignatureEntry> signatures = new LinkedList<JwsJsonSignatureEntry>();
     public JwsJsonProducer(String tbsDocument) {
+        this(tbsDocument, false);
+    }
+    public JwsJsonProducer(String tbsDocument, boolean supportFlattened) {
+        this.supportFlattened = supportFlattened;
         this.plainPayload = tbsDocument;
         this.encodedPayload = Base64UrlUtility.encode(tbsDocument);
     }
-    public JwsJsonProducer(String tbsDocument, List<JwsJsonSignatureEntry> signatures) {
-        this(tbsDocument);
-        for (JwsJsonSignatureEntry entry : signatures) {
-            updateJwsJsonSignedDocument(entry);
-        }
-    }
-
+    
     public String getPlainPayload() {
         return plainPayload;
     }
     public String getUnsignedEncodedPayload() {
         return encodedPayload;
     }
-
     public String getJwsJsonSignedDocument() {
+        return getJwsJsonSignedDocument(false);
+    }
+    public String getJwsJsonSignedDocument(boolean detached) {
         if (signatures.isEmpty()) { 
             throw new SecurityException("Signature is not available");
         }
-        return jwsJsonSignedDocBuilder.toString() + "]}";
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        if (!detached) {
+            sb.append("\"payload\":\"" + encodedPayload + "\"");
+            sb.append(",");
+        }
+        if (!supportFlattened || signatures.size() > 1) {
+            sb.append("\"signatures\":[");
+            for (int i = 0; i < signatures.size(); i++) {
+                JwsJsonSignatureEntry signature = signatures.get(i);
+                if (i > 0) {
+                    sb.append(",");
+                }
+                sb.append(signature.toJson());
+            }
+            sb.append("]");
+        } else {
+            sb.append(signatures.get(0).toJson(true));
+        }
+        sb.append("}");
+        return sb.toString();
     }
     public List<JwsJsonSignatureEntry> getSignatureEntries() {
-        return Collections.unmodifiableList(signatures);
+        return signatures;
     }
+    
     public MultivaluedMap<String, JwsJsonSignatureEntry> getSignatureEntryMap() {
         return JwsUtils.getJwsJsonSignatureMap(signatures);
     }
@@ -106,31 +127,34 @@ public class JwsJsonProducer {
         if (unionHeaders.getAlgorithm() == null) {
             throw new SecurityException("Algorithm header is not set");
         }
-        String sequenceToBeSigned = protectedHeader.getEncodedHeaderEntries() 
-            + "." + getUnsignedEncodedPayload();
+        String sequenceToBeSigned;
+        if (protectedHeader != null) {
+            sequenceToBeSigned = protectedHeader.getEncodedHeaderEntries()
+                    + "." + getUnsignedEncodedPayload();
+        } else {
+            sequenceToBeSigned = "." + getUnsignedEncodedPayload();
+        }
         byte[] bytesToBeSigned = StringUtils.toBytesUTF8(sequenceToBeSigned);
         
         byte[] signatureBytes = signer.sign(unionHeaders, bytesToBeSigned);
         
         String encodedSignatureBytes = Base64UrlUtility.encode(signatureBytes);
-        JwsJsonSignatureEntry signature = 
-            new JwsJsonSignatureEntry(encodedPayload, 
-                                      protectedHeader.getEncodedHeaderEntries(),
-                                      encodedSignatureBytes,
-                                      unprotectedHeader); 
+        JwsJsonSignatureEntry signature;
+        if (protectedHeader != null) {
+            signature = new JwsJsonSignatureEntry(encodedPayload,
+                    protectedHeader.getEncodedHeaderEntries(),
+                    encodedSignatureBytes,
+                    unprotectedHeader);
+        } else {
+            signature = new JwsJsonSignatureEntry(encodedPayload,
+                    null,
+                    encodedSignatureBytes,
+                    unprotectedHeader);
+        }
         return updateJwsJsonSignedDocument(signature);
     }
-    
     private String updateJwsJsonSignedDocument(JwsJsonSignatureEntry signature) {
-        if (signatures.isEmpty()) {
-            jwsJsonSignedDocBuilder.append("{\"payload\":\"" + encodedPayload + "\"");
-            jwsJsonSignedDocBuilder.append(",\"signatures\":[");
-        } else {
-            jwsJsonSignedDocBuilder.append(",");    
-        }
-        jwsJsonSignedDocBuilder.append(signature.toJson());
         signatures.add(signature);
-        
         return getJwsJsonSignedDocument();
     }
 }

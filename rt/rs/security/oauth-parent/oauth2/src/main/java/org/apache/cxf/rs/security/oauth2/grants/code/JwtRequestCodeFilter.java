@@ -18,11 +18,19 @@
  */
 package org.apache.cxf.rs.security.oauth2.grants.code;
 
+import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPublicKey;
+import java.util.List;
 import java.util.Map;
 
+import javax.crypto.SecretKey;
 import javax.ws.rs.core.MultivaluedMap;
 
+import org.apache.cxf.common.util.crypto.CryptoUtils;
+import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.jaxrs.impl.MetadataMap;
+import org.apache.cxf.jaxrs.provider.json.JsonMapObjectReaderWriter;
+import org.apache.cxf.rs.security.jose.JoseConstants;
 import org.apache.cxf.rs.security.jose.jwe.JweDecryptionProvider;
 import org.apache.cxf.rs.security.jose.jwe.JweUtils;
 import org.apache.cxf.rs.security.jose.jws.JwsJwtCompactConsumer;
@@ -38,18 +46,22 @@ public class JwtRequestCodeFilter implements AuthorizationCodeRequestFilter {
     private static final String REQUEST_PARAM = "request";
     private JweDecryptionProvider jweDecryptor;
     private JwsSignatureVerifier jwsVerifier;
+    private boolean verifyWithClientCertificates;
+    private boolean verifyWithClientSecret;
+    private boolean decryptWithClientSecret;
     private String issuer;
+    private JsonMapObjectReaderWriter jsonHandler = new JsonMapObjectReaderWriter();
     @Override
     public MultivaluedMap<String, String> process(MultivaluedMap<String, String> params, 
                                                   UserSubject endUser,
                                                   Client client) {
         String requestToken = params.getFirst(REQUEST_PARAM);
         if (requestToken != null) {
-            JweDecryptionProvider theJweDecryptor = getInitializedDecryptionProvider();
+            JweDecryptionProvider theJweDecryptor = getInitializedDecryptionProvider(client);
             if (theJweDecryptor != null) {
                 requestToken = theJweDecryptor.decrypt(requestToken).getContentText();
             }
-            JwsSignatureVerifier theSigVerifier = getInitializedSigVerifier();
+            JwsSignatureVerifier theSigVerifier = getInitializedSigVerifier(client);
             JwsJwtCompactConsumer consumer = new JwsJwtCompactConsumer(requestToken);
             if (!consumer.verifySignatureWith(theSigVerifier)) {
                 throw new SecurityException("Invalid Signature");
@@ -64,7 +76,16 @@ public class JwtRequestCodeFilter implements AuthorizationCodeRequestFilter {
             MultivaluedMap<String, String> newParams = new MetadataMap<String, String>();
             Map<String, Object> claimsMap = claims.asMap();
             for (Map.Entry<String, Object> entry : claimsMap.entrySet()) {
-                newParams.putSingle(entry.getKey(), entry.getValue().toString());
+                String key = entry.getKey();
+                Object value = entry.getValue();
+                if (value instanceof Map) {
+                    Map<String, Object> map = CastUtils.cast((Map<?, ?>)value);
+                    value = jsonHandler.toJson(map);
+                } else if (value instanceof List) {
+                    List<Object> list = CastUtils.cast((List<?>)value);
+                    value = jsonHandler.toJson(list);
+                } 
+                newParams.putSingle(key, value.toString());
             }
             return newParams;
         } else {
@@ -79,19 +100,50 @@ public class JwtRequestCodeFilter implements AuthorizationCodeRequestFilter {
         this.jwsVerifier = theJwsVerifier;
     }
     
-    protected JweDecryptionProvider getInitializedDecryptionProvider() {
+    protected JweDecryptionProvider getInitializedDecryptionProvider(Client c) {
         if (jweDecryptor != null) {
             return jweDecryptor;    
         } 
+        if (decryptWithClientSecret) {
+            SecretKey key = CryptoUtils.decodeSecretKey(c.getClientSecret());
+            return JweUtils.getDirectKeyJweDecryption(key, JoseConstants.A128GCM_ALGO);
+        }
         return JweUtils.loadDecryptionProvider(false);
     }
-    protected JwsSignatureVerifier getInitializedSigVerifier() {
+    protected JwsSignatureVerifier getInitializedSigVerifier(Client c) {
         if (jwsVerifier != null) {
             return jwsVerifier;    
+        } 
+        if (verifyWithClientSecret) {
+            byte[] hmac = CryptoUtils.decodeSequence(c.getClientSecret());
+            return JwsUtils.getHmacSignatureVerifier(hmac, JoseConstants.HMAC_SHA_256_ALGO);
+        } else if (verifyWithClientCertificates) {
+            X509Certificate cert = 
+                (X509Certificate)CryptoUtils.decodeCertificate(c.getApplicationCertificates().get(0));
+            return JwsUtils.getRSAKeySignatureVerifier((RSAPublicKey)cert.getPublicKey(), 
+                                                       JoseConstants.RS_SHA_256_ALGO);
         } 
         return JwsUtils.loadSignatureVerifier(true);
     }
     public void setIssuer(String issuer) {
         this.issuer = issuer;
+    }
+    public void setVerifyWithClientCertificates(boolean verifyWithClientCertificates) {
+        if (verifyWithClientSecret) {
+            throw new SecurityException();          
+        }
+        this.verifyWithClientCertificates = verifyWithClientCertificates;
+    }
+    public void setVerifyWithClientSecret(boolean verifyWithClientSecret) {
+        if (decryptWithClientSecret || verifyWithClientCertificates) {
+            throw new SecurityException();          
+        }
+        this.verifyWithClientSecret = verifyWithClientSecret;
+    }
+    public void setDecryptWithClientSecret(boolean decryptWithClientSecret) {
+        if (verifyWithClientSecret) {
+            throw new SecurityException();          
+        }
+        this.decryptWithClientSecret = decryptWithClientSecret;
     }
 }

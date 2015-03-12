@@ -57,6 +57,7 @@ import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.ws.security.wss4j.WSS4JOutInterceptor;
 import org.apache.cxf.ws.security.wss4j.WSS4JStaxOutInterceptor;
 import org.apache.hello_world_soap_http.Greeter;
+import org.apache.wss4j.common.ext.WSSecurityException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -340,7 +341,7 @@ public class WSSecurityClientTest extends AbstractBusClientServerTestBase {
             dispatcher.invoke(new StreamSource(is));
             fail("exception should have been generated");
         } catch (SOAPFaultException ex) {
-            assertTrue(ex.getMessage().contains("Security"));
+            assertTrue(ex.getMessage().equals(WSSecurityException.UNIFIED_SECURITY_ERR));
         }
 
         //
@@ -352,7 +353,7 @@ public class WSSecurityClientTest extends AbstractBusClientServerTestBase {
             dispatcher.invoke(new StreamSource(is));
             fail("exception should have been generated");
         } catch (SOAPFaultException ex) {
-            assertTrue(ex.getMessage().contains("Security"));
+            assertTrue(ex.getMessage().equals(WSSecurityException.UNIFIED_SECURITY_ERR));
         }
         //
         // Sending and empty security header should result in a Fault
@@ -363,7 +364,7 @@ public class WSSecurityClientTest extends AbstractBusClientServerTestBase {
             dispatcher.invoke(new StreamSource(is));
             fail("exception should have been generated");
         } catch (SOAPFaultException ex) {
-            assertTrue(ex.getMessage().contains("Security"));
+            assertTrue(ex.getMessage().equals(WSSecurityException.UNIFIED_SECURITY_ERR));
         }
 
     }

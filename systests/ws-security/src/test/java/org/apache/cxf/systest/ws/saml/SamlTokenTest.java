@@ -42,6 +42,7 @@ import org.apache.cxf.systest.ws.saml.client.SamlRoleCallbackHandler;
 import org.apache.cxf.systest.ws.ut.SecurityHeaderCacheInterceptor;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 import org.apache.cxf.ws.security.SecurityConstants;
+import org.apache.wss4j.common.ext.WSSecurityException;
 import org.apache.wss4j.common.saml.bean.AudienceRestrictionBean;
 import org.apache.wss4j.common.saml.bean.ConditionsBean;
 import org.apache.wss4j.common.saml.bean.KeyInfoBean.CERT_IDENTIFIER;
@@ -386,8 +387,8 @@ public class SamlTokenTest extends AbstractBusClientServerTestBase {
             saml2Port.doubleIt(25);
             fail("Expected failure on an invocation with an unsigned SAML SV Assertion");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
-            assertTrue(ex.getMessage().contains("An error was discovered processing")
-                       || ex.getMessage().contains("SamlToken not satisfied"));
+            assertTrue(ex.getMessage().contains("SamlToken not satisfied")
+                       || ex.getMessage().equals(WSSecurityException.UNIFIED_SECURITY_ERR));
         }
         
         ((java.io.Closeable)saml2Port).close();
@@ -996,8 +997,7 @@ public class SamlTokenTest extends AbstractBusClientServerTestBase {
             saml2Port.doubleIt(25);
             fail("Failure expected on a replayed SAML Assertion");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
-            String error = "A replay attack has been detected";
-            assertTrue(ex.getMessage().contains(error));
+            assertTrue(ex.getMessage().contains(WSSecurityException.UNIFIED_SECURITY_ERR));
         }
         
         ((java.io.Closeable)saml2Port).close();
@@ -1024,7 +1024,7 @@ public class SamlTokenTest extends AbstractBusClientServerTestBase {
             portNumber = STAX_PORT2;
         }
         updateAddressPort(saml2Port, portNumber);
-
+        
         // Create a SAML Token with an AudienceRestrictionCondition
         ConditionsBean conditions = new ConditionsBean();
         List<AudienceRestrictionBean> audienceRestrictions = new ArrayList<AudienceRestrictionBean>();
@@ -1057,6 +1057,100 @@ public class SamlTokenTest extends AbstractBusClientServerTestBase {
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
             // expected
         }
+    }
+    
+    @org.junit.Test
+    public void testAudienceRestrictionServiceName() throws Exception {
+
+        SpringBusFactory bf = new SpringBusFactory();
+        URL busFile = SamlTokenTest.class.getResource("client.xml");
+
+        Bus bus = bf.createBus(busFile.toString());
+        SpringBusFactory.setDefaultBus(bus);
+        SpringBusFactory.setThreadDefaultBus(bus);
+
+        URL wsdl = SamlTokenTest.class.getResource("DoubleItSaml.wsdl");
+        Service service = Service.create(wsdl, SERVICE_QNAME);
+        QName portQName = new QName(NAMESPACE, "DoubleItSaml2TransportPort2");
+        DoubleItPortType saml2Port = 
+                service.getPort(portQName, DoubleItPortType.class);
+        String portNumber = PORT2;
+        if (STAX_PORT.equals(test.getPort())) {
+            portNumber = STAX_PORT2;
+        }
+        updateAddressPort(saml2Port, portNumber);
+        
+        // Create a SAML Token with an AudienceRestrictionCondition
+        ConditionsBean conditions = new ConditionsBean();
+        List<AudienceRestrictionBean> audienceRestrictions = new ArrayList<AudienceRestrictionBean>();
+        AudienceRestrictionBean audienceRestriction = new AudienceRestrictionBean();
+        audienceRestriction.setAudienceURIs(Collections.singletonList(
+            service.getServiceName().toString()));
+        audienceRestrictions.add(audienceRestriction);
+        conditions.setAudienceRestrictions(audienceRestrictions);
+        
+        SamlCallbackHandler callbackHandler = new SamlCallbackHandler();
+        callbackHandler.setConditions(conditions);
+        ((BindingProvider)saml2Port).getRequestContext().put(
+            "ws-security.saml-callback-handler", callbackHandler
+        );
+        
+        saml2Port.doubleIt(25);
+    }
+    
+    @org.junit.Test
+    public void testDisableAudienceRestrictionValidation() throws Exception {
+
+        SpringBusFactory bf = new SpringBusFactory();
+        URL busFile = SamlTokenTest.class.getResource("client.xml");
+
+        Bus bus = bf.createBus(busFile.toString());
+        SpringBusFactory.setDefaultBus(bus);
+        SpringBusFactory.setThreadDefaultBus(bus);
+
+        URL wsdl = SamlTokenTest.class.getResource("DoubleItSaml.wsdl");
+        Service service = Service.create(wsdl, SERVICE_QNAME);
+        QName portQName = new QName(NAMESPACE, "DoubleItSaml2TransportPort2");
+        DoubleItPortType saml2Port = 
+                service.getPort(portQName, DoubleItPortType.class);
+        String portNumber = PORT2;
+        if (STAX_PORT.equals(test.getPort())) {
+            portNumber = STAX_PORT2;
+        }
+        updateAddressPort(saml2Port, portNumber);
+        
+        // Create a SAML Token with an AudienceRestrictionCondition
+        ConditionsBean conditions = new ConditionsBean();
+        List<AudienceRestrictionBean> audienceRestrictions = new ArrayList<AudienceRestrictionBean>();
+        AudienceRestrictionBean audienceRestriction = new AudienceRestrictionBean();
+        audienceRestriction.setAudienceURIs(Collections.singletonList(
+            service.getServiceName().toString() + ".xyz"));
+        audienceRestrictions.add(audienceRestriction);
+        conditions.setAudienceRestrictions(audienceRestrictions);
+        
+        SamlCallbackHandler callbackHandler = new SamlCallbackHandler();
+        callbackHandler.setConditions(conditions);
+        ((BindingProvider)saml2Port).getRequestContext().put(
+            "ws-security.saml-callback-handler", callbackHandler
+        );
+        
+        // It should fail with validation enabled
+        try {
+            saml2Port.doubleIt(25);
+            fail("Failure expected on unknown AudienceRestriction");
+        } catch (javax.xml.ws.soap.SOAPFaultException ex) {
+            // expected
+        }
+        
+        // It should pass with validation disabled
+        portQName = new QName(NAMESPACE, "DoubleItSaml2TransportPort3");
+        saml2Port = service.getPort(portQName, DoubleItPortType.class);
+        updateAddressPort(saml2Port, portNumber);
+        
+        ((BindingProvider)saml2Port).getRequestContext().put(
+            "ws-security.saml-callback-handler", callbackHandler
+        );
+        saml2Port.doubleIt(25);
     }
     
 }

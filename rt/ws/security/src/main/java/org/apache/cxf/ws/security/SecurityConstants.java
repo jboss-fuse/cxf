@@ -129,6 +129,14 @@ public final class SecurityConstants {
      */
     public static final String ENCRYPT_CRYPTO = "ws-security.encryption.crypto";
     
+    /**
+     * A message property for prepared X509 certificate to be used for encryption. 
+     * If this is not defined, then the certificate will be either loaded from the 
+     * keystore {@link ENCRYPT_PROPERTIES} or extracted from request 
+     * (if {@link ENCRYPT_USERNAME} has value "useReqSigCert").
+     */
+    public static final String ENCRYPT_CERT = "ws-security.encryption.certificate";
+    
     //
     // Boolean WS-Security configuration tags, e.g. the value should be "true" or "false".
     //
@@ -209,8 +217,10 @@ public final class SecurityConstants {
         "ws-security.enable.streaming";
     
     /**
-     * Whether to return the security error message to the client, and not one of the default error
-     * QNames. The default is false.
+     * Whether to return the security error message to the client, and not the default error message.
+     * The "real" security errors should not be returned to the client in a deployment scenario,
+     * as they may leak information about the deployment, or otherwise provide a "oracle" for attacks.
+     * The default is false.
      */
     public static final String RETURN_SECURITY_ERROR = "ws-security.return.security.error";
     
@@ -228,6 +238,13 @@ public final class SecurityConstants {
      * The default value is "true".
      */
     public static final String SC_FROM_JAAS_SUBJECT = "ws-security.sc.jaas-subject";
+    
+    /**
+     * Enable SAML AudienceRestriction validation. If this is set to "true", then IF the
+     * SAML Token contains Audience Restriction URIs, one of them must match either the
+     * request URL or the Service QName. The default is "true".
+     */
+    public static final String AUDIENCE_RESTRICTION_VALIDATION = "ws-security.validate.audience-restriction";
     
     //
     // Non-boolean WS-Security Configuration parameters
@@ -633,7 +650,8 @@ public final class SecurityConstants {
             CACHE_IDENTIFIER, CACHE_ISSUED_TOKEN_IN_ENDPOINT, PREFER_WSMEX_OVER_STS_CLIENT_CONFIG,
             DELEGATED_CREDENTIAL, KERBEROS_USE_CREDENTIAL_DELEGATION, 
             KERBEROS_IS_USERNAME_IN_SERVICENAME_FORM, STS_TOKEN_IMMINENT_EXPIRY_VALUE,
-            KERBEROS_REQUEST_CREDENTIAL_DELEGATION, ENABLE_UNSIGNED_SAML_ASSERTION_PRINCIPAL
+            KERBEROS_REQUEST_CREDENTIAL_DELEGATION, ENABLE_UNSIGNED_SAML_ASSERTION_PRINCIPAL,
+            AUDIENCE_RESTRICTION_VALIDATION
         }));
         ALL_PROPERTIES = Collections.unmodifiableSet(s);
     }

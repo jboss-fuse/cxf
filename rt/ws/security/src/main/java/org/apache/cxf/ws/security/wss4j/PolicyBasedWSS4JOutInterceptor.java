@@ -232,13 +232,14 @@ public class PolicyBasedWSS4JOutInterceptor extends AbstractPhaseInterceptor<Soa
 
         public Collection<PhaseInterceptor<? extends org.apache.cxf.message.Message>> 
         getAdditionalInterceptors() {
+            
             return null;
         }
         
         private void translateProperties(SoapMessage msg) {
             String bspCompliant = (String)msg.getContextualProperty(SecurityConstants.IS_BSP_COMPLIANT);
             if (bspCompliant != null) {
-                msg.setContextualProperty(WSHandlerConstants.IS_BSP_COMPLIANT, bspCompliant);
+                msg.put(WSHandlerConstants.IS_BSP_COMPLIANT, bspCompliant);
             }
         }
         

@@ -19,6 +19,8 @@
 
 package org.apache.cxf.common.util;
 
+import java.lang.reflect.Proxy;
+
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 
@@ -28,28 +30,38 @@ import org.apache.cxf.BusFactory;
 public class ClassHelper {
     static final ClassHelper HELPER;
     static {
-        ClassHelper theHelper = null;
-        try {
-            theHelper = new SpringAopClassHelper();
-        } catch (Throwable ex) {
-            theHelper = new ClassHelper();
-        }
-        HELPER = theHelper;
+        HELPER = getClassHelper();
     }
     
     
     protected ClassHelper() {
     }
     
+    private static ClassHelper getClassHelper() { 
+        boolean useSpring = true;
+        String s = SystemPropertyAction.getPropertyOrNull("org.apache.cxf.useSpringClassHelpers");
+        if (!StringUtils.isEmpty(s)) {
+            useSpring = "1".equals(s) || Boolean.parseBoolean(s);
+        }
+        if (useSpring) {
+            try {
+                return new SpringAopClassHelper();
+            } catch (Throwable ex) {
+                // ignore
+            }
+        }
+        return new ClassHelper();
+    }
+    
     protected Class<?> getRealClassInternal(Object o) {
-        return o.getClass();
+        return getRealObjectInternal(o).getClass();
     }
     
     protected Class<?> getRealClassFromClassInternal(Class<?> cls) {
         return cls;
     }
     protected Object getRealObjectInternal(Object o) {
-        return o;
+        return o instanceof Proxy ? Proxy.getInvocationHandler(o) : o;
     }
     
     public static Class<?> getRealClass(Object o) {

@@ -153,6 +153,7 @@ public abstract class HTTPConduit
      *  is used to get the response.
      */
     public static final String KEY_HTTP_CONNECTION = "http.connection";
+    public static final String KEY_HTTP_CONNECTION_ADDRESS = "http.connection.address";
 
     /**
      * The Logger for this class.
@@ -325,6 +326,17 @@ public abstract class HTTPConduit
         }
         clientSidePolicyCalced = true;
     }
+    
+    private void updateClientPolicy() {
+        if (!clientSidePolicyCalced) {
+            //do no spend time on building Message and Exchange (which basically
+            //are ConcurrentHashMap instances) if the policy is already available
+            Message m = new MessageImpl();
+            m.setExchange(new ExchangeImpl());
+            m.getExchange().put(EndpointInfo.class, this.endpointInfo);
+            updateClientPolicy(m);
+        }
+    }
 
     /**
      * This method returns the registered Logger for this conduit.
@@ -442,7 +454,8 @@ public abstract class HTTPConduit
     }
     
 
-    protected abstract void setupConnection(Message message, URI url, HTTPClientPolicy csPolicy) throws IOException;
+    protected abstract void setupConnection(Message message, Address address, HTTPClientPolicy csPolicy)
+        throws IOException;
 
     /**
      * Prepare to send an outbound HTTP message over this http conduit to a 
@@ -469,9 +482,9 @@ public abstract class HTTPConduit
         // This call can possibly change the conduit endpoint address and 
         // protocol from the default set in EndpointInfo that is associated
         // with the Conduit.
-        URI currentURI;
+        Address currentAddress;
         try {
-            currentURI = setupURI(message);
+            currentAddress = setupAddress(message);
         } catch (URISyntaxException e) {
             throw new IOException(e);
         }       
@@ -480,7 +493,7 @@ public abstract class HTTPConduit
         boolean needToCacheRequest = false;
         
         HTTPClientPolicy csPolicy = getClient(message);
-        setupConnection(message, currentURI, csPolicy);
+        setupConnection(message, currentAddress, csPolicy);
         
         // If the HTTP_REQUEST_METHOD is not set, the default is "POST".
         String httpRequestMethod = 
@@ -539,7 +552,7 @@ public abstract class HTTPConduit
             message.getInterceptorChain().add(CertConstraintsInterceptor.INSTANCE);
         }
 
-        setHeadersByAuthorizationPolicy(message, currentURI);
+        setHeadersByAuthorizationPolicy(message, currentAddress.getURI());
         new Headers(message).setFromClientPolicy(getClient(message));
         message.setContent(OutputStream.class, 
                            createOutputStream(message,
@@ -656,7 +669,7 @@ public abstract class HTTPConduit
      * @throws MalformedURLException
      * @throws URISyntaxException 
      */
-    private URI setupURI(Message message) throws URISyntaxException {
+    private Address setupAddress(Message message) throws URISyntaxException {
         String result = (String)message.get(Message.ENDPOINT_ADDRESS);
         String pathInfo = (String)message.get(Message.PATH_INFO);
         String queryString = (String)message.get(Message.QUERY_STRING);
@@ -664,7 +677,7 @@ public abstract class HTTPConduit
             if (pathInfo == null && queryString == null) {
                 URI uri = getURI();
                 message.put(Message.ENDPOINT_ADDRESS, defaultEndpointURIString);
-                return uri;
+                return new Address(uri);
             }
             result = getURI().toString();
             message.put(Message.ENDPOINT_ADDRESS, result);
@@ -677,7 +690,7 @@ public abstract class HTTPConduit
         if (queryString != null) {
             result = result + "?" + queryString;
         }        
-        return new URI(result);    
+        return new Address(new URI(result));
     }
 
 
@@ -766,7 +779,7 @@ public abstract class HTTPConduit
             headers.setAuthorization(authString);
         }
         
-        String proxyAuthString = authSupplier.getAuthorization(proxyAuthorizationPolicy, 
+        String proxyAuthString = proxyAuthSupplier.getAuthorization(proxyAuthorizationPolicy, 
                                                                currentURI, message, null);
         if (proxyAuthString != null) {
             headers.setProxyAuthorization(proxyAuthString);
@@ -844,10 +857,7 @@ public abstract class HTTPConduit
      * HTTPConduit.
      */
     public HTTPClientPolicy getClient() {
-        Message m = new MessageImpl();
-        m.setExchange(new ExchangeImpl());
-        m.getExchange().put(EndpointInfo.class, this.endpointInfo);
-        updateClientPolicy(m);
+        updateClientPolicy();
         return clientSidePolicy;
     }
 
@@ -1212,7 +1222,6 @@ public abstract class HTTPConduit
         
         protected void retransmit(String newURL) throws IOException {
             setupNewConnection(newURL);
-            outMessage.put("transport.retransmit.url", newURL);
             if (cachedStream != null && cachedStream.size() < Integer.MAX_VALUE) {
                 setFixedLengthStreamingMode((int)cachedStream.size());
             }
@@ -1290,12 +1299,8 @@ public abstract class HTTPConduit
             // Trust is okay, set up for writing the request.
             
             String method = getMethod();
-            if (KNOWN_HTTP_VERBS_WITH_NO_CONTENT.contains(method)) {
-                handleNoOutput();
-                return;
-            }
-
-            if (outMessage.get("org.apache.cxf.empty.request") != null) {
+            if (KNOWN_HTTP_VERBS_WITH_NO_CONTENT.contains(method)
+                || PropertyUtils.isTrue(outMessage.get(Headers.EMPTY_REQUEST_PROPERTY))) {
                 handleNoOutput();
                 return;
             }
@@ -1458,6 +1463,7 @@ public abstract class HTTPConduit
                     throw new IOException(e);
                 }
                 cookies.writeToMessageHeaders(outMessage);
+                outMessage.put("transport.retransmit.url", newURL);
                 retransmit(newURL);
                 return true;
             }
@@ -1880,6 +1886,4 @@ public abstract class HTTPConduit
         // Register that we have been here before we go.
         authURLs.add(currentURL.toString() + realm);
     }
-
-    
 }

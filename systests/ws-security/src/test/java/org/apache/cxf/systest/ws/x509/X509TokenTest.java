@@ -40,6 +40,7 @@ import org.apache.cxf.systest.ws.common.TestParam;
 import org.apache.cxf.systest.ws.ut.SecurityHeaderCacheInterceptor;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 import org.apache.cxf.ws.security.SecurityConstants;
+import org.apache.wss4j.common.ext.WSSecurityException;
 import org.example.contract.doubleit.DoubleItPortType;
 import org.example.contract.doubleit.DoubleItPortType2;
 import org.junit.BeforeClass;
@@ -1091,6 +1092,33 @@ public class X509TokenTest extends AbstractBusClientServerTestBase {
     }
     
     @org.junit.Test
+    public void testAsymmetricSignatureEncryption() throws Exception {
+
+        SpringBusFactory bf = new SpringBusFactory();
+        URL busFile = X509TokenTest.class.getResource("client.xml");
+
+        Bus bus = bf.createBus(busFile.toString());
+        SpringBusFactory.setDefaultBus(bus);
+        SpringBusFactory.setThreadDefaultBus(bus);
+
+        URL wsdl = X509TokenTest.class.getResource("DoubleItX509Signature.wsdl");
+        Service service = Service.create(wsdl, SERVICE_QNAME);
+        QName portQName = new QName(NAMESPACE, "DoubleItAsymmetricSignatureEncryptionPort");
+        DoubleItPortType x509Port = 
+                service.getPort(portQName, DoubleItPortType.class);
+        updateAddressPort(x509Port, test.getPort());
+        
+        if (test.isStreaming()) {
+            SecurityTestUtil.enableStreaming(x509Port);
+        }
+        
+        x509Port.doubleIt(25);
+        
+        ((java.io.Closeable)x509Port).close();
+        bus.shutdown(true);
+    }
+    
+    @org.junit.Test
     public void testAsymmetricSignatureReplay() throws Exception {
         if (test.isStreaming()) {
             return;
@@ -1121,9 +1149,7 @@ public class X509TokenTest extends AbstractBusClientServerTestBase {
             x509Port.doubleIt(25);
             fail("Failure expected on a replayed Timestamp");
         } catch (javax.xml.ws.soap.SOAPFaultException ex) {
-            String error = "A replay attack has been detected";
-            assertTrue(ex.getMessage().contains(error)
-                       || ex.getMessage().contains("The message has expired"));
+            assertTrue(ex.getMessage().contains(WSSecurityException.UNIFIED_SECURITY_ERR));
         }
         
         ((java.io.Closeable)x509Port).close();
@@ -1395,6 +1421,33 @@ public class X509TokenTest extends AbstractBusClientServerTestBase {
         URL wsdl = X509TokenTest.class.getResource("DoubleItX509Signature.wsdl");
         Service service = Service.create(wsdl, SERVICE_QNAME);
         QName portQName = new QName(NAMESPACE, "DoubleItSymmetricSignaturePort");
+        DoubleItPortType x509Port = 
+                service.getPort(portQName, DoubleItPortType.class);
+        updateAddressPort(x509Port, test.getPort());
+        
+        if (test.isStreaming()) {
+            SecurityTestUtil.enableStreaming(x509Port);
+        }
+        
+        x509Port.doubleIt(25);
+        
+        ((java.io.Closeable)x509Port).close();
+        bus.shutdown(true);
+    }
+    
+    @org.junit.Test
+    public void testAsymmetricProperties() throws Exception {
+
+        SpringBusFactory bf = new SpringBusFactory();
+        URL busFile = X509TokenTest.class.getResource("client.xml");
+
+        Bus bus = bf.createBus(busFile.toString());
+        SpringBusFactory.setDefaultBus(bus);
+        SpringBusFactory.setThreadDefaultBus(bus);
+
+        URL wsdl = X509TokenTest.class.getResource("DoubleItX509.wsdl");
+        Service service = Service.create(wsdl, SERVICE_QNAME);
+        QName portQName = new QName(NAMESPACE, "DoubleItAsymmetricPropertiesPort");
         DoubleItPortType x509Port = 
                 service.getPort(portQName, DoubleItPortType.class);
         updateAddressPort(x509Port, test.getPort());

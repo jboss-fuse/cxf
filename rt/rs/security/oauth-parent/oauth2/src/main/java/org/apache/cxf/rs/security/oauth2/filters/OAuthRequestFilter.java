@@ -85,7 +85,7 @@ public class OAuthRequestFilter extends AbstractAccessTokenValidator
         String authSchemeData = authParts[1];
         
         // Get the access token
-        AccessTokenValidation accessTokenV = getAccessTokenValidation(authScheme, authSchemeData); 
+        AccessTokenValidation accessTokenV = getAccessTokenValidation(authScheme, authSchemeData, null); 
         
         // Find the scopes which match the current request
         
@@ -110,6 +110,15 @@ public class OAuthRequestFilter extends AbstractAccessTokenValidator
             throw new WebApplicationException(403);
         }
       
+        if (accessTokenV.getClientIpAddress() != null) {
+            String remoteAddress = getMessageContext().getHttpServletRequest().getRemoteAddr();
+            if (remoteAddress == null || accessTokenV.getClientIpAddress().matches(remoteAddress)) {
+                String message = "Client IP Address is invalid";
+                LOG.warning(message);
+                throw new WebApplicationException(403);
+            }
+        }
+        
         // Create the security context and make it available on the message
         SecurityContext sc = createSecurityContext(req, accessTokenV);
         m.put(SecurityContext.class, sc);
@@ -121,6 +130,7 @@ public class OAuthRequestFilter extends AbstractAccessTokenValidator
                                                      accessTokenV.getTokenGrantType());
         
         oauthContext.setClientId(accessTokenV.getClientId());
+        oauthContext.setClientConfidential(accessTokenV.isClientConfidential());
         oauthContext.setTokenKey(accessTokenV.getTokenKey());
         oauthContext.setTokenAudience(accessTokenV.getAudience());
         oauthContext.setTokenRequestParts(authParts);

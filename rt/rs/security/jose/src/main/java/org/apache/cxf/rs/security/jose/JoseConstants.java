@@ -51,6 +51,9 @@ public final class JoseConstants {
     public static final String RS_SHA_256_ALGO = "RS256";
     public static final String RS_SHA_384_ALGO = "RS384";
     public static final String RS_SHA_512_ALGO = "RS512";
+    public static final String PS_SHA_256_ALGO = "PS256";
+    public static final String PS_SHA_384_ALGO = "PS384";
+    public static final String PS_SHA_512_ALGO = "PS512";
     public static final String ES_SHA_256_ALGO = "ES256";
     public static final String ES_SHA_384_ALGO = "ES384";
     public static final String ES_SHA_512_ALGO = "ES512";
@@ -65,6 +68,13 @@ public final class JoseConstants {
     public static final String A128GCMKW_ALGO = "A128GCMKW";
     public static final String A192GCMKW_ALGO = "A192GCMKW";
     public static final String A256GCMKW_ALGO = "A256GCMKW";
+    
+    public static final String ECDH_ES_DIRECT_ALGO = "ECDH-ES";
+    
+    public static final String ECDH_ES_A128KW_ALGO = "ECDH-ES+A128KW";
+    public static final String ECDH_ES_A192KW_ALGO = "ECDH-ES+A192KW";
+    public static final String ECDH_ES_A256KW_ALGO = "ECDH-ES+A256KW";
+    
     public static final String PBES2_HS256_A128KW_ALGO = "PBES2-HS256+A128KW";
     public static final String PBES2_HS384_A192KW_ALGO = "PBES2-HS384+A192KW";
     public static final String PBES2_HS512_A256KW_ALGO = "PBES2-HS512+A256KW";
@@ -75,6 +85,8 @@ public final class JoseConstants {
     public static final String A128GCM_ALGO = "A128GCM";
     public static final String A192GCM_ALGO = "A192GCM";
     public static final String A256GCM_ALGO = "A256GCM";
+    
+    public static final String JOSE_CONTEXT_PROPERTY = "org.apache.cxf.jose.context";
     
     private JoseConstants() {
         

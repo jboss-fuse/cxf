@@ -19,6 +19,8 @@
 
 package org.apache.cxf.javascript;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.xml.namespace.QName;
@@ -28,9 +30,12 @@ import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.xmlschema.SchemaCollection;
 import org.apache.cxf.common.xmlschema.XmlSchemaUtils;
 import org.apache.ws.commons.schema.XmlSchema;
+import org.apache.ws.commons.schema.XmlSchemaChoice;
 import org.apache.ws.commons.schema.XmlSchemaElement;
 import org.apache.ws.commons.schema.XmlSchemaObject;
 import org.apache.ws.commons.schema.XmlSchemaParticle;
+import org.apache.ws.commons.schema.XmlSchemaSequence;
+import org.apache.ws.commons.schema.XmlSchemaSequenceMember;
 import org.apache.ws.commons.schema.XmlSchemaType;
 import org.apache.ws.commons.schema.constants.Constants;
 
@@ -47,6 +52,10 @@ public final class ParticleInfo implements ItemInfo {
     // in the RPC case, we can have a type and no element.
     private XmlSchemaType type;
     private boolean empty;
+
+    private boolean isGroup;
+    private List<ParticleInfo> children;
+
     // These are exactly the same values as we find in the XmlSchemaElement.
     // there is no rationalization. But the accessors take care of business.
     private long minOccurs;
@@ -131,9 +140,12 @@ public final class ParticleInfo implements ItemInfo {
                                             SchemaCollection schemaCollection,
                                             NamespacePrefixAccumulator prefixAccumulator, QName contextName) {
         XmlSchemaParticle sequenceParticle =
-            JavascriptUtils.getObjectParticle(sequenceObject, contextName);
+            JavascriptUtils.getObjectParticle(sequenceObject, contextName, currentSchema);
         ParticleInfo elementInfo = new ParticleInfo();
         XmlSchemaParticle realParticle = sequenceParticle;
+
+        elementInfo.setMinOccurs(sequenceParticle.getMinOccurs());
+        elementInfo.setMaxOccurs(sequenceParticle.getMaxOccurs());
 
         if (sequenceParticle instanceof XmlSchemaElement) {
             XmlSchemaElement sequenceElement = (XmlSchemaElement)sequenceParticle;
@@ -149,10 +161,65 @@ public final class ParticleInfo implements ItemInfo {
                 elementInfo.global = true;
             }
             elementInfo.nillable = ((XmlSchemaElement)realParticle).isNillable();
-        }
+        } else if (sequenceParticle instanceof XmlSchemaChoice) {
+            XmlSchemaChoice choice = (XmlSchemaChoice)sequenceParticle;
 
-        elementInfo.minOccurs = sequenceParticle.getMinOccurs();
-        elementInfo.maxOccurs = sequenceParticle.getMaxOccurs();
+            if (sequenceParticle.getMaxOccurs() > 1) {
+                Message message = new Message("GROUP_ELEMENT_MULTI_OCCURS", LOG, sequenceParticle
+                        .getClass().getSimpleName());
+                throw new UnsupportedConstruct(message.toString());
+            }
+
+            elementInfo.children = new LinkedList<ParticleInfo>();
+
+            List<?> items = choice.getItems();
+            for (Object i : items) {
+                XmlSchemaObject item = (XmlSchemaObject)i;
+                XmlSchemaObject schemaObject = JavascriptUtils.getObjectParticle(item, contextName,
+                        currentSchema);
+                ParticleInfo childParticle = ParticleInfo.forLocalItem(schemaObject, currentSchema, schemaCollection,
+                        prefixAccumulator, contextName);
+
+                if (childParticle.isAny()) {
+                    Message message = new Message("GROUP_ELEMENT_ANY", LOG, sequenceParticle.getClass()
+                            .getSimpleName());
+                    throw new UnsupportedConstruct(message.toString());
+                }
+
+                childParticle.setMinOccurs(0);
+                elementInfo.children.add(childParticle);
+            }
+        } else if (sequenceParticle instanceof XmlSchemaSequence) {
+            XmlSchemaSequence nestedSequence = (XmlSchemaSequence)sequenceParticle;
+
+            if (sequenceParticle.getMaxOccurs() > 1) {
+                Message message = new Message("SEQUENCE_ELEMENT_MULTI_OCCURS", LOG, sequenceParticle
+                        .getClass().getSimpleName());
+                throw new UnsupportedConstruct(message.toString());
+            }
+
+            elementInfo.children = new LinkedList<ParticleInfo>();
+
+            List<XmlSchemaSequenceMember> items = nestedSequence.getItems();
+            for (XmlSchemaSequenceMember item : items) {
+                XmlSchemaObject schemaObject = JavascriptUtils.getObjectParticle((XmlSchemaObject)item, contextName,
+                        currentSchema);
+                ParticleInfo childParticle = ParticleInfo.forLocalItem(schemaObject, currentSchema, schemaCollection,
+                        prefixAccumulator, contextName);
+
+                if (childParticle.isAny()) {
+                    Message message = new Message("SEQUENCE_ELEMENT_ANY", LOG, sequenceParticle.getClass()
+                            .getSimpleName());
+                    throw new UnsupportedConstruct(message.toString());
+                }
+
+                if (sequenceParticle.getMinOccurs() == 0) {
+                    childParticle.setMinOccurs(0);
+                }
+                elementInfo.children.add(childParticle);
+            }
+
+        }
 
         factoryCommon(realParticle, currentSchema, schemaCollection, prefixAccumulator, elementInfo);
 
@@ -199,13 +266,19 @@ public final class ParticleInfo implements ItemInfo {
 
             elementInfo.defaultValue = schemaDefaultValue;
             factorySetupType(element, schemaCollection, elementInfo);
+
+            elementInfo.isGroup = false;
+        } else if (particle instanceof XmlSchemaChoice) {
+            elementInfo.isGroup = true;
+        } else if (particle instanceof XmlSchemaSequence) {
+            elementInfo.isGroup = true;
         } else { // any
             elementInfo.any = true;
             elementInfo.xmlName = null; // unknown until runtime.
             // TODO: multiple 'any'
             elementInfo.javascriptName = "any";
             elementInfo.type = null; // runtime for any.
-
+            elementInfo.isGroup = false;
         }
     }
 
@@ -325,6 +398,14 @@ public final class ParticleInfo implements ItemInfo {
         this.type = type;
     }
 
+    public boolean isGroup() {
+        return isGroup;
+    }
+
+    public List<ParticleInfo> getChildren() {
+        return children;
+    }
+
     public boolean isEmpty() {
         return empty;
     }
@@ -337,8 +418,28 @@ public final class ParticleInfo implements ItemInfo {
         return minOccurs;
     }
 
+    private void setMinOccurs(long value) {
+        minOccurs = value;
+
+        if (isGroup()) {
+            for (ParticleInfo child : getChildren()) {
+                child.setMinOccurs(value);
+            }
+        }
+    }
+
     public long getMaxOccurs() {
         return maxOccurs;
+    }
+
+    private void setMaxOccurs(long value) {
+        maxOccurs = value;
+
+        if (isGroup()) {
+            for (ParticleInfo child : getChildren()) {
+                child.setMaxOccurs(value);
+            }
+        }
     }
 
     public boolean isArray() {

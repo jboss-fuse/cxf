@@ -39,12 +39,6 @@
                 <sec:trustManagers>
                     <sec:keyStore type="jks" password="password" resource="Truststore.jks"/>
                 </sec:trustManagers>
-                <sec:cipherSuitesFilter>
-                    <sec:include>.*_EXPORT_.*</sec:include>
-                    <sec:include>.*_EXPORT1024_.*</sec:include>
-                    <sec:include>.*_WITH_DES_.*</sec:include>
-                    <sec:include>.*_WITH_AES_.*</sec:include>
-                </sec:cipherSuitesFilter>
                 <sec:clientAuthentication want="true" required="true"/>
             </httpj:tlsServerParameters>
         </httpj:engine>
@@ -82,6 +76,13 @@
         </jaxws:properties>
     </jaxws:endpoint>
     <jaxws:endpoint xmlns:s="http://www.example.org/contract/DoubleIt" id="SpnegoOverTransportEndorsing" address="https://localhost:${testutil.ports.StaxServer.2}/DoubleItSpnegoTransportEndorsing" serviceName="s:DoubleItService" endpointName="s:DoubleItSpnegoTransportEndorsingPort" implementor="org.apache.cxf.systest.kerberos.common.DoubleItImpl" wsdlLocation="org/apache/cxf/systest/kerberos/wssec/spnego/DoubleItSpnego.wsdl" depends-on="tls-settings">
+        <jaxws:properties>
+            <entry key="ws-security.kerberos.jaas.context" value="bob"/>
+            <entry key="ws-security.enable.streaming" value="true"/>
+            <entry key="ws-security.callback-handler" value-ref="kerberosCallbackHandler"/>
+        </jaxws:properties>
+    </jaxws:endpoint>
+    <jaxws:endpoint xmlns:s="http://www.example.org/contract/DoubleIt" id="SpnegoOverTransportEndorsingSP11" address="https://localhost:${testutil.ports.StaxServer.2}/DoubleItSpnegoTransportEndorsingSP11" serviceName="s:DoubleItService" endpointName="s:DoubleItSpnegoTransportEndorsingSP11Port" implementor="org.apache.cxf.systest.kerberos.common.DoubleItImpl" wsdlLocation="org/apache/cxf/systest/kerberos/wssec/spnego/DoubleItSpnego.wsdl" depends-on="tls-settings">
         <jaxws:properties>
             <entry key="ws-security.kerberos.jaas.context" value="bob"/>
             <entry key="ws-security.enable.streaming" value="true"/>

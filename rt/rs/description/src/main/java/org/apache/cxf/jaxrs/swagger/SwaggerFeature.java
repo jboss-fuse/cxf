@@ -18,13 +18,29 @@
  */
 package org.apache.cxf.jaxrs.swagger;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.container.PreMatching;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
+import com.wordnik.swagger.jaxrs.config.BeanConfig;
+import com.wordnik.swagger.jaxrs.listing.ApiDeclarationProvider;
+import com.wordnik.swagger.jaxrs.listing.ApiListingResourceJSON;
+import com.wordnik.swagger.jaxrs.listing.ResourceListingProvider;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.endpoint.Server;
 import org.apache.cxf.feature.AbstractFeature;
 import org.apache.cxf.jaxrs.JAXRSServiceFactoryBean;
+import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.apache.cxf.jaxrs.model.AbstractResourceInfo;
 import org.apache.cxf.jaxrs.provider.ServerProviderFactory;
 
@@ -33,26 +49,35 @@ public class SwaggerFeature extends AbstractFeature {
     private String resourcePackage;
     private String version = "1.0.0";
     private String basePath;
-    private String title = "Rest sample app";
-    private String description = "This is a app.";
-    private String contact = "freeman.fang@gmail.com";
+    private String title = "Sample REST Application";
+    private String description = "The Application";
+    private String contact = "committer@apache.org";
     private String license = "Apache 2.0 License";
     private String licenseUrl = "http://www.apache.org/licenses/LICENSE-2.0.html";
     private boolean scan = true;
+    private boolean runAsFilter;
+    
     @Override
     public void initialize(Server server, Bus bus) {
-        List<Object> serviceBeans = new ArrayList<Object>();
-        serviceBeans.add(new com.wordnik.swagger.jaxrs.listing.ApiListingResourceJSON());
-        calulateDefaultResourcePackage(server);
-        calulateDefaultBasePath(server);
-        ((JAXRSServiceFactoryBean)server.getEndpoint().get(JAXRSServiceFactoryBean.class.getName())).
-            setResourceClassesFromBeans(serviceBeans);
+        calculateDefaultResourcePackage(server);
+        calculateDefaultBasePath(server);
+        ApiListingResourceJSON apiListingResource = new ApiListingResourceJSON();
+        if (!runAsFilter) {
+            List<Object> serviceBeans = new ArrayList<Object>();
+            serviceBeans.add(apiListingResource);
+            ((JAXRSServiceFactoryBean)server.getEndpoint().get(JAXRSServiceFactoryBean.class.getName())).
+                setResourceClassesFromBeans(serviceBeans);
+        }
         List<Object> providers = new ArrayList<Object>();
-        providers.add(new com.wordnik.swagger.jaxrs.listing.ResourceListingProvider());
-        providers.add(new com.wordnik.swagger.jaxrs.listing.ApiDeclarationProvider());
+        if (runAsFilter) {
+            providers.add(new SwaggerContainerRequestFilter(apiListingResource));
+        }
+        providers.add(new ResourceListingProvider());
+        providers.add(new ApiDeclarationProvider());
         ((ServerProviderFactory)server.getEndpoint().get(
                 ServerProviderFactory.class.getName())).setUserProviders(providers);
-        com.wordnik.swagger.jaxrs.config.BeanConfig beanConfig = new com.wordnik.swagger.jaxrs.config.BeanConfig();
+        
+        BeanConfig beanConfig = new BeanConfig();
         beanConfig.setResourcePackage(getResourcePackage());
         beanConfig.setVersion(getVersion());
         beanConfig.setBasePath(getBasePath());
@@ -64,7 +89,7 @@ public class SwaggerFeature extends AbstractFeature {
         beanConfig.setScan(isScan());
         initializeProvider(server.getEndpoint(), bus);
     }
-    private void calulateDefaultResourcePackage(Server server) {
+    private void calculateDefaultResourcePackage(Server server) {
         JAXRSServiceFactoryBean serviceFactoryBean = 
             (JAXRSServiceFactoryBean)server.getEndpoint().get(JAXRSServiceFactoryBean.class.getName());
         AbstractResourceInfo resourceInfo = serviceFactoryBean.getClassResourceInfo().get(0);
@@ -75,10 +100,10 @@ public class SwaggerFeature extends AbstractFeature {
         }
     }
     
-    private void calulateDefaultBasePath(Server server) {
+    private void calculateDefaultBasePath(Server server) {
         if (getBasePath() == null || getBasePath().length() == 0) {
             String address = server.getEndpoint().getEndpointInfo().getAddress();
-            setBasePath(address + "/api-docs");
+            setBasePath(address);
         }
     }
     public String getResourcePackage() {
@@ -136,4 +161,43 @@ public class SwaggerFeature extends AbstractFeature {
         this.scan = scan;
     }
 
+    public boolean isRunAsFilter() {
+        return runAsFilter;
+    }
+    public void setRunAsFilter(boolean runAsFilter) {
+        this.runAsFilter = runAsFilter;
+    }
+
+    @PreMatching
+    private static class SwaggerContainerRequestFilter implements ContainerRequestFilter {
+        private static final String APIDOCS_LISTING_PATH = "api-docs";
+        private static final Pattern APIDOCS_RESOURCE_PATH = Pattern.compile(APIDOCS_LISTING_PATH + "(/.+)");
+        
+        private ApiListingResourceJSON apiListingResource;
+        @Context
+        private MessageContext mc;
+        public SwaggerContainerRequestFilter(ApiListingResourceJSON apiListingResource) {
+            this.apiListingResource = apiListingResource;
+        }
+
+        @Override
+        public void filter(ContainerRequestContext requestContext) throws IOException {
+            UriInfo ui = mc.getUriInfo();
+            if (ui.getPath().endsWith(APIDOCS_LISTING_PATH)) {
+                Response r = 
+                    apiListingResource.resourceListing(null, mc.getServletConfig(), mc.getHttpHeaders(), ui);
+                requestContext.abortWith(r);
+            } else {
+                final Matcher matcher = APIDOCS_RESOURCE_PATH.matcher(ui.getPath());
+                
+                if (matcher.find()) {
+                    Response r = 
+                        apiListingResource.apiDeclaration(matcher.group(1), 
+                            null, mc.getServletConfig(), mc.getHttpHeaders(), ui);
+                    requestContext.abortWith(r);                
+                }
+            }
+        }
+        
+    }
 }
