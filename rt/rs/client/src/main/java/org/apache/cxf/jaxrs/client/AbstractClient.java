@@ -1008,7 +1008,8 @@ public abstract class AbstractClient implements Client {
         
         message.put(Message.INVOCATION_CONTEXT, context);
         message.putAll(reqContext);
-        exchange.putAll(reqContext);
+        // To avoid the NPE of jaxrs failover systest
+        //exchange.putAll(reqContext);
     }
     
     protected void setPlainOperationNameProperty(Message outMessage, String name) {
