@@ -29,7 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import javax.crypto.Cipher;
+//import javax.crypto.Cipher;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
@@ -40,7 +40,7 @@ import org.apache.cxf.rs.security.jose.jaxrs.JweClientResponseFilter;
 import org.apache.cxf.rs.security.jose.jaxrs.JweWriterInterceptor;
 import org.apache.cxf.rs.security.jose.jaxrs.JwsJsonClientResponseFilter;
 import org.apache.cxf.rs.security.jose.jaxrs.JwsJsonWriterInterceptor;
-import org.apache.cxf.rs.security.jose.jwa.Algorithm;
+//import org.apache.cxf.rs.security.jose.jwa.Algorithm;
 import org.apache.cxf.systest.jaxrs.security.Book;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -59,19 +59,20 @@ public class JAXRSJwsJsonTest extends AbstractBusClientServerTestBase {
     }
     @BeforeClass
     public static void startServers() throws Exception {
-        assertTrue("server did not launch correctly", 
+        assertTrue("server did not launch correctly",
                    launchServer(BookServerJwsJson.class, true));
         registerBouncyCastleIfNeeded();
     }
     
     private static void registerBouncyCastleIfNeeded() throws Exception {
-        try {
+        Security.addProvider(new BouncyCastleProvider());
+        /*try {
             // Java 8 apparently has it
             Cipher.getInstance(Algorithm.AES_GCM_ALGO_JAVA);
         } catch (Throwable t) {
             // Oracle Java 7
             Security.addProvider(new BouncyCastleProvider());    
-        }
+        }*/
     }
     @AfterClass
     public static void unregisterBouncyCastleIfNeeded() throws Exception {

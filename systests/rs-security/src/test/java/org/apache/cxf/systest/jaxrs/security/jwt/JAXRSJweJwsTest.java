@@ -26,7 +26,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
-import javax.crypto.Cipher;
+//import javax.crypto.Cipher;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
@@ -76,13 +76,14 @@ public class JAXRSJweJwsTest extends AbstractBusClientServerTestBase {
     }
     
     private static void registerBouncyCastleIfNeeded() throws Exception {
-        try {
+        Security.addProvider(new BouncyCastleProvider());
+        /*try {
             // Java 8 apparently has it
             Cipher.getInstance(Algorithm.AES_GCM_ALGO_JAVA);
         } catch (Throwable t) {
             // Oracle Java 7
             Security.addProvider(new BouncyCastleProvider());    
-        }
+        }*/
     }
     @AfterClass
     public static void unregisterBouncyCastleIfNeeded() throws Exception {
