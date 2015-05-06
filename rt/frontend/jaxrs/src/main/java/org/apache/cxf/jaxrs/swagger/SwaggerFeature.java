@@ -30,6 +30,7 @@ import org.apache.cxf.interceptor.InterceptorProvider;
 import org.apache.cxf.jaxrs.JAXRSServiceFactoryBean;
 import org.apache.cxf.jaxrs.model.AbstractResourceInfo;
 import org.apache.cxf.jaxrs.provider.ProviderFactory;
+import org.apache.cxf.phase.Phase;
 
 public class SwaggerFeature extends AbstractFeature {
     
@@ -65,6 +66,7 @@ public class SwaggerFeature extends AbstractFeature {
         beanConfig.setLicenseUrl(getLicenseUrl());
         beanConfig.setScan(isScan());
         initializeProvider(server.getEndpoint(), bus);
+        server.getEndpoint().getInInterceptors().add(new SetScannerInterceptor(Phase.PRE_INVOKE, beanConfig));
     }
     private void calulateDefaultResourcePackage(Server server) {
         JAXRSServiceFactoryBean serviceFactoryBean = 
