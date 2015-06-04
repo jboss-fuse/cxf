@@ -55,18 +55,18 @@ public class SwaggerFeature extends AbstractFeature {
         providers.add(new com.wordnik.swagger.jaxrs.listing.ResourceListingProvider());
         providers.add(new com.wordnik.swagger.jaxrs.listing.ApiDeclarationProvider());
         ((ProviderFactory)bus.getProperty(ProviderFactory.class.getName())).setUserProviders(providers);
-        com.wordnik.swagger.jaxrs.config.BeanConfig beanConfig = new com.wordnik.swagger.jaxrs.config.BeanConfig();
-        beanConfig.setResourcePackage(getResourcePackage());
-        beanConfig.setVersion(getVersion());
-        beanConfig.setBasePath(getBasePath());
-        beanConfig.setTitle(getTitle());
-        beanConfig.setDescription(getDescription());
-        beanConfig.setContact(getContact());
-        beanConfig.setLicense(getLicense());
-        beanConfig.setLicenseUrl(getLicenseUrl());
-        beanConfig.setScan(isScan());
+        BeanConfigWrapper beanConfigWrapper = new BeanConfigWrapper();
+        beanConfigWrapper.setResourcePackage(getResourcePackage());
+        beanConfigWrapper.setVersion(getVersion());
+        beanConfigWrapper.setBasePath(getBasePath());
+        beanConfigWrapper.setTitle(getTitle());
+        beanConfigWrapper.setDescription(getDescription());
+        beanConfigWrapper.setContact(getContact());
+        beanConfigWrapper.setLicense(getLicense());
+        beanConfigWrapper.setLicenseUrl(getLicenseUrl());
+        beanConfigWrapper.setScan(isScan());
         initializeProvider(server.getEndpoint(), bus);
-        server.getEndpoint().getInInterceptors().add(new SetScannerInterceptor(Phase.PRE_INVOKE, beanConfig));
+        server.getEndpoint().getInInterceptors().add(new SetScannerInterceptor(Phase.PRE_INVOKE, beanConfigWrapper));
     }
     private void calulateDefaultResourcePackage(Server server) {
         JAXRSServiceFactoryBean serviceFactoryBean = 
