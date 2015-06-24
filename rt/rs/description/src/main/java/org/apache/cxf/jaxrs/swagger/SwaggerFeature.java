@@ -70,13 +70,10 @@ public class SwaggerFeature extends AbstractFeature {
                 setResourceClassesFromBeans(serviceBeans);
         }
         List<Object> providers = new ArrayList<Object>();
-        if (runAsFilter) {
-            providers.add(new SwaggerContainerRequestFilter(apiListingResource));
-        }
+        
         providers.add(new ResourceListingProvider());
         providers.add(new ApiDeclarationProvider());
-        ((ServerProviderFactory)server.getEndpoint().get(
-                ServerProviderFactory.class.getName())).setUserProviders(providers);
+        
         
         BeanConfig beanConfig = new BeanConfig();
         beanConfig.setResourcePackage(getResourcePackage());
@@ -90,6 +87,11 @@ public class SwaggerFeature extends AbstractFeature {
         beanConfig.setScan(isScan());
         initializeProvider(server.getEndpoint(), bus);
         server.getEndpoint().getInInterceptors().add(new SetScannerInterceptor(Phase.PRE_INVOKE, beanConfig));
+        if (runAsFilter) {
+            providers.add(new SwaggerContainerRequestFilter(apiListingResource, beanConfig));
+        }
+        ((ServerProviderFactory)server.getEndpoint().get(
+                ServerProviderFactory.class.getName())).setUserProviders(providers);
     }
     private void calculateDefaultResourcePackage(Server server) {
         JAXRSServiceFactoryBean serviceFactoryBean = 
@@ -176,15 +178,18 @@ public class SwaggerFeature extends AbstractFeature {
         private static final Pattern APIDOCS_RESOURCE_PATH = Pattern.compile(APIDOCS_LISTING_PATH + "(/.+)");
         
         private ApiListingResourceJSON apiListingResource;
+        private BeanConfig beanConfig;
         @Context
         private MessageContext mc;
-        public SwaggerContainerRequestFilter(ApiListingResourceJSON apiListingResource) {
+        public SwaggerContainerRequestFilter(ApiListingResourceJSON apiListingResource, BeanConfig beanConfig) {
             this.apiListingResource = apiListingResource;
+            this.beanConfig = beanConfig;
         }
 
         @Override
         public void filter(ContainerRequestContext requestContext) throws IOException {
             UriInfo ui = mc.getUriInfo();
+            mc.getServletContext().setAttribute("SCANNER", beanConfig);
             if (ui.getPath().endsWith(APIDOCS_LISTING_PATH)) {
                 Response r = 
                     apiListingResource.resourceListing(null, mc.getServletConfig(), mc.getHttpHeaders(), ui);
