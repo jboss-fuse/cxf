@@ -263,7 +263,8 @@ public class HttpsURLConnectionFactory {
                                                KeyManager[] keyManagers) throws GeneralSecurityException {
         if (tlsClientParameters.getCertAlias() != null) {
             for (int idx = 0; idx < keyManagers.length; idx++) {
-                if (keyManagers[idx] instanceof X509KeyManager) {
+                if (keyManagers[idx] instanceof X509KeyManager
+                    && !(keyManagers[idx] instanceof AliasedX509ExtendedKeyManager)) {
                     try {
                         keyManagers[idx] = new AliasedX509ExtendedKeyManager(
                             tlsClientParameters.getCertAlias(), (X509KeyManager)keyManagers[idx]);
