@@ -76,7 +76,12 @@ public class Activator implements BundleActivator {
             if (reg != null) {
                 reg.unregister();
             }
-            conduitFactory = new AsyncHTTPConduitFactory((Bus)this.busTracker.getService());
+            Bus bus = (Bus)this.busTracker.getService();
+            if (bus != null) {
+                conduitFactory = new AsyncHTTPConduitFactory(bus);
+            } else {
+                conduitFactory = new AsyncHTTPConduitFactory();
+            }
             conduitFactory.update(toMap(properties));
             reg = context.registerService(HTTPConduitFactory.class.getName(), conduitFactory, null);
         }
