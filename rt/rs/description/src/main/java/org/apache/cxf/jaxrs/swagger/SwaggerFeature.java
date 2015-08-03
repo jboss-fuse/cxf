@@ -31,7 +31,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import com.wordnik.swagger.jaxrs.config.BeanConfig;
 import com.wordnik.swagger.jaxrs.listing.ApiDeclarationProvider;
 import com.wordnik.swagger.jaxrs.listing.ApiListingResourceJSON;
 import com.wordnik.swagger.jaxrs.listing.ResourceListingProvider;
@@ -78,18 +77,18 @@ public class SwaggerFeature extends AbstractFeature {
         ((ServerProviderFactory)server.getEndpoint().get(
                 ServerProviderFactory.class.getName())).setUserProviders(providers);
         
-        BeanConfig beanConfig = new BeanConfig();
-        beanConfig.setResourcePackage(getResourcePackage());
-        beanConfig.setVersion(getVersion());
-        beanConfig.setBasePath(getBasePath());
-        beanConfig.setTitle(getTitle());
-        beanConfig.setDescription(getDescription());
-        beanConfig.setContact(getContact());
-        beanConfig.setLicense(getLicense());
-        beanConfig.setLicenseUrl(getLicenseUrl());
-        beanConfig.setScan(isScan());
+        BeanConfigWrapper beanConfigWrapper = new BeanConfigWrapper();
+        beanConfigWrapper.setResourcePackage(getResourcePackage());
+        beanConfigWrapper.setVersion(getVersion());
+        beanConfigWrapper.setBasePath(getBasePath());
+        beanConfigWrapper.setTitle(getTitle());
+        beanConfigWrapper.setDescription(getDescription());
+        beanConfigWrapper.setContact(getContact());
+        beanConfigWrapper.setLicense(getLicense());
+        beanConfigWrapper.setLicenseUrl(getLicenseUrl());
+        beanConfigWrapper.setScan(isScan());
         initializeProvider(server.getEndpoint(), bus);
-        server.getEndpoint().getInInterceptors().add(new SetScannerInterceptor(Phase.PRE_INVOKE, beanConfig));
+        server.getEndpoint().getInInterceptors().add(new SetScannerInterceptor(Phase.PRE_INVOKE, beanConfigWrapper));
     }
     private void calculateDefaultResourcePackage(Server server) {
         JAXRSServiceFactoryBean serviceFactoryBean = 
