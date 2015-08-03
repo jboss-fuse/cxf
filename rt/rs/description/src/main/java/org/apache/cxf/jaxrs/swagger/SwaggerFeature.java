@@ -75,20 +75,20 @@ public class SwaggerFeature extends AbstractFeature {
         providers.add(new ApiDeclarationProvider());
         
         
-        BeanConfig beanConfig = new BeanConfig();
-        beanConfig.setResourcePackage(getResourcePackage());
-        beanConfig.setVersion(getVersion());
-        beanConfig.setBasePath(getBasePath());
-        beanConfig.setTitle(getTitle());
-        beanConfig.setDescription(getDescription());
-        beanConfig.setContact(getContact());
-        beanConfig.setLicense(getLicense());
-        beanConfig.setLicenseUrl(getLicenseUrl());
-        beanConfig.setScan(isScan());
+        BeanConfigWrapper beanConfigWrapper = new BeanConfigWrapper();
+        beanConfigWrapper.setResourcePackage(getResourcePackage());
+        beanConfigWrapper.setVersion(getVersion());
+        beanConfigWrapper.setBasePath(getBasePath());
+        beanConfigWrapper.setTitle(getTitle());
+        beanConfigWrapper.setDescription(getDescription());
+        beanConfigWrapper.setContact(getContact());
+        beanConfigWrapper.setLicense(getLicense());
+        beanConfigWrapper.setLicenseUrl(getLicenseUrl());
+        beanConfigWrapper.setScan(isScan());
         initializeProvider(server.getEndpoint(), bus);
-        server.getEndpoint().getInInterceptors().add(new SetScannerInterceptor(Phase.PRE_INVOKE, beanConfig));
+        server.getEndpoint().getInInterceptors().add(new SetScannerInterceptor(Phase.PRE_INVOKE, beanConfigWrapper));
         if (runAsFilter) {
-            providers.add(new SwaggerContainerRequestFilter(apiListingResource, beanConfig));
+            providers.add(new SwaggerContainerRequestFilter(apiListingResource, beanConfigWrapper));
         }
         ((ServerProviderFactory)server.getEndpoint().get(
                 ServerProviderFactory.class.getName())).setUserProviders(providers);
@@ -178,17 +178,28 @@ public class SwaggerFeature extends AbstractFeature {
         private static final Pattern APIDOCS_RESOURCE_PATH = Pattern.compile(APIDOCS_LISTING_PATH + "(/.+)");
         
         private ApiListingResourceJSON apiListingResource;
-        private BeanConfig beanConfig;
+        private BeanConfigWrapper beanConfigWrapper;
         @Context
         private MessageContext mc;
-        public SwaggerContainerRequestFilter(ApiListingResourceJSON apiListingResource, BeanConfig beanConfig) {
+        public SwaggerContainerRequestFilter(ApiListingResourceJSON apiListingResource, 
+                                             BeanConfigWrapper beanConfigWrapper) {
             this.apiListingResource = apiListingResource;
-            this.beanConfig = beanConfig;
+            this.beanConfigWrapper = beanConfigWrapper;
         }
 
         @Override
         public void filter(ContainerRequestContext requestContext) throws IOException {
             UriInfo ui = mc.getUriInfo();
+            BeanConfig beanConfig = new BeanConfig();
+            beanConfig.setResourcePackage(beanConfigWrapper.getResourcePackage());
+            beanConfig.setVersion(beanConfigWrapper.getVersion());
+            beanConfig.setBasePath(beanConfigWrapper.getBasePath());
+            beanConfig.setTitle(beanConfigWrapper.getTitle());
+            beanConfig.setDescription(beanConfigWrapper.getDescription());
+            beanConfig.setContact(beanConfigWrapper.getContact());
+            beanConfig.setLicense(beanConfigWrapper.getLicense());
+            beanConfig.setLicenseUrl(beanConfigWrapper.getLicenseUrl());
+            beanConfig.setScan(beanConfigWrapper.isScan());
             mc.getServletContext().setAttribute("SCANNER", beanConfig);
             if (ui.getPath().endsWith(APIDOCS_LISTING_PATH)) {
                 Response r = 

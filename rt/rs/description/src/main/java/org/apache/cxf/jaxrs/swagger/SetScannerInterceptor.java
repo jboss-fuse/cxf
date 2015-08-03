@@ -28,16 +28,26 @@ import org.apache.cxf.phase.AbstractPhaseInterceptor;
 
 public class SetScannerInterceptor extends AbstractPhaseInterceptor {
 
-    private BeanConfig beanConfig;
+    private BeanConfigWrapper beanConfigWrapper;
     
-    public SetScannerInterceptor(String phase, BeanConfig beanConfig) {
+    public SetScannerInterceptor(String phase, BeanConfigWrapper beanConfigWrapper) {
         super(phase);
-        this.beanConfig = beanConfig;
+        this.beanConfigWrapper = beanConfigWrapper;
     }
 
     @Override
     public void handleMessage(Message m) throws Fault {
         MessageContextImpl mci = new MessageContextImpl(m);
+        BeanConfig beanConfig = new BeanConfig();
+        beanConfig.setResourcePackage(beanConfigWrapper.getResourcePackage());
+        beanConfig.setVersion(beanConfigWrapper.getVersion());
+        beanConfig.setBasePath(beanConfigWrapper.getBasePath());
+        beanConfig.setTitle(beanConfigWrapper.getTitle());
+        beanConfig.setDescription(beanConfigWrapper.getDescription());
+        beanConfig.setContact(beanConfigWrapper.getContact());
+        beanConfig.setLicense(beanConfigWrapper.getLicense());
+        beanConfig.setLicenseUrl(beanConfigWrapper.getLicenseUrl());
+        beanConfig.setScan(beanConfigWrapper.isScan());
         mci.getServletContext().setAttribute("SCANNER", beanConfig);
     }
 
