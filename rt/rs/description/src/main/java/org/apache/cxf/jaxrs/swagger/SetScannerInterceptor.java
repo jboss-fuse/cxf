@@ -48,7 +48,9 @@ public class SetScannerInterceptor extends AbstractPhaseInterceptor {
         beanConfig.setLicense(beanConfigWrapper.getLicense());
         beanConfig.setLicenseUrl(beanConfigWrapper.getLicenseUrl());
         beanConfig.setScan(beanConfigWrapper.isScan());
-        mci.getServletContext().setAttribute("SCANNER", beanConfig);
+        if (mci.getServletContext() != null) {
+            mci.getServletContext().setAttribute("SCANNER", beanConfig);
+        }
     }
 
 }
