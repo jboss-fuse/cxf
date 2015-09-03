@@ -305,7 +305,7 @@
         <feature version="${project.version}">cxf-jaxws</feature>
         <feature version="${project.version}">cxf-javascript</feature>
         <bundle>mvn:commons-lang/commons-lang/${cxf.commons-lang.version}</bundle>
-        <bundle>mvn:org.apache.velocity/velocity/${cxf.velocity.version}</bundle>
+        <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.velocity/${cxf.velocity-bundle.version}</bundle>
         <bundle>mvn:commons-collections/commons-collections/${cxf.commons-collections.version}</bundle>
         <bundle>mvn:org.apache.cxf/cxf-tools-common/${project.version}</bundle>
         <bundle>mvn:org.apache.cxf/cxf-tools-java2ws/${project.version}</bundle>
