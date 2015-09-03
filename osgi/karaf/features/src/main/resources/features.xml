@@ -390,7 +390,7 @@
 
     <feature name="cxf-bean-validation-core" version="${project.version}" resolver="(obr)">
         <bundle start-level="10" dependency="true">mvn:org.apache.servicemix.specs/org.apache.servicemix.specs.jsr303-api-${cxf.osgi.validation.api.version}/${cxf.servicemix.specs.version}</bundle>
-        <bundle start-level="30" dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.hibernate-validator/${cxf.hibernate-validator.bundle.version}</bundle> 
+        <bundle start-level="30" dependency="true">mvn:org.hibernate/hibernate-validator/${cxf.hibernate-validator.bundle.version}</bundle> 
     </feature>
     <!-- This feature can only be activated if Java 7 is used --> 
     <feature name="cxf-bean-validation" version="${project.version}" resolver="(obr)">
