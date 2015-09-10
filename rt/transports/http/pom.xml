@@ -41,7 +41,7 @@
         <cxf.export.service>
             org.apache.aries.blueprint.NamespaceHandler;osgi.service.blueprint.namespace="http://cxf.apache.org/transports/http/configuration"
         </cxf.export.service>
-        <publicsuffix-tld-names-url>https://hg.mozilla.org/mozilla-central/raw-file/fb720c90eb49590ba55bf52a8a4826ffff9f528b/netwerk/dns/effective_tld_names.dat</publicsuffix-tld-names-url>
+        <publicsuffix-tld-names-url>https://publicsuffix.org/list/effective_tld_names.dat</publicsuffix-tld-names-url>
     </properties>
     <dependencies>
         <dependency>
