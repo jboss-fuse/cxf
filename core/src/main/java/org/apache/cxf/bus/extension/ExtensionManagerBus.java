@@ -180,6 +180,7 @@ public class ExtensionManagerBus extends AbstractBasicInterceptorProvider implem
         extensionManager.activateAllByType(ResourceResolver.class);
         
         extensions.put(ExtensionManager.class, extensionManager);        
+        extensions.put(ClassLoader.class, extensionClassLoader);
     }
     
     public ExtensionManagerBus(Map<Class<?>, Object> e, Map<String, Object> properties) {
