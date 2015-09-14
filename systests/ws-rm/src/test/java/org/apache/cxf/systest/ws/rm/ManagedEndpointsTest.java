@@ -52,6 +52,7 @@ import org.apache.cxf.ws.rm.RMUtils;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -116,7 +117,8 @@ public class ManagedEndpointsTest extends AbstractClientServerTestBase {
     public void stopBus() throws Exception {
         clientBus.shutdown(true);
     }
-    
+
+    @Ignore("ENTESB-4006")
     @Test
     public void testManagedEndpointsOneway() throws Exception {
         prepareClient();
@@ -175,6 +177,7 @@ public class ManagedEndpointsTest extends AbstractClientServerTestBase {
         
     }
 
+    @Ignore("ENTESB-4006")
     @Test
     public void testManagedEndpointsOneway12() throws Exception {
         prepareClient();
