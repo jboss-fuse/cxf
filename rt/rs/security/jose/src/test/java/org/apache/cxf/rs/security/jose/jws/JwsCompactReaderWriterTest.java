@@ -39,7 +39,6 @@ import org.apache.cxf.rs.security.jose.jwt.JwtTokenReaderWriter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class JwsCompactReaderWriterTest extends Assert {
@@ -236,7 +235,6 @@ public class JwsCompactReaderWriterTest extends Assert {
         }
     }
 
-    @Ignore("ENTESB-3977")
     @Test
     public void testWriteReadJwsSignedByESPrivateKey() throws Exception {
         JoseHeaders headers = new JoseHeaders();

@@ -42,7 +42,6 @@ import org.apache.cxf.rs.security.jose.jws.JwsJsonProtectedHeader;
 import org.apache.cxf.rs.security.jose.jws.JwsJsonUnprotectedHeader;
 import org.apache.cxf.rs.security.jose.jws.JwsUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -439,7 +438,6 @@ public class JwsJoseCookBookTest {
         Security.removeProvider(BouncyCastleProvider.class.getName());
     }
 
-    @Ignore("ENTESB-3977")
     @Test
     public void testECDSASignature() throws Exception {
         
@@ -607,7 +605,6 @@ public class JwsJoseCookBookTest {
         assertTrue(jsonConsumer.verifySignatureWith(key, JoseConstants.HMAC_SHA_256_ALGO));
     }
 
-    @Ignore("ENTESB-3977")
     @Test
     public void testMultipleSignatures() throws Exception {
         try {

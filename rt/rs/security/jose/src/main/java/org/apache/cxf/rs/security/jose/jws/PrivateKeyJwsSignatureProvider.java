@@ -88,6 +88,7 @@ public class PrivateKeyJwsSignatureProvider extends AbstractJwsSignatureProvider
             try {
                 return s.sign();
             } catch (SignatureException ex) {
+                ex.printStackTrace();
                 throw new SecurityException();
             }
         }
