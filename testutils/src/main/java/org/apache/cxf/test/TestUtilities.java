@@ -220,6 +220,8 @@ public class TestUtilities {
 
         IOUtils.copy(is, os);
 
+        Thread.sleep(2000);
+
         // TODO: shouldn't have to do this. IO caching needs cleaning
         // up or possibly removal...
         os.flush();
