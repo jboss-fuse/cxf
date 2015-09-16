@@ -379,7 +379,26 @@
 
     <profiles>
         <profile>
-            <id>activemq.tests.aix.excludes</id>
+            <id>cxf.tests.openjdk.excludes</id>
+            <activation>
+                <jdk>1.7.0_85</jdk>   <!-- this is a hack, can't really specify openjdk, but this is the current version -->
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <excludes combine.children="append">
+                                <exclude>**/CachedOutputStreamTest.*</exclude>
+                                <exclude>**/CachedWriterTest.*</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>cxf.tests.aix.excludes</id>
             <activation>
                 <property>
                     <name>os.name</name>
