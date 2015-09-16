@@ -220,6 +220,12 @@ public class TestUtilities {
 
         IOUtils.copy(is, os);
 
+        // TODO: shouldn't have to do this. IO caching needs cleaning
+        // up or possibly removal...
+        os.flush();
+        is.close();
+        os.close();
+
 
         byte[] bs = obs.getResponseStream().toByteArray();
         
