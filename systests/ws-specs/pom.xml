@@ -279,26 +279,6 @@
                 </dependency>
             </dependencies>
         </profile>
-        <profile>
-            <id>activemq.tests.windows.excludes</id>
-            <activation>
-                <os>
-                    <family>Windows</family>
-                </os>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <excludes combine.children="append">
-                                <exclude>**/WSAPureWsdlTest.*</exclude>
-                            </excludes>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
 
     </profiles>
 </project>
