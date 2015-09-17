@@ -54,7 +54,7 @@ import org.junit.BeforeClass;
 public abstract class AbstractJMSTester extends Assert {
     protected static final String WSDL = "/jms_test.wsdl";
     protected static final String SERVICE_NS = "http://cxf.apache.org/hello_world_jms";
-    protected static final int MAX_RECEIVE_TIME = 10;
+    protected static final int MAX_RECEIVE_TIME = 100;
     protected static final String MESSAGE_CONTENT = "HelloWorld";
     protected static Bus bus;
     protected static ConnectionFactory cf;
