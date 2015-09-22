@@ -209,28 +209,4 @@
              </plugin>
         </plugins>
     </build>
-    <profiles>
-        <profile>
-            <id>cxf.tests.solaris.excludes</id>
-            <activation>
-                <property>
-                    <name>os.name</name>
-                    <value>SunOS</value>
-                </property>
-                <jdk>1.7</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <excludes combine.children="append">
-                                <exclude>**/DefaultHostnameVerifierTest.*</exclude>
-                            </excludes>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>
