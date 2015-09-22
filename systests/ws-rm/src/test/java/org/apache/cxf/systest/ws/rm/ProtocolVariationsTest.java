@@ -60,7 +60,6 @@ import org.apache.cxf.ws.rm.RMManager;
 
 import org.junit.After;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -338,7 +337,6 @@ public class ProtocolVariationsTest extends AbstractBusClientServerTestBase {
         verifyTwowayNonAnonymous(Names200408.WSA_NAMESPACE_NAME, RM10Constants.INSTANCE);
     }
 
-    @Ignore("ENTESB-4033")
     @Test
     public void testRM10WSA200408Decoupled() throws Exception {
         init("org/apache/cxf/systest/ws/rm/rminterceptors.xml", true);
