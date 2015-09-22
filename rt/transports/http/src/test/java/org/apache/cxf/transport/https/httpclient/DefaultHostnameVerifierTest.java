@@ -155,10 +155,16 @@ public class DefaultHostnameVerifierTest {
         final CertificateFactory cf = CertificateFactory.getInstance("X.509");
         final InputStream in = new ByteArrayInputStream(CertificatesToPlayWith.X509_MULTIPLE_SUBJECT_ALT);
         final X509Certificate x509 = (X509Certificate) cf.generateCertificate(in);
-
-        Assert.assertEquals("CN=localhost, OU=Unknown, O=Unknown, L=Unknown, ST=Unknown, C=CH",
-                x509.getSubjectDN().getName());
-
+        
+        //per the RFC2253, the order of attributes in DN is not significant
+        //so the DN could be like C=CH,ST=Unknown,L=Unknown,O=Unknown,OU=Unknown,CN=localhost
+        //on different platforms, but still valid
+        Assert.assertTrue(x509.getSubjectDN().getName().contains("CN=localhost"));
+        Assert.assertTrue(x509.getSubjectDN().getName().contains("OU=Unknown"));
+        Assert.assertTrue(x509.getSubjectDN().getName().contains("O=Unknown"));
+        Assert.assertTrue(x509.getSubjectDN().getName().contains("L=Unknown"));
+        Assert.assertTrue(x509.getSubjectDN().getName().contains("ST=Unknown"));
+        Assert.assertTrue(x509.getSubjectDN().getName().contains("C=CH"));
         impl.verify("localhost.localdomain", x509);
         impl.verify("127.0.0.1", x509);
 
