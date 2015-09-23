@@ -93,9 +93,9 @@ public class ProviderServiceFactoryTest extends AbstractJaxWsTest {
         JaxWsServerFactoryBean svrFactory = new JaxWsServerFactoryBean();
         svrFactory.setBus(getBus());
         svrFactory.setServiceFactory(bean);
-        String address = "local://localhost:9000/test";
+        String address = "http://localhost:9000/test";
         svrFactory.setAddress(address);
-        //svrFactory.setTransportId(LocalTransportFactory.TRANSPORT_ID);
+        svrFactory.setTransportId(LocalTransportFactory.TRANSPORT_ID);
 
         ServerImpl server = (ServerImpl)svrFactory.create();
 
@@ -115,43 +115,42 @@ public class ProviderServiceFactoryTest extends AbstractJaxWsTest {
     @Test
     public void testSOAPBindingFromCode() throws Exception {
         JaxWsServiceFactoryBean bean = new JaxWsServiceFactoryBean();
-        bean.setServiceClass(DOMSourcePayloadProvider.class);
+        bean.setServiceClass(SOAPSourcePayloadProvider.class);
         bean.setBus(getBus());
-        bean.setInvoker(new JAXWSMethodInvoker(new DOMSourcePayloadProvider()));
+        bean.setInvoker(new JAXWSMethodInvoker(new SOAPSourcePayloadProvider()));
         
-        bean.create();
+        Service service = bean.create();
 
-        /*assertEquals("SOAPSourcePayloadProviderService", service.getName().getLocalPart());
+        assertEquals("SOAPSourcePayloadProviderService", service.getName().getLocalPart());
 
         InterfaceInfo intf = service.getServiceInfos().get(0).getInterface();
         assertNotNull(intf);
-        assertEquals(1, intf.getOperations().size());*/
+        assertEquals(1, intf.getOperations().size());
 
         JaxWsServerFactoryBean svrFactory = new JaxWsServerFactoryBean();
         svrFactory.setBus(getBus());
         svrFactory.setServiceFactory(bean);
         String address = "local://localhost:9000/test";
         svrFactory.setAddress(address);
-        svrFactory.setTransportId(LocalTransportFactory.TRANSPORT_ID);
 
-        svrFactory.create();
+        ServerImpl server = (ServerImpl)svrFactory.create();
 
         // See if our endpoint was created correctly
-        //assertEquals(1, service.getServiceInfos().get(0).getEndpoints().size());
+        assertEquals(1, service.getServiceInfos().get(0).getEndpoints().size());
 
-        /*Endpoint endpoint = server.getEndpoint();
+        Endpoint endpoint = server.getEndpoint();
         Binding binding = endpoint.getBinding();
         assertTrue(binding instanceof SoapBinding);
 
         SoapBindingInfo sb = (SoapBindingInfo)endpoint.getEndpointInfo().getBinding();
         assertEquals("document", sb.getStyle());
-        assertEquals(false, bean.isWrapped());*/
+        assertEquals(false, bean.isWrapped());
 
-        //assertEquals(1, sb.getOperations().size());
-        invoke(address, LocalTransportFactory.TRANSPORT_ID, "/org/apache/cxf/jaxws/sayHi.xml");
+        assertEquals(1, sb.getOperations().size());
+        Node res = invoke(address, LocalTransportFactory.TRANSPORT_ID, "/org/apache/cxf/jaxws/sayHi.xml");
         
-        //addNamespace("j", "http://service.jaxws.cxf.apache.org/");
-        //assertValid("/s:Envelope/s:Body/j:sayHi", res);
+        addNamespace("j", "http://service.jaxws.cxf.apache.org/");
+        assertValid("/s:Envelope/s:Body/j:sayHi", res);
     }
     
     @Test
