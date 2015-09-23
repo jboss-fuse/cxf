@@ -117,7 +117,7 @@ public class LocalDestination extends AbstractDestination {
                 Executor ex = message.getExchange() != null
                     ? message.getExchange().get(Executor.class) : null;
                 // Need to avoid to get the SynchronousExecutor
-                if (ex == null || SynchronousExecutor.isA(ex)) {
+                /*if (ex == null || SynchronousExecutor.isA(ex)) {
                     if (exchange == null) {
                         ex = localDestinationFactory.getExecutor(bus);
                     } else {
@@ -130,7 +130,8 @@ public class LocalDestination extends AbstractDestination {
                     }
                 } else {
                     ex.execute(receiver);
-                }
+                }*/
+                new Thread(receiver).start();
             }
         }
 

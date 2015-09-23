@@ -224,7 +224,7 @@ public class TestUtilities {
         // up or possibly removal...
         os.flush();
         is.close();
-        os.close();
+        //os.close();
 
 
         byte[] bs = obs.getResponseStream().toByteArray();
@@ -372,8 +372,8 @@ public class TestUtilities {
                 InputStream is = message.getContent(InputStream.class);
                 try {
                     IOUtils.copy(is, response);
-                    is.close();
-                    response.close();
+                    //is.close();
+                    //response.close();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

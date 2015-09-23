@@ -20,6 +20,7 @@ package org.apache.cxf.jaxws.provider;
 
 import org.w3c.dom.Node;
 
+import org.apache.cxf.binding.soap.SoapTransportFactory;
 import org.apache.cxf.jaxws.AbstractJaxWsTest;
 import org.apache.cxf.jaxws.EndpointImpl;
 import org.apache.cxf.transport.local.LocalTransportFactory;
@@ -29,9 +30,9 @@ public class ProviderTest extends AbstractJaxWsTest {
     @Test
     public void testInvocation() throws Exception {
         EndpointImpl ep = new EndpointImpl(getBus(), new PayloadProvider(), (String) null);
-        ep.publish("local://localhost:9000/Provider");
+        ep.publish("http://localhost:9000/Provider");
         
-        Node response = invoke("local://localhost:9000/Provider",
+        Node response = invoke("http://localhost:9000/Provider",
                                LocalTransportFactory.TRANSPORT_ID, 
                                "/org/apache/cxf/jaxws/sayHi.xml");
 
@@ -45,10 +46,10 @@ public class ProviderTest extends AbstractJaxWsTest {
     @Test
     public void testCXF1852() throws Exception {
         EndpointImpl ep = new EndpointImpl(getBus(), new PayloadProvider2(), (String) null);
-        ep.publish("local://localhost:9001/Provider2");
+        ep.publish("http://localhost:9001/Provider2");
         
-        Node response = invoke("local://localhost:9001/Provider2",
-                               LocalTransportFactory.TRANSPORT_ID, 
+        Node response = invoke("http://localhost:9001/Provider2",
+                               SoapTransportFactory.TRANSPORT_ID, 
                                "/org/apache/cxf/jaxws/sayHi.xml");
 
         assertNotNull(response);
