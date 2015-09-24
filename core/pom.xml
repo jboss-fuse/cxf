@@ -377,31 +377,4 @@
         </pluginManagement>
     </build>
 
-    <profiles>
-        <profile>
-            <id>cxf.tests.solaris.excludes</id>
-            <activation>
-                <property>
-                    <name>os.name</name>
-                    <value>SunOS</value>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <excludes combine.children="append">
-                                <exclude>**/CachedOutputStreamTest.*</exclude>
-                                <exclude>**/CachedWriterTest.*</exclude>
-                            </excludes>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
-
-
-
 </project>
