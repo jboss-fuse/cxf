@@ -27,7 +27,7 @@
     <parent>
         <artifactId>cxf-rt-rs-security-oauth-parent</artifactId>
         <groupId>org.apache.cxf</groupId>
-        <version>3.0.2.redhat-6-2-0-SNAPSHOT</version>
+        <version>3.0.4.redhat-620165</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <properties>
