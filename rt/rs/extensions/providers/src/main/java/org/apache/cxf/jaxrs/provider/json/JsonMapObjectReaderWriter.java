@@ -19,6 +19,7 @@
 package org.apache.cxf.jaxrs.provider.json;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,11 +30,19 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.cxf.common.util.StringUtils;
+import org.apache.cxf.helpers.IOUtils;
 
 
 
 public class JsonMapObjectReaderWriter {
     private boolean format;
+    
+    public JsonMapObjectReaderWriter() {
+        
+    }
+    public JsonMapObjectReaderWriter(boolean format) {
+        this.format = format;
+    }
     
     public String toJson(JsonMapObject obj) {
         return toJson(obj.asMap());
@@ -95,11 +104,12 @@ public class JsonMapObjectReaderWriter {
         } else if (Map.class.isAssignableFrom(value.getClass())) {
             toJsonInternal(out, (Map<String, Object>)value);
         } else {
-            if (value.getClass() == String.class) {
+            boolean stringOrEnum = value.getClass() == String.class || value.getClass().isEnum();
+            if (stringOrEnum) {
                 out.append("\"");
             }
             out.append(value.toString());
-            if (value.getClass() == String.class) {
+            if (stringOrEnum) {
                 out.append("\"");
             }
         }
@@ -115,13 +125,22 @@ public class JsonMapObjectReaderWriter {
             out.append("\r\n ");
         }
     }
-        
+    public JsonMapObject fromJsonToJsonObject(InputStream is) throws IOException {
+        return fromJsonToJsonObject(IOUtils.toString(is));
+    }
+    public JsonMapObject fromJsonToJsonObject(String json) {
+        JsonMapObject obj = new JsonMapObject();
+        fromJson(obj, json);
+        return obj;
+    }    
     public void fromJson(JsonMapObject obj, String json) {
         String theJson = json.trim();
         JsonObjectSettable settable = new JsonObjectSettable(obj);
         readJsonObjectAsSettable(settable, theJson.substring(1, theJson.length() - 1));
     }
-    
+    public Map<String, Object> fromJson(InputStream is) throws IOException {
+        return fromJson(IOUtils.toString(is));
+    }
     public Map<String, Object> fromJson(String json) {
         String theJson = json.trim();
         MapSettable nextMap = new MapSettable();
@@ -198,7 +217,7 @@ public class JsonMapObjectReaderWriter {
         String valueStr = value.toString().trim(); 
         if (valueStr.startsWith("\"")) {
             value = valueStr.substring(1, valueStr.length() - 1);
-        } else if ("true".equals(value) || "false".equals(value)) {
+        } else if ("true".equals(valueStr) || "false".equals(valueStr)) {
             value = Boolean.valueOf(valueStr);
         } else {
             try {
@@ -221,7 +240,7 @@ public class JsonMapObjectReaderWriter {
         int nextOpenIndex = json.indexOf(openChar, from + 1);
         int closingIndex = json.indexOf(closeChar, from + 1);
         while (nextOpenIndex != -1 && nextOpenIndex < closingIndex) {
-            nextOpenIndex = json.indexOf(openChar, closingIndex + 1);
+            nextOpenIndex = json.indexOf(openChar, nextOpenIndex + 1);
             closingIndex = json.indexOf(closeChar, closingIndex + 1);
         }
         return closingIndex;
