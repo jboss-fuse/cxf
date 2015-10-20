@@ -25,6 +25,7 @@ import org.apache.cxf.jaxrs.model.wadl.petstore.PetStore;
 import org.apache.cxf.jaxrs.utils.ResourceUtils;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class JavaDocProviderTest extends Assert {
@@ -35,7 +36,8 @@ public class JavaDocProviderTest extends Assert {
             doTestJavaDocs("classpath:/javadocs/pet-store-javadoc16.jar");
         }
     }
-    
+
+    @Ignore("ENTESB-4237")
     @Test
     public void testJava7Docs() throws Exception {
         if (JavaDocProvider.JAVA_VERSION != JavaDocProvider.JAVA_VERSION_16) {
