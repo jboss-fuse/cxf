@@ -58,6 +58,18 @@
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-jsp</artifactId>
             <version>${cxf.jetty.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.glassfish</groupId>
+                    <artifactId>javax.el</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- lock down so it doesn't try to use SNAPSHOT from version range -->
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.el</artifactId>
+            <version>3.0.1-b08</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
