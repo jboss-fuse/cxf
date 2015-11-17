@@ -99,6 +99,7 @@ public abstract class AbstractOAuthDataProvider implements OAuthDataProvider {
             convertScopeToPermissions(accessToken.getClient(), theScopes);
         at.setScopes(thePermissions);
         at.setSubject(accessToken.getSubject());
+        at.setClientCodeVerifier(accessToken.getClientCodeVerifier());
         saveAccessToken(at);
         if (isRefreshTokenSupported(theScopes)) {
             createNewRefreshToken(at);
@@ -120,6 +121,7 @@ public abstract class AbstractOAuthDataProvider implements OAuthDataProvider {
         rt.setGrantType(at.getGrantType());
         rt.setScopes(at.getScopes());
         rt.setSubject(at.getSubject());
+        rt.setClientCodeVerifier(at.getClientCodeVerifier());
         rt.getAccessTokens().add(at.getTokenKey());
         at.setRefreshToken(rt.getTokenKey());
         saveRefreshToken(at, rt);
