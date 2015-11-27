@@ -32,18 +32,32 @@ public abstract class AbstractCodeDataProvider extends AbstractOAuthDataProvider
     @Override
     public ServerAuthorizationCodeGrant createCodeGrant(AuthorizationCodeRegistration reg) 
         throws OAuthServiceException {
-        ServerAuthorizationCodeGrant grant = new ServerAuthorizationCodeGrant(reg.getClient(), codeLifetime);
-        grant.setRedirectUri(reg.getRedirectUri());
-        grant.setSubject(reg.getSubject());
-        grant.setRequestedScopes(reg.getRequestedScope());
-        grant.setApprovedScopes(reg.getApprovedScope());
+        ServerAuthorizationCodeGrant grant = doCreateCodeGrant(reg);
         saveCodeGrant(grant);
         return grant;
+    }
+    
+    protected ServerAuthorizationCodeGrant doCreateCodeGrant(AuthorizationCodeRegistration reg)
+        throws OAuthServiceException {
+        return AbstractCodeDataProvider.initCodeGrant(reg, codeLifetime);
     }
     
     public void setCodeLifetime(long codeLifetime) {
         this.codeLifetime = codeLifetime;
     }
+    
+    public static ServerAuthorizationCodeGrant initCodeGrant(AuthorizationCodeRegistration reg,
+                                                             long lifetime) {
+        ServerAuthorizationCodeGrant grant = new ServerAuthorizationCodeGrant(reg.getClient(), lifetime);
+        grant.setRedirectUri(reg.getRedirectUri());
+        grant.setSubject(reg.getSubject());
+        grant.setRequestedScopes(reg.getRequestedScope());
+        grant.setApprovedScopes(reg.getApprovedScope());
+        grant.setAudience(reg.getAudience());
+        grant.setClientCodeChallenge(reg.getClientCodeChallenge());
+        return grant;
+    }
+
     
     protected abstract void saveCodeGrant(ServerAuthorizationCodeGrant grant);
     

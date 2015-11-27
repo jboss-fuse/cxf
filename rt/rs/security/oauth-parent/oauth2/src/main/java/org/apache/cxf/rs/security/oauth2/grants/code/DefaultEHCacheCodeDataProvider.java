@@ -23,6 +23,7 @@ import java.util.List;
 import net.sf.ehcache.Ehcache;
 
 import org.apache.cxf.Bus;
+import org.apache.cxf.rs.security.oauth2.provider.AbstractCodeDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.DefaultEHCacheOAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.OAuthServiceException;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthUtils;
@@ -57,8 +58,13 @@ public class DefaultEHCacheCodeDataProvider extends DefaultEHCacheOAuthDataProvi
     public ServerAuthorizationCodeGrant createCodeGrant(AuthorizationCodeRegistration reg)
         throws OAuthServiceException {
         ServerAuthorizationCodeGrant grant = doCreateCodeGrant(reg);
-        saveAuthorizationGrant(grant);
+        saveCodeGrant(grant);
         return grant;
+    }
+    
+    protected ServerAuthorizationCodeGrant doCreateCodeGrant(AuthorizationCodeRegistration reg)
+        throws OAuthServiceException {
+        return AbstractCodeDataProvider.initCodeGrant(reg, grantLifetime);
     }
 
     @Override
@@ -72,18 +78,7 @@ public class DefaultEHCacheCodeDataProvider extends DefaultEHCacheOAuthDataProvi
         return grant;
     }
     
-    protected ServerAuthorizationCodeGrant doCreateCodeGrant(AuthorizationCodeRegistration reg)
-        throws OAuthServiceException {
-        ServerAuthorizationCodeGrant grant = 
-            new ServerAuthorizationCodeGrant(reg.getClient(), getCode(reg), getGrantLifetime(), getIssuedAt());
-        grant.setApprovedScopes(getApprovedScopes(reg));
-        grant.setAudience(reg.getAudience());
-        grant.setClientCodeChallenge(reg.getClientCodeChallenge());
-        grant.setSubject(reg.getSubject());
-        grant.setRedirectUri(reg.getRedirectUri());
-        return grant;
-    }
-
+    
     protected List<String> getApprovedScopes(AuthorizationCodeRegistration reg) {
         return reg.getApprovedScope();
     }
@@ -103,6 +98,11 @@ public class DefaultEHCacheCodeDataProvider extends DefaultEHCacheOAuthDataProvi
     protected long getIssuedAt() {
         return OAuthUtils.getIssuedAt();
     }
+    
+    protected void saveCodeGrant(ServerAuthorizationCodeGrant grant) {
+        putCacheValue(codeGrantCache, grant.getCode(), grant, grant.getExpiresIn());
+    }
+
     
     protected void saveAuthorizationGrant(ServerAuthorizationCodeGrant grant) { 
         putCacheValue(codeGrantCache, grant.getCode(), grant, grant.getExpiresIn());
