@@ -195,6 +195,9 @@ public class DefaultEHCacheOAuthDataProvider extends AbstractOAuthDataProvider
         accessTokenCache = createCache(cacheManager, accessTokenKey);
         refreshTokenCache = createCache(cacheManager, refreshTokenKey);
     }
+    @Override
+    public void close() {
+        cacheManager.shutdown();
+    }
 
-    
 }
