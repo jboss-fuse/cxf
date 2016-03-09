@@ -23,10 +23,13 @@ import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
@@ -41,6 +44,7 @@ import org.apache.cxf.annotations.Provider.Type;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.endpoint.Server;
 import org.apache.cxf.jaxrs.JAXRSServiceFactoryBean;
+import org.apache.cxf.jaxrs.ext.ContextProvider;
 import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.apache.cxf.jaxrs.model.ClassResourceInfo;
 import org.apache.cxf.jaxrs.model.doc.DocumentationProvider;
@@ -48,21 +52,16 @@ import org.apache.cxf.jaxrs.model.doc.JavaDocProvider;
 import org.apache.cxf.jaxrs.provider.ServerProviderFactory;
 import org.apache.cxf.jaxrs.utils.InjectionUtils;
 import org.apache.cxf.jaxrs.utils.JAXRSUtils;
+import org.apache.cxf.message.Message;
 
 import io.swagger.jaxrs.config.BeanConfig;
 import io.swagger.jaxrs.config.DefaultReaderConfig;
 import io.swagger.jaxrs.config.ReaderConfig;
+import io.swagger.jaxrs.config.SwaggerContextService;
 import io.swagger.jaxrs.listing.ApiListingResource;
 
 @Provider(Type.Feature)
 public class Swagger2Feature extends AbstractSwaggerFeature {
-
-    protected boolean dynamicBasePath;
-
-    protected boolean replaceTags;
-
-    protected DocumentationProvider javadocProvider;
-
     private String host;
 
     private String[] schemes;
@@ -72,6 +71,14 @@ public class Swagger2Feature extends AbstractSwaggerFeature {
     private boolean scanAllResources;
 
     private String ignoreRoutes;
+
+    private boolean dynamicBasePath;
+
+    private boolean replaceTags;
+
+    private boolean usePathBasedConfig;
+
+    private DocumentationProvider javadocProvider;
 
     @Override
     protected void addSwaggerResource(Server server) {
@@ -93,11 +100,17 @@ public class Swagger2Feature extends AbstractSwaggerFeature {
         }
         providers.add(new Swagger2Serializers(dynamicBasePath, replaceTags, javadocProvider, cris));
         providers.add(new ReaderConfigFilter());
+
+        if (usePathBasedConfig) {
+            providers.add(new ServletConfigProvider());
+        }
+
         ((ServerProviderFactory) server.getEndpoint().get(
                 ServerProviderFactory.class.getName())).setUserProviders(providers);
 
         BeanConfig beanConfig = new BeanConfig();
         beanConfig.setResourcePackage(getResourcePackage());
+        beanConfig.setUsePathBasedConfig(isUsePathBasedConfig());
         beanConfig.setVersion(getVersion());
         beanConfig.setBasePath(getBasePath());
         beanConfig.setHost(getHost());
@@ -111,6 +124,14 @@ public class Swagger2Feature extends AbstractSwaggerFeature {
         beanConfig.setScan(isScan());
         beanConfig.setPrettyPrint(isPrettyPrint());
         beanConfig.setFilterClass(getFilterClass());
+    }
+
+    public boolean isUsePathBasedConfig() {
+        return usePathBasedConfig;
+    }
+
+    public void setUsePathBasedConfig(boolean usePathBasedConfig) {
+        this.usePathBasedConfig = usePathBasedConfig;
     }
 
     public String getHost() {
@@ -185,6 +206,44 @@ public class Swagger2Feature extends AbstractSwaggerFeature {
         }
     }
 
+
+    @javax.ws.rs.ext.Provider
+    private class ServletConfigProvider implements ContextProvider<ServletConfig> {
+        public ServletConfig createContext(Message message) {
+            final ServletConfig sc = (ServletConfig)message.get("HTTP.CONFIG");
+
+            if (sc != null && sc.getInitParameter(SwaggerContextService.USE_PATH_BASED_CONFIG) == null) {
+                return new ServletConfig() {
+                    @Override
+                    public String getServletName() {
+                        return sc.getServletName();
+                    }
+
+                    @Override
+                    public ServletContext getServletContext() {
+                        return sc.getServletContext();
+                    }
+
+                    @Override
+                    public Enumeration<String> getInitParameterNames() {
+                        return sc.getInitParameterNames();
+                    }
+
+                    @Override
+                    public String getInitParameter(String name) {
+                        if (Objects.equals(SwaggerContextService.USE_PATH_BASED_CONFIG, name)) {
+                            return "true";
+                        } else {
+                            return sc.getInitParameter(name);
+                        }
+                    }
+                };
+            }
+
+            return sc;
+        }
+    }
+
     @PreMatching
     protected static class SwaggerContainerRequestFilter extends ApiListingResource implements ContainerRequestFilter {
 
@@ -202,6 +261,7 @@ public class Swagger2Feature extends AbstractSwaggerFeature {
         @Override
         public void filter(ContainerRequestContext requestContext) throws IOException {
             UriInfo ui = mc.getUriInfo();
+
             List<MediaType> mediaTypes = mc.getHttpHeaders().getAcceptableMediaTypes();
 
             Response response = null;
