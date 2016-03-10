@@ -29,6 +29,7 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletOutputStream;
+import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.cxf.common.logging.LogUtils;
@@ -424,6 +425,18 @@ public class DefaultProtocolInterceptor extends AtmosphereInterceptorAdapter {
 
             public void write(byte[] b) throws IOException {
                 getOut().write(b);
+            }
+
+            @Override
+            public void setWriteListener(WriteListener writeListener) {
+                throw new IllegalStateException(
+                        "Method 'Override' not yet implemented!");
+            }
+
+            @Override
+            public boolean isReady() {
+                throw new IllegalStateException(
+                        "Method 'isReady' not yet implemented!");
             }
         }
 

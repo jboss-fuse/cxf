@@ -21,6 +21,7 @@ package org.apache.cxf.transport.http.netty.server.servlet;
 
 import java.io.IOException;
 
+import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 
 import io.netty.buffer.ByteBuf;
@@ -57,5 +58,25 @@ public class NettyServletInputStream extends ServletInputStream {
         // we need to release the ByteBufInputStream
         byteBuf.release();
     }
-    
+
+    // servlet 3.0+ API
+
+    @Override
+    public boolean isFinished() {
+        throw new IllegalStateException(
+                "Method 'isFinished' not yet implemented!");
+    }
+
+    @Override
+    public boolean isReady() {
+        throw new IllegalStateException(
+                "Method 'isReady' not yet implemented!");
+    }
+
+    @Override
+    public void setReadListener(ReadListener readListener) {
+        throw new IllegalStateException(
+                "Method 'setReadListener' not yet implemented!");
+    }
+
 }

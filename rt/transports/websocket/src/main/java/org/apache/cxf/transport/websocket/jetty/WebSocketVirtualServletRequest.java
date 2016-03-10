@@ -37,6 +37,7 @@ import java.util.logging.Logger;
 
 import javax.servlet.AsyncContext;
 import javax.servlet.DispatcherType;
+import javax.servlet.ReadListener;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -47,6 +48,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpUpgradeHandler;
 import javax.servlet.http.Part;
 
 import org.apache.cxf.common.logging.LogUtils;
@@ -138,6 +140,24 @@ public class WebSocketVirtualServletRequest implements HttpServletRequest {
             @Override
             public int read(byte[] b, int off, int len) throws IOException {
                 return in.read(b, off, len);
+            }
+
+            @Override
+            public boolean isFinished() {
+                throw new IllegalStateException(
+                        "Method 'isFinished' not yet implemented!");
+            }
+
+            @Override
+            public boolean isReady() {
+                throw new IllegalStateException(
+                        "Method 'isReady' not yet implemented!");
+            }
+
+            @Override
+            public void setReadListener(ReadListener readListener) {
+                throw new IllegalStateException(
+                        "Method 'setReadListener' not yet implemented!");
             }
         };
     }
@@ -524,4 +544,24 @@ public class WebSocketVirtualServletRequest implements HttpServletRequest {
     public void logout() throws ServletException {
         LOG.log(Level.FINE, "logout");
     }
+
+    // servlet 3.1 API
+
+    @Override
+    public String changeSessionId() {
+        throw new IllegalStateException(
+                "Method 'changeSessionId' not yet implemented!");
+    }
+
+    @Override
+    public <T extends HttpUpgradeHandler> T upgrade(Class<T> handlerClass) throws IOException, ServletException {
+        throw new IllegalStateException(
+                "Method 'upgrade' not yet implemented!");
+    }
+
+    @Override
+    public long getContentLengthLong() {
+        return getContentLength();
+    }
+
 }

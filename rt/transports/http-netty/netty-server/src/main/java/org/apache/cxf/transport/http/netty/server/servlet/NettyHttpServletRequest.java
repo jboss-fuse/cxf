@@ -36,11 +36,20 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
+import javax.servlet.AsyncContext;
+import javax.servlet.DispatcherType;
 import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpUpgradeHandler;
+import javax.servlet.http.Part;
 
 import org.apache.cxf.transport.http.netty.server.util.Utils;
 import io.netty.channel.ChannelHandlerContext;
@@ -471,5 +480,94 @@ public class NettyHttpServletRequest implements HttpServletRequest {
     public RequestDispatcher getRequestDispatcher(String path) {
         throw new IllegalStateException(
                 "Method 'getRequestDispatcher' not yet implemented!");
+    }
+
+    // servlet 3.0+ API
+
+    @Override
+    public String changeSessionId() {
+        throw new IllegalStateException(
+                "Method 'changeSessionId' not yet implemented!");
+    }
+
+    @Override
+    public boolean authenticate(HttpServletResponse response) throws IOException, ServletException {
+        throw new IllegalStateException(
+                "Method 'authenticate' not yet implemented!");
+    }
+
+    @Override
+    public void login(String username, String password) throws ServletException {
+        throw new IllegalStateException(
+                "Method 'login' not yet implemented!");
+    }
+
+    @Override
+    public void logout() throws ServletException {
+        throw new IllegalStateException(
+                "Method 'logout' not yet implemented!");
+    }
+
+    @Override
+    public Collection<Part> getParts() throws IOException, ServletException {
+        throw new IllegalStateException(
+                "Method 'getParts' not yet implemented!");
+    }
+
+    @Override
+    public Part getPart(String name) throws IOException, ServletException {
+        throw new IllegalStateException(
+                "Method 'getPart' not yet implemented!");
+    }
+
+    @Override
+    public <T extends HttpUpgradeHandler> T upgrade(Class<T> handlerClass) throws IOException, ServletException {
+        throw new IllegalStateException(
+                "Method 'upgrade' not yet implemented!");
+    }
+
+    @Override
+    public long getContentLengthLong() {
+        return getContentLength();
+    }
+
+    @Override
+    public ServletContext getServletContext() {
+        return null;
+    }
+
+    @Override
+    public AsyncContext startAsync() throws IllegalStateException {
+        throw new IllegalStateException(
+                "Method 'startAsync' not yet implemented!");
+    }
+
+    @Override
+    public AsyncContext startAsync(ServletRequest servletRequest, ServletResponse servletResponse)
+            throws IllegalStateException {
+        throw new IllegalStateException(
+                "Method 'startAsync' not yet implemented!");
+    }
+
+    @Override
+    public boolean isAsyncStarted() {
+        return false;
+    }
+
+    @Override
+    public boolean isAsyncSupported() {
+        return false;
+    }
+
+    @Override
+    public AsyncContext getAsyncContext() {
+        throw new IllegalStateException(
+                "Method 'getAsyncContext' not yet implemented!");
+    }
+
+    @Override
+    public DispatcherType getDispatcherType() {
+        throw new IllegalStateException(
+                "Method 'getDispatcherType' not yet implemented!");
     }
 }

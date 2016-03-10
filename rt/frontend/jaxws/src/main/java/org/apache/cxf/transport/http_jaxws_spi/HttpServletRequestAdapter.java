@@ -36,6 +36,7 @@ import java.util.Map;
 
 import javax.servlet.AsyncContext;
 import javax.servlet.DispatcherType;
+import javax.servlet.ReadListener;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -46,6 +47,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpUpgradeHandler;
 import javax.servlet.http.Part;
 import javax.xml.ws.spi.http.HttpContext;
 import javax.xml.ws.spi.http.HttpExchange;
@@ -397,11 +399,28 @@ class HttpServletRequestAdapter implements HttpServletRequest {
     public void logout() throws ServletException {
         throw new UnsupportedOperationException();
     }
-    
-    private static class ServletInputStreamAdapter extends ServletInputStream {
-        
+
+    // servlet-3.1 API
+
+    @Override
+    public String changeSessionId() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T extends HttpUpgradeHandler> T upgrade(Class<T> handlerClass) throws IOException, ServletException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long getContentLengthLong() {
+        return getContentLength();
+    }
+
+    private class ServletInputStreamAdapter extends ServletInputStream {
+
         private InputStream delegate;
-        
+
         ServletInputStreamAdapter(InputStream delegate) {
             this.delegate = delegate;
         }
@@ -409,6 +428,21 @@ class HttpServletRequestAdapter implements HttpServletRequest {
         @Override
         public int read() throws IOException {
             return delegate.read();
+        }
+
+        @Override
+        public boolean isFinished() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean isReady() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void setReadListener(ReadListener readListener) {
+            throw new UnsupportedOperationException();
         }
     }
 }

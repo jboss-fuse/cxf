@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Collection;
 import java.util.Locale;
 
 import javax.servlet.ServletOutputStream;
@@ -48,6 +49,8 @@ public class NettyServletResponse implements HttpServletResponse {
     private PrintWriter writer;
 
     private boolean responseCommited;
+
+    private int status;
 
     public NettyServletResponse(HttpResponse response) {
         this.originalResponse = response;
@@ -87,10 +90,12 @@ public class NettyServletResponse implements HttpServletResponse {
     }
 
     public void sendError(int sc) throws IOException {
+        this.status = sc;
         this.originalResponse.setStatus(HttpResponseStatus.valueOf(sc));
     }
 
     public void sendError(int sc, String msg) throws IOException {
+        this.status = sc;
         this.originalResponse.setStatus(new HttpResponseStatus(sc, msg));
 
     }
@@ -232,4 +237,33 @@ public class NettyServletResponse implements HttpServletResponse {
                 "Method 'setLocale' not yet implemented!");
 
     }
+
+    // servlet 3.0+ API
+
+    @Override
+    public int getStatus() {
+        return status;
+    }
+
+    @Override
+    public String getHeader(String name) {
+        return originalResponse.headers().get(name);
+    }
+
+    @Override
+    public Collection<String> getHeaders(String name) {
+        return originalResponse.headers().getAll(name);
+    }
+
+    @Override
+    public Collection<String> getHeaderNames() {
+        return originalResponse.headers().names();
+    }
+
+    @Override
+    public void setContentLengthLong(long len) {
+        throw new IllegalStateException(
+                "Method 'setContentLengthLong' not yet implemented!");
+    }
+
 }

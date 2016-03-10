@@ -30,6 +30,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletOutputStream;
+import javax.servlet.WriteListener;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
@@ -311,6 +312,14 @@ public class WebSocketVirtualServletResponse implements HttpServletResponse {
         responseHeaders.put(WebSocketUtils.SC_KEY, Integer.toString(sc));
     }
 
+    // servlet 3.1 API
+
+    @Override
+    public void setContentLengthLong(long len) {
+        throw new IllegalStateException(
+                "Method 'setContentLengthLong' not yet implemented!");
+    }
+
     private ServletOutputStream createOutputStream() {
         //REVISIT
         // This output buffering is needed as the server side websocket does
@@ -321,49 +330,65 @@ public class WebSocketVirtualServletResponse implements HttpServletResponse {
         // the things to consider :
         // - provide a size limit if we are use this buffering
         // - add a chunking mode in the cxf websocket's binding.
-        return new ServletOutputStream() {
-            private InternalByteArrayOutputStream buffer = new InternalByteArrayOutputStream();
-
-            @Override
-            public void write(int b) throws IOException {
-                byte[] data = new byte[1];
-                data[0] = (byte)b;
-                write(data, 0, 1);
-            }
-
-            @Override
-            public void write(byte[] data) throws IOException {
-                write(data, 0, data.length);
-            }
-
-            @Override
-            public void write(byte[] data, int offset, int length) throws IOException {
-                if (responseHeaders.get(WebSocketUtils.FLUSHED_KEY) == null) {
-                    // buffer the data until it gets flushed
-                    buffer.write(data, offset, length);
-                } else {
-                    // unbuffered write to the socket
-                    String respid = responseHeaders.get(WebSocketConstants.DEFAULT_RESPONSE_ID_KEY);
-                    byte[] headers = respid != null 
-                        ? WebSocketUtils.buildHeaderLine(WebSocketConstants.DEFAULT_RESPONSE_ID_KEY, respid) : null;
-                    data = WebSocketUtils.buildResponse(headers, data, offset, length);
-                    webSocketHolder.write(data, 0, data.length);
-                }
-            }
-            public void close() throws IOException {
-                if (responseHeaders.get(WebSocketUtils.FLUSHED_KEY) == null) {
-                    byte[] data = WebSocketUtils.buildResponse(responseHeaders, buffer.getBytes(), 0, buffer.size());
-                    webSocketHolder.write(data, 0, data.length);
-                    responseHeaders.put(WebSocketUtils.FLUSHED_KEY, "true");
-                }
-                super.close();
-            }
-        };
+        return new WebSocketServletOutputStream();
     }
 
     private static class InternalByteArrayOutputStream extends ByteArrayOutputStream {
         public byte[] getBytes() {
             return buf;
+        }
+    }
+
+    private class WebSocketServletOutputStream extends ServletOutputStream {
+
+        private InternalByteArrayOutputStream buffer = new InternalByteArrayOutputStream();
+
+        @Override
+        public void write(int b) throws IOException {
+            byte[] data = new byte[1];
+            data[0] = (byte)b;
+            write(data, 0, 1);
+        }
+
+        @Override
+        public void write(byte[] data) throws IOException {
+            write(data, 0, data.length);
+        }
+
+        @Override
+        public void write(byte[] data, int offset, int length) throws IOException {
+            if (responseHeaders.get(WebSocketUtils.FLUSHED_KEY) == null) {
+                // buffer the data until it gets flushed
+                buffer.write(data, offset, length);
+            } else {
+                // unbuffered write to the socket
+                String respid = responseHeaders.get(WebSocketConstants.DEFAULT_RESPONSE_ID_KEY);
+                byte[] headers = respid != null
+                    ? WebSocketUtils.buildHeaderLine(WebSocketConstants.DEFAULT_RESPONSE_ID_KEY, respid) : null;
+                data = WebSocketUtils.buildResponse(headers, data, offset, length);
+                webSocketHolder.write(data, 0, data.length);
+            }
+        }
+
+        public void close() throws IOException {
+            if (responseHeaders.get(WebSocketUtils.FLUSHED_KEY) == null) {
+                byte[] data = WebSocketUtils.buildResponse(responseHeaders, buffer.getBytes(), 0, buffer.size());
+                webSocketHolder.write(data, 0, data.length);
+                responseHeaders.put(WebSocketUtils.FLUSHED_KEY, "true");
+            }
+            super.close();
+        }
+
+        @Override
+        public boolean isReady() {
+            throw new IllegalStateException(
+                    "Method 'isReady' not yet implemented!");
+        }
+
+        @Override
+        public void setWriteListener(WriteListener writeListener) {
+            throw new IllegalStateException(
+                    "Method 'setWriteListener' not yet implemented!");
         }
     }
 }
