@@ -47,10 +47,12 @@ import org.atmosphere.cpr.AtmosphereFramework;
 import org.atmosphere.cpr.AtmosphereInterceptorAdapter;
 import org.atmosphere.cpr.AtmosphereInterceptorWriter;
 import org.atmosphere.cpr.AtmosphereRequest;
+import org.atmosphere.cpr.AtmosphereRequestImpl;
 import org.atmosphere.cpr.AtmosphereResource;
 import org.atmosphere.cpr.AtmosphereResourceEvent;
 import org.atmosphere.cpr.AtmosphereResourceEventListenerAdapter;
 import org.atmosphere.cpr.AtmosphereResponse;
+import org.atmosphere.cpr.AtmosphereResponseImpl;
 import org.atmosphere.cpr.FrameworkConfig;
 
 /**
@@ -257,7 +259,7 @@ public class DefaultProtocolInterceptor extends AtmosphereInterceptorAdapter {
      * @throws IOException
      */
     protected AtmosphereRequest createAtmosphereRequest(AtmosphereRequest r, byte[] data) throws IOException {
-        AtmosphereRequest.Builder b = new AtmosphereRequest.Builder();
+        AtmosphereRequest.Builder b = new AtmosphereRequestImpl.Builder();
         ByteArrayInputStream in = new ByteArrayInputStream(data);
         Map<String, String> hdrs = WebSocketUtils.readHeaders(in);
         String path = hdrs.get(WebSocketUtils.URI_KEY);
@@ -357,7 +359,7 @@ public class DefaultProtocolInterceptor extends AtmosphereInterceptorAdapter {
     }
 
     // a workaround to flush the header data upon close when no write operation occurs  
-    private static class WrappedAtmosphereResponse extends AtmosphereResponse {
+    private class WrappedAtmosphereResponse extends AtmosphereResponseImpl {
         final AtmosphereResponse response;
         ServletOutputStream sout;
         WrappedAtmosphereResponse(AtmosphereResponse resp, AtmosphereRequest req) throws IOException {
