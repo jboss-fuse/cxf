@@ -25,10 +25,9 @@ or even in an OSGi container.
 
 Assuming you have a freshly intalled Apache Karaf-3.x,
 1) Start Karaf and at its console, type(*Note)
-   feature:repo-add cxf 3.0.2
-   feature:install war
-   feature:install cxf-management-web
-   install -s mvn:org.apache.cxf.samples/logbrowser/3.0.2/war
+   features:install war
+   features:install cxf-management-web
+   install -s mvn:org.apache.cxf.samples/logbrowser/3.0.2.redhat-SNAPSHOT/war
 
 2) Open browser and go to:
     http://localhost:8181/cxf-samples-logbrowser/log/browser/LogBrowser.html
