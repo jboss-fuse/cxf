@@ -27,10 +27,10 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.soap.MessageFactory;
-import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
 import javax.xml.soap.SOAPPart;
-import javax.xml.transform.dom.DOMSource;
+import javax.xml.stream.XMLStreamReader;
+import javax.xml.stream.XMLStreamWriter;
 
 import org.w3c.dom.Document;
 
@@ -84,10 +84,11 @@ public abstract class AbstractSecurityTest extends AbstractCXFTest {
      * Creates a {@link SoapMessage} from the contents of a document.
      * @param doc the document containing the SOAP content.
      */
-    protected SoapMessage getSoapMessageForDom(Document doc) throws SOAPException {
+    protected SoapMessage getSoapMessageForDom(Document doc) throws Exception {
         SOAPMessage saajMsg = MessageFactory.newInstance().createMessage();
         SOAPPart part = saajMsg.getSOAPPart();
-        part.setContent(new DOMSource(doc));
+        SAAJStreamWriter writer = new SAAJStreamWriter(part);
+        StaxUtils.copy(doc, writer);
         saajMsg.saveChanges();
 
         // Hack to create the context map
