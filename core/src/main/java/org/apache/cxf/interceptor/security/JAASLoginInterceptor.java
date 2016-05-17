@@ -106,6 +106,8 @@ public class JAASLoginInterceptor extends AbstractPhaseInterceptor<Message> {
 
         String name = null;
         String password = null;
+        String nonce = null;
+        String createdTime = null;
         
         AuthorizationPolicy policy = message.get(AuthorizationPolicy.class);
         if (policy != null) {
@@ -118,6 +120,10 @@ public class JAASLoginInterceptor extends AbstractPhaseInterceptor<Message> {
                 UsernameToken ut = (UsernameToken)token;
                 name = ut.getName();
                 password = ut.getPassword();
+                if (ut.getPasswordType().endsWith("PasswordDigest")) {
+                    nonce = ut.getNonce();
+                    createdTime = ut.getCreatedTime();
+                }
             }
         }
 
@@ -126,7 +132,7 @@ public class JAASLoginInterceptor extends AbstractPhaseInterceptor<Message> {
         }
 
         try {
-            CallbackHandler handler = getCallbackHandler(name, password);  
+            CallbackHandler handler = getCallbackHandler(name, password, nonce, createdTime);  
             LoginContext ctx = new LoginContext(getContextName(), null, handler, loginConfig);  
             
             ctx.login();
@@ -161,8 +167,12 @@ public class JAASLoginInterceptor extends AbstractPhaseInterceptor<Message> {
         }
     }
 
-    protected CallbackHandler getCallbackHandler(String name, String password) {
-        return new NamePasswordCallbackHandler(name, password);
+    protected CallbackHandler getCallbackHandler(String name, String password, String nonce, String createdTime) {
+        if (nonce != null && createdTime != null) {
+            return new NameDigestPasswordCallbackHandler(name, password, nonce, createdTime);
+        } else {
+            return new NamePasswordCallbackHandler(name, password);
+        }
     }
     
     protected SecurityContext createSecurityContext(String name, Subject subject) {
