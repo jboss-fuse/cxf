@@ -29,6 +29,8 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.xml.namespace.QName;
+import javax.xml.soap.MessageFactory;
+import javax.xml.soap.SOAPMessage;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.ws.BindingProvider;
@@ -80,6 +82,8 @@ public class SecurityPolicyTest extends AbstractBusClientServerTestBase  {
             + PORT + "/SecPolTestSignThenEncrypt";
     public static final String POLICY_SIGNENC_PROVIDER_ADDRESS 
         = "http://localhost:" + PORT + "/SecPolTestSignThenEncryptProvider";
+    public static final String POLICY_FAULT_SIGNENC_PROVIDER_ADDRESS 
+    = "http://localhost:" + PORT + "/SecPolTestFaultSignThenEncryptProvider";
     public static final String POLICY_SIGN_ADDRESS = "http://localhost:" + PORT + "/SecPolTestSign";
     public static final String POLICY_XPATH_ADDRESS = "http://localhost:" + PORT + "/SecPolTestXPath";
     public static final String POLICY_SIGNONLY_ADDRESS = "http://localhost:" + PORT + "/SecPolTestSignedOnly";
@@ -161,6 +165,12 @@ public class SecurityPolicyTest extends AbstractBusClientServerTestBase  {
         
         ep = (EndpointImpl)Endpoint.publish(POLICY_SIGNENC_PROVIDER_ADDRESS,
                                             new DoubleItProvider());
+        
+        ei = ep.getServer().getEndpoint().getEndpointInfo(); 
+        setCryptoProperties(ei, "bob.properties", "alice.properties");
+        
+        ep = (EndpointImpl)Endpoint.publish(POLICY_FAULT_SIGNENC_PROVIDER_ADDRESS,
+                                            new DoubleItFaultProvider());
         
         ei = ep.getServer().getEndpoint().getEndpointInfo(); 
         setCryptoProperties(ei, "bob.properties", "alice.properties");
@@ -469,6 +479,28 @@ public class SecurityPolicyTest extends AbstractBusClientServerTestBase  {
         
     }
     
+    @WebServiceProvider(targetNamespace = "http://www.example.org/contract/DoubleIt",
+                        portName = "DoubleItFaultPortSignThenEncrypt",
+                        serviceName = "DoubleItService",
+                        wsdlLocation = "classpath:/org/apache/cxf/systest/ws/security/DoubleIt.wsdl")
+    @ServiceMode(value = Mode.MESSAGE)
+    public static class DoubleItFaultProvider implements Provider<SOAPMessage> {
+
+        public SOAPMessage invoke(SOAPMessage request) {
+            try {
+                MessageFactory messageFactory = MessageFactory.newInstance();
+                SOAPMessage msg = messageFactory.createMessage();
+                msg.getSOAPBody().addFault(new QName("http://schemas.xmlsoap.org/soap/envelope/", "Server"),
+                                           "Foo");
+                return msg;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+    }
+
     @Test
     public void testCXF3041() throws Exception {
         SpringBusFactory bf = new SpringBusFactory();
