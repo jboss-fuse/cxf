@@ -666,4 +666,39 @@ public class SecurityPolicyTest extends AbstractBusClientServerTestBase  {
         epBus.shutdown(true);
         bus.shutdown(true);
     }
+    
+    @Test
+    public void testFault() throws Exception {
+        SpringBusFactory bf = new SpringBusFactory();
+
+        URL busFile = SecurityPolicyTest.class.getResource("https_config_client.xml");
+        Bus bus = bf.createBus(busFile.toString());
+        SpringBusFactory.setDefaultBus(bus);
+        SpringBusFactory.setThreadDefaultBus(bus);
+        
+        URL wsdl = SecurityPolicyTest.class.getResource("DoubleIt.wsdl");
+        Service service = Service.create(wsdl, SERVICE_QNAME);
+        
+        QName portQName = new QName(NAMESPACE, "DoubleItFaultPortSignThenEncrypt");
+        DoubleItPortType pt = service.getPort(portQName, DoubleItPortType.class);
+        updateAddressPort(pt, PORT);
+        ((BindingProvider)pt).getRequestContext().put(SecurityConstants.CALLBACK_HANDLER, 
+                                                      new KeystorePasswordCallback());
+        ((BindingProvider)pt).getRequestContext().put(SecurityConstants.SIGNATURE_PROPERTIES,
+                                                      "alice.properties");
+        ((BindingProvider)pt).getRequestContext().put(SecurityConstants.ENCRYPT_PROPERTIES, 
+                                                      "bob.properties");
+        
+        // DOM
+        try {
+            pt.doubleIt(5);
+            fail("SOAPFaultException expected!");
+        } catch (SOAPFaultException e) {
+            assertEquals("Foo", e.getFault().getFaultString());
+        } finally {
+            ((java.io.Closeable)pt).close();
+            bus.shutdown(true);
+        }
+    }
+    
 }
