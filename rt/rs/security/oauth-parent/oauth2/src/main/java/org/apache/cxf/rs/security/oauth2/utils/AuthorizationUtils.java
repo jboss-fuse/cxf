@@ -89,6 +89,10 @@ public final class AuthorizationUtils {
     }
     
     public static void throwAuthorizationFailure(Set<String> challenges, String realm) {
+        throwAuthorizationFailure(challenges, realm, null);
+    }
+
+    public static void throwAuthorizationFailure(Set<String> challenges, String realm, Throwable cause) {
         ResponseBuilder rb = JAXRSUtils.toResponseBuilder(401);
         
         StringBuilder sb = new StringBuilder();
@@ -107,8 +111,12 @@ public final class AuthorizationUtils {
             }
             rb.header(HttpHeaders.WWW_AUTHENTICATE, sb.toString());
         }
-        Response r = rb.build();
-        throw ExceptionUtils.toNotAuthorizedException(null, r);
+        Response r = null;
+        if (cause != null) {
+            r = rb.entity(cause.getMessage()).build(); 
+        } else {
+            r = rb.build();
+        }
+        throw ExceptionUtils.toNotAuthorizedException(cause, r);
     }
-
 }
