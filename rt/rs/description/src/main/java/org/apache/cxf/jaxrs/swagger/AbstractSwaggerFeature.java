@@ -66,13 +66,13 @@ public abstract class AbstractSwaggerFeature extends AbstractFeature {
         if (!activateOnlyIfJaxrsSupported || SWAGGER_JAXRS_AVAILABLE) {
             calculateDefaultResourcePackage(server);
             calculateDefaultBasePath(server);
-            addSwaggerResource(server);
+            addSwaggerResource(server, bus);
 
             initializeProvider(server.getEndpoint(), bus);
         }
     }
 
-    protected abstract void addSwaggerResource(Server server);
+    protected abstract void addSwaggerResource(Server server, Bus bus);
 
     protected abstract void setBasePathByAddress(String address);
 

@@ -41,6 +41,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.cxf.Bus;
 import org.apache.cxf.annotations.Provider;
 import org.apache.cxf.annotations.Provider.Type;
 import org.apache.cxf.common.util.StringUtils;
@@ -87,17 +88,18 @@ public class Swagger2Feature extends AbstractSwaggerFeature {
     protected void addSwaggerResource(Server server, Bus bus) {
         JAXRSServiceFactoryBean sfb =
             (JAXRSServiceFactoryBean) server.getEndpoint().get(JAXRSServiceFactoryBean.class.getName());
+        ApplicationInfo appInfo = null;
         if (!isScan()) {
             ServerProviderFactory factory =
                 (ServerProviderFactory)server.getEndpoint().get(ServerProviderFactory.class.getName());
-            ApplicationInfo applicationInfo = factory.getApplicationProvider();
-            if (applicationInfo == null) {
-                Set<Class<?>> serviceClasses = new HashSet<Class<?>>();
+            appInfo = factory.getApplicationProvider();
+            if (appInfo == null) {
+                Set<Class<?>> serviceClasses = new HashSet<>();
                 for (ClassResourceInfo cri : sfb.getClassResourceInfo()) {
                     serviceClasses.add(cri.getServiceClass());
                 }
-                applicationInfo = new ApplicationInfo(new DefaultApplication(serviceClasses), bus);
-                server.getEndpoint().put(Application.class.getName(), applicationInfo);
+                appInfo = new ApplicationInfo(new DefaultApplication(serviceClasses), bus);
+                server.getEndpoint().put(Application.class.getName(), appInfo);
             }
         }
 
@@ -124,8 +126,9 @@ public class Swagger2Feature extends AbstractSwaggerFeature {
 
         ((ServerProviderFactory) server.getEndpoint().get(
                 ServerProviderFactory.class.getName())).setUserProviders(providers);
-
-        BeanConfig beanConfig = new BeanConfig();
+        BeanConfig beanConfig = appInfo == null
+            ? new BeanConfig()
+            : new ApplicationBeanConfig(appInfo.getProvider());
         beanConfig.setResourcePackage(getResourcePackage());
         beanConfig.setUsePathBasedConfig(isUsePathBasedConfig());
         beanConfig.setVersion(getVersion());
@@ -331,6 +334,17 @@ public class Swagger2Feature extends AbstractSwaggerFeature {
                 rc.setIgnoredRoutes(routes);
             }
             mc.getServletContext().setAttribute(ReaderConfig.class.getName(), rc);
+        }
+    }
+
+    protected static class DefaultApplication extends Application {
+        Set<Class<?>> serviceClasses;
+        DefaultApplication(Set<Class<?>> serviceClasses) {
+            this.serviceClasses = serviceClasses;
+        }
+        @Override
+        public Set<Class<?>> getClasses() {
+            return serviceClasses;
         }
     }
 }
