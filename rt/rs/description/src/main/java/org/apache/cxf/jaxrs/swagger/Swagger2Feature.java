@@ -85,6 +85,12 @@ public class Swagger2Feature extends AbstractSwaggerFeature {
     private DocumentationProvider javadocProvider;
 
     @Override
+    protected void calculateDefaultBasePath(Server server) {
+        dynamicBasePath = true;
+        super.calculateDefaultBasePath(server);
+    }
+
+    @Override
     protected void addSwaggerResource(Server server, Bus bus) {
         JAXRSServiceFactoryBean sfb =
             (JAXRSServiceFactoryBean) server.getEndpoint().get(JAXRSServiceFactoryBean.class.getName());
@@ -117,7 +123,8 @@ public class Swagger2Feature extends AbstractSwaggerFeature {
                 }
             }
         }
-        providers.add(new Swagger2Serializers(dynamicBasePath, replaceTags, javadocProvider, cris));
+        Swagger2Serializers s2s = new Swagger2Serializers(dynamicBasePath, replaceTags, javadocProvider, cris);
+        providers.add(s2s);
         providers.add(new ReaderConfigFilter());
 
         if (usePathBasedConfig) {
@@ -144,6 +151,8 @@ public class Swagger2Feature extends AbstractSwaggerFeature {
         beanConfig.setScan(isScan());
         beanConfig.setPrettyPrint(isPrettyPrint());
         beanConfig.setFilterClass(getFilterClass());
+
+        s2s.setBeanConfig(beanConfig);
     }
 
     public boolean isUsePathBasedConfig() {
