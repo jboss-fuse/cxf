@@ -20,7 +20,7 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf</artifactId>
-        <version>3.0.2.redhat-SNAPSHOT</version>
+        <version>3.0.4.redhat-621161</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>cxf-parent</artifactId>
@@ -181,7 +181,7 @@
         <cxf.aries.version>1.0.0</cxf.aries.version>
         <cxf.aries.version.range>[1.0,2)</cxf.aries.version.range>
         <cxf.osgi.version>4.2.0</cxf.osgi.version>
-        <cxf.karaf.version>2.4.0</cxf.karaf.version>
+        <cxf.karaf.version>2.4.0.redhat-621161</cxf.karaf.version>
         <cxf.pax.logging.version>1.6.0</cxf.pax.logging.version>
         <cxf.pax.exam.version>3.4.0</cxf.pax.exam.version>
         <cxf.felix.framework.version>2.0.5</cxf.felix.framework.version>
