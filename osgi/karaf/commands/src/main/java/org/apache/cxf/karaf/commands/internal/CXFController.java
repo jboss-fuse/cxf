@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.common.logging.LogUtils;
-import org.apache.cxf.karaf.commands.CXFController;
+import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.ConfigurationAdmin;
@@ -35,15 +35,14 @@ import org.osgi.service.cm.ConfigurationAdmin;
 
 /**
  */
-public class CXFControllerImpl implements CXFController {
-    private static final Logger LOG = LogUtils.getL7dLogger(CXFControllerImpl.class);
+public class CXFController {
+    private static final Logger LOG = LogUtils.getL7dLogger(CXFController.class);
 
+    @Reference
     private BundleContext bundleContext;
-    private ConfigurationAdmin configAdmin;
 
-    public void setBundleContext(BundleContext bundleContext) {
-        this.bundleContext = bundleContext;
-    }
+    @Reference
+    private ConfigurationAdmin configAdmin;
 
     public List<Bus> getBusses() {
         List<Bus> busses = new ArrayList<Bus>();
@@ -88,10 +87,8 @@ public class CXFControllerImpl implements CXFController {
         return configAdmin;
     }
 
-    public void setConfigAdmin(ConfigurationAdmin configAdmin) {
-        this.configAdmin = configAdmin;
+    public BundleContext getBundleContext() {
+        return bundleContext;
     }
-
-
 
 }
