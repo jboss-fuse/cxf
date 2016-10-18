@@ -50,6 +50,11 @@ public final class BaseUrlHelper {
             sb.append(request.getContextPath()).append(request.getServletPath());
             
             reqPrefix = sb.toString();
+        } else {
+            int matrixParamIndex = reqPrefix.indexOf(";");
+            if (matrixParamIndex > 0) {
+                reqPrefix = reqPrefix.substring(0, matrixParamIndex);
+            }
         }
         return reqPrefix;
     }
