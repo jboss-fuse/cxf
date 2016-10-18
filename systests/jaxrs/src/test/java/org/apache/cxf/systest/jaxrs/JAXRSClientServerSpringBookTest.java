@@ -130,6 +130,17 @@ public class JAXRSClientServerSpringBookTest extends AbstractBusClientServerTest
         assertFalse(s.contains(";a=b"));
         assertTrue(s.contains("<a href=\"http://localhost:" + PORT + "/the/"));
     }
+    //TODO: Uncomment test once jetty9 version has been upgraded > 9.3.5.v20151012
+//    @Test
+//    public void testGetServicesPageWithServletPatternMatchOnly2() throws Exception {
+//        final String address = "http://localhost:" + PORT + "/services;a=b/list;a=b;a=b"; 
+//        WebClient wc = WebClient.create(address).accept("text/*");
+//        String s = wc.get(String.class);
+//        assertTrue(s.contains("href=\"/services/list/?stylesheet=1\""));
+//        assertTrue(s.contains("<title>CXF - Service list</title>"));
+//        assertFalse(s.contains(";a=b"));
+//        assertTrue(s.contains("<a href=\"http://localhost:" + PORT + "/services/list/"));
+//    }
     
     @Test
     public void testEchoBookForm() throws Exception {
