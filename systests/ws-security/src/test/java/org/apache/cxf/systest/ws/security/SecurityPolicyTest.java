@@ -39,6 +39,7 @@ import javax.xml.ws.Service;
 import javax.xml.ws.Service.Mode;
 import javax.xml.ws.ServiceMode;
 import javax.xml.ws.WebServiceProvider;
+import javax.xml.ws.soap.SOAPFaultException;
 import javax.xml.xpath.XPathConstants;
 
 import org.w3c.dom.Document;
