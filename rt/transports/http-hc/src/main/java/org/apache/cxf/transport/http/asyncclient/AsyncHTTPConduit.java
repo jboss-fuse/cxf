@@ -38,6 +38,8 @@ import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 
@@ -53,11 +55,13 @@ import org.apache.cxf.Bus;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.configuration.jsse.SSLUtils;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
+import org.apache.cxf.endpoint.ClientCallback;
 import org.apache.cxf.helpers.HttpHeaderHelper;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.io.CacheAndWriteOutputStream;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.io.CopyingOutputStream;
+import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageUtils;
 import org.apache.cxf.service.model.EndpointInfo;
@@ -106,6 +110,7 @@ public class AsyncHTTPConduit extends URLConnectionHTTPConduit {
     volatile SSLContext sslContext;
     volatile SSLSession session;
     volatile CloseableHttpAsyncClient client;
+    volatile Timer timer;
 
     public AsyncHTTPConduit(Bus b,
                             EndpointInfo ei, 
@@ -113,6 +118,7 @@ public class AsyncHTTPConduit extends URLConnectionHTTPConduit {
                             AsyncHTTPConduitFactory factory) throws IOException {
         super(b, ei, t);
         this.factory = factory;
+        this.timer = new Timer();
     }
 
     public synchronized CloseableHttpAsyncClient getHttpAsyncClient() throws IOException {
@@ -641,6 +647,7 @@ public class AsyncHTTPConduit extends URLConnectionHTTPConduit {
         
         protected void handleResponseAsync() throws IOException {
             isAsync = true;
+            timer.schedule(new CheckReceiveTimeoutForAsync(), csPolicy.getReceiveTimeout());
         }
         
         protected void closeInputStream() throws IOException {
@@ -852,6 +859,23 @@ public class AsyncHTTPConduit extends URLConnectionHTTPConduit {
                 sessionLock.notifyAll();
             }
         }
+        
+        class CheckReceiveTimeoutForAsync extends TimerTask {
+            public void run() {
+                if (httpResponse == null) {
+                    outbuf.shutdown();
+                    inbuf.shutdown();
+                    if (exception != null) {
+                        throw new RuntimeException(exception);
+                    }
+
+                    Exchange exchange = outMessage.getExchange();
+                    ClientCallback cc = exchange.get(ClientCallback.class);
+                    cc.handleException(null, new SocketTimeoutException());
+                }
+            }
+        }
+        
 
     }
 
