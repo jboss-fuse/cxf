@@ -131,6 +131,21 @@ public class AsyncHTTPConduitTest extends AbstractBusClientServerTestBase {
             //expected!!!
         }
     }
+    
+    @Test
+    public void testTimeoutAsync() throws Exception {
+        updateAddressPort(g, PORT);
+        HTTPConduit c = (HTTPConduit)ClientProxy.getClient(g).getConduit();
+        c.getClient().setReceiveTimeout(3000);
+        try {
+            Response<GreetMeLaterResponse> future = g.greetMeLaterAsync(-5000L);
+            future.get();
+            fail();
+        } catch (Exception ex) {
+            //expected!!!
+        }
+    }
+
     @Test
     public void testConnectIssue() throws Exception {
         updateAddressPort(g, PORT_INV);
