@@ -132,7 +132,7 @@ public class AsyncHTTPConduitFactory implements HTTPConduitFactory {
     int soTimeout = IOReactorConfig.DEFAULT.getSoTimeout();
     boolean soKeepalive = IOReactorConfig.DEFAULT.isSoKeepalive();
     boolean tcpNoDelay = true;
-    Timer timer = new Timer();
+    private Timer timer = new Timer();
     
 
     AsyncHTTPConduitFactory() {
@@ -149,7 +149,11 @@ public class AsyncHTTPConduitFactory implements HTTPConduitFactory {
         addListener(b);
         setProperties(b.getProperties());
     }
-    
+
+    Timer getTimer() {
+        return timer;
+    }
+ 
     public UseAsyncPolicy getUseAsyncPolicy() {
         return policy;
     }
