@@ -27,7 +27,7 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-runtime-javascript</artifactId>
-        <version>3.0.4.redhat-621159</version>
+        <version>3.0.4.redhat-621159-02</version>
     </parent>
     <dependencies>
         <dependency>
