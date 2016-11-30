@@ -21,6 +21,7 @@ package org.apache.cxf.transport.http.asyncclient;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Timer;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.cxf.Bus;
@@ -131,6 +132,8 @@ public class AsyncHTTPConduitFactory implements HTTPConduitFactory {
     int soTimeout = IOReactorConfig.DEFAULT.getSoTimeout();
     boolean soKeepalive = IOReactorConfig.DEFAULT.isSoKeepalive();
     boolean tcpNoDelay = true;
+    private Timer timer = new Timer();
+    
 
     AsyncHTTPConduitFactory() {
         super();
@@ -146,7 +149,11 @@ public class AsyncHTTPConduitFactory implements HTTPConduitFactory {
         addListener(b);
         setProperties(b.getProperties());
     }
-    
+
+    Timer getTimer() {
+        return timer;
+    }
+ 
     public UseAsyncPolicy getUseAsyncPolicy() {
         return policy;
     }
