@@ -28,7 +28,7 @@
     <parent>
         <groupId>org.apache.cxf.services</groupId>
         <artifactId>cxf-services</artifactId>
-        <version>3.0.4.redhat-621159</version>
+        <version>3.0.4.redhat-621159-03</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modules>
