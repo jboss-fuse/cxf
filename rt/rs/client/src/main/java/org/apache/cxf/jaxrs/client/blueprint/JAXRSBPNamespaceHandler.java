@@ -35,12 +35,17 @@ import org.osgi.service.blueprint.reflect.Metadata;
 @Namespaces("http://cxf.apache.org/blueprint/jaxrs-client")
 public class JAXRSBPNamespaceHandler implements NamespaceHandler {
     private BlueprintContainer blueprintContainer;
-    
+    private org.apache.cxf.jaxrs.blueprint.JAXRSBPNamespaceHandler jaxRSBPNamespaceHandler;
+
     public JAXRSBPNamespaceHandler() {
+        jaxRSBPNamespaceHandler = new org.apache.cxf.jaxrs.blueprint.JAXRSBPNamespaceHandler();
     }
     
     public URL getSchemaLocation(String namespace) {
-        return getClass().getClassLoader().getResource("schemas/blueprint/jaxrs-client.xsd");
+        if ("http://cxf.apache.org/blueprint/jaxrs-client".equals(namespace)) {
+            return getClass().getClassLoader().getResource("schemas/blueprint/jaxrs-client.xsd");
+        }
+        return jaxRSBPNamespaceHandler.getSchemaLocation(namespace);
     }
 
 
