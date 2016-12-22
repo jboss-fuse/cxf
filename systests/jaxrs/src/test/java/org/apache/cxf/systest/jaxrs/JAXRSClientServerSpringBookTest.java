@@ -81,7 +81,6 @@ public class JAXRSClientServerSpringBookTest extends AbstractBusClientServerTest
     public void testGetGenericBook() throws Exception {
         String baseAddress = "http://localhost:" + PORT + "/the/thebooks8/books"; 
         WebClient wc = WebClient.create(baseAddress);
-        WebClient.getConfig(wc).getHttpConduit().getClient().setReceiveTimeout(10000000);
         Long id = wc.type("application/xml").accept("text/plain").post(new Book("CXF", 1L), Long.class);
         assertEquals(new Long(1), id);
         Book book = wc.replaceHeader("Accept", "application/xml").query("id", 1L).get(Book.class);
@@ -93,6 +92,93 @@ public class JAXRSClientServerSpringBookTest extends AbstractBusClientServerTest
         final String address = "http://localhost:" + PORT + "/the/thebooks/bookstore/books/webex"; 
         doTestGetBookWebEx(address);
         
+    }
+    
+    @Test
+    public void testGetBookText() throws Exception {
+        final String address = "http://localhost:" + PORT + "/the/thebooks/bookstore/books/text"; 
+        WebClient wc = WebClient.create(address).accept("text/*");
+        WebClient.getConfig(wc).getHttpConduit().getClient().setReceiveTimeout(10000000);
+        assertEquals(406, wc.get().getStatus());
+        
+    }
+    
+    @Test
+    public void testGetServicesPageNotFound() throws Exception {
+        final String address = "http://localhost:" + PORT + "/the/services;a=b"; 
+        WebClient wc = WebClient.create(address).accept("text/*");
+        WebClient.getConfig(wc).getHttpConduit().getClient().setReceiveTimeout(10000000);
+        assertEquals(404, wc.get().getStatus());
+    }
+    @Test
+    public void testGetServicesPage() throws Exception {
+        final String address = "http://localhost:" + PORT + "/the/services"; 
+        WebClient wc = WebClient.create(address).accept("text/*");
+        String s = wc.get(String.class);
+        assertTrue(s.contains("href=\"/the/services/?stylesheet=1\""));
+        assertTrue(s.contains("<title>CXF - Service list</title>"));
+        assertTrue(s.contains("<a href=\"http://localhost:" + PORT + "/the/"));
+    }
+    @Test
+    public void testGetServicesPageWithServletPatternMatchOnly() throws Exception {
+        final String address = "http://localhost:" + PORT + "/the/;a=b"; 
+        WebClient wc = WebClient.create(address).accept("text/*");
+        String s = wc.get(String.class);
+        assertTrue(s.contains("href=\"/the/?stylesheet=1\""));
+        assertTrue(s.contains("<title>CXF - Service list</title>"));
+        assertFalse(s.contains(";a=b"));
+        assertTrue(s.contains("<a href=\"http://localhost:" + PORT + "/the/"));
+    }
+    @Test
+    public void testGetServicesPageWithServletPatternMatchOnly2() throws Exception {
+        final String address = "http://localhost:" + PORT + "/services;a=b;/list;a=b/;a=b"; 
+        WebClient wc = WebClient.create(address).accept("text/*");
+        String s = wc.get(String.class);
+        assertTrue(s.contains("href=\"/services/list/?stylesheet=1\""));
+        assertTrue(s.contains("<title>CXF - Service list</title>"));
+        assertFalse(s.contains(";a=b"));
+        assertTrue(s.contains("<a href=\"http://localhost:" + PORT + "/services/list/"));
+    }
+    
+    @Test
+    public void testEchoBookForm() throws Exception {
+        String address = "http://localhost:" + PORT + "/bus/thebooksform/bookform";
+        doTestEchoBookForm(address);
+    }
+    @Test
+    public void testEchoBookForm2() throws Exception {
+        String address = "http://localhost:" + PORT + "/bus/thebooksform/bookform2";
+        doTestEchoBookForm(address);
+    }
+    @Test
+    public void testEchoBookForm3() throws Exception {
+        String address = "http://localhost:" + PORT + "/bus/thebooksform/bookform3";
+        doTestEchoBookForm(address);
+    }
+    @Test
+    public void testEchoBookForm4() throws Exception {
+        String address = "http://localhost:" + PORT + "/bus/thebooksform/bookform4";
+        doTestEchoBookForm(address);
+    }
+    private void doTestEchoBookForm(String address) throws Exception {
+        WebClient wc = WebClient.create(address);
+        WebClient.getConfig(wc).getHttpConduit().getClient().setReceiveTimeout(10000000L);
+        
+        Book b = 
+            wc.form(new Form().param("name", "CXFForm").param("id", "125"))
+                .readEntity(Book.class);
+        assertEquals("CXFForm", b.getName());
+        assertEquals(125L, b.getId());
+    }
+    @Test
+    public void testEchoBookFormXml() throws Exception {
+        String address = "http://localhost:" + PORT + "/bus/thebooksform/bookform";
+        WebClient wc = WebClient.create(address);
+        Book b = 
+            wc.type("application/xml").post(new Book("CXFFormXml", 125L))
+                .readEntity(Book.class);
+        assertEquals("CXFFormXml", b.getName());
+        assertEquals(125L, b.getId());
     }
     
     @Test
