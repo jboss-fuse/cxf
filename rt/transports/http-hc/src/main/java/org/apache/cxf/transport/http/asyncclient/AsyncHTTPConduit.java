@@ -38,8 +38,8 @@ import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.TimerTask;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import javax.net.ssl.HostnameVerifier;
@@ -644,7 +644,9 @@ public class AsyncHTTPConduit extends URLConnectionHTTPConduit {
         
         protected void handleResponseAsync() throws IOException {
             isAsync = true;
-            factory.getTimer().schedule(new CheckReceiveTimeoutForAsync(), csPolicy.getReceiveTimeout());
+            factory.getTimer().schedule(
+                                        new CheckReceiveTimeoutForAsync(), 
+                                        csPolicy.getReceiveTimeout(), TimeUnit.MILLISECONDS);
         }
         
         protected void closeInputStream() throws IOException {
@@ -857,12 +859,13 @@ public class AsyncHTTPConduit extends URLConnectionHTTPConduit {
             }
         }
         
-        class CheckReceiveTimeoutForAsync extends TimerTask {
+        class CheckReceiveTimeoutForAsync implements Runnable {
             public void run() {
                 if (httpResponse == null) {
                     outbuf.shutdown();
                     inbuf.shutdown();
                     if (exception != null) {
+                        LOG.log(Level.WARNING, "Exception on Async Response", exception);
                         throw new RuntimeException(exception);
                     }
 
