@@ -795,8 +795,11 @@ public class ClientImpl
                         if (resCtx != null) {
                             responseContext.put(Thread.currentThread(), resCtx);
                         }
-                        callback.handleException(resCtx, error);
-
+                        // remove callback so that it won't be invoked twice
+                        callback = message.getExchange().remove(ClientCallback.class);
+                        if (callback != null) {
+                            callback.handleException(resCtx, error);
+                        }
                     }
                 } else {
                     chain.doIntercept(message);
@@ -805,8 +808,13 @@ public class ClientImpl
             }
 
             callback = message.getExchange().get(ClientCallback.class);
+            if (callback == null || isPartialResponse(message)) {
+                return;
+            }
 
-            if (callback != null && !isPartialResponse(message)) {
+            // remove callback so that it won't be invoked twice
+            callback = message.getExchange().remove(ClientCallback.class);
+            if (callback != null) {
                 message.getExchange().setInMessage(message);
                 Map<String, Object> resCtx = CastUtils.cast((Map<?, ?>)message
                                                                 .getExchange()
