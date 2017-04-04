@@ -228,6 +228,7 @@ public class AsyncHTTPConduitTest extends AbstractBusClientServerTestBase {
                     }
                 }).get();
             } catch (Exception e) {
+                // Ignore
             }
         }
         Thread.sleep(1000);
