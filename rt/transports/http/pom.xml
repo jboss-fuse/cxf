@@ -200,7 +200,7 @@
                             <goal>wget</goal>
                         </goals>
                         <configuration>
-                            <url>${publicsuffix-tld-names-url}</url>
+                            <url>https://raw.githubusercontent.com/publicsuffix/list/master/public_suffix_list.dat</url>
                             <outputDirectory>${project.build.outputDirectory}/mozilla</outputDirectory>
                             <outputFileName>public-suffix-list.txt</outputFileName>
                         </configuration>
