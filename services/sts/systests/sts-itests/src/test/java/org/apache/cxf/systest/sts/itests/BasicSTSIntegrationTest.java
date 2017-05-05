@@ -41,7 +41,7 @@ public class BasicSTSIntegrationTest {
 
     @Configuration
     public Option[] getConfig() {
-        String karafVersion = System.getProperty("karaf.version", "4.0.6");
+        String karafVersion = System.getProperty("karaf.version", "4.1.1");
         String port = TestUtil.getPortNumber(BasicSTSIntegrationTest.class);
         System.setProperty("BasicSTSIntegrationTest.PORT", port);
         String localRepository = System.getProperty("localRepository");

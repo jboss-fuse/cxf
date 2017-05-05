@@ -60,6 +60,7 @@ public class NoAriesBlueprintTest extends OSGiTestSupport {
                     .useOptions(systemProperty("org.ops4j.pax.url.mvn.localRepository").value(localRepo)),
                 mvnBundle("org.apache.ws.xmlschema", "xmlschema-core"),
                 mvnBundle("org.apache.servicemix.bundles", "org.apache.servicemix.bundles.wsdl4j"),
+                mvnBundle("org.apache.felix", "org.apache.felix.configadmin"),
                 mvnBundle("org.apache.cxf", "cxf-core"),
                 mvnBundle("org.apache.cxf", "cxf-rt-wsdl"),
                 mvnBundle("org.apache.cxf", "cxf-rt-databinding-jaxb"),

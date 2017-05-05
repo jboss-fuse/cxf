@@ -78,6 +78,16 @@
             <type>xml</type>
             <version>${cxf.activemq.version}</version>
             <classifier>features</classifier>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>org.osgi.core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>org.apache.felix.framework</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         
         <dependency>

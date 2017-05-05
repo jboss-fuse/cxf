@@ -80,8 +80,7 @@ public class BundleDelegatingClassLoader extends ClassLoader {
     protected Enumeration<URL> findResources(final String name) throws IOException {
         Enumeration<URL> urls;
         try {
-            urls =  AccessController.doPrivileged(new PrivilegedExceptionAction<Enumeration<URL>>() {
-                @SuppressWarnings("unchecked")
+            urls = AccessController.doPrivileged(new PrivilegedExceptionAction<Enumeration<URL>>() {
                 public Enumeration<URL> run() throws IOException {
                     return bundle.getResources(name);
                 }
