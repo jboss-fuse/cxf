@@ -285,7 +285,7 @@ public class JAXRSClientServerWebSocketTest extends AbstractBusClientServerTestB
             List<WebSocketTestClient.Response> received = wsclient.getReceivedResponses();
             assertEquals(1, received.size());
             WebSocketTestClient.Response resp = received.get(0);
-            assertEquals(400, resp.getStatusCode());
+            assertEquals(404, resp.getStatusCode());
         } finally {
             wsclient.close();
         }

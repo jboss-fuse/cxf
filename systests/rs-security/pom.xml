@@ -33,6 +33,7 @@
     <properties>
         <oauth.version>20100527</oauth.version>
         <cxf.module.name>org.apache.cxf.systests.security</cxf.module.name>
+        <cxf.surefire.fork.mode>always</cxf.surefire.fork.mode>
     </properties>
     <dependencies>
         <dependency>
@@ -97,7 +98,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-transports-http-jetty</artifactId>
+            <artifactId>cxf-rt-transports-http-undertow</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
