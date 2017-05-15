@@ -17,29 +17,16 @@
  * under the License.
  */
 
-package org.apache.cxf.systest.jaxrs.websocket;
+package org.apache.cxf.systest.http_undertow;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import javax.jws.WebMethod;
+import javax.jws.WebService;
 
-/**
- * JAXRSClientServerWebSocketSpringWebAppTest without atmosphere
- */
-public class JAXRSClientServerWebSocketSpringWebAppNoAtmosphereTest extends JAXRSClientServerWebSocketSpringWebAppTest {
-    private static final String PORT = BookServerWebSocket.PORT2_WAR;
-
-    @BeforeClass
-    public static void startServers() throws Exception {
-        System.setProperty("org.apache.cxf.transport.websocket.atmosphere.disabled", "true");
-        startServers(PORT);
+@WebService
+public class Dummy implements DummyInterface {
+    @WebMethod
+    public String echo(String what) {
+        return what;
     }
 
-    @AfterClass
-    public static void cleanup() {
-        System.clearProperty("org.apache.cxf.transport.websocket.atmosphere.disabled");
-    }
-
-    protected String getPort() {
-        return PORT;
-    }
 }
