@@ -39,6 +39,10 @@ public class JCacheCodeDataProvider extends JCacheOAuthDataProvider
     private long codeLifetime = 10 * 60;
     private Cache<String, ServerAuthorizationCodeGrant> grantCache;
 
+    public JCacheCodeDataProvider(boolean storeJwtTokenKeyOnly) throws Exception {
+        this(DEFAULT_CONFIG_URL, BusFactory.getThreadDefaultBus(true), CLIENT_CACHE_KEY, CODE_GRANT_CACHE_KEY,
+             ACCESS_TOKEN_CACHE_KEY, REFRESH_TOKEN_CACHE_KEY, storeJwtTokenKeyOnly);
+    }
     protected JCacheCodeDataProvider() throws Exception {
         this(DEFAULT_CONFIG_URL, BusFactory.getThreadDefaultBus(true));
     }
@@ -55,6 +59,17 @@ public class JCacheCodeDataProvider extends JCacheOAuthDataProvider
                                      String accessTokenKey,
                                      String refreshTokenKey) throws Exception {
         super(configFileURL, bus, clientCacheKey, accessTokenKey, refreshTokenKey);
+        grantCache = createCache(cacheManager, codeCacheKey, String.class, ServerAuthorizationCodeGrant.class);
+    }
+    
+    protected JCacheCodeDataProvider(String configFileURL,
+                                     Bus bus,
+                                     String clientCacheKey,
+                                     String codeCacheKey,
+                                     String accessTokenKey,
+                                     String refreshTokenKey,
+                                     boolean storeJwtTokenKeyOnly) throws Exception {
+        super(configFileURL, bus, clientCacheKey, accessTokenKey, refreshTokenKey, storeJwtTokenKeyOnly);
         grantCache = createCache(cacheManager, codeCacheKey, String.class, ServerAuthorizationCodeGrant.class);
     }
 

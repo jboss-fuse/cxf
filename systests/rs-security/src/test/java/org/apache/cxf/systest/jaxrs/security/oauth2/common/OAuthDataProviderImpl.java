@@ -29,7 +29,7 @@ import java.util.Set;
 import org.apache.cxf.common.util.Base64Utility;
 import org.apache.cxf.rs.security.oauth2.common.Client;
 import org.apache.cxf.rs.security.oauth2.common.OAuthPermission;
-import org.apache.cxf.rs.security.oauth2.grants.code.DefaultEHCacheCodeDataProvider;
+import org.apache.cxf.rs.security.oauth2.grants.code.JCacheCodeDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.OAuthServiceException;
 import org.apache.cxf.rs.security.oauth2.saml.Constants;
 import org.apache.cxf.rt.security.crypto.CryptoUtils;
@@ -38,7 +38,7 @@ import org.apache.xml.security.utils.ClassLoaderUtils;
 /**
  * Extend the DefaultEHCacheCodeDataProvider to allow refreshing of tokens
  */
-public class OAuthDataProviderImpl extends DefaultEHCacheCodeDataProvider {
+public class OAuthDataProviderImpl extends  JCacheCodeDataProvider {
     private Set<String> externalClients = new HashSet<String>();
     public OAuthDataProviderImpl(String servicePort) throws Exception {
         // filters/grants test client

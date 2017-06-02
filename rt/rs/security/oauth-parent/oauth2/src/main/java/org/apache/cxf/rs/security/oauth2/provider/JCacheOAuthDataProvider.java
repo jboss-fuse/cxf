@@ -55,12 +55,13 @@ public class JCacheOAuthDataProvider extends AbstractOAuthDataProvider {
     private final Cache<String, RefreshToken> refreshTokenCache;
     private boolean storeJwtTokenKeyOnly;
     private JoseJwtConsumer jwtTokenConsumer;
+    private String accessTokenCacheKey;
 
     public JCacheOAuthDataProvider() throws Exception {
         this(false);
     }
     public JCacheOAuthDataProvider(boolean storeJwtTokenKeyOnly) throws Exception {
-        this(DEFAULT_CONFIG_URL, BusFactory.getThreadDefaultBus(true));
+        this(DEFAULT_CONFIG_URL, BusFactory.getThreadDefaultBus(true), storeJwtTokenKeyOnly);
     }
 
     public JCacheOAuthDataProvider(String configFileURL, Bus bus) throws Exception {
@@ -90,6 +91,7 @@ public class JCacheOAuthDataProvider extends AbstractOAuthDataProvider {
         clientCache = createCache(cacheManager, clientCacheKey, String.class, Client.class);
         
         this.storeJwtTokenKeyOnly = storeJwtTokenKeyOnly;
+        this.accessTokenCacheKey = accessTokenCacheKey;
         if (storeJwtTokenKeyOnly) {
             jwtAccessTokenCache = createCache(cacheManager, accessTokenCacheKey, String.class, String.class);
         } else {
@@ -169,11 +171,13 @@ public class JCacheOAuthDataProvider extends AbstractOAuthDataProvider {
     @Override
     protected void saveAccessToken(ServerAccessToken serverToken) {
         if (isUseJwtFormatForAccessTokens() && isStoreJwtTokenKeyOnly()) {
+            if (jwtAccessTokenCache == null) {
+                jwtAccessTokenCache = createCache(cacheManager, accessTokenCacheKey, String.class, String.class);
+            }
             jwtAccessTokenCache.put(serverToken.getTokenKey(), serverToken.getTokenKey());
         } else {
             accessTokenCache.put(serverToken.getTokenKey(), serverToken);
         }
-        
     }
 
     @Override
@@ -183,7 +187,6 @@ public class JCacheOAuthDataProvider extends AbstractOAuthDataProvider {
 
     @Override
     public void close() {
-        
         clientCache.close();
         refreshTokenCache.close();
         if (accessTokenCache != null) {
@@ -286,8 +289,13 @@ public class JCacheOAuthDataProvider extends AbstractOAuthDataProvider {
     
     protected static <K, V> Cache<K, V> createCache(CacheManager cacheManager,
                                                     String cacheKey, Class<K> keyType, Class<V> valueType) {
-
-        Cache<K, V> cache = cacheManager.getCache(cacheKey, keyType, valueType);
+        Cache<K, V> cache = null;
+        try {
+            cache = cacheManager.getCache(cacheKey, keyType, valueType);
+        } catch (java.lang.ClassCastException cce) {
+            cacheManager.destroyCache(cacheKey);
+            cache = null;
+        }
         if (cache == null) {
             cache = cacheManager.createCache(
                 cacheKey,
@@ -309,4 +317,13 @@ public class JCacheOAuthDataProvider extends AbstractOAuthDataProvider {
         this.jwtTokenConsumer = jwtTokenConsumer;
     }
     
+    
+
+    public void setStoreJwtTokenKeyOnly(boolean storeJwtTokenKeyOnly) {
+        this.storeJwtTokenKeyOnly = storeJwtTokenKeyOnly;
+        if (storeJwtTokenKeyOnly) {
+            accessTokenCacheKey = accessTokenCacheKey + "_JWT";
+            jwtAccessTokenCache = createCache(cacheManager, accessTokenCacheKey, String.class, String.class);
+        }
+    }
 }
