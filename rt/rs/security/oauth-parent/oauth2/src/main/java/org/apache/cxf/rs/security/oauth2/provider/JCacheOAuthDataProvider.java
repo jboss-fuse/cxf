@@ -46,7 +46,7 @@ public class JCacheOAuthDataProvider extends AbstractOAuthDataProvider {
     public static final String CLIENT_CACHE_KEY = "cxf.oauth2.client.cache";
     public static final String ACCESS_TOKEN_CACHE_KEY = "cxf.oauth2.accesstoken.cache";
     public static final String REFRESH_TOKEN_CACHE_KEY = "cxf.oauth2.refreshtoken.cache";
-    public static final String DEFAULT_CONFIG_URL = "cxf-oauth2-ehcache3.xml";
+    public static final String DEFAULT_CONFIG_URL = "cxf-oauth2-infinispan.xml";
 
     protected final CacheManager cacheManager;
     private final Cache<String, Client> clientCache;

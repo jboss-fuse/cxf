@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.cxf.BusFactory;
 import org.apache.cxf.common.util.Base64Utility;
 import org.apache.cxf.rs.security.oauth2.common.Client;
 import org.apache.cxf.rs.security.oauth2.common.OAuthPermission;
@@ -36,10 +37,98 @@ import org.apache.cxf.rt.security.crypto.CryptoUtils;
 import org.apache.xml.security.utils.ClassLoaderUtils;
 
 /**
- * Extend the DefaultEHCacheCodeDataProvider to allow refreshing of tokens
+ * Extend the JCacheCodeDataProvider to allow refreshing of tokens
  */
 public class OAuthDataProviderImpl extends  JCacheCodeDataProvider {
     private Set<String> externalClients = new HashSet<String>();
+    public OAuthDataProviderImpl(String servicePort, String configUri) throws Exception {
+        super(configUri, BusFactory.getThreadDefaultBus(true));
+        // filters/grants test client
+        Client client = new Client("consumer-id", "this-is-a-secret", true);
+        client.setRedirectUris(Collections.singletonList("http://www.blah.apache.org"));
+        
+        client.getAllowedGrantTypes().add("authorization_code");
+        client.getAllowedGrantTypes().add("refresh_token");
+        client.getAllowedGrantTypes().add("implicit");
+        client.getAllowedGrantTypes().add("hybrid");
+        client.getAllowedGrantTypes().add("password");
+        client.getAllowedGrantTypes().add("client_credentials");
+        client.getAllowedGrantTypes().add("urn:ietf:params:oauth:grant-type:saml2-bearer");
+        client.getAllowedGrantTypes().add("urn:ietf:params:oauth:grant-type:jwt-bearer");
+        
+        client.getRegisteredScopes().add("read_balance");
+        client.getRegisteredScopes().add("create_balance");
+        client.getRegisteredScopes().add("read_data");
+        client.getRegisteredScopes().add("read_book");
+        client.getRegisteredScopes().add("create_book");
+        client.getRegisteredScopes().add("create_image");
+        client.getRegisteredScopes().add("openid");
+        
+        this.setClient(client);
+        
+        // OIDC filters test client
+        client = new Client("consumer-id-oidc", "this-is-a-secret", true);
+        client.setRedirectUris(Collections.singletonList("https://localhost:" + servicePort 
+                                                         + "/secured/bookstore/books"));
+        
+        client.getAllowedGrantTypes().add("authorization_code");
+        client.getAllowedGrantTypes().add("refresh_token");
+        
+        client.getRegisteredScopes().add("openid");
+        
+        this.setClient(client);
+        
+        // Audience test client
+        client = new Client("consumer-id-aud", "this-is-a-secret", true);
+        client.setRedirectUris(Collections.singletonList("http://www.blah.apache.org"));
+        
+        client.getAllowedGrantTypes().add("authorization_code");
+        client.getAllowedGrantTypes().add("refresh_token");
+        
+        client.getRegisteredAudiences().add("https://localhost:" + servicePort 
+                                            + "/secured/bookstore/books");
+        client.getRegisteredAudiences().add("https://127.0.0.1/test");
+        client.getRegisteredScopes().add("openid");
+        
+        this.setClient(client);
+        
+        // Audience test client 2
+        client = new Client("consumer-id-aud2", "this-is-a-secret", true);
+        client.setRedirectUris(Collections.singletonList("http://www.blah.apache.org"));
+        
+        client.getAllowedGrantTypes().add("authorization_code");
+        client.getAllowedGrantTypes().add("refresh_token");
+        
+        client.getRegisteredAudiences().add("https://localhost:" + servicePort 
+                                            + "/securedxyz/bookstore/books");
+        client.getRegisteredScopes().add("openid");
+        
+        this.setClient(client);
+        
+        // JAXRSOAuth2Test clients
+        client = new Client("alice", "alice", true);
+        client.getAllowedGrantTypes().add(Constants.SAML2_BEARER_GRANT);
+        client.getAllowedGrantTypes().add("urn:ietf:params:oauth:grant-type:jwt-bearer");
+        client.getAllowedGrantTypes().add("custom_grant");
+        this.setClient(client);
+
+        Certificate cert = loadCert();
+        String encodedCert = Base64Utility.encode(cert.getEncoded());
+        
+        Client client2 = new Client("CN=whateverhost.com,OU=Morpit,O=ApacheTest,L=Syracuse,C=US", 
+                                    null,
+                                    true,
+                                    null,
+                                    null);
+        client2.getAllowedGrantTypes().add("custom_grant");
+        client2.setApplicationCertificates(Collections.singletonList(encodedCert));
+        this.setClient(client2);
+        
+        // external clients (in LDAP/etc) which can be used for client cred
+        externalClients.add("bob:bobPassword");
+        
+    }
+    
     public OAuthDataProviderImpl(String servicePort) throws Exception {
         // filters/grants test client
         Client client = new Client("consumer-id", "this-is-a-secret", true);
