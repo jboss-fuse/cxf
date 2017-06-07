@@ -291,10 +291,13 @@ public class JCacheOAuthDataProvider extends AbstractOAuthDataProvider {
                                                     String cacheKey, Class<K> keyType, Class<V> valueType) {
         Cache<K, V> cache = null;
         try {
-            cache = cacheManager.getCache(cacheKey, keyType, valueType);
+            //cache = cacheManager.getCache(cacheKey, keyType, valueType);
+            cache = cacheManager.getCache(cacheKey);
         } catch (java.lang.ClassCastException cce) {
             cacheManager.destroyCache(cacheKey);
             cache = null;
+        } catch (java.lang.IllegalArgumentException iae) {
+            cache = cacheManager.getCache(cacheKey, keyType, valueType);
         }
         if (cache == null) {
             cache = cacheManager.createCache(
