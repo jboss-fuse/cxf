@@ -279,6 +279,43 @@ public final class TLSParameterJaxBUtils {
 
         return fac.getKeyManagers();
     }
+    
+    /**
+     * This method converts the JAXB KeyManagersType into a list of
+     * JSSE KeyManagers.
+     */
+    public static KeyManager[] getKeyManagers(KeyManagersType kmc, String alias)
+        throws GeneralSecurityException,
+               IOException {
+
+        KeyStore keyStore = getKeyStore(kmc.getKeyStore());
+
+        String alg = kmc.isSetFactoryAlgorithm()
+                     ? kmc.getFactoryAlgorithm()
+                     : KeyManagerFactory.getDefaultAlgorithm();
+
+        char[] keyPass = kmc.isSetKeyPassword()
+                     ? deobfuscate(kmc.getKeyPassword())
+                     : null;
+
+        KeyManagerFactory fac =
+                     kmc.isSetProvider()
+                     ? KeyManagerFactory.getInstance(alg, kmc.getProvider())
+                     : KeyManagerFactory.getInstance(alg);
+        try {             
+            fac.init(keyStore, keyPass);
+
+            return fac.getKeyManagers();
+        } catch (java.security.UnrecoverableKeyException uke) {
+            //jsse has the restriction that different key in keystore
+            //cannot has different password, use MultiKeyPasswordKeyManager
+            //as fallback when this happen
+            MultiKeyPasswordKeyManager manager
+                = new MultiKeyPasswordKeyManager(keyStore, alias,
+                                             new String(keyPass));
+            return new KeyManager[]{manager};
+        }
+    }
 
     /**
      * This method converts the JAXB KeyManagersType into a list of
