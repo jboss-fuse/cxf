@@ -40,9 +40,11 @@ import org.apache.cxf.ws.policy.PolicyInterceptorProviderRegistry;
 import org.apache.cxf.ws.policy.builder.primitive.PrimitiveAssertion;
 import org.apache.cxf.ws.policy.builder.primitive.PrimitiveAssertionBuilder;
 import org.apache.cxf.ws.security.policy.custom.AlgorithmSuiteBuilder;
+import org.apache.cxf.ws.security.policy.custom.NTLMTokenBuilder;
 import org.apache.cxf.ws.security.policy.interceptors.HttpsTokenInterceptorProvider;
 import org.apache.cxf.ws.security.policy.interceptors.IssuedTokenInterceptorProvider;
 import org.apache.cxf.ws.security.policy.interceptors.KerberosTokenInterceptorProvider;
+import org.apache.cxf.ws.security.policy.interceptors.NTLMTokenInterceptorProvider;
 import org.apache.cxf.ws.security.policy.interceptors.SamlTokenInterceptorProvider;
 import org.apache.cxf.ws.security.policy.interceptors.SecureConversationTokenInterceptorProvider;
 import org.apache.cxf.ws.security.policy.interceptors.SpnegoTokenInterceptorProvider;
@@ -157,7 +159,8 @@ public final class WSSecurityPolicyLoader implements PolicyInterceptorProviderLo
         reg.registerBuilder(new WSS10Builder());
         reg.registerBuilder(new WSS11Builder());
         reg.registerBuilder(new X509TokenBuilder());
-
+        reg.registerBuilder(new NTLMTokenBuilder());
+        
         //add generic assertions for these known things to prevent warnings
         List<QName> others = Arrays.asList(new QName[] {
             SP12Constants.INCLUDE_TIMESTAMP, SP11Constants.INCLUDE_TIMESTAMP,
@@ -305,6 +308,7 @@ public final class WSSecurityPolicyLoader implements PolicyInterceptorProviderLo
         reg.register(new SamlTokenInterceptorProvider());
         reg.register(new SecureConversationTokenInterceptorProvider());
         reg.register(new SpnegoTokenInterceptorProvider());
+        reg.register(new NTLMTokenInterceptorProvider());
     }
 
 }
