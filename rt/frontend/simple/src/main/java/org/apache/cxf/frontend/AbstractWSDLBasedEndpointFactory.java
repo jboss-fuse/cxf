@@ -111,7 +111,8 @@ public abstract class AbstractWSDLBasedEndpointFactory extends AbstractEndpointF
         if (ei != null) {
             if ((transportId != null
                 && !ei.getTransportId().equals(transportId))
-                || (bindingId != null && !ei.getBinding().getBindingId().equals(bindingId))) {
+                || (bindingId != null 
+                    && !stripMtomTrueSuffix(ei.getBinding().getBindingId()).equals(stripMtomTrueSuffix(bindingId)))) {
                 ei = null;
             } else {
                 BindingFactoryManager bfm = getBus().getExtension(BindingFactoryManager.class);
@@ -152,8 +153,9 @@ public abstract class AbstractWSDLBasedEndpointFactory extends AbstractEndpointF
                 ei = createEndpointInfo(bi);
             } else if (bindingId != null && !ei.getBinding().getBindingId().equals(bindingId)
                 //consider SoapBinding has multiple default namespace
-                && !(SoapBindingFactory.DEFAULT_NAMESPACES.contains(bindingId)
-                    && SoapBindingFactory.DEFAULT_NAMESPACES.contains(ei.getBinding().getBindingId()))) {
+                && !(SoapBindingFactory.DEFAULT_NAMESPACES.contains(stripMtomTrueSuffix(bindingId))
+                    && SoapBindingFactory.DEFAULT_NAMESPACES.contains(
+                           stripMtomTrueSuffix(ei.getBinding().getBindingId())))) {
                 LOG.warning("Binding for endpoint/port "
                     + endpointName + " in wsdl doesn't match " + bindingId + ".");
                 ei = createEndpointInfo(null);
@@ -391,5 +393,14 @@ public abstract class AbstractWSDLBasedEndpointFactory extends AbstractEndpointF
 
     public void setWsdlURL(String wsdlURL) {
         getServiceFactory().setWsdlURL(wsdlURL);
+    }
+    
+    private String stripMtomTrueSuffix(String bindingId) {
+        int index = bindingId.indexOf("?");
+        if (index > 0) {
+            return bindingId.substring(0, index);
+        } else {
+            return bindingId;
+        }
     }
 }
