@@ -20,24 +20,38 @@
 package org.apache.cxf.maven_plugin.java2swagger;
 
 import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
-import org.apache.cxf.endpoint.Server;
-import org.apache.cxf.feature.Feature;
+import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
 import org.apache.cxf.helpers.FileUtils;
-import org.apache.cxf.jaxrs.JAXRSServerFactoryBean;
-import org.apache.cxf.jaxrs.swagger.Swagger2Feature;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectHelper;
+import org.reflections.Reflections;
+
+import io.swagger.annotations.Api;
+import io.swagger.jaxrs.Reader;
+import io.swagger.models.Contact;
+import io.swagger.models.Info;
+import io.swagger.models.License;
+import io.swagger.models.Scheme;
+import io.swagger.models.Swagger;
+import io.swagger.util.Yaml;
 
 
 
@@ -48,7 +62,68 @@ import org.apache.maven.project.MavenProjectHelper;
  * @threadSafe
  */
 public class Java2SwaggerMojo extends AbstractMojo {
+    
+    /**
+    * @parameter
+    * @required
+    */
+    private List<String> resourcePackages;
+    
+    /**
+     * @parameter default-value="1.0.0"
+     */
+    private String version;
+    
+    
+    /**
+     * @parameter default-value="/api"
+     */
+    private String basePath;
+    
+    /**
+     * @parameter default-value="Sample REST Application"
+     */
+    private String title;
+    
+    
+    /**
+     * @parameter default-value="The Application"
+     */
+    private String description;
+    
+    
+    /**
+     * @parameter default-value="users@cxf.apache.org"
+     */
+    private String contact;
+    
+    
+    /**
+     * @parameter default-value="Apache 2.0 License"
+     */
+    private String license;
+    
+    /**
+     * @parameter default-value="http://www.apache.org/licenses/LICENSE-2.0.html"
+     */
+    private String licenseUrl;
+    
+    /**
+     * @parameter default-value="example.cxf.apache.org:8181"
+     */
+    private String host;
 
+    /**
+     * @parameter
+     */
+    private List<String> schemes;
+
+    
+    /**
+     * @parameter default-value="json"
+     */
+    private String payload;
+    
 
     /**
      * @parameter
@@ -73,12 +148,6 @@ public class Java2SwaggerMojo extends AbstractMojo {
      */
     private String classifier;
 
-    /**
-     * @parameter
-     * @required
-     */
-    private List<String> classResourceNames;
-
 
     /**
      * @parameter expression="${project}"
@@ -101,82 +170,56 @@ public class Java2SwaggerMojo extends AbstractMojo {
      */
     private String outputFileName;
 
-    /**
-     * @parameter default-value="json"
-     */
-    private String outputFileExtension;
-
-    /**
-     * @parameter default-value="http://localhost:12333/cxf/swagger"
-     */
-    private String address;
-
+      
     private ClassLoader resourceClassLoader;
+    
+    private Swagger swagger;
+    
+    private ObjectMapper mapper = new ObjectMapper();
+    
+    private Set<Class<?>> resourceClasses;
 
 
     public void execute() throws MojoExecutionException {
-        List<Class<?>> resourceClasses = loadResourceClasses();
-        List<Object> resourceObjects = new ArrayList<Object>();
-        for (Class<?> resourceClass : resourceClasses) {
-            try {
-                resourceObjects.add(resourceClass.newInstance());
-            } catch (InstantiationException e) {
-                throw new MojoExecutionException(e.getMessage(), e);
-            } catch (IllegalAccessException e) {
-                throw new MojoExecutionException(e.getMessage(), e);
-            }
-        }
-
-        Thread.currentThread().setContextClassLoader(getClassLoader());
-        List<Feature> features = new ArrayList<Feature>();
-        features.add(new Swagger2Feature());
-        JAXRSServerFactoryBean serverFacBean = new JAXRSServerFactoryBean();
-        serverFacBean.setAddress(address);
-        serverFacBean.setServiceBeans(resourceObjects);
-        serverFacBean.setFeatures(features);
-        Server server = serverFacBean.create();
-
-        InputStream in = null;
         try {
-            String serverAddress = server.getEndpoint().getEndpointInfo().getAddress();
-            String apiDocs = serverAddress + "/swagger.json";
-            URL url = new URL(apiDocs);
-            in = url.openStream();
-            String res = getStringFromInputStream(in);
-            generateJson(resourceClasses, res);
-        } catch (Exception e) {
-            throw new MojoExecutionException(e.getMessage(), e);
-        } finally {
-            server.stop();
+            configureSwagger();
+            loadSwaggerAnnotation();
+            generateSwaggerPayLoad();
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
-
-
     }
 
 
-    private void generateJson(List<Class<?>> resourceClasses, String swagger) throws MojoExecutionException {
+    private void generateSwaggerPayLoad() throws MojoExecutionException {
 
         if (outputFile == null && project != null) {
             // Put the json in target/generated/json
+            // put the yaml in target/generated/yaml
 
             String name = null;
             if (outputFileName != null) {
                 name = outputFileName;
             } else if (resourceClasses.size() == 1) {
-                name = resourceClasses.get(0).getSimpleName();
+                name = resourceClasses.iterator().next().getSimpleName();
             } else {
-                name = "application";
+                name = "swagger";
             }
-            outputFile = (project.getBuild().getDirectory() + "/generated/json/" + name + "."
-                    + outputFileExtension).replace("/", File.separator);
+            outputFile = (project.getBuild().getDirectory() + "/generated/" + payload.toLowerCase() + "/" + name + "."
+                    + payload.toLowerCase()).replace("/", File.separator);
         }
 
         BufferedWriter writer = null;
         try {
             FileUtils.mkDir(new File(outputFile).getParentFile());
             writer = new BufferedWriter(new FileWriter(outputFile));
-            writer.write(swagger);
-
+            if ("json".equals(this.payload)) {
+                ObjectWriter jsonWriter = mapper.writer(new DefaultPrettyPrinter());
+                writer.write(jsonWriter.writeValueAsString(swagger));
+            } else if ("yaml".equals(this.payload)) {
+                writer.write(Yaml.pretty().writeValueAsString(swagger));
+            }
+       
         } catch (IOException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         } finally {
@@ -188,15 +231,15 @@ public class Java2SwaggerMojo extends AbstractMojo {
                 throw new MojoExecutionException(e.getMessage(), e);
             }
         }
-        // Attach the generated json file to the artifacts that get deployed
+        // Attach the generated swagger file to the artifacts that get deployed
         // with the enclosing project
         if (attachSwagger && outputFile != null) {
             File jsonFile = new File(outputFile);
             if (jsonFile.exists()) {
                 if (classifier != null) {
-                    projectHelper.attachArtifact(project, "json", classifier, jsonFile);
+                    projectHelper.attachArtifact(project, payload.toLowerCase(), classifier, jsonFile);
                 } else {
-                    projectHelper.attachArtifact(project, "json", jsonFile);
+                    projectHelper.attachArtifact(project, payload.toLowerCase(), jsonFile);
                 }
 
             }
@@ -222,29 +265,53 @@ public class Java2SwaggerMojo extends AbstractMojo {
         return resourceClassLoader;
     }
 
-    private List<Class<?>> loadResourceClasses() throws MojoExecutionException {
-        List<Class<?>> resourceClasses = new ArrayList<Class<?>>(classResourceNames.size());
-        for (String className : classResourceNames) {
-            try {
-                resourceClasses.add(getClassLoader().loadClass(className));
-            } catch (Exception e) {
-                throw new MojoExecutionException(e.getMessage(), e);
-            }
+    private Set<Class<?>> loadResourceClasses(Class<? extends Annotation> clazz) throws MojoExecutionException {
+        resourceClasses = new LinkedHashSet<Class<?>>(this.resourcePackages.size());
+        Thread.currentThread().setContextClassLoader(getClassLoader());
+        for (String resourcePackage : resourcePackages) {
+            Set<Class<?>> c = new Reflections(resourcePackage).getTypesAnnotatedWith(clazz, true);
+            resourceClasses.addAll(c);
+            Set<Class<?>> inherited = new Reflections(resourcePackage).getTypesAnnotatedWith(clazz);
+            resourceClasses.addAll(inherited);
         }
 
         return resourceClasses;
     }
 
 
-    private static String getStringFromInputStream(InputStream in) throws Exception {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        int c = 0;
-        while ((c = in.read()) != -1) {
-            bos.write(c);
-        }
-        in.close();
-        bos.close();
-        return bos.toString();
+      
+    private void loadSwaggerAnnotation() throws MojoExecutionException {
+        Reader reader = new Reader(swagger);
+        swagger = reader.read(loadResourceClasses(Api.class));
     }
 
+    private void configureSwagger() {
+        swagger = new Swagger();
+        mapper.configure(SerializationFeature.WRITE_EMPTY_JSON_ARRAYS, false);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        Info info = new Info();
+        Contact swaggerContact = new Contact();
+        License swaggerLicense = new License();
+        swaggerLicense.name(this.license)
+            .url(this.licenseUrl);
+        swaggerContact.email(this.contact)
+            .name("Apache CXF")
+            .url("http://cxf.apache.org/");
+        info.version(this.version)
+            .description(this.description)
+            .contact(swaggerContact)
+            .license(swaggerLicense)
+            .title(this.title);
+        swagger.setInfo(info);
+        if (this.schemes == null || this.schemes.size() == 0) {
+            this.schemes = new ArrayList<String>();
+            this.schemes.add("http");
+            this.schemes.add("https");
+        }
+        for (String scheme : this.schemes) {
+            swagger.scheme(Scheme.forValue(scheme));
+        }
+        swagger.setHost(this.host);
+        swagger.setBasePath(this.basePath);
+    }
 }
