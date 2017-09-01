@@ -62,6 +62,7 @@ public class JettyHTTPDestination extends ServletDestination {
 
     protected JettyHTTPServerEngine engine;
     protected JettyHTTPServerEngineFactory serverEngineFactory;
+    protected JettyHTTPHandler handler;
     protected ServletContext servletContext;
     protected URL nurl;
     protected ClassLoader loader;
@@ -97,6 +98,20 @@ public class JettyHTTPDestination extends ServletDestination {
         }
         loader = bus.getExtension(ClassLoader.class);
     }
+
+    protected JettyHTTPDestination(Bus bus,
+                                   DestinationRegistry registry,
+                                   EndpointInfo ei,
+                                   URL nurl,
+                                   JettyHTTPServerEngineFactory serverEngineFactory)
+        throws IOException {
+        //Add the default port if the address is missing it
+        super(bus, registry, ei, getAddressValue(ei, true).getAddress(), true);
+        this.serverEngineFactory = serverEngineFactory;
+        this.nurl = nurl;
+        loader = bus.getExtension(ClassLoader.class);
+    }
+
 
     protected Logger getLogger() {
         return LOG;
@@ -171,8 +186,8 @@ public class JettyHTTPDestination extends ServletDestination {
         // pick the handler supporting websocket if jetty-websocket is available otherwise pick the default handler.
         
         if (engine != null) {
-            JettyHTTPHandler jhd = createJettyHTTPHandler(this, contextMatchOnExact());
-            engine.addServant(nurl, jhd);
+            handler = createJettyHTTPHandler(this, contextMatchOnExact());
+            engine.addServant(nurl, handler);
         }
     }
 
@@ -190,8 +205,10 @@ public class JettyHTTPDestination extends ServletDestination {
         if (engine != null) {
             engine.removeServant(nurl);
         }
-    }   
-     
+        handler = null;
+    }
+
+
 
     
     protected String getBasePathForFullAddress(String addr) {
