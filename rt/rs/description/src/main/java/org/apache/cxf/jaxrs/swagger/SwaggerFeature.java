@@ -20,10 +20,13 @@ package org.apache.cxf.jaxrs.swagger;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.PreMatching;
@@ -112,9 +115,33 @@ public class SwaggerFeature extends AbstractSwaggerFeature {
             beanConfig.setTermsOfServiceUrl(beanConfigWrapper.getTermsOfServiceUrl());
             beanConfig.setFilterClass(beanConfigWrapper.getFilterClass());
             mc.getServletContext().setAttribute("SCANNER", beanConfig);
+            ServletConfig sc = mc.getServletConfig();
+            if (sc == null) {
+                sc = new ServletConfig() {
+                    @Override
+                    public String getServletName() {
+                        return null;
+                    }
+
+                    @Override
+                    public ServletContext getServletContext() {
+                        return mc.getServletContext();
+                    }
+
+                    @Override
+                    public String getInitParameter(String name) {
+                        return null;
+                    }
+
+                    @Override
+                    public Enumeration<String> getInitParameterNames() {
+                        return null;
+                    }
+                };
+            }
             if (ui.getPath().endsWith(APIDOCS_LISTING_PATH)) {
                 Response r = 
-                    apiListingResource.resourceListing(null, mc.getServletConfig(), mc.getHttpHeaders(), ui);
+                    apiListingResource.resourceListing(null, sc, mc.getHttpHeaders(), ui);
                 requestContext.abortWith(r);
             } else {
                 final Matcher matcher = APIDOCS_RESOURCE_PATH.matcher(ui.getPath());
