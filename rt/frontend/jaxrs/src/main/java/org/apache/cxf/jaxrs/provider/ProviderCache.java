@@ -19,6 +19,8 @@
 
 package org.apache.cxf.jaxrs.provider;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
