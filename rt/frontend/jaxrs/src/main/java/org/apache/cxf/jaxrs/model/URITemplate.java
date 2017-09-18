@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -331,18 +332,26 @@ public final class URITemplate {
     }
     
     public static URITemplate createTemplate(String pathValue) {
-
         if (pathValue == null) {
-            return new URITemplate("/");
-        }
-
-        if (!pathValue.startsWith("/")) {
+            pathValue = "/";
+        } else if (!pathValue.startsWith("/")) {
             pathValue = "/" + pathValue;
         }
-
-        return new URITemplate(pathValue);
+        return createExactTemplate(pathValue);
     }
-
+    
+    public static URITemplate createExactTemplate(String pathValue) {
+        URITemplate template = URI_TEMPLATE_CACHE.get(pathValue);
+        if (template == null) {
+            template = new URITemplate(pathValue);
+            if (URI_TEMPLATE_CACHE.size() >= MAX_URI_TEMPLATE_CACHE_SIZE) {
+                URI_TEMPLATE_CACHE.clear();
+            }
+            URI_TEMPLATE_CACHE.put(pathValue, template);
+        }
+        return template;
+    }
+    
     public static int compareTemplates(URITemplate t1, URITemplate t2) {
         String l1 = t1.getLiteralChars();
         String l2 = t2.getLiteralChars();
