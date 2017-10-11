@@ -20,7 +20,7 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf</artifactId>
-        <version>3.1.11.redhat-SNAPSHOT</version>
+        <version>3.1.11.fuse-000119</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>cxf-parent</artifactId>
@@ -187,7 +187,7 @@
         <cxf.aries.version.range>[1.0,2)</cxf.aries.version.range>
         <cxf.felix.framework.version>2.0.5</cxf.felix.framework.version>
         <cxf.osgi.version>5.0.0</cxf.osgi.version>
-        <cxf.karaf.version>4.1.1</cxf.karaf.version>
+        <cxf.karaf.version>4.2.0.fuse-000116</cxf.karaf.version>
         <cxf.pax.logging.version>1.6.0</cxf.pax.logging.version>
         <cxf.pax.exam.version>4.10.0</cxf.pax.exam.version>
         <cxf.felix.configadmin.version>1.2.4</cxf.felix.configadmin.version>
@@ -196,7 +196,7 @@
         <cxf.servicemix.cglib.version>3.2.0_1</cxf.servicemix.cglib.version>
         <cxf.servicemix.jodatime.version>2.3_1</cxf.servicemix.jodatime.version>
         <cxf.servicemix.jsoup.version>1.5.2_2</cxf.servicemix.jsoup.version>
-        <cxf.servicemix.specs.version>2.6.0</cxf.servicemix.specs.version>
+        <cxf.servicemix.specs.version>2.10.0.fuse-000099</cxf.servicemix.specs.version>
         <cxf.servicemix.specs.version.jaxrs>2.6.0</cxf.servicemix.specs.version.jaxrs>
         <cxf.javax.mail.version>1.4.4</cxf.javax.mail.version>
         <cxf.jaxb.bundle.version>2.2.11_1</cxf.jaxb.bundle.version>
