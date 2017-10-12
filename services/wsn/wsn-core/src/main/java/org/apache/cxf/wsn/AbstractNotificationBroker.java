@@ -36,6 +36,8 @@ import javax.management.ObjectName;
 import javax.xml.namespace.QName;
 import javax.xml.ws.wsaddressing.W3CEndpointReference;
 
+import org.w3c.dom.Element;
+
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.wsn.util.IdGenerator;
 import org.apache.cxf.wsn.util.WSNHelper;
@@ -233,7 +235,21 @@ public abstract class AbstractNotificationBroker extends AbstractEndpoint
         AbstractSubscription subscription = null;
         boolean success = false;
         try {
-            subscription = createSubscription(idGenerator.generateSanitizedId());
+            List<Object> list = subscribeRequest.getAny();
+            String subscriptionName = null;
+            for (Object obj : list) {
+                if (obj instanceof Element
+                    && ((Element)obj).getNamespaceURI().equals(org.apache.cxf.wsn.client.NotificationBroker.
+                                  QNAME_SUBSCRIPTION_NAME.getNamespaceURI())
+                    && ((Element)obj).getLocalName().equals(org.apache.cxf.wsn.client.NotificationBroker.
+                                  QNAME_SUBSCRIPTION_NAME.getLocalPart())) {
+                    subscriptionName = ((Element)obj).getFirstChild().getTextContent();
+                }
+            }
+            if (subscriptionName == null) {
+                subscriptionName = idGenerator.generateSanitizedId();
+            }
+            subscription = createSubscription(subscriptionName);
             subscription.setBroker(this);
             subscriptions.put(subscription.getAddress(), subscription);
             subscription.create(subscribeRequest);

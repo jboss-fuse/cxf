@@ -72,6 +72,8 @@ public class NotificationBroker implements Referencable {
     public static final QName QNAME_INITIAL_TERMINATION_TIME = new QName(WSN_URI, "InitialTerminationTime");
     
     public static final QName QNAME_PULLPOINT_QUEUE_NAME = new QName(WSN_URI, "pullPointQueueName");
+    
+    public static final QName QNAME_SUBSCRIPTION_NAME = new QName(WSN_URI, "subscriptionName");
 
     
     private org.oasis_open.docs.wsn.brw_2.NotificationBroker broker;
@@ -216,6 +218,51 @@ public class NotificationBroker implements Referencable {
             subscribeRequest.setSubscriptionPolicy(new Subscribe.SubscriptionPolicy());
             subscribeRequest.getSubscriptionPolicy().getAny().add(new UseRaw());
         }
+        SubscribeResponse response = getBroker().subscribe(subscribeRequest);
+        return new Subscription(response.getSubscriptionReference());
+    }
+    
+    public Subscription subscribe(Referencable consumer, String topic,
+                                  String xpath, boolean raw, String initialTerminationTime,
+                                  String subscriptionName)
+        //CHECKSTYLE:OFF - WS-Notification spec throws a lot of faults
+        throws TopicNotSupportedFault, InvalidFilterFault, TopicExpressionDialectUnknownFault, 
+        UnacceptableInitialTerminationTimeFault, SubscribeCreationFailedFault, 
+        InvalidMessageContentExpressionFault, InvalidTopicExpressionFault, UnrecognizedPolicyRequestFault, 
+        UnsupportedPolicyRequestFault, ResourceUnknownFault, NotifyMessageNotSupportedFault, 
+        InvalidProducerPropertiesExpressionFault {
+        //CHECKSTYLE:ON
+
+        Subscribe subscribeRequest = new Subscribe();
+        if (initialTerminationTime != null) {
+            subscribeRequest.setInitialTerminationTime(
+                  new JAXBElement<String>(QNAME_INITIAL_TERMINATION_TIME,
+                  String.class, initialTerminationTime));
+        }
+        subscribeRequest.setConsumerReference(consumer.getEpr());
+        subscribeRequest.setFilter(new FilterType());
+        if (topic != null) {
+            TopicExpressionType topicExp = new TopicExpressionType();
+            topicExp.getContent().add(topic);
+            subscribeRequest.getFilter().getAny().add(
+                    new JAXBElement<TopicExpressionType>(QNAME_TOPIC_EXPRESSION,
+                            TopicExpressionType.class, topicExp));
+        }
+        if (xpath != null) {
+            QueryExpressionType xpathExp = new QueryExpressionType();
+            xpathExp.setDialect(XPATH1_URI);
+            xpathExp.getContent().add(xpath);
+            subscribeRequest.getFilter().getAny().add(
+                    new JAXBElement<QueryExpressionType>(QNAME_MESSAGE_CONTENT,
+                            QueryExpressionType.class, xpathExp));
+        }
+        if (raw) {
+            subscribeRequest.setSubscriptionPolicy(new Subscribe.SubscriptionPolicy());
+            subscribeRequest.getSubscriptionPolicy().getAny().add(new UseRaw());
+        }
+        System.out.println("the subscription id is " + NotificationBroker.QNAME_SUBSCRIPTION_NAME + subscriptionName);
+        subscribeRequest.getAny().add(new JAXBElement<String>(
+            NotificationBroker.QNAME_SUBSCRIPTION_NAME, String.class, subscriptionName));
         SubscribeResponse response = getBroker().subscribe(subscribeRequest);
         return new Subscription(response.getSubscriptionReference());
     }
