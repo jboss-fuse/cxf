@@ -181,6 +181,27 @@
         <name>The Apache Software Foundation</name>
         <url>http://www.apache.org/</url>
     </organization>
+    
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.apache.cxf</groupId>
+                <artifactId>cxf-xjc-plugin</artifactId>
+                <version>${cxf.xjc-utils.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.cxf.xjcplugins</groupId>
+                <artifactId>cxf-xjc-javadoc</artifactId>
+                <version>${cxf.xjc-utils.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.cxf.xjcplugins</groupId>
+                <artifactId>cxf-xjc-dv</artifactId>
+                <version>${cxf.xjc-utils.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <modules>
         <module>parent</module>
         <module>core</module>
@@ -241,6 +262,23 @@
                                 <maxmem>256M</maxmem>
                                 <fork>${cxf.compiler.fork}</fork>
                             </configuration>
+                        </plugin>
+                        
+                        <!-- CXF XJC Plugins -->
+                        <plugin>
+                          <groupId>org.apache.cxf</groupId>
+                          <artifactId>cxf-xjc-plugin</artifactId>
+                          <version>${cxf.xjc-utils.version}</version>
+                        </plugin>
+                        <plugin>
+                          <groupId>org.apache.cxf.xjcplugins</groupId>
+                          <artifactId>cxf-xjc-javadoc</artifactId>
+                          <version>${cxf.xjc-utils.version}</version>
+                        </plugin>
+                        <plugin>
+                          <groupId>org.apache.cxf.xjcplugins</groupId>
+                          <artifactId>cxf-xjc-dv</artifactId>
+                          <version>${cxf.xjc-utils.version}</version>
                         </plugin>
                     </plugins>
                 </pluginManagement>
