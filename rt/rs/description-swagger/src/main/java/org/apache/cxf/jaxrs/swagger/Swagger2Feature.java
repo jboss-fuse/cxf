@@ -129,7 +129,8 @@ public class Swagger2Feature extends AbstractSwaggerFeature {
         swaggerResources.add(apiListingResource);
         
         List<Object> providers = new ArrayList<>();
-        if (runAsFilter) {
+        String destinationName = server.getDestination().getClass().getName();
+        if (runAsFilter || destinationName.endsWith("JettyHTTPDestination")) {
             providers.add(new SwaggerContainerRequestFilter(appInfo == null ? null : appInfo.getProvider()));
         }
         

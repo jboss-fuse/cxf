@@ -54,7 +54,8 @@ public class SwaggerFeature extends AbstractSwaggerFeature {
                 setResourceClassesFromBeans(serviceBeans);
         }
         List<Object> providers = new ArrayList<Object>();
-        if (runAsFilter) {
+        String destinationName = server.getDestination().getClass().getName();
+        if (runAsFilter || destinationName.endsWith("JettyHTTPDestination")) {
             providers.add(new SwaggerContainerRequestFilter(apiListingResource));
         }
         providers.add(new ResourceListingProvider());
