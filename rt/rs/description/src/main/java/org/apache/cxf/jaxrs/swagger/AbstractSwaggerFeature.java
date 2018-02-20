@@ -72,7 +72,12 @@ public abstract class AbstractSwaggerFeature extends AbstractFeature {
         }
     }
 
-    protected abstract void addSwaggerResource(Server server, Bus bus);
+    protected abstract void addSwaggerResource(Server server);
+
+    // let's not break backward compatibility
+    protected void addSwaggerResource(Server server, Bus bus) {
+        addSwaggerResource(server);
+    }
 
     protected abstract void setBasePathByAddress(String address);
 

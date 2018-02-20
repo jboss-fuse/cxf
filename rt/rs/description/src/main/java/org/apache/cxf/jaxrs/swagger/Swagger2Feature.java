@@ -91,6 +91,11 @@ public class Swagger2Feature extends AbstractSwaggerFeature {
     }
 
     @Override
+    protected void addSwaggerResource(Server server) {
+        addSwaggerResource(server, null);
+    }
+
+    @Override
     protected void addSwaggerResource(Server server, Bus bus) {
         JAXRSServiceFactoryBean sfb =
             (JAXRSServiceFactoryBean) server.getEndpoint().get(JAXRSServiceFactoryBean.class.getName());
