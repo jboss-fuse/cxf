@@ -66,13 +66,18 @@ public abstract class AbstractSwaggerFeature extends AbstractFeature {
         if (!activateOnlyIfJaxrsSupported || SWAGGER_JAXRS_AVAILABLE) {
             calculateDefaultResourcePackage(server);
             calculateDefaultBasePath(server);
-            addSwaggerResource(server);
+            addSwaggerResource(server, bus);
 
             initializeProvider(server.getEndpoint(), bus);
         }
     }
 
     protected abstract void addSwaggerResource(Server server);
+
+    // let's not break backward compatibility
+    protected void addSwaggerResource(Server server, Bus bus) {
+        addSwaggerResource(server);
+    }
 
     protected abstract void setBasePathByAddress(String address);
 
@@ -98,7 +103,7 @@ public abstract class AbstractSwaggerFeature extends AbstractFeature {
         }
     }
     
-    private void calculateDefaultBasePath(Server server) {
+    protected void calculateDefaultBasePath(Server server) {
         if (getBasePath() == null || getBasePath().length() == 0) {
             String address = server.getEndpoint().getEndpointInfo().getAddress();
             setBasePathByAddress(address);

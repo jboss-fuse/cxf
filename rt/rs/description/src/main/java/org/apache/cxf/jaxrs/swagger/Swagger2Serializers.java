@@ -39,6 +39,7 @@ import org.apache.cxf.jaxrs.model.OperationResourceInfo;
 import org.apache.cxf.jaxrs.model.doc.DocumentationProvider;
 import org.apache.cxf.jaxrs.utils.JAXRSUtils;
 
+import io.swagger.jaxrs.config.BeanConfig;
 import io.swagger.jaxrs.listing.SwaggerSerializers;
 import io.swagger.models.HttpMethod;
 import io.swagger.models.Operation;
@@ -55,6 +56,8 @@ public class Swagger2Serializers extends SwaggerSerializers {
     protected final DocumentationProvider javadocProvider;
 
     protected final List<ClassResourceInfo> cris;
+
+    protected BeanConfig beanConfig;
 
     public Swagger2Serializers(
             final boolean dynamicBasePath,
@@ -83,7 +86,12 @@ public class Swagger2Serializers extends SwaggerSerializers {
         if (dynamicBasePath) {
             MessageContext ctx = JAXRSUtils.createContextValue(
                     JAXRSUtils.getCurrentMessage(), null, MessageContext.class);
-            data.setBasePath(StringUtils.substringBeforeLast(ctx.getHttpServletRequest().getRequestURI(), "/"));
+            String currentBasePath = StringUtils.substringBeforeLast(ctx.getHttpServletRequest().getRequestURI(), "/");
+            if (!currentBasePath.equals(beanConfig.getBasePath())) {
+                data.setBasePath(currentBasePath);
+                data.setHost(beanConfig.getHost());
+                data.setInfo(beanConfig.getInfo());
+            }
         }
 
         if (replaceTags || javadocProvider != null) {
@@ -160,5 +168,10 @@ public class Swagger2Serializers extends SwaggerSerializers {
             normalizedPath.append('}');
         }
         return StringUtils.EMPTY.equals(normalizedPath.toString()) ? "/" : normalizedPath.toString();
+    }
+
+    void setBeanConfig(BeanConfig beanConfig) {
+        this.beanConfig = beanConfig;
+
     }
 }
