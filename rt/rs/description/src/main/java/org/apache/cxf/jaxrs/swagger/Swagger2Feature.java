@@ -23,11 +23,9 @@ import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.servlet.ServletConfig;
@@ -142,9 +140,9 @@ public class Swagger2Feature extends AbstractSwaggerFeature {
             ? new BeanConfig()
             : new ApplicationBeanConfig(appInfo.getProvider());
         beanConfig.setResourcePackage(getResourcePackage());
-        beanConfig.setUsePathBasedConfig(isUsePathBasedConfig());
         beanConfig.setVersion(getVersion());
         beanConfig.setBasePath(getBasePath());
+        beanConfig.setUsePathBasedConfig(isUsePathBasedConfig());
         beanConfig.setHost(getHost());
         beanConfig.setSchemes(getSchemes());
         beanConfig.setTitle(getTitle());
@@ -159,6 +157,7 @@ public class Swagger2Feature extends AbstractSwaggerFeature {
 
         s2s.setBeanConfig(beanConfig);
     }
+    
 
     public boolean isUsePathBasedConfig() {
         return usePathBasedConfig;
@@ -241,42 +240,29 @@ public class Swagger2Feature extends AbstractSwaggerFeature {
     }
 
 
-    @javax.ws.rs.ext.Provider
     private class ServletConfigProvider implements ContextProvider<ServletConfig> {
+
+        @Override
         public ServletConfig createContext(Message message) {
             final ServletConfig sc = (ServletConfig)message.get("HTTP.CONFIG");
 
-            if (sc != null && sc.getInitParameter(SwaggerContextService.USE_PATH_BASED_CONFIG) == null) {
-                return new ServletConfig() {
-                    @Override
-                    public String getServletName() {
-                        return sc.getServletName();
-                    }
-
-                    @Override
-                    public ServletContext getServletContext() {
-                        return sc.getServletContext();
-                    }
-
-                    @Override
-                    public Enumeration<String> getInitParameterNames() {
-                        return sc.getInitParameterNames();
-                    }
-
-                    @Override
-                    public String getInitParameter(String name) {
-                        if (Objects.equals(SwaggerContextService.USE_PATH_BASED_CONFIG, name)) {
-                            return "true";
-                        } else {
-                            return sc.getInitParameter(name);
-                        }
-                    }
-                };
+            // When deploying into OSGi container, it is possible to use embedded Jetty
+            // transport. In this case, the ServletConfig is not available and Swagger
+            // does not take into account certain configuration parameters. To overcome
+            // that, the ServletConfig is synthesized from ServletContext instance.
+            if (sc == null) {
+                final ServletContext context = (ServletContext)message.get("HTTP.CONTEXT");
+                if (context != null) {
+                    return new SyntheticServletConfig(context);
+                }
+            } else if (sc != null && sc.getInitParameter(SwaggerContextService.USE_PATH_BASED_CONFIG) == null) {
+                return new DelegatingServletConfig(sc);
             }
 
             return sc;
         }
     }
+
 
     @PreMatching
     protected static class SwaggerContainerRequestFilter extends ApiListingResource implements ContainerRequestFilter {
