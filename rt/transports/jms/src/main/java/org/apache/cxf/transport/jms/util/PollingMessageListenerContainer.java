@@ -76,8 +76,15 @@ public class PollingMessageListenerContainer extends AbstractMessageListenerCont
                             safeRollBack(session, e);
                         }
                     }
-                } catch (Exception e) {
-                    LOG.log(Level.WARNING, "Unexpected exception. Restarting session and consumer", e);
+                } catch (Throwable e) {
+                    if (e instanceof Exception) {
+                        LOG.log(Level.WARNING, "Unexpected exception. Restarting session and consumer", (Exception)e);
+                    }
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e1) {
+                        // Ignore
+                    }
                 } finally {
                     ResourceCloser.close(consumer);
                     ResourceCloser.close(session);

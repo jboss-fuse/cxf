@@ -85,6 +85,8 @@ public class JMSEndpoint {
     private boolean useConduitIdSelector = true;
     private String username;
     private int concurrentConsumers = 1;
+    private String messageSelector;
+    private int retryInterval = 5000;
 
     /**
      * @param uri
@@ -474,6 +476,24 @@ public class JMSEndpoint {
             }
             throw new IllegalArgumentException(v);
         }
+    }
+
+    public String getMessageSelector() {
+        return messageSelector;
+    }
+
+    public void setMessageSelector(String messageSelector) {
+        this.messageSelector = messageSelector;
+    }
+    
+    public int getRetryInterval() {
+        return retryInterval;
+    }
+    public void setRetryInterval(int retryInterval) {
+        this.retryInterval = retryInterval;
+    }
+    public void setRetryInterval(String retryInterval) {
+        this.retryInterval = Integer.valueOf(retryInterval);
     }
     
 }
