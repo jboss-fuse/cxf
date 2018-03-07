@@ -27,7 +27,7 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-maven-plugins</artifactId>
-        <version>3.0.2.redhat-SNAPSHOT</version>
+        <version>3.0.4.redhat-621216-08</version>
     </parent>
     <dependencies>
         <dependency>
