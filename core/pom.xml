@@ -27,7 +27,7 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>3.1.11.redhat-SNAPSHOT</version>
+        <version>3.1.11.fuse-000209</version>
         <relativePath>../parent/pom.xml</relativePath>
     </parent>
     <properties>
@@ -335,6 +335,23 @@
                         </configuration>
                     </execution>
                 </executions>
+                <dependencies>
+                  <dependency>
+                    <groupId>org.apache.cxf.xjcplugins</groupId>
+                    <artifactId>cxf-xjc-javadoc</artifactId>
+                    <version>${cxf.xjc-utils.version}</version>
+                  </dependency>
+                  <dependency>
+                    <groupId>org.apache.cxf.xjcplugins</groupId>
+                    <artifactId>cxf-xjc-dv</artifactId>
+                    <version>${cxf.xjc-utils.version}</version>
+                  </dependency>
+                  <dependency>
+                    <groupId>com.sun.xml.bind</groupId>
+                    <artifactId>jaxb-xjc</artifactId>
+                    <version>2.2.11</version>
+                  </dependency>
+                </dependencies>
             </plugin>
         </plugins>
         <pluginManagement>
