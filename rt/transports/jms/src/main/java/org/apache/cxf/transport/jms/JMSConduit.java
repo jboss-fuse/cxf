@@ -230,7 +230,8 @@ public class JMSConduit extends AbstractConduit implements JMSExchangeSender, Me
                     javax.jms.Message replyMessage = JMSUtil.receive(session, replyDestination,
                                                                      correlationId,
                                                                      jmsConfig.getReceiveTimeout(),
-                                                                     jmsConfig.isPubSubNoLocal());
+                                                                     jmsConfig.isPubSubNoLocal(),
+                                                                     exchange);
                     processReplyMessage(exchange, replyMessage);
                 } else {
                     try {
