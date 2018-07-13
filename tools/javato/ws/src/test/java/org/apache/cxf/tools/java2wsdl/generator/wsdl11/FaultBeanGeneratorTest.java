@@ -45,6 +45,11 @@ public class FaultBeanGeneratorTest extends ProcessorTestBase {
         System.setProperty("java.class.path", getClassPath());
         if (JavaUtils.isJava9Compatible()) {
             System.setProperty("org.apache.cxf.common.util.Compiler-fork", "true");
+            String java9PlusFolder = output.getParent() + "/java9";
+            System.setProperty("java.class.path", System.getProperty("java.class.path") 
+                               + ":" + java9PlusFolder + "/jaxb-api-2.2.11.jar"
+                               + ":" + java9PlusFolder + "/jaxws-api-2.2.9.jar"
+                               + ":" + java9PlusFolder + "/geronimo-ws-metadata_2.0_spec-1.1.3.jar");
         }
         processor.setEnvironment(env);
     }

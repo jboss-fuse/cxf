@@ -42,6 +42,7 @@ import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.configuration.security.FiltersType;
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.frontend.ClientProxy;
+import org.apache.cxf.helpers.JavaUtils;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.hello_world.Greeter;
@@ -243,7 +244,14 @@ public class CipherSuitesTest extends AbstractBusClientServerTestBase {
 
     // Both client + server include DHE
     @org.junit.Test
-    public void testDHEIncluded() throws Exception {
+    public void testRC4Included() throws Exception {
+        String version = System.getProperty("java.version");
+        if (JavaUtils.isJava9Compatible() 
+            || version.length() > 1 && 1.8D <= Double.parseDouble(version.substring(0, 3))
+            ) {
+            // RC4 not supported since JDK8
+            return;
+        }
         SpringBusFactory bf = new SpringBusFactory();
         URL busFile = CipherSuitesTest.class.getResource("ciphersuites-dhe-client.xml");
 
@@ -267,7 +275,14 @@ public class CipherSuitesTest extends AbstractBusClientServerTestBase {
 
     // Both client + server include DHE
     @org.junit.Test
-    public void testDHEIncludedAsync() throws Exception {
+    public void testRC4IncludedAsync() throws Exception {
+        String version = System.getProperty("java.version");
+        if (JavaUtils.isJava9Compatible()
+            || version.length() > 1 && 1.8D <= Double.parseDouble(version.substring(0, 3))
+            ) {
+            // RC4 not supported since JDK8
+            return;
+        }
         SpringBusFactory bf = new SpringBusFactory();
         URL busFile = CipherSuitesTest.class.getResource("ciphersuites-dhe-client.xml");
 
