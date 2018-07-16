@@ -46,6 +46,7 @@ public class BasicAuthJAASTest extends AbstractBusClientServerTestBase {
 
     @BeforeClass
     public static void startServers() throws Exception {
+        System.setProperty("testutil.ports.basicauth.Server", PORT);
         assertTrue(
             "Server failed to launch",
             // run the server in the same process
