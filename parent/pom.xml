@@ -163,7 +163,7 @@
         <cxf.woodstox.stax2-api.version>3.1.4</cxf.woodstox.stax2-api.version>
         <cxf.wsdl4j.version>1.6.3.redhat-1</cxf.wsdl4j.version>
         <cxf.wss4j.version>2.1.7</cxf.wss4j.version>
-        <cxf.xerces.version>2.11.0.SP4-redhat-1</cxf.xerces.version>
+        <cxf.xerces.version>2.12.0</cxf.xerces.version>
         <cxf.xmlbeans.version>2.6.0</cxf.xmlbeans.version>
         <cxf.xmlschema.version>2.2.1.redhat-1</cxf.xmlschema.version>
         <cxf.xpp3.bundle.version>1.1.4c_7</cxf.xpp3.bundle.version>
@@ -205,7 +205,7 @@
         <cxf.xmlsec.bundle.version>2.0.6</cxf.xmlsec.bundle.version>
         <cxf.rhino.bundle.version>1.7R2_3</cxf.rhino.bundle.version>
         <cxf.xmlresolver.bundle.version>1.2_5</cxf.xmlresolver.bundle.version>
-        <cxf.xerces.bundle.version>2.11.0_1</cxf.xerces.bundle.version>
+        <cxf.xerces.bundle.version>2.12.0_1</cxf.xerces.bundle.version>
         <cxf.bcel.bundle.version>5.2_4</cxf.bcel.bundle.version>
         <cxf.xalan.version>2.7.1.redhat-8</cxf.xalan.version>
         <cxf.xalan.bundle.version>2.7.2_3</cxf.xalan.bundle.version>
