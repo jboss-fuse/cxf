@@ -20,7 +20,7 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf</artifactId>
-        <version>3.1.11.redhat-SNAPSHOT</version>
+        <version>3.1.11.fuse-720007</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>cxf-parent</artifactId>
@@ -179,7 +179,7 @@
         <cxf.jboss.weld.version>2.4.0.Final</cxf.jboss.weld.version>
         <cxf.jboss.logging.version>3.3.0.Final</cxf.jboss.logging.version>
         <cxf.osgi.validation.api.version>1.1.0</cxf.osgi.validation.api.version>
-        <cxf.hibernate.validator.version>5.2.2.Final</cxf.hibernate.validator.version>
+        <cxf.hibernate.validator.version>5.3.5.Final-redhat-2</cxf.hibernate.validator.version>
         <cxf.glassfish.json.version>1.0.4</cxf.glassfish.json.version>
         <cxf.javax.el.version>3.0.0</cxf.javax.el.version>
         <cxf.servicemix.javax.el.version>3.0.0_1</cxf.servicemix.javax.el.version> 
@@ -189,7 +189,7 @@
         <cxf.aries.version.range>[1.0,2)</cxf.aries.version.range>
         <cxf.felix.framework.version>2.0.5</cxf.felix.framework.version>
         <cxf.osgi.version>5.0.0</cxf.osgi.version>
-        <cxf.karaf.version>4.1.1</cxf.karaf.version>
+        <cxf.karaf.version>4.2.0.fuse-720008</cxf.karaf.version>
         <cxf.pax.logging.version>1.6.0</cxf.pax.logging.version>
         <cxf.pax.exam.version>4.10.0</cxf.pax.exam.version>
         <cxf.felix.configadmin.version>1.2.4</cxf.felix.configadmin.version>
