@@ -34,11 +34,6 @@ public class OpenApiFeatureBeanPostProcessor implements BeanPostProcessor, BeanF
     private BeanFactory beanFactory;
     
     @Override
-    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-        return bean;
-    }
-    
-    @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
         if (bean instanceof OpenApiFeature) {
             final OpenApiFeature feature = (OpenApiFeature)bean;
