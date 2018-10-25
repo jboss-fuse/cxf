@@ -111,22 +111,22 @@
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-javascript</artifactId>
-            <version>3.1.11.fuse-710022</version>
+            <version>3.1.11.fuse-710031</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-frontend-jaxws</artifactId>
-            <version>3.1.11.fuse-710022</version>
+            <version>3.1.11.fuse-710031</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-transports-http</artifactId>
-            <version>3.1.11.fuse-710022</version>
+            <version>3.1.11.fuse-710031</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-transports-http-jetty</artifactId>
-            <version>3.1.11.fuse-710022</version>
+            <version>3.1.11.fuse-710031</version>
         </dependency>
     </dependencies>
 </project>
