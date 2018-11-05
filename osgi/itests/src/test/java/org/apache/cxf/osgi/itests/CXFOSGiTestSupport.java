@@ -65,6 +65,7 @@ import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 import static org.ops4j.pax.exam.CoreOptions.when;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.karafDistributionConfiguration;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.replaceConfigurationFile;
 
 /**
  * 
@@ -84,6 +85,7 @@ public class CXFOSGiTestSupport {
 
     protected MavenUrlReference cxfUrl;
     protected MavenUrlReference karafUrl;
+    protected MavenUrlReference springLegacyUrl;
 
     /**
      * @param probe
@@ -130,6 +132,9 @@ public class CXFOSGiTestSupport {
             .type("tar.gz");
         cxfUrl = maven().groupId("org.apache.cxf.karaf").artifactId("apache-cxf").versionAsInProject()
             .type("xml").classifier("features");
+        springLegacyUrl = maven().groupId("org.apache.karaf.features").
+            artifactId("spring-legacy").version(getKarafVersion())
+            .type("xml").classifier("features");
         String localRepo = System.getProperty("localRepository");
         Object urp = System.getProperty("cxf.useRandomFirstPort");
         return composite(karafDistributionConfiguration()
@@ -142,6 +147,8 @@ public class CXFOSGiTestSupport {
                          //KarafDistributionOption.keepRuntimeFolder(),
                          //debugConfiguration(), // nor this
                 systemProperty("java.awt.headless").value("true"),
+                         replaceConfigurationFile("etc/org.ops4j.pax.url.mvn.cfg",
+                                                  new File("src/test/resources/etc/org.ops4j.pax.url.mvn.cfg")),
                          when(localRepo != null)
                              .useOptions(editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg",
                                                                   "org.ops4j.pax.url.mvn.localRepository",

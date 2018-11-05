@@ -50,7 +50,8 @@ public class JMSTransactionTest extends AbstractVmJMSTest {
     private static TransactionManager transactionManager;
 
     public static void startBusAndJMS(Class<?> testClass) {
-        String brokerURI = "vm://" + testClass.getName() + "?broker.persistent=false&broker.useJmx=false";
+        String brokerURI = "vm://" + testClass.getName() 
+            + "?broker.persistent=false&broker.useJmx=false&jms.xaAckMode=1";
         startBusAndJMS(brokerURI);
         startBroker(brokerURI);
     }

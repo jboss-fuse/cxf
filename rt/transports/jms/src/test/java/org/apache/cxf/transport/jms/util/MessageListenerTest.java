@@ -133,7 +133,7 @@ public class MessageListenerTest {
 
     private Connection createXAConnection(String name, TransactionManager tm) throws JMSException {
         ActiveMQXAConnectionFactory cf = new ActiveMQXAConnectionFactory("vm://" + name
-                                                                         + "?broker.persistent=false");
+                                                                         + "?broker.persistent=false&jms.xaAckMode=1");
         cf.setRedeliveryPolicy(redeliveryPolicy());
         XaPooledConnectionFactory cfp = new XaPooledConnectionFactory(cf);
         cfp.setTransactionManager(tm);
