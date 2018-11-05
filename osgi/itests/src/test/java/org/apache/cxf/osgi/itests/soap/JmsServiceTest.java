@@ -81,6 +81,7 @@ public class JmsServiceTest extends CXFOSGiTestSupport {
             cxfBaseConfig(),
             testUtils(),
             features(cxfUrl, "cxf-core", "cxf-jaxws", "cxf-transports-jms"),
+            features(springLegacyUrl, "spring/4.3.18.RELEASE_1"),
             KarafDistributionOption.keepRuntimeFolder(),
             logLevel(LogLevel.INFO),
             features(activeMQFeature, "activemq-broker-noweb"),
