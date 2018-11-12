@@ -27,20 +27,45 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>3.2.7</version>
+        <version>3.2.x.redhat-SNAPSHOT </version>
         <relativePath>../parent</relativePath>
     </parent>
     <prerequisites>
         <maven>${cxf.maven.core.version}</maven>
     </prerequisites>
-    <modules>
-        <module>codegen-plugin</module>
-        <module>java2ws-plugin</module>
-        <module>java2wadl-plugin</module>
-        <module>java2swagger-plugin</module>
-        <module>wsdl-validator-plugin</module>
-        <module>wadl2java-plugin</module>
-        <module>corba</module>
-        <module>archetypes</module>
-    </modules>
+    <profiles>
+        <profile>
+            <id>default</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <modules>
+                <module>codegen-plugin</module>
+                <module>java2ws-plugin</module>
+                <module>java2wadl-plugin</module>
+                <module>java2swagger-plugin</module>
+                <module>wsdl-validator-plugin</module>
+                <module>wadl2java-plugin</module>
+                <module>corba</module>
+                <module>archetypes</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>java9plus</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <modules>
+                <!--java.corba was removed from jdk11 and can't find an external equivalent-->
+                <module>codegen-plugin</module>
+                <module>java2ws-plugin</module>
+                <module>java2wadl-plugin</module>
+                <module>java2swagger-plugin</module>
+                <module>wsdl-validator-plugin</module>
+                <module>wadl2java-plugin</module>
+                <module>archetypes</module>
+            </modules>
+        </profile>
+    </profiles>
+
 </project>
