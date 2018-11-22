@@ -349,6 +349,11 @@
                         <version>${cxf.xjc-utils.version}</version>
                     </dependency>
                     <dependency>
+                        <groupId>org.apache.cxf.xjcplugins</groupId>
+                        <artifactId>cxf-xjc-ts</artifactId>
+                        <version>${cxf.xjc-utils.version}</version>
+                    </dependency>
+                    <dependency>
                         <groupId>com.sun.xml.bind</groupId>
                         <artifactId>jaxb-xjc</artifactId>
                         <version>${cxf.jaxb.xjc.version}</version>
