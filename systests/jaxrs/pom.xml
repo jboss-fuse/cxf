@@ -556,6 +556,7 @@
                     </argLine>
                     <excludes>
                         <exclude>**/*JAXRSClientServerWebSocketSpringWebAppTest.java</exclude>
+                        <exclude>**/*JAXRSClientServerWebSocketSpringWebAppNoAtmosphereTest.java</exclude>
                     </excludes>
                 </configuration>
             </plugin>
