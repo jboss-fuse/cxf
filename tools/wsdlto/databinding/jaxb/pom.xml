@@ -32,6 +32,10 @@
     </parent>
     <properties>
         <cxf.module.name>org.apache.cxf.tools.wsdl.jaxb</cxf.module.name>
+        <cxf.osgi.import>
+            com.sun.codemodel;version="${cxf.osgi.javax.bind.version}",
+            com.sun.tools.xjc*;version="${cxf.osgi.javax.bind.version}"
+        </cxf.osgi.import>
     </properties>
     <dependencies>
         <dependency>
