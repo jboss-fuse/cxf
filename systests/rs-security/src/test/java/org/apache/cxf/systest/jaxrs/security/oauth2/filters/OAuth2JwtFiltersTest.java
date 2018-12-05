@@ -50,7 +50,7 @@ public class OAuth2JwtFiltersTest extends AbstractBusClientServerTestBase {
         assertTrue("server did not launch correctly",
                    launchServer(BookServerOAuth2ServiceJwt.class, true));
     }
-    @org.junit.Ignore("revisit later")
+    @org.junit.Test
     public void testServiceWithJwtToken() throws Exception {
         String oauthServiceAddress = "https://localhost:" + OAUTH_PORT + "/services/";
         String rsAddress = "https://localhost:" + PORT + "/secured/bookstore/books";

@@ -134,7 +134,7 @@ public class OAuth2FiltersTest extends AbstractBusClientServerTestBase {
         assertNotEquals(response.getStatus(), 200);
     }
 
-    @org.junit.Ignore("revisit later")
+    @org.junit.Test
     public void testServiceWithTokenAndScope() throws Exception {
         URL busFile = OAuth2FiltersTest.class.getResource("client.xml");
 
@@ -251,7 +251,7 @@ public class OAuth2FiltersTest extends AbstractBusClientServerTestBase {
         assertNotEquals(response.getStatus(), 200);
     }
 
-    @org.junit.Ignore("revisit later")
+    @org.junit.Test
     public void testServiceWithTokenAndMultipleScopes() throws Exception {
         URL busFile = OAuth2FiltersTest.class.getResource("client.xml");
 
