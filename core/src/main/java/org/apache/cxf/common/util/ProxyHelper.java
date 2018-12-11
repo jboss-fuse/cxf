@@ -24,6 +24,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,8 +42,12 @@ public class ProxyHelper {
         }
         HELPER = theHelper;
     }
+   
     
-    protected Map<String, ClassLoader> proxyClassLoaderCache = new HashMap<String, ClassLoader>();
+    protected Map<String, ClassLoader> proxyClassLoaderCache = 
+        Collections.synchronizedMap(new HashMap<String, ClassLoader>());
+    protected int cacheSize =
+        Integer.parseInt(System.getProperty("org.apache.cxf.proxy.classloader.size", "3000"));
     
     protected ProxyHelper() {
     }
@@ -82,6 +87,9 @@ public class ProxyHelper {
         }
         for (Class<?> currentInterface : interfaces) {
             combined.addLoader(getClassLoader(currentInterface));
+        }
+        if (proxyClassLoaderCache.size() >= cacheSize) {
+            proxyClassLoaderCache.clear();
         }
         proxyClassLoaderCache.put(getSortedNameFromInterfaceArray(interfaces), combined);
         return combined;

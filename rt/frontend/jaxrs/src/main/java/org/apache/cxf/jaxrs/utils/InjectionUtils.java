@@ -137,7 +137,13 @@ public final class InjectionUtils {
     private static final String ENUM_CONVERSION_CASE_SENSITIVE = "enum.conversion.case.sensitive";
 
     private static final String IGNORE_MATRIX_PARAMETERS = "ignore.matrix.parameters";
-
+    
+    private static Map<String, ProxyClassLoader> proxyClassLoaderCache = 
+        Collections.synchronizedMap(new HashMap<String, ProxyClassLoader>());
+    
+    private static int cacheSize =
+        Integer.parseInt(System.getProperty("org.apache.cxf.proxy.classloader.size", "3000"));
+    
     private InjectionUtils() {
 
     }
@@ -1076,9 +1082,19 @@ public final class InjectionUtils {
             proxy = createThreadLocalServletApiContext(type.getName());
         }
         if (proxy == null) {
-            ProxyClassLoader loader = new ProxyClassLoader(Proxy.class.getClassLoader());
-            loader.addLoader(type.getClassLoader());
-            loader.addLoader(ThreadLocalProxy.class.getClassLoader());
+            ProxyClassLoader loader
+                = proxyClassLoaderCache.get(type.getName()); 
+            if (loader == null
+                || !canSeeAllClasses(loader, new Class<?>[]{Proxy.class, type, ThreadLocalProxy.class})) {
+                // to avoid creating too much ProxyClassLoader to save Metaspace usage
+                loader = new ProxyClassLoader(Proxy.class.getClassLoader());
+                loader.addLoader(type.getClassLoader());
+                loader.addLoader(ThreadLocalProxy.class.getClassLoader());
+                if (proxyClassLoaderCache.size() >= cacheSize) {
+                    proxyClassLoaderCache.clear();
+                }
+                proxyClassLoaderCache.put(type.getName(), loader); 
+            } 
             return (ThreadLocalProxy<T>)Proxy.newProxyInstance(loader,
                                    new Class[] {type, ThreadLocalProxy.class },
                                    new ThreadLocalInvocationHandler<T>());
@@ -1086,8 +1102,24 @@ public final class InjectionUtils {
 
         return (ThreadLocalProxy<T>)proxy;
     }
-
-    private static boolean isServletApiContext(String name) {
+    
+    private static boolean canSeeAllClasses(ClassLoader loader, Class<?>[] interfaces) {
+        for (Class<?> currentInterface : interfaces) {
+            String ifName = currentInterface.getName();
+            try {
+                Class<?> ifClass = Class.forName(ifName, true, loader);
+                if (ifClass != currentInterface) {
+                    return false;
+                }
+               
+            } catch (NoClassDefFoundError | ClassNotFoundException e) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    private static boolean isServletApiContext(String name) { 
         return name.startsWith("javax.servlet.");
     }
 
