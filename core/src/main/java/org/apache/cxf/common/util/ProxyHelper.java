@@ -24,6 +24,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -39,8 +41,9 @@ public class ProxyHelper {
         }
         HELPER = theHelper;
     }
-
-
+    
+    protected Map<String, ClassLoader> proxyClassLoaderCache = new HashMap<String, ClassLoader>();
+    
     protected ProxyHelper() {
     }
 
@@ -61,6 +64,10 @@ public class ProxyHelper {
         if (canSeeAllInterfaces(loader, interfaces)) {
             return loader;
         }
+        ClassLoader cachedLoader = proxyClassLoaderCache.get(getSortedNameFromInterfaceArray(interfaces));
+        if (cachedLoader != null && canSeeAllInterfaces(cachedLoader, interfaces)) {
+            return cachedLoader;
+        }
         ProxyClassLoader combined;
         final SecurityManager sm = System.getSecurityManager();
         if (sm == null) {
@@ -76,7 +83,16 @@ public class ProxyHelper {
         for (Class<?> currentInterface : interfaces) {
             combined.addLoader(getClassLoader(currentInterface));
         }
+        proxyClassLoaderCache.put(getSortedNameFromInterfaceArray(interfaces), combined);
         return combined;
+    }
+    
+    private String getSortedNameFromInterfaceArray(Class<?>[] interfaces) {
+        SortedArraySet<String> arraySet = new SortedArraySet<String>();
+        for (Class<?> currentInterface : interfaces) {
+            arraySet.add(currentInterface.getName());
+        }
+        return arraySet.toString();
     }
 
     private static ClassLoader getClassLoader(final Class<?> clazz) {
@@ -125,4 +141,5 @@ public class ProxyHelper {
     public static Object getProxy(ClassLoader loader, Class<?>[] interfaces, InvocationHandler handler) {
         return HELPER.getProxyInternal(loader, interfaces, handler);
     }
+    
 }
