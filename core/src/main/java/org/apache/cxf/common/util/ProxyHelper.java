@@ -22,6 +22,8 @@ package org.apache.cxf.common.util;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 
@@ -38,6 +40,7 @@ public class ProxyHelper {
         HELPER = theHelper;
     }
     
+    protected Map<String, ClassLoader> proxyClassLoaderCache = new HashMap<String, ClassLoader>();
     
     protected ProxyHelper() {
     }
@@ -59,11 +62,24 @@ public class ProxyHelper {
         if (canSeeAllInterfaces(loader, interfaces)) {
             return loader;
         }
+        ClassLoader cachedLoader = proxyClassLoaderCache.get(getSortedNameFromInterfaceArray(interfaces));
+        if (cachedLoader != null && canSeeAllInterfaces(cachedLoader, interfaces)) {
+            return cachedLoader;
+        }
         ProxyClassLoader combined = new ProxyClassLoader(loader, interfaces);
         for (Class<?> currentInterface : interfaces) {
             combined.addLoader(currentInterface.getClassLoader());
         }
+        proxyClassLoaderCache.put(getSortedNameFromInterfaceArray(interfaces), combined);
         return combined;
+    }
+    
+    private String getSortedNameFromInterfaceArray(Class<?>[] interfaces) {
+        SortedArraySet<String> arraySet = new SortedArraySet<String>();
+        for (Class<?> currentInterface : interfaces) {
+            arraySet.add(currentInterface.getName());
+        }
+        return arraySet.toString();
     }
 
     private boolean canSeeAllInterfaces(ClassLoader loader, Class<?>[] interfaces) {
@@ -100,4 +116,5 @@ public class ProxyHelper {
     public static Object getProxy(ClassLoader loader, Class<?>[] interfaces, InvocationHandler handler) {
         return HELPER.getProxyInternal(loader, interfaces, handler);
     }
+    
 }
