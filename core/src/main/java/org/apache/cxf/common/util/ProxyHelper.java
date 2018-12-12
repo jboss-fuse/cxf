@@ -36,7 +36,6 @@ import org.apache.cxf.common.logging.LogUtils;
  *
  */
 public class ProxyHelper {
-    
     static final ProxyHelper HELPER;
     static {
         ProxyHelper theHelper = null;
@@ -47,7 +46,8 @@ public class ProxyHelper {
         }
         HELPER = theHelper;
     }
-    private static final Logger LOG = LogUtils.getL7dLogger(ProxyHelper.class);   
+   
+    private static final Logger LOG = LogUtils.getL7dLogger(ProxyHelper.class);
     
     protected Map<String, ClassLoader> proxyClassLoaderCache = 
         Collections.synchronizedMap(new HashMap<String, ClassLoader>());
@@ -73,10 +73,12 @@ public class ProxyHelper {
      */
     private ClassLoader getClassLoaderForInterfaces(final ClassLoader loader, final Class<?>[] interfaces) {
         if (canSeeAllInterfaces(loader, interfaces)) {
+            LOG.log(Level.FINE, "current classloader " + loader + " can see all interface");
             return loader;
         }
         ClassLoader cachedLoader = proxyClassLoaderCache.get(getSortedNameFromInterfaceArray(interfaces));
         if (cachedLoader != null && canSeeAllInterfaces(cachedLoader, interfaces)) {
+            LOG.log(Level.FINE, "find required loader from ProxyClassLoader cache");
             return cachedLoader;
         }
         ProxyClassLoader combined;
