@@ -49,6 +49,7 @@ import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.ws.rs.WebApplicationException;
@@ -1025,10 +1026,16 @@ public final class InjectionUtils {
             if (loader == null
                 || !canSeeAllClasses(loader, new Class<?>[]{Proxy.class, type, ThreadLocalProxy.class})) {
                 // to avoid creating too much ProxyClassLoader to save Metaspace usage
+                LOG.log(Level.FINE, "can't find required ProxyClassLoader for type " + type.getName());
+                LOG.log(Level.FINE, "create a new one with parent  " + Proxy.class.getClassLoader());
                 loader = new ProxyClassLoader(Proxy.class.getClassLoader());
                 loader.addLoader(type.getClassLoader());
+                LOG.log(Level.FINE, "type classloader is  " + type.getClassLoader().getClass().getName());
                 loader.addLoader(ThreadLocalProxy.class.getClassLoader());
+                LOG.log(Level.FINE, "ThreadLocalProxy classloader is  " 
+                    + ThreadLocalProxy.class.getClassLoader().getClass().getName());
                 if (proxyClassLoaderCache.size() >= cacheSize) {
+                    LOG.log(Level.FINE, "proxyClassLoaderCache is full, need clear it");
                     proxyClassLoaderCache.clear();
                 }
                 proxyClassLoaderCache.put(type.getName(), loader); 
