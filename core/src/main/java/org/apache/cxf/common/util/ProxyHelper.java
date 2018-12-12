@@ -27,11 +27,16 @@ import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.apache.cxf.common.logging.LogUtils;
 
 /**
  *
  */
 public class ProxyHelper {
+    
     static final ProxyHelper HELPER;
     static {
         ProxyHelper theHelper = null;
@@ -42,12 +47,13 @@ public class ProxyHelper {
         }
         HELPER = theHelper;
     }
-   
+    private static final Logger LOG = LogUtils.getL7dLogger(ProxyHelper.class);   
     
     protected Map<String, ClassLoader> proxyClassLoaderCache = 
         Collections.synchronizedMap(new HashMap<String, ClassLoader>());
     protected int cacheSize =
         Integer.parseInt(System.getProperty("org.apache.cxf.proxy.classloader.size", "3000"));
+    
     
     protected ProxyHelper() {
     }
@@ -74,6 +80,7 @@ public class ProxyHelper {
             return cachedLoader;
         }
         ProxyClassLoader combined;
+        LOG.log(Level.FINE, "can't find required ProxyClassLoader from cache, create a new one with parent " + loader);
         final SecurityManager sm = System.getSecurityManager();
         if (sm == null) {
             combined = new ProxyClassLoader(loader, interfaces);
@@ -87,8 +94,14 @@ public class ProxyHelper {
         }
         for (Class<?> currentInterface : interfaces) {
             combined.addLoader(getClassLoader(currentInterface));
+            LOG.log(Level.FINE, "interface for new created ProxyClassLoader is "
+                + currentInterface.getName());
+            LOG.log(Level.FINE, "interface's classloader for new created ProxyClassLoader is "
+                + currentInterface.getClassLoader());
+        LOG.log(Level.FINE, "can't find required ProxyClassLoader from cache, create a new one with parent " + loader);
         }
         if (proxyClassLoaderCache.size() >= cacheSize) {
+            LOG.log(Level.FINE, "proxyClassLoaderCache is full, need clear it");
             proxyClassLoaderCache.clear();
         }
         proxyClassLoaderCache.put(getSortedNameFromInterfaceArray(interfaces), combined);
