@@ -1083,7 +1083,7 @@ public final class InjectionUtils {
         }
         if (proxy == null) {
             ProxyClassLoader loader
-                = proxyClassLoaderCache.get(type.getName()); 
+                = proxyClassLoaderCache.get(type.getName() + type.getClassLoader()); 
             if (loader == null
                 || !canSeeAllClasses(loader, new Class<?>[]{Proxy.class, type, ThreadLocalProxy.class})) {
                 // to avoid creating too much ProxyClassLoader to save Metaspace usage
@@ -1091,7 +1091,7 @@ public final class InjectionUtils {
                 LOG.log(Level.FINE, "create a new one with parent  " + Proxy.class.getClassLoader());
                 loader = new ProxyClassLoader(Proxy.class.getClassLoader());
                 loader.addLoader(type.getClassLoader());
-                LOG.log(Level.FINE, "type classloader is  " + type.getClassLoader().getClass().getName());
+                LOG.log(Level.FINE, "type classloader is  " + type.getClassLoader());
                 loader.addLoader(ThreadLocalProxy.class.getClassLoader());
                 LOG.log(Level.FINE, "ThreadLocalProxy classloader is  " 
                     + ThreadLocalProxy.class.getClassLoader().getClass().getName());
@@ -1099,7 +1099,7 @@ public final class InjectionUtils {
                     LOG.log(Level.FINE, "proxyClassLoaderCache is full, need clear it");
                     proxyClassLoaderCache.clear();
                 }
-                proxyClassLoaderCache.put(type.getName(), loader); 
+                proxyClassLoaderCache.put(type.getName() + type.getClassLoader(), loader); 
             } 
             return (ThreadLocalProxy<T>)Proxy.newProxyInstance(loader,
                                    new Class[] {type, ThreadLocalProxy.class },
