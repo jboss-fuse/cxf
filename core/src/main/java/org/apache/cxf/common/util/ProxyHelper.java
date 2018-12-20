@@ -110,7 +110,6 @@ public class ProxyHelper {
                 + currentInterface.getName());
             LOG.log(Level.FINE, "interface's classloader for new created ProxyClassLoader is "
                 + currentInterface.getClassLoader());
-        LOG.log(Level.FINE, "can't find required ProxyClassLoader from cache, create a new one with parent " + loader);
         }
         if (proxyClassLoaderCache.size() >= cacheSize) {
             LOG.log(Level.FINE, "proxyClassLoaderCache is full, need clear it");
