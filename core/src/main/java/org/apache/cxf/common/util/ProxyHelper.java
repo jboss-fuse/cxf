@@ -23,8 +23,8 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -48,7 +48,7 @@ public class ProxyHelper {
     private static final Logger LOG = LogUtils.getL7dLogger(ProxyHelper.class);
     
     protected Map<String, ClassLoader> proxyClassLoaderCache = 
-        Collections.synchronizedMap(new HashMap<String, ClassLoader>());
+        Collections.synchronizedMap(new WeakHashMap<String, ClassLoader>());
     protected int cacheSize =
         Integer.parseInt(System.getProperty("org.apache.cxf.proxy.classloader.size", "3000"));
     

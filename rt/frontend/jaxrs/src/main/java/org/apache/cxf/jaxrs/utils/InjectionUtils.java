@@ -49,6 +49,7 @@ import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.WeakHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -111,7 +112,7 @@ public final class InjectionUtils {
     private static final String IGNORE_MATRIX_PARAMETERS = "ignore.matrix.parameters";
     
     private static Map<String, ProxyClassLoader> proxyClassLoaderCache = 
-        Collections.synchronizedMap(new HashMap<String, ProxyClassLoader>());
+        Collections.synchronizedMap(new WeakHashMap<String, ProxyClassLoader>());
     
     private static int cacheSize =
         Integer.parseInt(System.getProperty("org.apache.cxf.proxy.classloader.size", "3000"));
