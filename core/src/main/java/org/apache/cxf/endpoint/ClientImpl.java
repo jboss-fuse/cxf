@@ -281,7 +281,7 @@ public class ClientImpl
         }
         return responseContext.get(Thread.currentThread());
     }
-    protected Map<String, Object> setResponseContext(Map<String, Object> ctx) {
+    protected Map<String, Object> reloadResponseContext(Map<String, Object> ctx) {
         if (ctx instanceof ResponseContext) {
             ResponseContext c = (ResponseContext)ctx;
             responseContext.put(Thread.currentThread(), c);
@@ -539,7 +539,7 @@ public class ClientImpl
             }
             return processResult(message, exchange, oi, resContext);
         } finally {
-            setResponseContext(resContext);
+            reloadResponseContext(resContext);
             if (origLoader != null) {
                 origLoader.reset();
             }
@@ -638,7 +638,7 @@ public class ClientImpl
                 resContext.putAll(inMsg);
                 // remove the recursive reference if present
                 resContext.remove(Message.INVOCATION_CONTEXT);
-                setResponseContext(resContext);
+                reloadResponseContext(resContext);
             }
             resList = CastUtils.cast(inMsg.getContent(List.class));
         }
@@ -814,7 +814,7 @@ public class ClientImpl
                         resCtx = CastUtils.cast((Map<?, ?>) resCtx
                                 .get(RESPONSE_CONTEXT));
                         if (resCtx != null) {
-                            setResponseContext(resCtx);
+                            reloadResponseContext(resCtx);
                         }
                         // remove callback so that it won't be invoked twice
                         callback = message.getExchange().remove(ClientCallback.class);
@@ -843,7 +843,7 @@ public class ClientImpl
                                                                 .get(Message.INVOCATION_CONTEXT));
                 resCtx = CastUtils.cast((Map<?, ?>)resCtx.get(RESPONSE_CONTEXT));
                 if (resCtx != null && responseContext != null) {
-                    setResponseContext(resCtx);
+                    reloadResponseContext(resCtx);
                 }
                 try {
                     Object obj[] = processResult(message, message.getExchange(),
