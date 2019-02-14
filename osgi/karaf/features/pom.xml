@@ -206,7 +206,7 @@
                                 <descriptor>mvn:org.apache.karaf.features/framework/${cxf.karaf.version}/xml/features</descriptor>
                                 <descriptor>mvn:org.apache.karaf.features/standard/${cxf.karaf.version}/xml/features</descriptor>
                                 <descriptor>mvn:org.apache.karaf.features/spring/${cxf.karaf.version}/xml/features</descriptor>
-								<descriptor>mvn:org.ops4j.pax.web/pax-web-features/6.0.2/xml/features</descriptor>
+                                <descriptor>mvn:org.ops4j.pax.web/pax-web-features/7.3.0/xml/features</descriptor>
                                 <descriptor>file:${project.build.directory}/classes/features.xml</descriptor>
                             </descriptors>
                             <distribution>org.apache.karaf.features:framework</distribution>
@@ -215,9 +215,73 @@
                                 <feature>framework</feature>
                             </framework>
                             <features>
-                                <feature>cxf-*</feature>
+                                <!--feature>cxf-*</feature-->
                                 <!-- <feature>cxf-management-web</feature> -->
                                 <!-- <feature>cxf-wsn</feature> -->
+                                <feature>cxf-specs</feature>
+                                <feature>cxf-jaxb</feature>
+                                <feature>cxf-abdera</feature>
+                                <feature>cxf-core</feature>
+                                <feature>cxf-core</feature>
+                                <feature>cxf-commands</feature>
+                                <feature>cxf-wsdl</feature>
+                                <feature>cxf-ws-policy</feature>
+                                <feature>cxf-ws-addr</feature>
+                                <feature>cxf-ws-rm</feature>
+                                <feature>cxf-ws-mex</feature>
+                                <feature>cxf-ws-security</feature>
+                                <feature>cxf-rt-security</feature>
+                                <feature>cxf-rt-security-saml</feature>
+                                <feature>cxf-http-client</feature>
+                                <feature>cxf-http</feature>
+                                <feature>cxf-http-provider</feature>
+                                <feature>cxf-http-jetty</feature>
+                                <feature>cxf-http-async</feature>
+                                <feature>cxf-http-netty-client</feature>
+                                <feature>cxf-http-netty-server</feature>
+                                <!-- servlet-api 3.1.0 and 4.0.1 conflict -->
+                                <!--feature>cxf-http-undertow</feature-->
+                                <feature>cxf-bindings-soap</feature>
+                                <feature>cxf-jaxws</feature>
+                                <feature>cxf-jaxrs</feature>
+                                <feature>cxf-rs-security-xml</feature>
+                                <feature>cxf-rs-security-sso-saml</feature>
+                                <feature>cxf-rs-security-cors</feature>
+                                <feature>cxf-rs-security-oauth</feature>
+                                <feature>cxf-rs-security-jose</feature>
+                                <feature>cxf-rs-security-oauth2</feature>
+                                <feature>cxf-jackson</feature>
+                                <feature>cxf-jsr-json</feature>
+                                <feature>cxf-tracing-brave</feature>
+                                <feature>cxf-tracing-opentracing</feature>
+                                <feature>cxf-rs-description-swagger2</feature>
+                                <feature>cxf-rs-description-openapi-v3</feature>
+                                <feature>cxf-databinding-aegis</feature>
+                                <feature>cxf-databinding-jaxb</feature>
+                                <feature>cxf-features-clustering</feature>
+                                <feature>cxf-features-logging</feature>
+                                <feature>cxf-features-throttling</feature>
+                                <feature>cxf-features-metrics</feature>
+                                <feature>cxf-bindings-corba</feature>
+                                <feature>cxf-bindings-coloc</feature>
+                                <feature>cxf-transports-local</feature>
+                                <feature>cxf-transports-jms</feature>
+                                <feature>cxf-transports-udp</feature>
+                                <feature>cxf-transports-websocket-client</feature>
+                                <feature>cxf-transports-websocket-server</feature>
+                                <feature>cxf-sse</feature>
+                                <feature>cxf-javascript</feature>
+                                <feature>cxf-frontend-javascript</feature>
+                                <feature>cxf-xjc-runtime</feature>
+                                <feature>cxf-tools</feature>
+                                <feature>cxf-sts</feature>
+                                <feature>cxf-wsn-api</feature>
+                                <feature>cxf-wsn</feature>
+                                <feature>cxf-ws-discovery-api</feature>
+                                <feature>cxf-ws-discovery</feature>
+                                <feature>cxf-bean-validation-core</feature>
+                                <feature>cxf-bean-validation</feature>
+                                <feature>cxf-jaxrs-cdi</feature>
                             </features>
                         </configuration>
                     </execution>
