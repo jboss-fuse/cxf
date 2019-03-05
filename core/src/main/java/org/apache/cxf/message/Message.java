@@ -144,6 +144,8 @@ public interface Message extends StringMap {
 
     String CONTENT_TYPE = "Content-Type";    
     String ACCEPT_CONTENT_TYPE = "Accept";
+    String X_FORWARDED_PREFIX = "X-Forwarded-Prefix";
+    String X_FORWARDED_PATH = "X-Forwarded-Path";
     String BASE_PATH = Message.class.getName() + ".BASE_PATH";
     String ENCODING = Message.class.getName() + ".ENCODING";
     String FIXED_PARAMETER_ORDER = Message.class.getName() + ".FIXED_PARAMETER_ORDER";

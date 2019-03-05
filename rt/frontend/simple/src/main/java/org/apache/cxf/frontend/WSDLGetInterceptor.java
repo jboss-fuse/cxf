@@ -19,6 +19,7 @@
 
 package org.apache.cxf.frontend;
 
+import java.net.URI;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -66,6 +67,17 @@ public class WSDLGetInterceptor extends AbstractPhaseInterceptor<Message> {
 
         String baseUri = (String)message.get(Message.REQUEST_URL);
         String ctx = (String)message.get(Message.PATH_INFO);
+        String forwardedPrefix = (String)message.get(Message.X_FORWARDED_PREFIX);
+        String forwardedPath = (String)message.get(Message.X_FORWARDED_PATH);
+        if (forwardedPath != null) {
+            ctx = forwardedPath;
+            URI uri = URI.create(baseUri);
+            baseUri = uri.getScheme() + "://" + uri.getRawAuthority() + forwardedPath;
+        } else if (forwardedPrefix != null) {
+            ctx = forwardedPrefix + ctx;
+            URI uri = URI.create(baseUri);
+            baseUri = uri.getScheme() + "://" + uri.getRawAuthority() + forwardedPrefix + uri.getPath();
+        }
 
         WSDLGetUtils utils = (WSDLGetUtils)message.getContextualProperty(WSDLGetUtils.class.getName());
         if (utils == null) {
