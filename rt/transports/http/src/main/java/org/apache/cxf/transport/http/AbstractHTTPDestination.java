@@ -389,8 +389,14 @@ public abstract class AbstractHTTPDestination
         };
         
         inMessage.put(SecurityContext.class, httpSecurityContext);
-        
-        
+
+        if (req.getHeader(Message.X_FORWARDED_PREFIX) != null) {
+            inMessage.put(Message.X_FORWARDED_PREFIX, req.getHeader(Message.X_FORWARDED_PREFIX));
+        }
+        if (req.getHeader(Message.X_FORWARDED_PATH) != null) {
+            inMessage.put(Message.X_FORWARDED_PATH, req.getHeader(Message.X_FORWARDED_PATH));
+        }
+
         Headers headers = new Headers(inMessage);
         headers.copyFromRequest(req);
         String credentials = headers.getAuthorization();
