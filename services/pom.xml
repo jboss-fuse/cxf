@@ -28,7 +28,7 @@
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf</artifactId>
         <relativePath>../pom.xml</relativePath>
-        <version>3.2.7.redhat-SNAPSHOT</version>
+        <version>3.2.7.fuse-730029</version>
     </parent>
     <modules>
         <module>sts</module>
