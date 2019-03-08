@@ -185,13 +185,13 @@
         <cxf.validation.api.package.version>[1.0.0,2)</cxf.validation.api.package.version>
         <cxf.cdi.api.version>1.2</cxf.cdi.api.version>
         <cxf.cda.api.osgi.range>[1.1,2)</cxf.cda.api.osgi.range>
-        <cxf.json.api.version>1.0</cxf.json.api.version>
+        <cxf.json.api.version>1.1.4</cxf.json.api.version>
         <cxf.jboss.weld.version>2.4.8.Final</cxf.jboss.weld.version>
         <cxf.jboss.logging.version>3.3.2.Final-redhat-00001</cxf.jboss.logging.version>
         <cxf.osgi.validation.api.version>1.1.0</cxf.osgi.validation.api.version>
         <cxf.hibernate.validator.version>5.3.5.Final-redhat-2</cxf.hibernate.validator.version>
         <cxf.glassfish.json.version>1.0.4</cxf.glassfish.json.version>
-        <cxf.johnzon.version>1.0.0</cxf.johnzon.version>
+        <cxf.johnzon.version>1.1.0</cxf.johnzon.version>
         <cxf.javax.el.version>3.0.0</cxf.javax.el.version>
         <cxf.servicemix.javax.el.version>3.0.0_1</cxf.servicemix.javax.el.version>
         <!-- various OSGi related versions -->
