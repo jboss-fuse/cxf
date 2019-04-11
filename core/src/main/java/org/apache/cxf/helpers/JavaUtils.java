@@ -55,7 +55,7 @@ public final class JavaUtils {
         try {
             isJava8Before161 = version != null && version.startsWith("1.8.0")
                 && Integer.parseInt(version.substring(6)) < 161;
-        } catch (NumberFormatException ex) {
+        } catch (Exception ex) {
             isJava8Before161 = false;
         }
 
