@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements. See the NOTICE file
@@ -27,7 +27,7 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>3.2.7.redhat-SNAPSHOT</version>
+        <version>3.2.7.fuse-preprod-740001-redhat-00001</version>
         <relativePath>../../../../parent/pom.xml</relativePath>
     </parent>
     
@@ -175,14 +175,10 @@
                         <phase>generate-sources</phase>
                         <configuration>
                             <fork>${cxf.codegenplugin.forkmode}</fork>
-                            <sourceRoot>
-                                ${basedir}/target/generated-sources
-                            </sourceRoot>
+                            <sourceRoot>${basedir}/target/generated-sources</sourceRoot>
                             <wsdlOptions>
                                 <wsdlOption>
-                                    <wsdl>
-                                        ${basedir}/src/test/resources/DoubleItLogical.wsdl
-                                    </wsdl>
+                                    <wsdl>${basedir}/src/test/resources/DoubleItLogical.wsdl</wsdl>
                                 </wsdlOption>
                             </wsdlOptions>
                         </configuration>

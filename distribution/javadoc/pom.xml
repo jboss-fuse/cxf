@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements. See the NOTICE file
@@ -27,7 +27,7 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>3.2.7.redhat-SNAPSHOT</version>
+        <version>3.2.7.fuse-preprod-740001-redhat-00001</version>
         <relativePath>../../parent</relativePath>
     </parent>
     <properties>
@@ -360,60 +360,60 @@
                         <phase>generate-sources</phase>
                         <configuration>
                             <target>
-                                <mkdir dir="${project.build.directory}/coresources" />
+                                <mkdir dir="${project.build.directory}/coresources"></mkdir>
                                 <copy todir="${project.build.directory}/coresources">
                                     <fileset dir="../../core">
-                                        <include name="**/src/main/java/**/*.java" />
+                                        <include name="**/src/main/java/**/*.java"></include>
                                     </fileset>
                                 </copy>
-                                <mkdir dir="${project.build.directory}/sources" />
+                                <mkdir dir="${project.build.directory}/sources"></mkdir>
                                 <copy todir="${project.build.directory}/sources">
                                     <fileset dir="../../core">
-                                        <include name="**/src/main/java/**/*.java" />
+                                        <include name="**/src/main/java/**/*.java"></include>
                                     </fileset>
                                     <fileset dir="../../rt">
-                                        <include name="**/src/main/java/**/*.java" />
-                                        <exclude name="management-web/**" />
+                                        <include name="**/src/main/java/**/*.java"></include>
+                                        <exclude name="management-web/**"></exclude>
                                     </fileset>
 
                                     <fileset dir="../../tools">
-                                        <include name="**/src/main/java/**/*.java" />
-                                        <exclude name="wsdlto/test/**" />
+                                        <include name="**/src/main/java/**/*.java"></include>
+                                        <exclude name="wsdlto/test/**"></exclude>
                                     </fileset>
 
                                     <fileset dir="../../integration">
-                                        <include name="**/src/main/java/**/*.java" />
+                                        <include name="**/src/main/java/**/*.java"></include>
                                     </fileset>
                                     
                                     <fileset dir="../../services">
-                                        <include name="**/src/main/java/**/*.java" />
-                                        <exclude name="**/wsn-osgi/**" />
-                                        <exclude name="**/systests/**" />
-                                        <exclude name="**/sts-war/**" />
-                                        <exclude name="**/xkms-war/**" />
-                                        <exclude name="**/xkms-itests/**" />
+                                        <include name="**/src/main/java/**/*.java"></include>
+                                        <exclude name="**/wsn-osgi/**"></exclude>
+                                        <exclude name="**/systests/**"></exclude>
+                                        <exclude name="**/sts-war/**"></exclude>
+                                        <exclude name="**/xkms-war/**"></exclude>
+                                        <exclude name="**/xkms-itests/**"></exclude>
                                     </fileset>
-                                    <regexpmapper from="^(.*)/main/java/(.*)$$" to="\2" />
+                                    <regexpmapper from="^(.*)/main/java/(.*)$$" to="\2"></regexpmapper>
                                 </copy>
                                 <!-- aegis/jaxws have an extra directory in there -->
                                 <copy todir="${project.build.directory}/sources">
                                     <fileset dir="../../rt/databinding/aegis">
-                                        <include name="**/src/main/generated/**/*.java" />
+                                        <include name="**/src/main/generated/**/*.java"></include>
                                     </fileset>
                                     <fileset dir="../../rt/frontend/jaxws">
-                                        <include name="**/src/main/generated/**/*.java" />
+                                        <include name="**/src/main/generated/**/*.java"></include>
                                     </fileset>
                                     <fileset dir="../../tools/corba">
-                                        <include name="**/src/main/generated/**/*.java" />
+                                        <include name="**/src/main/generated/**/*.java"></include>
                                     </fileset>
-                                    <regexpmapper from="^(.*)/main/generated/(.*)$$" to="\2" />
+                                    <regexpmapper from="^(.*)/main/generated/(.*)$$" to="\2"></regexpmapper>
                                 </copy>
                                 <!-- services have some cxf generated things -->
                                 <copy todir="${project.build.directory}/sources">
                                     <fileset dir="../../services">
-                                        <include name="**/generated-sources/cxf/**/*.java" />
+                                        <include name="**/generated-sources/cxf/**/*.java"></include>
                                     </fileset>
-                                    <regexpmapper from="^(.*)/generated-sources/cxf/(.*)$$" to="\2" />
+                                    <regexpmapper from="^(.*)/generated-sources/cxf/(.*)$$" to="\2"></regexpmapper>
                                 </copy>
                                 
                             </target>
@@ -475,21 +475,15 @@
                             <pluginExecutions>
                                 <pluginExecution>
                                     <pluginExecutionFilter>
-                                        <groupId>
-                                            org.apache.maven.plugins
-                                        </groupId>
-                                        <artifactId>
-                                            maven-antrun-plugin
-                                        </artifactId>
-                                        <versionRange>
-                                            [1.7,)
-                                        </versionRange>
+                                        <groupId>org.apache.maven.plugins</groupId>
+                                        <artifactId>maven-antrun-plugin</artifactId>
+                                        <versionRange>[1.7,)</versionRange>
                                         <goals>
                                             <goal>run</goal>
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore />
+                                        <ignore></ignore>
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>

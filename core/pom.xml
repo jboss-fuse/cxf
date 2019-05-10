@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements. See the NOTICE file
@@ -27,19 +27,16 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>3.2.7.redhat-SNAPSHOT</version>
+        <version>3.2.7.fuse-preprod-740001-redhat-00001</version>
         <relativePath>../parent/pom.xml</relativePath>
     </parent>
     <properties>
         <cxf.module.name>org.apache.cxf.core</cxf.module.name>
         <cxf.bundle.activator>org.apache.cxf.bus.osgi.CXFActivator</cxf.bundle.activator>
-        <cxf.osgi.export>
-            !org.apache.cxf.internal,
+        <cxf.osgi.export>!org.apache.cxf.internal,
             META-INF.cxf,
-            org.apache.cxf.*
-        </cxf.osgi.export>
-        <cxf.osgi.import>
-            com.ctc.wstx*;resolution:=optional,
+            org.apache.cxf.*</cxf.osgi.export>
+        <cxf.osgi.import>com.ctc.wstx*;resolution:=optional,
             org.codehaus.stax2*;resolution:=optional,
             com.sun*;resolution:=optional,
             org.slf4j*;resolution:=optional;version="${cxf.osgi.slf4j.version}",
@@ -64,19 +61,14 @@
             com.sun.xml.internal.bind.api;resolution:=optional,
             com.sun.xml.internal.bind.api.impl;resolution:=optional,
             com.sun.xml.bind.v2.model.annotation;resolution:=optional,
-            org.apache.aries*;version="${cxf.aries.version.range}";resolution:=optional
-        </cxf.osgi.import>
-        <cxf.osgi.dynamic.import>
-            org.apache.cxf.bus,org.apache.cxf.*,com.ctc.wstx.*
-        </cxf.osgi.dynamic.import>
+            org.apache.aries*;version="${cxf.aries.version.range}";resolution:=optional</cxf.osgi.import>
+        <cxf.osgi.dynamic.import>org.apache.cxf.bus,org.apache.cxf.*,com.ctc.wstx.*</cxf.osgi.dynamic.import>
         <!-- keep in sync with services exported in activator -->
-        <cxf.export.service>
-            org.apache.aries.blueprint.NamespaceHandler;osgi.service.blueprint.namespace="http://cxf.apache.org/blueprint/core",
+        <cxf.export.service>org.apache.aries.blueprint.NamespaceHandler;osgi.service.blueprint.namespace="http://cxf.apache.org/blueprint/core",
             org.apache.aries.blueprint.NamespaceHandler;osgi.service.blueprint.namespace="http://cxf.apache.org/configuration/beans",
             org.apache.aries.blueprint.NamespaceHandler;osgi.service.blueprint.namespace="http://cxf.apache.org/configuration/parameterized-types",
             org.apache.aries.blueprint.NamespaceHandler;osgi.service.blueprint.namespace="http://cxf.apache.org/configuration/security",
-            org.apache.aries.blueprint.NamespaceHandler;osgi.service.blueprint.namespace="http://schemas.xmlsoap.org/wsdl/",
-        </cxf.export.service>
+            org.apache.aries.blueprint.NamespaceHandler;osgi.service.blueprint.namespace="http://schemas.xmlsoap.org/wsdl/",</cxf.export.service>
     </properties>
     <dependencies>
         <dependency>
@@ -390,16 +382,10 @@
                             <_nouses>true</_nouses>
                             <_versionpolicy>[$(version;==;$(@)),$(version;+;$(@)))</_versionpolicy>
                             <Export-Package>${cxf.osgi.export}</Export-Package>
-                            <Import-Package>
-                                ${cxf.osgi.import},
-                                *
-                            </Import-Package>
-                            <DynamicImport-Package>
-                                ${cxf.osgi.dynamic.import}
-                            </DynamicImport-Package>
-                            <Export-Service>
-                                ${cxf.export.service}
-                            </Export-Service>
+                            <Import-Package>${cxf.osgi.import},
+                                *</Import-Package>
+                            <DynamicImport-Package>${cxf.osgi.dynamic.import}</DynamicImport-Package>
+                            <Export-Service>${cxf.export.service}</Export-Service>
                             <Bundle-Activator>${cxf.bundle.activator}</Bundle-Activator>
                         </instructions>
                     </configuration>
