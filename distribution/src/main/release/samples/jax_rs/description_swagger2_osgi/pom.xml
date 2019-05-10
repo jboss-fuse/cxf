@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 Licensed to the Apache Software Foundation (ASF) under one
 or more contributor license agreements. See the NOTICE file
@@ -26,7 +26,7 @@ under the License.
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
         <artifactId>cxf-samples</artifactId>
-        <version>3.2.7.redhat-SNAPSHOT</version>
+        <version>3.2.7.fuse-preprod-740002-redhat-00001</version>
         <relativePath>../..</relativePath>
     </parent>
 
@@ -43,8 +43,7 @@ under the License.
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId};blueprint.aries.xml-validation:=false</Bundle-SymbolicName>
-                        <Import-Package>
-                            javax.ws.rs,
+                        <Import-Package>javax.ws.rs,
                             javax.ws.rs.core,
                             javax.ws.rs.container,
                             org.apache.cxf.jaxrs.provider,
@@ -57,10 +56,8 @@ under the License.
                             com.fasterxml.jackson.jaxrs.base,
                             com.fasterxml.jackson.jaxrs.json,
                             javax.annotation;version="[1.2,2)",
-                            *
-                        </Import-Package>
-                        <Export-Package>
-                        </Export-Package>
+                            *</Import-Package>
+                        <Export-Package></Export-Package>
                     </instructions>
                 </configuration>
             </plugin>
@@ -71,17 +68,17 @@ under the License.
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-transports-http</artifactId>
-            <version>3.2.7.redhat-SNAPSHOT</version>
+            <version>3.2.7.fuse-preprod-740002-redhat-00001</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-frontend-jaxrs</artifactId>
-            <version>3.2.7.redhat-SNAPSHOT</version>
+            <version>3.2.7.fuse-preprod-740002-redhat-00001</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-rs-service-description-swagger</artifactId>
-            <version>3.2.7.redhat-SNAPSHOT</version>
+            <version>3.2.7.fuse-preprod-740002-redhat-00001</version>
         </dependency>
         <dependency>
             <groupId>javax.ws.rs</groupId>

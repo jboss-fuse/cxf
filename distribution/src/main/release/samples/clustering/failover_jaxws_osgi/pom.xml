@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 Licensed to the Apache Software Foundation (ASF) under one
 or more contributor license agreements. See the NOTICE file
@@ -26,7 +26,7 @@ under the License.
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
         <artifactId>cxf-samples</artifactId>
-        <version>3.2.7.redhat-SNAPSHOT</version>
+        <version>3.2.7.fuse-preprod-740002-redhat-00001</version>
         <relativePath>../..</relativePath>
     </parent>
 
@@ -43,12 +43,10 @@ under the License.
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId};blueprint.aries.xml-validation:=false</Bundle-SymbolicName>
-                        <Import-Package>
-                            org.apache.cxf,
+                        <Import-Package>org.apache.cxf,
                             org.apache.cxf.clustering.circuitbreaker,
                             org.qi4j.library.circuitbreaker,
-                            *
-                        </Import-Package>
+                            *</Import-Package>
                     </instructions>
                 </configuration>
             </plugin>
@@ -59,19 +57,19 @@ under the License.
     	<dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-rs-client</artifactId>
-            <version>3.2.7.redhat-SNAPSHOT</version>
+            <version>3.2.7.fuse-preprod-740002-redhat-00001</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf.samples</groupId>
             <artifactId>failover_server</artifactId>
-            <version>3.2.7.redhat-SNAPSHOT</version>
+            <version>3.2.7.fuse-preprod-740002-redhat-00001</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-features-clustering</artifactId>
-            <version>3.2.7.redhat-SNAPSHOT</version>
+            <version>3.2.7.fuse-preprod-740002-redhat-00001</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
