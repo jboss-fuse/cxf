@@ -26,7 +26,7 @@
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
         <artifactId>cxf-samples</artifactId>
-        <version>3.2.7.redhat-SNAPSHOT</version>
+        <version>3.2.7.fuse-preprod-740004-redhat-00001</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <build>
@@ -71,7 +71,7 @@
         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
-            <version>1.1.1</version>
+            <version>1.1.1.redhat-3</version>
         </dependency>
         <dependency>
             <groupId>net.oauth.core</groupId>
@@ -95,11 +95,4 @@
             <scope>runtime</scope>
         </dependency>
     </dependencies>
-    <repositories>
-        <repository>
-            <id>oauth</id>
-            <name>OAuth Repository</name>
-            <url>http://oauth.googlecode.com/svn/code/maven/</url>
-        </repository>
-    </repositories>
 </project>

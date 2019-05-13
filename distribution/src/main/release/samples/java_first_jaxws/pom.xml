@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements. See the NOTICE file
@@ -26,7 +26,7 @@
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
         <artifactId>cxf-samples</artifactId>
-        <version>3.2.7.redhat-SNAPSHOT</version>
+        <version>3.2.7.fuse-preprod-740004-redhat-00001</version>
     </parent>
     <properties>
         <cxf.version>${project.version}</cxf.version>
@@ -67,9 +67,7 @@
                     </container>
                     <configuration>
                         <type>standalone</type>
-                        <home>
-                            ${project.build.directory}/apache-tomcat-${tomcat.version}
-                        </home>
+                        <home>${project.build.directory}/apache-tomcat-${tomcat.version}</home>
                         <properties>
                             <cargo.servlet.port>8080</cargo.servlet.port>
                             <cargo.logging>high</cargo.logging>
@@ -149,12 +147,12 @@
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-frontend-jaxws</artifactId>
-            <version>3.2.7.redhat-SNAPSHOT</version>
+            <version>3.2.7.fuse-preprod-740004-redhat-00001</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-transports-http</artifactId>
-            <version>3.2.7.redhat-SNAPSHOT</version>
+            <version>3.2.7.fuse-preprod-740004-redhat-00001</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>

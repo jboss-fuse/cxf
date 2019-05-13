@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements. See the NOTICE file
@@ -28,7 +28,7 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>3.2.7.redhat-SNAPSHOT</version>
+        <version>3.2.7.fuse-preprod-740004-redhat-00001</version>
         <relativePath>../../../parent/pom.xml</relativePath>
     </parent>
     <properties>
@@ -93,21 +93,17 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Import-Package>
-                            javax.xml.bind*;version="[0.0,3)",
+                        <Import-Package>javax.xml.bind*;version="[0.0,3)",
                             javax.jws*;version="[0.0,3)",
                             javax.xml.ws*;version="[0.0,3)",
                             org.apache.cxf*;version="[3.0,4)",
-                            *
-                        </Import-Package>
-                        <Export-Package>
-                            org.oasis_open.docs.wsn.*;version=1.3;-noimport:=true,
+                            *</Import-Package>
+                        <Export-Package>org.oasis_open.docs.wsn.*;version=1.3;-noimport:=true,
                             org.oasis_open.docs.wsrf.*;version=1.2,
                             org.apache.cxf.wsn.client;version=${cxf.osgi.version.clean},
                             org.apache.cxf.wsn.util;version=${cxf.osgi.version.clean},
                             org.apache.cxf.wsn.wsdl;version=${cxf.osgi.version.clean},
-                            org.apache.cxf.wsn.jaxws;version=${cxf.osgi.version.clean}
-                        </Export-Package>
+                            org.apache.cxf.wsn.jaxws;version=${cxf.osgi.version.clean}</Export-Package>
                         <_nouses>true</_nouses>
                         <_versionpolicy>[$(version;==;$(@)),$(version;+;$(@)))</_versionpolicy>
                     </instructions>

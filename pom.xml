@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements. See the NOTICE file
@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.cxf</groupId>
     <artifactId>cxf</artifactId>
-    <version>3.2.7.redhat-SNAPSHOT</version>
+    <version>3.2.7.fuse-preprod-740004-redhat-00001</version>
     <name>Apache CXF</name>
     <description>Apache CXF is an open-source services framework that aids in 
     the development of services using front-end programming APIs, like JAX-WS 
@@ -41,7 +41,7 @@
     <properties>
         <cxf.compiler.fork>false</cxf.compiler.fork>
         <cxf.build-utils.version>3.4.1</cxf.build-utils.version>
-        <cxf.xjc-utils.version>3.2.4.fuse-730014</cxf.xjc-utils.version>
+        <cxf.xjc-utils.version>3.2.4.fuse-preprod-740010-redhat-00001</cxf.xjc-utils.version>
         <cxf.jdk.version>1.8</cxf.jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <site.deploy.url>scp://people.apache.org/www/cxf.apache.org/maven-site</site.deploy.url>
@@ -63,31 +63,6 @@
             <url>${site.deploy.url}</url>
         </site>
     </distributionManagement>
-    <repositories>
-        <repository>
-            <id>apache.snapshots</id>
-            <url>https://repository.apache.org/snapshots/</url>
-            <name>Apache Snapshot Repo</name>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-        </repository>
-    </repositories>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>apache.snapshots</id>
-            <url>https://repository.apache.org/snapshots/</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-        </pluginRepository>
-    </pluginRepositories>
     <inceptionYear>2006</inceptionYear>
     <mailingLists>
         <mailingList>
@@ -266,66 +241,66 @@
                                 <phase>validate</phase>
                                 <configuration>
                                     <target>
-                                        <path id="ecp.ws.path" location="${eclipse.workspace.dir}" />
-                                        <property name="full.eclipse.workspace" refid="ecp.ws.path" />
-                                        <whichresource resource="/cxf-eclipse-pmd" property="pmd.url" />
-                                        <whichresource resource="/cxf-pmd-ruleset.xml" property="pmdruleset.url" />
-                                        <whichresource resource="/cxf-eclipse-checkstyle" property="eclipse.checkstyle.url" />
-                                        <whichresource resource="/cxf-checkstyle.xml" property="checkstyle.url" />
-                                        <whichresource resource="/cxf-checkstyle-corba.xml" property="corba.checkstyle.url" />
-                                        <whichresource resource="/cxf-checkstyle-suppressions.xml" property="checkstyle.suppression.url" />
-                                        <mkdir dir="${full.eclipse.workspace}/.metadata/.plugins/org.eclipse.core.runtime/.settings" />
-                                        <mkdir dir="${full.eclipse.workspace}/.metadata/.plugins/com.atlassw.tools.eclipse.checkstyle" />
-                                        <mkdir dir="${full.eclipse.workspace}/.metadata/.plugins/net.sourceforge.pmd.eclipse" />
-                                        <get src="${checkstyle.url}" dest="${full.eclipse.workspace}/cxf-checkstyle.xml" />
-                                        <get src="${checkstyle.suppression.url}" dest="${full.eclipse.workspace}/cxf-checkstyle-suppressions.xml" />
-                                        <get src="${corba.checkstyle.url}" dest="${full.eclipse.workspace}/cxf-checkstyle-corba.xml" />
+                                        <path id="ecp.ws.path" location="${eclipse.workspace.dir}"></path>
+                                        <property name="full.eclipse.workspace" refid="ecp.ws.path"></property>
+                                        <whichresource resource="/cxf-eclipse-pmd" property="pmd.url"></whichresource>
+                                        <whichresource resource="/cxf-pmd-ruleset.xml" property="pmdruleset.url"></whichresource>
+                                        <whichresource resource="/cxf-eclipse-checkstyle" property="eclipse.checkstyle.url"></whichresource>
+                                        <whichresource resource="/cxf-checkstyle.xml" property="checkstyle.url"></whichresource>
+                                        <whichresource resource="/cxf-checkstyle-corba.xml" property="corba.checkstyle.url"></whichresource>
+                                        <whichresource resource="/cxf-checkstyle-suppressions.xml" property="checkstyle.suppression.url"></whichresource>
+                                        <mkdir dir="${full.eclipse.workspace}/.metadata/.plugins/org.eclipse.core.runtime/.settings"></mkdir>
+                                        <mkdir dir="${full.eclipse.workspace}/.metadata/.plugins/com.atlassw.tools.eclipse.checkstyle"></mkdir>
+                                        <mkdir dir="${full.eclipse.workspace}/.metadata/.plugins/net.sourceforge.pmd.eclipse"></mkdir>
+                                        <get src="${checkstyle.url}" dest="${full.eclipse.workspace}/cxf-checkstyle.xml"></get>
+                                        <get src="${checkstyle.suppression.url}" dest="${full.eclipse.workspace}/cxf-checkstyle-suppressions.xml"></get>
+                                        <get src="${corba.checkstyle.url}" dest="${full.eclipse.workspace}/cxf-checkstyle-corba.xml"></get>
                                         <!-- Add checkstyle config -->
                                         <copy file="${basedir}/etc/eclipse/template.checkstyle-config.xml" tofile="${full.eclipse.workspace}/.metadata/.plugins/com.atlassw.tools.eclipse.checkstyle/checkstyle-config.xml" overwrite="no">
                                             <filterset>
-                                                <filter token="CHECKSTYLE_SUPPRESSION_FILE" value="${full.eclipse.workspace}/cxf-checkstyle-suppressions.xml" />
-                                                <filter token="CHECKSTYLE_CONFIG_FILE" value="${full.eclipse.workspace}/cxf-checkstyle.xml" />
-                                                <filter token="CHECKSTYLE_CORBA_CONFIG_FILE" value="${full.eclipse.workspace}/cxf-checkstyle-corba.xml" />
-                                                <filter token="APACHE_HEADER_FILE" value="${full.eclipse.workspace}/apache-header.txt" />
+                                                <filter token="CHECKSTYLE_SUPPRESSION_FILE" value="${full.eclipse.workspace}/cxf-checkstyle-suppressions.xml"></filter>
+                                                <filter token="CHECKSTYLE_CONFIG_FILE" value="${full.eclipse.workspace}/cxf-checkstyle.xml"></filter>
+                                                <filter token="CHECKSTYLE_CORBA_CONFIG_FILE" value="${full.eclipse.workspace}/cxf-checkstyle-corba.xml"></filter>
+                                                <filter token="APACHE_HEADER_FILE" value="${full.eclipse.workspace}/apache-header.txt"></filter>
                                             </filterset>
                                         </copy>
                                         <xslt style="${basedir}/etc/eclipse/addcheckstyle.xsl" in="${full.eclipse.workspace}/.metadata/.plugins/com.atlassw.tools.eclipse.checkstyle/checkstyle-config.xml" out="${full.eclipse.workspace}/.metadata/.plugins/com.atlassw.tools.eclipse.checkstyle/checkstyle-config.xml.new">
-                                            <param name="checkstyleconfig" expression="${full.eclipse.workspace}/cxf-checkstyle.xml" />
-                                            <param name="checkstyleconfigcorba" expression="${full.eclipse.workspace}/cxf-checkstyle-corba.xml" />
+                                            <param name="checkstyleconfig" expression="${full.eclipse.workspace}/cxf-checkstyle.xml"></param>
+                                            <param name="checkstyleconfigcorba" expression="${full.eclipse.workspace}/cxf-checkstyle-corba.xml"></param>
                                         </xslt>
-                                        <copy file="${full.eclipse.workspace}/.metadata/.plugins/com.atlassw.tools.eclipse.checkstyle/checkstyle-config.xml.new" tofile="${full.eclipse.workspace}/.metadata/.plugins/com.atlassw.tools.eclipse.checkstyle/checkstyle-config.xml" overwrite="yes" />
+                                        <copy file="${full.eclipse.workspace}/.metadata/.plugins/com.atlassw.tools.eclipse.checkstyle/checkstyle-config.xml.new" tofile="${full.eclipse.workspace}/.metadata/.plugins/com.atlassw.tools.eclipse.checkstyle/checkstyle-config.xml" overwrite="yes"></copy>
                                         <!-- Add checkstyle config for 5.0 plugin -->
                                         <copy file="${basedir}/etc/eclipse/template.checkstyle-config.xml" tofile="${full.eclipse.workspace}/.metadata/.plugins/net.sf.eclipsecs.core/checkstyle-config.xml" overwrite="no">
                                             <filterset>
-                                                <filter token="CHECKSTYLE_SUPPRESSION_FILE" value="${full.eclipse.workspace}/cxf-checkstyle-suppressions.xml" />
-                                                <filter token="CHECKSTYLE_CONFIG_FILE" value="${full.eclipse.workspace}/cxf-checkstyle.xml" />
-                                                <filter token="CHECKSTYLE_CORBA_CONFIG_FILE" value="${full.eclipse.workspace}/cxf-checkstyle-corba.xml" />
-                                                <filter token="APACHE_HEADER_FILE" value="${full.eclipse.workspace}/apache-header.txt" />
+                                                <filter token="CHECKSTYLE_SUPPRESSION_FILE" value="${full.eclipse.workspace}/cxf-checkstyle-suppressions.xml"></filter>
+                                                <filter token="CHECKSTYLE_CONFIG_FILE" value="${full.eclipse.workspace}/cxf-checkstyle.xml"></filter>
+                                                <filter token="CHECKSTYLE_CORBA_CONFIG_FILE" value="${full.eclipse.workspace}/cxf-checkstyle-corba.xml"></filter>
+                                                <filter token="APACHE_HEADER_FILE" value="${full.eclipse.workspace}/apache-header.txt"></filter>
                                             </filterset>
                                         </copy>
                                         <xslt style="${basedir}/etc/eclipse/addcheckstyle.xsl" in="${full.eclipse.workspace}/.metadata/.plugins/net.sf.eclipsecs.core/checkstyle-config.xml" out="${full.eclipse.workspace}/.metadata/.plugins/net.sf.eclipsecs.core/checkstyle-config.xml.new">
-                                            <param name="checkstyleconfig" expression="${full.eclipse.workspace}/cxf-checkstyle.xml" />
-                                            <param name="checkstyleconfigcorba" expression="${full.eclipse.workspace}/cxf-checkstyle-corba.xml" />
+                                            <param name="checkstyleconfig" expression="${full.eclipse.workspace}/cxf-checkstyle.xml"></param>
+                                            <param name="checkstyleconfigcorba" expression="${full.eclipse.workspace}/cxf-checkstyle-corba.xml"></param>
                                         </xslt>
-                                        <copy file="${full.eclipse.workspace}/.metadata/.plugins/net.sf.eclipsecs.core/checkstyle-config.xml.new" tofile="${full.eclipse.workspace}/.metadata/.plugins/net.sf.eclipsecs.core/checkstyle-config.xml" overwrite="yes" />
+                                        <copy file="${full.eclipse.workspace}/.metadata/.plugins/net.sf.eclipsecs.core/checkstyle-config.xml.new" tofile="${full.eclipse.workspace}/.metadata/.plugins/net.sf.eclipsecs.core/checkstyle-config.xml" overwrite="yes"></copy>
                                         <!-- Add code format rules -->
-                                        <loadfile property="eclipse.code.cleanup" srcFile="${basedir}/etc/eclipse/CXFCleanUp.xml" />
-                                        <loadfile property="eclipse.code.templates" srcFile="${basedir}/etc/eclipse/codetemplates.xml" />
-                                        <loadfile property="eclipse.xml.templates" srcFile="${basedir}/etc/eclipse/xmltemplates.xml" />
+                                        <loadfile property="eclipse.code.cleanup" srcFile="${basedir}/etc/eclipse/CXFCleanUp.xml"></loadfile>
+                                        <loadfile property="eclipse.code.templates" srcFile="${basedir}/etc/eclipse/codetemplates.xml"></loadfile>
+                                        <loadfile property="eclipse.xml.templates" srcFile="${basedir}/etc/eclipse/xmltemplates.xml"></loadfile>
                                         <propertyfile file="${full.eclipse.workspace}/.metadata/.plugins/org.eclipse.core.runtime/.settings/org.eclipse.jdt.ui.prefs">
-                                            <entry key="cleanup_profile" value="_CXF" />
-                                            <entry key="org.eclipse.jdt.ui.cleanupprofiles" value="${eclipse.code.cleanup}" />
-                                            <entry key="org.eclipse.jdt.ui.text.custom_code_templates" value="${eclipse.code.templates}" />
+                                            <entry key="cleanup_profile" value="_CXF"></entry>
+                                            <entry key="org.eclipse.jdt.ui.cleanupprofiles" value="${eclipse.code.cleanup}"></entry>
+                                            <entry key="org.eclipse.jdt.ui.text.custom_code_templates" value="${eclipse.code.templates}"></entry>
                                             <!-- Add import order -->
-                                            <entry key="org.eclipse.jdt.ui.importorder" value="java;javax;org.w3c;org.xml;junit;antlr;com;net;org;org.junit;#org.junit" />
+                                            <entry key="org.eclipse.jdt.ui.importorder" value="java;javax;org.w3c;org.xml;junit;antlr;com;net;org;org.junit;#org.junit"></entry>
                                             <!-- Sort order -->
-                                            <entry key="org.eclipse.jdt.ui.visibility.order" value="B,R,D,V," />
-                                            <entry key="outlinesortoption" value="T,SF,F,SI,I,C,SM,M," />
-                                            <entry key="org.eclipse.jdt.ui.enable.visibility.order" value="true" />
+                                            <entry key="org.eclipse.jdt.ui.visibility.order" value="B,R,D,V,"></entry>
+                                            <entry key="outlinesortoption" value="T,SF,F,SI,I,C,SM,M,"></entry>
+                                            <entry key="org.eclipse.jdt.ui.enable.visibility.order" value="true"></entry>
                                         </propertyfile>
                                         <propertyfile file="${full.eclipse.workspace}/.metadata/.plugins/org.eclipse.core.runtime/.settings/org.eclipse.wst.xml.ui.prefs">
-                                            <entry key="eclipse.preferences.version" value="1" />
-                                            <entry key="org.eclipse.wst.sse.ui.custom_templates" value="${eclipse.xml.templates}" />
+                                            <entry key="eclipse.preferences.version" value="1"></entry>
+                                            <entry key="org.eclipse.wst.sse.ui.custom_templates" value="${eclipse.xml.templates}"></entry>
                                         </propertyfile>
                                     </target>
                                 </configuration>
@@ -413,7 +388,7 @@
             <plugins>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>properties-maven-plugin </artifactId>
+                    <artifactId>properties-maven-plugin</artifactId>
                     <version>1.0.0</version>
                 </plugin>
                 <plugin>
@@ -641,21 +616,15 @@
                             <pluginExecutions>
                                 <pluginExecution>
                                     <pluginExecutionFilter>
-                                        <groupId>
-                                            org.apache.maven.plugins
-                                        </groupId>
-                                        <artifactId>
-                                            maven-plugin-plugin
-                                        </artifactId>
-                                        <versionRange>
-                                            [3.4,)
-                                        </versionRange>
+                                        <groupId>org.apache.maven.plugins</groupId>
+                                        <artifactId>maven-plugin-plugin</artifactId>
+                                        <versionRange>[3.4,)</versionRange>
                                         <goals>
                                             <goal>descriptor</goal>
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore />
+                                        <ignore></ignore>
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>
@@ -689,36 +658,24 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+        <groupId>org.commonjava.maven.plugins</groupId>
+        <artifactId>project-sources-maven-plugin</artifactId>
+        <version>1.0</version>
+        <executions>
+          <execution>
+            <id>project-sources-archive</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>archive</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
         </plugins>
     </build>
-    <reporting>
-        <plugins>
-            <plugin>
-                <artifactId>maven-site-plugin</artifactId>
-                <version>3.6</version>
-                <configuration>
-                    <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
-                    <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>2.9</version>
-                <configuration>
-                    <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
-                </configuration>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                            <report>summary</report>
-                            <report>index</report>
-                            <report>dependencies</report>
-                            <report>issue-tracking</report>
-                            <report>scm</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-        </plugins>
-    </reporting>
 </project>
+<!--
+Modified by POM Manipulation Extension for Maven 3.5.1 ( SHA: c829a8c7 ) 
+-->
+

@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~  Licensed to the Apache Software Foundation (ASF) under one
   ~  or more contributor license agreements.  See the NOTICE file
@@ -27,20 +27,16 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>3.2.7.redhat-SNAPSHOT</version>
+        <version>3.2.7.fuse-preprod-740004-redhat-00001</version>
         <relativePath>../../../parent/pom.xml</relativePath>
     </parent>
     <properties>
         <cxf.module.name>org.apache.cxf.rs.client.mp</cxf.module.name>
-        <cxf.osgi.import>
-            org.apache.aries*;version="${cxf.aries.version.range}";resolution:=optional,
+        <cxf.osgi.import>org.apache.aries*;version="${cxf.aries.version.range}";resolution:=optional,
             org.springframework*;resolution:="optional";version="${cxf.osgi.spring.version}",
-            javax.annotation*;version="${cxf.osgi.javax.annotation.version}"
-        </cxf.osgi.import>
+            javax.annotation*;version="${cxf.osgi.javax.annotation.version}"</cxf.osgi.import>
         <!-- keep in sync with services exported in activator -->
-        <cxf.export.service>
-            org.apache.aries.blueprint.NamespaceHandler;osgi.service.blueprint.namespace="http://cxf.apache.org/blueprint/jaxrs-client"
-        </cxf.export.service>
+        <cxf.export.service>org.apache.aries.blueprint.NamespaceHandler;osgi.service.blueprint.namespace="http://cxf.apache.org/blueprint/jaxrs-client"</cxf.export.service>
         <cxf.bundle.activator>org.apache.cxf.jaxrs.client.blueprint.Activator</cxf.bundle.activator>
     </properties>
     <dependencies>
@@ -191,7 +187,7 @@
                                 <configuration>
                                     <target>
                                         <propertyfile file="${basedir}/.settings/org.eclipse.jdt.core.prefs">
-                                            <entry key="org.eclipse.jdt.core.compiler.problem.annotationSuperInterface" value="ignore" />
+                                            <entry key="org.eclipse.jdt.core.compiler.problem.annotationSuperInterface" value="ignore"></entry>
                                         </propertyfile>
                                     </target>
                                 </configuration>
