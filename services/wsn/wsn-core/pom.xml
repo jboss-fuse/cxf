@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements. See the NOTICE file
@@ -28,12 +28,12 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>3.2.7.redhat-SNAPSHOT</version>
+        <version>3.2.7.fuse-preprod-740003-redhat-00001</version>
         <relativePath>../../../parent/pom.xml</relativePath>
     </parent>
     <properties>
         <cxf.module.name>org.apache.cxf.wsn.core</cxf.module.name>
-        <cxf.server.launcher.vmargs />
+        <cxf.server.launcher.vmargs></cxf.server.launcher.vmargs>
         <cxf.surefire.enable.assertions>false</cxf.surefire.enable.assertions>
     </properties>
     <dependencies>
@@ -151,22 +151,16 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Require-Bundle>
-                            org.apache.cxf.services.wsn.cxf-services-wsn-api
-                        </Require-Bundle>
-                        <Import-Package>
-                            org.apache.cxf.wsn.util.*;version=${cxf.osgi.version.clean},
+                        <Require-Bundle>org.apache.cxf.services.wsn.cxf-services-wsn-api</Require-Bundle>
+                        <Import-Package>org.apache.cxf.wsn.util.*;version=${cxf.osgi.version.clean},
                             !org.apache.cxf.wsn*,
                             javax.xml.bind*;version="[0.0,3)",
                             javax.jws*;version="[0.0,3)",
                             javax.xml.ws*;version="[0.0,3)",
                             org.apache.cxf*;version="[3.0,4)",
                             org.apache.activemq.command;version="[5, 10)",
-                            *
-                        </Import-Package>
-                        <Export-Package>
-                            org.apache.cxf.wsn.services;version=${cxf.osgi.version.clean}
-                        </Export-Package>
+                            *</Import-Package>
+                        <Export-Package>org.apache.cxf.wsn.services;version=${cxf.osgi.version.clean}</Export-Package>
                         <_nouses>true</_nouses>
                         <_versionpolicy>[$(version;==;$(@)),$(version;+;$(@)))</_versionpolicy>
                     </instructions>

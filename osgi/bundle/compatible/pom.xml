@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements. See the NOTICE file
@@ -27,7 +27,7 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-bundle-parent</artifactId>
-        <version>3.2.7.redhat-SNAPSHOT</version>
+        <version>3.2.7.fuse-preprod-740003-redhat-00001</version>
     </parent>
     <properties>
         <cxf.osgi.symbolic.name>${project.groupId}.bundle</cxf.osgi.symbolic.name>
@@ -132,8 +132,7 @@
                         <Specification-Vendor>The Apache Software Foundation</Specification-Vendor>
                         <Specification-Version>${cxf.osgi.version.clean}</Specification-Version>
                         <DynamicImport-Package>*</DynamicImport-Package>
-                        <DynamicImport-Package>
-                            com.sun.xml.bind,
+                        <DynamicImport-Package>com.sun.xml.bind,
                             com.sun.xml.bind.*,
                             com.sun.xml.internal.bind,
                             com.sun.xml.internal.bind.*,
@@ -146,10 +145,8 @@
                             org.apache.karaf.jaas.modules,
                             org.apache.karaf.jaas.modules.*,
                             org.eclipse.jetty.jmx,
-                            org.eclipse.jetty.jmx.*
-                        </DynamicImport-Package>
-                        <Import-Package>
-                            org.apache.cxf.*,
+                            org.eclipse.jetty.jmx.*</DynamicImport-Package>
+                        <Import-Package>org.apache.cxf.*,
                             META-INF.cxf,
                             antlr*;resolution:=optional,
                             com.sun*;resolution:=optional,
@@ -196,8 +193,7 @@
                             javax.xml.stream*;version="[0.0,2)",
                             javax.xml.ws.spi.http*;version="[0.0,3)";resolution:=optional,
                             javax.xml.ws*;version="[0.0,3)",
-                            *
-                        </Import-Package>
+                            *</Import-Package>
                         <Require-Bundle>org.apache.cxf.cxf-core;visibility:=reexport,
                             org.apache.cxf.cxf-rt-frontend-jaxws;visibility:=reexport,
                             org.apache.cxf.cxf-rt-frontend-jaxrs;visibility:=reexport, 
@@ -224,42 +220,28 @@
                             <pluginExecutions>
                                 <pluginExecution>
                                     <pluginExecutionFilter>
-                                        <groupId>
-                                            org.apache.maven.plugins
-                                        </groupId>
-                                        <artifactId>
-                                            maven-antrun-plugin
-                                        </artifactId>
-                                        <versionRange>
-                                            [1.7,)
-                                        </versionRange>
+                                        <groupId>org.apache.maven.plugins</groupId>
+                                        <artifactId>maven-antrun-plugin</artifactId>
+                                        <versionRange>[1.7,)</versionRange>
                                         <goals>
                                             <goal>run</goal>
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore />
+                                        <ignore></ignore>
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>
                                     <pluginExecutionFilter>
-                                        <groupId>
-                                            org.codehaus.mojo
-                                        </groupId>
-                                        <artifactId>
-                                            properties-maven-plugin
-                                        </artifactId>
-                                        <versionRange>
-                                            [1.0-alpha-2,)
-                                        </versionRange>
+                                        <groupId>org.codehaus.mojo</groupId>
+                                        <artifactId>properties-maven-plugin</artifactId>
+                                        <versionRange>[1.0-alpha-2,)</versionRange>
                                         <goals>
-                                            <goal>
-                                                read-project-properties
-                                            </goal>
+                                            <goal>read-project-properties</goal>
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore />
+                                        <ignore></ignore>
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>

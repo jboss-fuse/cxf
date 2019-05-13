@@ -21,7 +21,7 @@
     <parent>
         <groupId>org.apache.cxf.karaf</groupId>
         <artifactId>karaf-parent</artifactId>
-        <version>3.2.7.redhat-SNAPSHOT</version>
+        <version>3.2.7.fuse-preprod-740003-redhat-00001</version>
     </parent>
     <artifactId>cxf-karaf-commands</artifactId>
     <packaging>bundle</packaging>
@@ -71,12 +71,10 @@
                 <configuration>
                     <instructions>
                         <Karaf-Commands>*</Karaf-Commands>
-                        <Import-Package>
-              !org.apache.cxf.karaf.commands,
+                        <Import-Package>!org.apache.cxf.karaf.commands,
               org.apache.cxf*;version="[3,4)",
               org.apache.karaf.shell*;version="[4,5)",
-              *
-                        </Import-Package>
+              *</Import-Package>
                         <_nouses>true</_nouses>
                         <_versionpolicy>[$(version;==;$(@)),$(version;+;$(@)))</_versionpolicy>
                     </instructions>
