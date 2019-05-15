@@ -16,18 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package sample.rs.service;
+package org.apache.cxf.spring.boot.jaxrs;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
+@Path("/sample")
+public class SampleJaxRSResource {
 
-@SpringBootApplication
-@EnableEurekaClient
-public class SampleRestApplication {
-
-    public static void main(String[] args) {
-        SpringApplication.run(SampleRestApplication.class, args);
+    @GET
+    public String test() {
+        return "";
     }
 }
