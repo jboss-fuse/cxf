@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements. See the NOTICE file
@@ -27,7 +27,7 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>3.2.7.fuse-740017</version>
+        <version>3.2.7.fuse-740017-redhat-00001</version>
         <relativePath>../../../parent/pom.xml</relativePath>
     </parent>
     <properties>
@@ -56,18 +56,11 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Import-Package>
-                            javax.xml.ws*;version="${cxf.osgi.javax.xml.ws.version}", <!-- To workaround issue with BindingProvider interface not visible -->
-                            *
-                        </Import-Package>
-                        <Export-Package>
-                                org.apache.cxf.xkms.crypto.provider,
+                        <Import-Package>javax.xml.ws*;version="${cxf.osgi.javax.xml.ws.version}", 
+                            *</Import-Package>
+                        <Export-Package>org.apache.cxf.xkms.crypto.provider,
                                 org.apache.cxf.xkms.cache,
-                                org.apache.cxf.xkms.client
-                                <!-- To avoid problems with existing users.
-                                         We should try to remove the exports again in the future.
-                                 -->
-                        </Export-Package>
+                                org.apache.cxf.xkms.client</Export-Package>
                     </instructions>
                 </configuration>
             </plugin>

@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements. See the NOTICE file
@@ -26,7 +26,7 @@
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
         <artifactId>cxf-samples</artifactId>
-        <version>3.2.7.fuse-740017</version>
+        <version>3.2.7.fuse-740017-redhat-00001</version>
         <relativePath>..</relativePath>
     </parent>
     <properties>
@@ -61,23 +61,23 @@
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-transports-http</artifactId>
-            <version>3.2.7.fuse-740017</version>
+            <version>3.2.7.fuse-740017-redhat-00001</version>
         </dependency>
         <!-- This dependency is needed if you're using the Jetty container -->
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-transports-http-jetty</artifactId>
-            <version>3.2.7.fuse-740017</version>
+            <version>3.2.7.fuse-740017-redhat-00001</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-frontend-jaxws</artifactId>
-            <version>3.2.7.fuse-740017</version>
+            <version>3.2.7.fuse-740017-redhat-00001</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-integration-tracing-brave</artifactId>
-            <version>3.2.7.fuse-740017</version>
+            <version>3.2.7.fuse-740017-redhat-00001</version>
         </dependency>
         <dependency>
             <groupId>org.apache.aries.blueprint</groupId>
@@ -103,17 +103,14 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Import-Package>
-                            javax.ws.rs,
+                        <Import-Package>javax.ws.rs,
                             javax.ws.rs.core,
                             javax.ws.rs.container,
                             org.apache.cxf.tracing.brave,
                             org.osgi.service.blueprint,
                             brave,
-                            *
-                        </Import-Package>
-                        <Export-Package>
-                        </Export-Package>
+                            *</Import-Package>
+                        <Export-Package></Export-Package>
                     </instructions>
                 </configuration>
             </plugin>

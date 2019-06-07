@@ -27,7 +27,7 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>3.2.7.fuse-740017</version>
+        <version>3.2.7.fuse-740017-redhat-00001</version>
         <relativePath>../../../parent/pom.xml</relativePath>
     </parent>
     <properties>
@@ -40,9 +40,7 @@
                 <artifactId>maven-bundle-plugin</artifactId>
                 <configuration>
                     <instructions>
-                        <Include-Resource>
-                            {maven-resources},META-INF/=target/classes/META-INF/spring-configuration-metadata.json
-                        </Include-Resource>
+                        <Include-Resource>{maven-resources},META-INF/=target/classes/META-INF/spring-configuration-metadata.json</Include-Resource>
                     </instructions>
                 </configuration>
             </plugin>

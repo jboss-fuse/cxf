@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements. See the NOTICE file
@@ -27,28 +27,22 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>3.2.7.fuse-740017</version>
+        <version>3.2.7.fuse-740017-redhat-00001</version>
         <relativePath>../../../../parent/pom.xml</relativePath>
     </parent>
     <properties>
         <cxf.module.name>org.apache.cxf.transport.http.netty.server</cxf.module.name>
         <cxf.bundle.activator>org.apache.cxf.transport.http.netty.server.blueprint.Activator</cxf.bundle.activator>
-        <cxf.osgi.import>
-            javax.servlet*;version="[3.1,5)",
+        <cxf.osgi.import>javax.servlet*;version="[3.1,5)",
             io.netty.*;version="${cxf.netty.version.range}",
             javax.annotation;version="${cxf.osgi.javax.annotation.version}",
             org.apache.aries*;version="${cxf.aries.version.range}";resolution:=optional,
             org.osgi.service.blueprint*;resolution:=optional,
             org.springframework*;resolution:="optional";version="${cxf.osgi.spring.version}",
-            javax.xml.bind*;version="${cxf.osgi.javax.bind.version}"
-        </cxf.osgi.import>
-        <cxf.osgi.export>
-            org.apache.cxf.*,
-        </cxf.osgi.export>
+            javax.xml.bind*;version="${cxf.osgi.javax.bind.version}"</cxf.osgi.import>
+        <cxf.osgi.export>org.apache.cxf.*,</cxf.osgi.export>
         <!-- keep in sync with services exported in activator -->
-        <cxf.export.service>
-            org.apache.aries.blueprint.NamespaceHandler;osgi.service.blueprint.namespace="http://cxf.apache.org/transports/http-netty-server/configuration"
-        </cxf.export.service>
+        <cxf.export.service>org.apache.aries.blueprint.NamespaceHandler;osgi.service.blueprint.namespace="http://cxf.apache.org/transports/http-netty-server/configuration"</cxf.export.service>
     </properties>
     <dependencies>
         <dependency>

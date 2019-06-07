@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~  Licensed to the Apache Software Foundation (ASF) under one
   ~  or more contributor license agreements.  See the NOTICE file
@@ -21,7 +21,7 @@
     <parent>
         <artifactId>cxf-parent</artifactId>
         <groupId>org.apache.cxf</groupId>
-        <version>3.2.7.fuse-740017</version>
+        <version>3.2.7.fuse-740017-redhat-00001</version>
         <relativePath>../../parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -72,32 +72,32 @@
             <dependency>
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-core</artifactId>
-                <version>${project.version}</version>
+                <version>3.2.7.fuse-740017-redhat-00001</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-rt-transports-http-undertow</artifactId>
-                <version>${project.version}</version>
+                <version>3.2.7.fuse-740017-redhat-00001</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-rt-frontend-jaxrs</artifactId>
-                <version>${project.version}</version>
+                <version>3.2.7.fuse-740017-redhat-00001</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-rt-rs-client</artifactId>
-                <version>${project.version}</version>
+                <version>3.2.7.fuse-740017-redhat-00001</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-integration-cdi</artifactId>
-                <version>${project.version}</version>
+                <version>3.2.7.fuse-740017-redhat-00001</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-testutils</artifactId>
-                <version>${project.version}</version>
+                <version>3.2.7.fuse-740017-redhat-00001</version>
                 <scope>test</scope>
             </dependency>
             <dependency>

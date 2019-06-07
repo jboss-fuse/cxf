@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements. See the NOTICE file
@@ -26,7 +26,7 @@
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
         <artifactId>cxf-samples</artifactId>
-        <version>3.2.7.fuse-740017</version>
+        <version>3.2.7.fuse-740017-redhat-00001</version>
         <relativePath>../..</relativePath>
     </parent>
     <properties>
@@ -48,16 +48,14 @@
                                 <pluginExecution>
                                     <pluginExecutionFilter>
                                         <groupId>org.codehaus.mojo</groupId>
-                                        <artifactId>
-                                            idlj-maven-plugin
-                                        </artifactId>
+                                        <artifactId>idlj-maven-plugin</artifactId>
                                         <versionRange>[1.2.1,)</versionRange>
                                         <goals>
                                             <goal>generate</goal>
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <execute />
+                                        <execute></execute>
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>
@@ -224,17 +222,17 @@
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-frontend-jaxws</artifactId>
-            <version>3.2.7.fuse-740017</version>
+            <version>3.2.7.fuse-740017-redhat-00001</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-bindings-corba</artifactId>
-            <version>3.2.7.fuse-740017</version>
+            <version>3.2.7.fuse-740017-redhat-00001</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-tools-common</artifactId>
-            <version>3.2.7.fuse-740017</version>
+            <version>3.2.7.fuse-740017-redhat-00001</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>

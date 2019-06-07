@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
         <artifactId>cxf-samples</artifactId>
-        <version>3.2.7.fuse-740017</version>
+        <version>3.2.7.fuse-740017-redhat-00001</version>
         <relativePath>..</relativePath>
     </parent>
     <artifactId>spring-boot-sample-ws-cxf</artifactId>
@@ -65,8 +65,7 @@
                     <imageName>${project.groupId}/${project.artifactId}</imageName>
                     <baseImage>frolvlad/alpine-oraclejdk8:slim</baseImage>
                     <entryPoint>java -Djava.security.egd=file:/dev/./urandom -jar
-                        ${project.build.finalName}.jar
-                    </entryPoint>
+                        ${project.build.finalName}.jar</entryPoint>
                     <resources>
                         <resource>
                             <targetPath>/</targetPath>

@@ -27,22 +27,18 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>3.2.7.fuse-740017</version>
+        <version>3.2.7.fuse-740017-redhat-00001</version>
         <relativePath>../../parent/pom.xml</relativePath>
     </parent>
     
     <properties>
         <cxf.module.name>org.apache.cxf.cdi</cxf.module.name>
-        <cxf.osgi.import>
-            javax.servlet*;version="${cxf.osgi.javax.servlet.version}",
+        <cxf.osgi.import>javax.servlet*;version="${cxf.osgi.javax.servlet.version}",
             javax.enterprise*;version="${cxf.cda.api.osgi.range}",
             javax.ws.rs*;version="[1.0,3)",
             org.apache.cxf.interceptor;resolution:=optional,
-            *          
-        </cxf.osgi.import>
-        <cxf.osgi.export>
-            org.apache.cxf.cdi
-        </cxf.osgi.export>
+            *</cxf.osgi.import>
+        <cxf.osgi.export>org.apache.cxf.cdi</cxf.osgi.export>
     </properties>
     
     <dependencies>
@@ -53,7 +49,7 @@
         <dependency>
             <groupId>javax.inject</groupId>
             <artifactId>javax.inject</artifactId>
-            <version>1</version>
+            <version>1.0.0.redhat-6</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -116,18 +112,10 @@
                         <_nouses>true</_nouses>
                         <_versionpolicy>[$(version;==;$(@)),$(version;+;$(@)))</_versionpolicy>
                         <Export-Package>${cxf.osgi.export}</Export-Package>
-                        <Import-Package>
-                            ${cxf.osgi.import}
-                        </Import-Package>
-                        <DynamicImport-Package>
-                            ${cxf.osgi.dynamic.import}
-                        </DynamicImport-Package>
-                        <Require-Capability>
-                            osgi.extender;filter:="(osgi.extender=pax.cdi)"
-                        </Require-Capability>
-                        <Provide-Capability>
-                            org.ops4j.pax.cdi.extension; extension="cxf-integration-cdi"
-                        </Provide-Capability>        
+                        <Import-Package>${cxf.osgi.import}</Import-Package>
+                        <DynamicImport-Package>${cxf.osgi.dynamic.import}</DynamicImport-Package>
+                        <Require-Capability>osgi.extender;filter:="(osgi.extender=pax.cdi)"</Require-Capability>
+                        <Provide-Capability>org.ops4j.pax.cdi.extension; extension="cxf-integration-cdi"</Provide-Capability>        
                     </instructions>
                 </configuration>
             </plugin>            
