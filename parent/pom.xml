@@ -122,9 +122,9 @@
         <cxf.javassist.version>3.24.1-GA</cxf.javassist.version>
         <cxf.javax.ws.rs.version>2.1.1</cxf.javax.ws.rs.version>
         <cxf.jaxb.version>2.2.11</cxf.jaxb.version>
-        <cxf.jaxb.impl.version>${cxf.jaxb.version}</cxf.jaxb.impl.version>
-        <cxf.jaxb.core.version>${cxf.jaxb.version}</cxf.jaxb.core.version>
-        <cxf.jaxb.xjc.version>${cxf.jaxb.version}</cxf.jaxb.xjc.version>
+        <cxf.jaxb.impl.version>2.2.11</cxf.jaxb.impl.version>
+        <cxf.jaxb.core.version>2.2.11</cxf.jaxb.core.version>
+        <cxf.jaxb.xjc.version>2.2.11</cxf.jaxb.xjc.version>
         <cxf.joda.time.version>2.9.4</cxf.joda.time.version>
         <cxf.jdom.version>1.0</cxf.jdom.version>
         <cxf.jettison.version>1.4.0</cxf.jettison.version>
@@ -2924,6 +2924,9 @@
 	    <id>java9-plus</id>
 	    <properties>
                 <cxf.jaxb.version>2.3.0</cxf.jaxb.version>
+                <cxf.jaxb.impl.version>2.3.0</cxf.jaxb.impl.version>
+                <cxf.jaxb.core.version>2.3.0</cxf.jaxb.core.version>
+                <cxf.jaxb.xjc.version>2.3.0</cxf.jaxb.xjc.version>
                 <cxf.karaf.version>4.2.0.fuse-730018</cxf.karaf.version>
                 <org.apache.cxf.transport.websocket.atmosphere.disabled>true</org.apache.cxf.transport.websocket.atmosphere.disabled>
 	    </properties>

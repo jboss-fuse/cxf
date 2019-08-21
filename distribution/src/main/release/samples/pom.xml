@@ -224,6 +224,10 @@
 	    <id>java9-plus</id>
 	    <properties>
                 <cxf.jaxb.version>2.3.0</cxf.jaxb.version>
+                <cxf.jaxb.impl.version>2.3.0</cxf.jaxb.impl.version>
+                <cxf.jaxb.core.version>2.3.0</cxf.jaxb.core.version>
+                <cxf.jaxb.xjc.version>2.3.0</cxf.jaxb.xjc.version>
+                <cxf.com.sun.jaxb.version>2.3.0</cxf.com.sun.jaxb.version>
 	    </properties>
 	    <activation>
         	<jdk>[9,)</jdk>
@@ -267,17 +271,17 @@
                 <dependency>
                     <groupId>com.sun.xml.bind</groupId>
                     <artifactId>jaxb-impl</artifactId>
-                    <version>${cxf.jaxb.version}</version>
+                    <version>${cxf.jaxb.impl.version}</version>
                 </dependency>
                 <dependency>
                     <groupId>com.sun.xml.bind</groupId>
                     <artifactId>jaxb-core</artifactId>
-                    <version>${cxf.jaxb.version}</version>
+                    <version>${cxf.jaxb.core.version}</version>
                 </dependency>
                 <dependency>
                     <groupId>com.sun.xml.bind</groupId>
                     <artifactId>jaxb-xjc</artifactId>
-                    <version>${cxf.jaxb.version}</version>
+                    <version>${cxf.jaxb.xjc.version}</version>
                 </dependency>
             </dependencies>
 	</profile>
