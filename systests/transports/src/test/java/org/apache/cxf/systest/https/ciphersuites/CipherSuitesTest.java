@@ -22,13 +22,11 @@ package org.apache.cxf.systest.https.ciphersuites;
 import java.net.URL;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
 import java.util.Collections;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.xml.ws.BindingProvider;
@@ -36,10 +34,7 @@ import javax.xml.ws.BindingProvider;
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.bus.spring.SpringBusFactory;
-import org.apache.cxf.common.logging.LogUtils;
-import org.apache.cxf.configuration.jsse.SSLUtils;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
-import org.apache.cxf.configuration.security.FiltersType;
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.helpers.JavaUtils;
@@ -368,67 +363,6 @@ public class CipherSuitesTest extends AbstractBusClientServerTestBase {
         bus.shutdown(true);
     }
 
-    // Client does not allow NULL
-    @org.junit.Test
-    public void testClientAESServerNULL() throws Exception {
-        SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = CipherSuitesTest.class.getResource("ciphersuites-client.xml");
-
-        Bus bus = bf.createBus(busFile.toString());
-        BusFactory.setDefaultBus(bus);
-        BusFactory.setThreadDefaultBus(bus);
-
-        URL url = SOAPService.WSDL_LOCATION;
-        SOAPService service = new SOAPService(url, SOAPService.SERVICE);
-        assertNotNull("Service is null", service);
-        final Greeter port = service.getHttpsPort();
-        assertNotNull("Port is null", port);
-
-        updateAddressPort(port, PORT3);
-
-        try {
-            port.greetMe("Kitty");
-            fail("Failure expected on not being able to negotiate a cipher suite");
-        } catch (Exception ex) {
-            // expected
-        }
-
-        ((java.io.Closeable)port).close();
-        bus.shutdown(true);
-    }
-
-    // Client does not allow NULL
-    @org.junit.Test
-    public void testClientAESServerNULLAsync() throws Exception {
-        SpringBusFactory bf = new SpringBusFactory();
-        URL busFile = CipherSuitesTest.class.getResource("ciphersuites-client.xml");
-
-        Bus bus = bf.createBus(busFile.toString());
-        BusFactory.setDefaultBus(bus);
-        BusFactory.setThreadDefaultBus(bus);
-
-        URL url = SOAPService.WSDL_LOCATION;
-        SOAPService service = new SOAPService(url, SOAPService.SERVICE);
-        assertNotNull("Service is null", service);
-        final Greeter port = service.getHttpsPort();
-        assertNotNull("Port is null", port);
-
-        // Enable Async
-        ((BindingProvider)port).getRequestContext().put("use.async.http.conduit", true);
-
-        updateAddressPort(port, PORT3);
-
-        try {
-            port.greetMe("Kitty");
-            fail("Failure expected on not being able to negotiate a cipher suite");
-        } catch (Exception ex) {
-            // expected
-        }
-
-        ((java.io.Closeable)port).close();
-        bus.shutdown(true);
-    }
-
     // Both client + server include AES, client enables a TLS v1.2 CipherSuite
     @org.junit.Test
     public void testAESIncludedTLSv12() throws Exception {
@@ -611,55 +545,6 @@ public class CipherSuitesTest extends AbstractBusClientServerTestBase {
 
         ((java.io.Closeable)port).close();
         bus.shutdown(true);
-    }
-
-    @org.junit.Test
-    public void testDefaultCipherSuitesFilterExcluded() throws Exception {
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null, null, new java.security.SecureRandom());
-
-        FiltersType filtersType = new FiltersType();
-        filtersType.getInclude().add(".*_AES_.*");
-        String[] supportedCipherSuites = sslContext.getSocketFactory().getSupportedCipherSuites();
-        String[] filteredCipherSuites = SSLUtils.getFilteredCiphersuites(filtersType, supportedCipherSuites,
-                                         LogUtils.getL7dLogger(CipherSuitesTest.class), false);
-
-        // Check we have no anon/EXPORT/NULL/etc ciphersuites
-        assertFalse(Arrays.stream(
-            filteredCipherSuites).anyMatch(c -> c.matches(".*NULL|anon|EXPORT.*")));
-    }
-
-    @org.junit.Test
-    public void testExclusionFilter() throws Exception {
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null, null, new java.security.SecureRandom());
-
-        FiltersType filtersType = new FiltersType();
-        filtersType.getInclude().add(".*_AES_.*");
-        filtersType.getExclude().add(".*anon.*");
-        String[] supportedCipherSuites = sslContext.getSocketFactory().getSupportedCipherSuites();
-        String[] filteredCipherSuites = SSLUtils.getFilteredCiphersuites(filtersType, supportedCipherSuites,
-                                         LogUtils.getL7dLogger(CipherSuitesTest.class), false);
-
-        // Check we have no anon ciphersuites
-        assertFalse(Arrays.stream(
-            filteredCipherSuites).anyMatch(c -> c.matches(".*anon.*")));
-    }
-
-    @org.junit.Test
-    public void testInclusionFilter() throws Exception {
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null, null, new java.security.SecureRandom());
-
-        FiltersType filtersType = new FiltersType();
-        filtersType.getInclude().add(".*anon.*");
-        String[] supportedCipherSuites = sslContext.getSocketFactory().getSupportedCipherSuites();
-        String[] filteredCipherSuites = SSLUtils.getFilteredCiphersuites(filtersType, supportedCipherSuites,
-                                         LogUtils.getL7dLogger(CipherSuitesTest.class), false);
-
-        // Check we have anon ciphersuites
-        assertTrue(Arrays.stream(
-            filteredCipherSuites).anyMatch(c -> c.matches(".*anon.*")));
     }
 
     private static class NoOpX509TrustManager implements X509TrustManager {
