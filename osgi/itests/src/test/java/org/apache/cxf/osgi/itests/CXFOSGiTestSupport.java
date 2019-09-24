@@ -48,6 +48,7 @@ import static org.ops4j.pax.exam.CoreOptions.maven;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 import static org.ops4j.pax.exam.CoreOptions.when;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFileExtend;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.karafDistributionConfiguration;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.replaceConfigurationFile;
@@ -80,7 +81,7 @@ public class CXFOSGiTestSupport {
      * @return
      */
     protected Option cxfBaseConfig() {
-        karafUrl = maven().groupId("org.apache.karaf").artifactId("apache-karaf-minimal").version(getKarafVersion())
+        karafUrl = maven().groupId("org.apache.karaf").artifactId("apache-karaf").version(getKarafVersion())
             .type("tar.gz");
         cxfUrl = maven().groupId("org.apache.cxf.karaf").artifactId("apache-cxf").versionAsInProject()
             .type("xml").classifier("features");
@@ -109,6 +110,9 @@ public class CXFOSGiTestSupport {
                              .useOptions(editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg",
                                                                   "org.ops4j.pax.url.mvn.localRepository",
                                                                   localRepo)),
+                             editConfigurationFileExtend("etc/org.ops4j.pax.url.mvn.cfg",
+                                                         "org.ops4j.pax.url.mvn.repositories",
+                                                         "http://maven.repository.redhat.com/ga@id=redhat-product"),
                              new VMOption("--add-reads=java.xml=java.logging"),
                              new VMOption("--add-exports=java.base/"
                                  + "org.apache.karaf.specs.locator=java.xml,ALL-UNNAMED"),
@@ -155,6 +159,9 @@ public class CXFOSGiTestSupport {
                              .useOptions(editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg",
                                                                   "org.ops4j.pax.url.mvn.localRepository",
                                                                   localRepo)),
+                         editConfigurationFileExtend("etc/org.ops4j.pax.url.mvn.cfg",
+                                                     "org.ops4j.pax.url.mvn.repositories",
+                                                     "http://maven.repository.redhat.com/ga@id=redhat-product"),
                          when(urp != null).useOptions(systemProperty("cxf.useRandomFirstPort").value("true")));
         }
     }
