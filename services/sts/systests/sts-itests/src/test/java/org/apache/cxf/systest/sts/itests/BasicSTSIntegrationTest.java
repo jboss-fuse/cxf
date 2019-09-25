@@ -31,6 +31,7 @@ import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 
 import static org.ops4j.pax.exam.CoreOptions.maven;
+import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 import static org.ops4j.pax.exam.CoreOptions.when;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.configureConsole;
@@ -106,6 +107,7 @@ public class BasicSTSIntegrationTest {
             new VMOption("--add-exports=jdk.naming.rmi/com.sun.jndi.url.rmi=ALL-UNNAMED"),
             new VMOption("-classpath"),
             new VMOption("lib/jdk9plus/*" + File.pathSeparator + "lib/boot/*"),
+            mavenBundle("org.apache.karaf.itests", "servlet-compatibility").version(karafVersion).noStart(),
 
             };
         } else {
@@ -128,6 +130,7 @@ public class BasicSTSIntegrationTest {
                                                                           localRepository)),
                                  features(stsFeatures, "cxf-sts-service"),
                                  configureConsole().ignoreLocalConsole().ignoreRemoteShell(),
+                                 mavenBundle("org.apache.karaf.itests", "servlet-compatibility").version(karafVersion).noStart()
 
             };
         }

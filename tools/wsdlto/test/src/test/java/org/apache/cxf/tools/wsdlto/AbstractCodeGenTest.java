@@ -53,6 +53,8 @@ public abstract class AbstractCodeGenTest extends ProcessorTestBase {
             env.put(ToolConstants.CFG_OUTPUTDIR, tmpDir.getRoot().toString());
             env.put(ToolConstants.CFG_SUPPRESS_WARNINGS, true);
             env.put(ToolConstants.CFG_VALIDATE_WSDL, true);
+
+            System.setProperty("javax.xml.accessExternalSchema", "all");
         }
     };
     //CHECKSTYLE:ON
