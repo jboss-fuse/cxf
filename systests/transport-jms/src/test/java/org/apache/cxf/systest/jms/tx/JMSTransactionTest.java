@@ -23,6 +23,7 @@ import java.util.Collections;
 import javax.jms.Connection;
 import javax.jms.JMSException;
 import javax.jms.Queue;
+import javax.jms.Session;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 
@@ -65,6 +66,8 @@ public class JMSTransactionTest extends AbstractVmJMSTest {
         bus = BusFactory.getDefaultBus();
         registerTransactionManager();
         ActiveMQXAConnectionFactory cf1 = new ActiveMQXAConnectionFactory(brokerURI);
+        // https://issues.apache.org/jira/browse/AMQ-2659
+        cf1.setXaAckMode(Session.AUTO_ACKNOWLEDGE);
         cf1.setRedeliveryPolicy(redeliveryPolicy());
         JcaPooledConnectionFactory pcf = new JcaPooledConnectionFactory();
         pcf.setTransactionManager(transactionManager);

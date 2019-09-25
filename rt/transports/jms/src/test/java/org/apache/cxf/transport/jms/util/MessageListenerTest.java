@@ -203,6 +203,8 @@ public class MessageListenerTest {
     private Connection createXAConnection(String name, TransactionManager tm) throws JMSException {
         ActiveMQXAConnectionFactory cf = new ActiveMQXAConnectionFactory("vm://" + name
                                                                          + "?broker.persistent=false");
+        // https://issues.apache.org/jira/browse/AMQ-2659
+        cf.setXaAckMode(Session.AUTO_ACKNOWLEDGE);
         cf.setRedeliveryPolicy(redeliveryPolicy());
         XaPooledConnectionFactory cfp = new XaPooledConnectionFactory(cf);
         cfp.setTransactionManager(tm);
