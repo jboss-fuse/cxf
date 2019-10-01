@@ -55,11 +55,6 @@
             <version>${cxf.tomcat.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.tomcat.embed</groupId>
-            <artifactId>tomcat-embed-logging-juli</artifactId>
-            <version>${cxf.tomcat.version}</version>
-        </dependency>
 
         <dependency>
             <groupId>org.apache.tomcat.embed</groupId>
@@ -70,13 +65,13 @@
         <dependency>
             <groupId>org.apache.tomcat</groupId>
             <artifactId>tomcat-jasper</artifactId>
-            <version>${cxf.tomcat.version}</version>
+            <version>${cxf.tomcat.upsteam.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.apache.tomcat</groupId>
             <artifactId>tomcat-jasper-el</artifactId>
-            <version>${cxf.tomcat.version}</version>
+            <version>${cxf.tomcat.upsteam.version}</version>
         </dependency>
 
         <dependency>

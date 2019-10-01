@@ -40,27 +40,15 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.tomcat.embed</groupId>
-            <artifactId>tomcat-embed-logging-juli</artifactId>
-            <version>${cxf.tomcat.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.apache.tomcat</groupId>
             <artifactId>tomcat-jasper</artifactId>
-            <version>${cxf.tomcat.version}</version>
+            <version>${cxf.tomcat.upstream.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf.systests</groupId>
             <artifactId>cxf-systests-rs-sse-base</artifactId>
             <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-server</artifactId>
-            <version>${cxf.jetty.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
