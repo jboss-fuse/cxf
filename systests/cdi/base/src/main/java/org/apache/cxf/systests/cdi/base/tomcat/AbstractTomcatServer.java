@@ -44,6 +44,7 @@ public abstract class AbstractTomcatServer extends AbstractBusTestServerBase {
 
         server = new Tomcat();
         server.setPort(port);
+        server.getConnector();
 
         try {
             final File base = createTemporaryDirectory();
