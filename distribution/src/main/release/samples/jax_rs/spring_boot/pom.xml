@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
         <artifactId>cxf-samples</artifactId>
-        <version>3.2.x.sb2.redhat-7-x</version>
+        <version>3.2.7.fuse-sb2-750020</version>
         <relativePath>../..</relativePath>
     </parent>
     <groupId>org.apache.cxf.samples</groupId> 
