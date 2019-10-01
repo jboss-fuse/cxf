@@ -41,6 +41,7 @@ public final class StatsServer {
 
         final Tomcat server = new Tomcat();
         server.setPort(8686);
+        server.getConnector();
         server.setBaseDir(base.getAbsolutePath());
 
         final StandardContext context = (StandardContext)server.addWebapp("/", base.getAbsolutePath());
@@ -51,11 +52,11 @@ public final class StatsServer {
 
         final Wrapper cxfServlet = Tomcat.addServlet(context, "cxfServlet", new CXFServlet());
         cxfServlet.setAsyncSupported(true);
-        context.addServletMapping("/rest/*", "cxfServlet");
+        context.addServletMappingDecoded("/rest/*", "cxfServlet");
 
         final Context staticContext = server.addWebapp("/static", base.getAbsolutePath());
         Tomcat.addServlet(staticContext, "cxfStaticServlet", new DefaultServlet());
-        staticContext.addServletMapping("/static/*", "cxfStaticServlet");
+        staticContext.addServletMappingDecoded("/static/*", "cxfStaticServlet");
         staticContext.setResources(resourcesFrom(staticContext, "target/classes/web-ui"));
         staticContext.setParentClassLoader(Thread.currentThread().getContextClassLoader());
 
