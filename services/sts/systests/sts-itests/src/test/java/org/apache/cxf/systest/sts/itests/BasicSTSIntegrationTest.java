@@ -130,7 +130,8 @@ public class BasicSTSIntegrationTest {
                                                                           localRepository)),
                                  features(stsFeatures, "cxf-sts-service"),
                                  configureConsole().ignoreLocalConsole().ignoreRemoteShell(),
-                                 mavenBundle("org.apache.karaf.itests", "servlet-compatibility").version(karafVersion).noStart()
+                                 mavenBundle("org.apache.karaf.itests", "servlet-compatibility").
+                                     version(karafVersion).noStart()
 
             };
         }

@@ -119,7 +119,7 @@
             <dependency>
                 <groupId>org.apache.tomcat</groupId>
                 <artifactId>tomcat-jasper</artifactId>
-                <version>${cxf.tomcat.version}</version>
+                <version>${cxf.tomcat.upstream.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.ning</groupId>

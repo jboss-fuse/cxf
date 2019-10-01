@@ -47,8 +47,4 @@ public class TomcatEmbeddedTest extends AbstractSseTest {
         return EmbeddedTomcatServer.PORT;
     }
 
-    @Override
-    protected boolean supportsErrorPropagation() {
-        return true;
-    }
 }
