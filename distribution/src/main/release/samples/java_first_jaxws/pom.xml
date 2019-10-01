@@ -31,7 +31,7 @@
     <properties>
         <cxf.version>${project.version}</cxf.version>
         <cxf.release.base>${basedir}/../..</cxf.release.base>
-        <tomcat.version>8.5.29</tomcat.version>
+        <tomcat.version>9.0.7.redhat-19</tomcat.version>
     </properties>
     <build>
         <plugins>
