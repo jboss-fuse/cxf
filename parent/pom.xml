@@ -20,7 +20,7 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf</artifactId>
-        <version>3.2.7.redhat-SNAPSHOT</version>
+        <version>3.2.7.fuse-760002</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>cxf-parent</artifactId>
@@ -200,7 +200,7 @@
         <cxf.aries.parser.version>1.3.1</cxf.aries.parser.version> 
         <cxf.aries.version.range>[1.0,2)</cxf.aries.version.range>
         <cxf.osgi.version>5.0.0</cxf.osgi.version>
-        <cxf.karaf.version>4.2.0.fuse-730018</cxf.karaf.version>
+        <cxf.karaf.version>4.2.6.fuse-760004</cxf.karaf.version>
         <cxf.pax.logging.version>1.11.2</cxf.pax.logging.version>
         <cxf.pax.exam.version>4.13.1</cxf.pax.exam.version>
         <cxf.felix.configadmin.version>1.2.4</cxf.felix.configadmin.version>
@@ -2928,7 +2928,7 @@
                 <cxf.jaxb.impl.version>2.3.0</cxf.jaxb.impl.version>
                 <cxf.jaxb.core.version>2.3.0</cxf.jaxb.core.version>
                 <cxf.jaxb.xjc.version>2.3.0</cxf.jaxb.xjc.version>
-                <cxf.karaf.version>4.2.0.fuse-730018</cxf.karaf.version>
+                <cxf.karaf.version>4.2.6.fuse-760004</cxf.karaf.version>
                 <org.apache.cxf.transport.websocket.atmosphere.disabled>true</org.apache.cxf.transport.websocket.atmosphere.disabled>
 	    </properties>
 	    <activation>
