@@ -140,6 +140,7 @@
                         <id>test-integration</id>
                         <phase>integration-test</phase>
                         <goals>
+                            <goal>install</goal>
                             <goal>integration-test</goal>
                         </goals>
                         <configuration>
