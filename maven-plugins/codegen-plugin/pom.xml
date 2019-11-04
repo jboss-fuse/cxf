@@ -182,6 +182,7 @@
                         <id>test-integration</id>
                         <phase>integration-test</phase>
                         <goals>
+                            <goal>install</goal>
                             <goal>integration-test</goal>
                             <goal>verify</goal>
                         </goals>
