@@ -233,8 +233,8 @@
                                 <feature>cxf-rt-security-saml</feature>
                                 <feature>cxf-http-client</feature>
                                 <feature>cxf-http</feature>
-                                <feature>cxf-http-provider</feature>
-                                <feature>cxf-http-jetty</feature>
+                                <!--feature>cxf-http-provider</feature-->
+                                <!--feature>cxf-http-jetty</feature-->
                                 <feature>cxf-http-async</feature>
                                 <feature>cxf-http-netty-client</feature>
                                 <feature>cxf-http-netty-server</feature>
@@ -275,7 +275,7 @@
                                 <feature>cxf-tools</feature>
                                 <feature>cxf-sts</feature>
                                 <feature>cxf-wsn-api</feature>
-                                <feature>cxf-wsn</feature>
+                                <!--feature>cxf-wsn</feature-->
                                 <feature>cxf-ws-discovery-api</feature>
                                 <feature>cxf-ws-discovery</feature>
                                 <feature>cxf-bean-validation-core</feature>
