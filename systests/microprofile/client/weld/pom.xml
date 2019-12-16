@@ -22,7 +22,7 @@
     <parent>
         <artifactId>cxf-microprofile-tck</artifactId>
         <groupId>org.apache.cxf.systests</groupId>
-        <version>3.2.x.sb2.redhat-7-x</version>
+        <version>3.2.7.fuse-sb2-760009</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     
