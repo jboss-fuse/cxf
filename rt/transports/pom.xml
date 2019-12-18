@@ -27,7 +27,7 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-rt</artifactId>
-        <version>3.2.x.sb2.redhat-7-x</version>
+        <version>3.2.7.fuse-sb2-760010</version>
     </parent>
     <modules>
         <module>local</module>
