@@ -220,29 +220,6 @@ public class OAuthRequestFilter extends AbstractAccessTokenValidator
         }
         return foundValidScope;
     }
-    
-    protected boolean checkRequestURI(HttpServletRequest request, List<String> uris, Message m) {
-
-        if (uris.isEmpty()) {
-            return true;
-        }
-        String servletPath = request.getPathInfo();
-        if (servletPath == null) {
-            servletPath = (String)m.get(Message.PATH_INFO);
-        }
-        boolean foundValidScope = false;
-        for (String uri : uris) {
-            if (OAuthUtils.checkRequestURI(servletPath, uri)) {
-                foundValidScope = true;
-                break;
-            }
-        }
-        if (!foundValidScope) {
-            String message = "Invalid request URI: " + request.getRequestURL().toString();
-            LOG.fine(message);
-        }
-        return foundValidScope;
-    }
     protected boolean checkScopeProperty(String scope) {
         if (!requiredScopes.isEmpty()) {
             return requiredScopes.contains(scope);
