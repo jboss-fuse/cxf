@@ -54,22 +54,27 @@ public class NoAriesBlueprintTest extends OSGiTestSupport {
             localRepo = "";
         }
 
-        return new Option[]{
-                systemProperty("java.awt.headless").value("true"),
-                when(!"".equals(localRepo))
-                    .useOptions(systemProperty("org.ops4j.pax.url.mvn.localRepository").value(localRepo)),
-                mvnBundle("org.apache.ws.xmlschema", "xmlschema-core"),
-                mvnBundle("org.apache.servicemix.bundles", "org.apache.servicemix.bundles.wsdl4j"),
-                mvnBundle("org.apache.cxf", "cxf-core"),
-                mvnBundle("org.apache.cxf", "cxf-rt-wsdl"),
-                mvnBundle("org.apache.cxf", "cxf-rt-databinding-jaxb"),
-                mvnBundle("org.apache.cxf", "cxf-rt-bindings-xml"),
-                mvnBundle("org.apache.cxf", "cxf-rt-bindings-soap"),
-                mvnBundle("org.apache.cxf", "cxf-rt-frontend-simple"),
-                mvnBundle("javax.servlet", "javax.servlet-api"),
-                mvnBundle("org.apache.cxf", "cxf-rt-transports-http"),
-                mvnBundle("org.apache.cxf", "cxf-rt-frontend-jaxws"),
-                junitBundles()
+        final Option[] basicOptions = new Option[] {
+            systemProperty("java.awt.headless").value("true"),
+            when(!"".equals(localRepo))
+                .useOptions(systemProperty("org.ops4j.pax.url.mvn.localRepository").value(localRepo)),
+            mavenBundle("org.apache.ws.xmlschema", "xmlschema-core").versionAsInProject(),
+            mavenBundle("org.apache.servicemix.bundles", "org.apache.servicemix.bundles.wsdl4j").versionAsInProject(),
+            mavenBundle("org.apache.felix", "org.apache.felix.configadmin").versionAsInProject(),
+            mavenBundle("org.apache.cxf", "cxf-core").versionAsInProject(),
+            mavenBundle("org.apache.cxf", "cxf-rt-wsdl").versionAsInProject(),
+            mavenBundle("org.apache.cxf", "cxf-rt-databinding-jaxb").versionAsInProject(),
+            mavenBundle("org.apache.cxf", "cxf-rt-bindings-xml").versionAsInProject(),
+            mavenBundle("org.apache.cxf", "cxf-rt-bindings-soap").versionAsInProject(),
+            mavenBundle("org.apache.cxf", "cxf-rt-frontend-simple").versionAsInProject(),
+            mavenBundle("jakarta.servlet", "jakarta.servlet-api").versionAsInProject(),
+            mavenBundle("org.apache.cxf", "cxf-rt-transports-http").versionAsInProject(),
+            mavenBundle("org.apache.cxf", "cxf-rt-frontend-jaxws").versionAsInProject(),
+            junitBundles(),
+            systemPackages(
+                "javax.annotation;version=\"1.3\"",
+                "javax.xml.soap;version=\"1.5\""
+            )
         };
     }
 }
