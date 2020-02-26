@@ -1615,8 +1615,10 @@ public abstract class HTTPConduit
             inMessage.put(Message.RESPONSE_CODE, responseCode);
             propagateConduit(exchange, inMessage);
 
-            if (!doProcessResponse(outMessage, responseCode)
-                || HttpURLConnection.HTTP_ACCEPTED == responseCode) {
+            if ((!doProcessResponse(outMessage, responseCode)
+                || HttpURLConnection.HTTP_ACCEPTED == responseCode)
+                && MessageUtils.getContextualBoolean(outMessage, 
+                    Message.PROCESS_202_RESPONSE_ONEWAY_OR_PARTIAL, true)) {
                 in = getPartialResponse();
                 if (in == null 
                     || !MessageUtils.getContextualBoolean(outMessage, Message.PROCESS_ONEWAY_RESPONSE, false)) {
