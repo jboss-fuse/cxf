@@ -131,15 +131,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>javax.el</groupId>
-            <artifactId>javax.el-api</artifactId>
-            <version>${cxf.javax.el.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-validator</artifactId>
-            <version>${cxf.hibernate.validator.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+            <version>${cxf.spring.boot.version}</version>
             <scope>test</scope>
         </dependency>
         <!--need this dependency for hibernate validator 5.3.x-->
