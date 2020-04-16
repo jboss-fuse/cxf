@@ -476,24 +476,6 @@ public class AttachmentDeserializerTest extends Assert {
         in.close();
     }
 
-<<<<<<< HEAD
-    private String getString(InputStream ins) throws Exception {
-        try (ByteArrayOutputStream bout = new ByteArrayOutputStream(100)) {
-            byte b[] = new byte[100];
-            int i = ins.read(b);
-            while (i > 0) {
-                bout.write(b, 0, i);
-                i = ins.read(b);
-            }
-            if (i == 0) {
-                throw new IOException("Should not be 0");
-            }
-            return bout.toString();
-        }
-    }
-
-=======
->>>>>>> 6c39901... Restrict the number of message attachments
     @Test
     public void testCXF3383() throws Exception {
         String contentType = "multipart/related; type=\"application/xop+xml\";"
