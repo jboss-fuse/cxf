@@ -202,7 +202,7 @@
         <cxf.aries.version.range>[1.0,2)</cxf.aries.version.range>
         <cxf.osgi.version>5.0.0</cxf.osgi.version>
         <cxf.karaf.version>4.2.0.fuse-730018</cxf.karaf.version>
-        <cxf.pax.logging.version>1.11.4</cxf.pax.logging.version>
+        <cxf.pax.logging.version>1.11.6</cxf.pax.logging.version>
         <cxf.pax.exam.version>4.13.1</cxf.pax.exam.version>
         <cxf.felix.configadmin.version>1.2.4</cxf.felix.configadmin.version>
         <cxf.servicemix.aspectj.version>1.8.7_2</cxf.servicemix.aspectj.version>
