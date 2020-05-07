@@ -32,7 +32,7 @@
     </parent>
     <properties>
         <cxf.module.name>org.apache.cxf.rs.search</cxf.module.name>
-        <jackson.version>1.9.13.jdk17-redhat-00001</jackson.version>
+        <jackson.version>1.9.14.jdk17-redhat-00001</jackson.version>
     </properties>
     <dependencies>
         <dependency>
