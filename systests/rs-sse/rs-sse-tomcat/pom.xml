@@ -48,7 +48,7 @@
         <dependency>
             <groupId>org.apache.tomcat</groupId>
             <artifactId>tomcat-jasper</artifactId>
-            <version>${cxf.tomcat.upstream.version}</version>
+            <version>${cxf.tomcat.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
