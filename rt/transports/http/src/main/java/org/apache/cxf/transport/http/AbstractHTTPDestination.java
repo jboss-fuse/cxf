@@ -338,8 +338,13 @@ public abstract class AbstractHTTPDestination
 
         inMessage.put(Message.HTTP_REQUEST_METHOD, req.getMethod());
         String requestURI = req.getRequestURI();
-        inMessage.put(Message.REQUEST_URI, requestURI);
+       
+        
         String requestURL = req.getRequestURL().toString();
+        if (requestURL.contains(";") && !requestURL.startsWith("http")) {
+            requestURI = requestURL;
+        }
+        inMessage.put(Message.REQUEST_URI, requestURI);
         inMessage.put(Message.REQUEST_URL, requestURL);
         String contextPath = req.getContextPath();
         if (contextPath == null) {

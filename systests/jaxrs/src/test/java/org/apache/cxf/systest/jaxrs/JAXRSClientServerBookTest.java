@@ -84,7 +84,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 //CHECKSTYLE.OFF:JavaNCSS
@@ -831,7 +830,6 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
     }
 
     @Test
-    @Ignore("This test fails, but I'm not sure if it's because of jackson-databind with whitelist support...")
     public void testBookWithSpaceProxyNonEncodedSemicolon() throws Exception {
         BookStore store = JAXRSClientFactory.create("http://localhost:" + PORT,
                                                     BookStore.class);
@@ -2011,7 +2009,6 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
     }
 
     @Test
-    @Ignore("This test fails, but I'm not sure if it's because of jackson-databind with whitelist support...")
     public void testGetBookByMatrixParametersInTheMiddle() throws Exception {
         getAndCompareAsStrings(
             "http://localhost:" + PORT + "/bookstore/segment;first=12;second=3/matrix-middle",
