@@ -91,6 +91,7 @@
         <cxf.ehcache.version>2.10.5</cxf.ehcache.version>
         <cxf.ehcache3.version>3.0.3</cxf.ehcache3.version>
         <cxf.fastinfoset.bundle.version>1.2.13_1</cxf.fastinfoset.bundle.version>
+        <!-- Guava 20 is required by opensaml bundle -->
         <cxf.guava.version>20.0.0.redhat-1</cxf.guava.version>
         <cxf.hazelcast.version>3.12</cxf.hazelcast.version>
         <cxf.hibernate.em.version>5.3.15.Final-redhat-00001</cxf.hibernate.em.version>
