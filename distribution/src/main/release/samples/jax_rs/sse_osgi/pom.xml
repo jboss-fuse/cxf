@@ -27,7 +27,7 @@
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
         <artifactId>cxf-samples</artifactId>
-        <version>3.3.6.redhat-SNAPSHOT</version>
+        <version>3.3.6.redhat.7.x-SNAPSHOT</version>
         <relativePath>../..</relativePath>
     </parent>
 
