@@ -62,9 +62,9 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>jakarta.servlet</groupId>
-            <artifactId>jakarta.servlet-api</artifactId>
-            <version>4.0.3</version>
+            <groupId>${cxf.servlet-api.group}</groupId>
+            <artifactId>${cxf.servlet-api.artifact}</artifactId>
+            <version>${cxf.servlet-api.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
