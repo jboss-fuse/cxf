@@ -72,6 +72,12 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>org.apache.karaf.itests</groupId>
+            <artifactId>servlet-compatibility</artifactId>
+            <version>${cxf.karaf.version}</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- Karaf features -->
         <dependency>
@@ -91,7 +97,8 @@
             <groupId>org.apache.activemq</groupId>
             <artifactId>activemq-karaf</artifactId>
             <type>xml</type>
-            <version>${cxf.activemq.version}</version>
+            <!-- Features from RedHat version of activemq-karaf depend on Spring 3 -->
+            <version>5.15.11</version>
             <classifier>features</classifier>
             <exclusions>
                 <exclusion>

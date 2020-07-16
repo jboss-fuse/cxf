@@ -481,6 +481,7 @@ public class ClientAuthTest extends AbstractBusClientServerTestBase {
     @org.junit.Test
     public void testBouncyCastleProvider() throws Exception {
         // TODO There seems to be a bug with BC 1.60 + JDK 11
+        // TODO There seems to be a bug with BC 1.66 + JDK 8 as well
         Assume.assumeFalse(JavaUtils.isJava11Compatible());
         try {
             Security.addProvider(new BouncyCastleProvider());
