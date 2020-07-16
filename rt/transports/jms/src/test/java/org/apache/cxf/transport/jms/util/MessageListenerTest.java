@@ -93,7 +93,8 @@ public class MessageListenerTest {
     }
 
     @Test
-    @Ignore("Works with ActiveMQ 5.15.11, but not with 5.11.0.redhat-630446 - org.apache.activemq.ActiveMQXASession.doStartTransaction() is different")
+    @Ignore("Works with ActiveMQ 5.15.11, but not with 5.11.0.redhat-630446 "
+            + "- org.apache.activemq.ActiveMQXASession.doStartTransaction() is different")
     public void testWithJTA() throws JMSException, XAException, InterruptedException {
         TransactionManager transactionManager = new GeronimoTransactionManager();
         Connection connection = createXAConnection("brokerJTA", transactionManager);
