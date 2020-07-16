@@ -120,8 +120,8 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>${cxf.servlet-api.group}</groupId>
-            <artifactId>${cxf.servlet-api.artifact}</artifactId>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
             <version>${cxf.servlet-api.version}</version>
             <scope>provided</scope>
             <optional>true</optional>
