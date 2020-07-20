@@ -1556,8 +1556,8 @@
                 </exclusions>
             </dependency>
             <dependency>
-                <groupId>jakarta.validation</groupId>
-                <artifactId>jakarta.validation-api</artifactId>
+                <groupId>javax.validation</groupId>
+                <artifactId>validation-api</artifactId>
                 <version>${cxf.validation.api.version}</version>
                 <optional>true</optional>
             </dependency>
