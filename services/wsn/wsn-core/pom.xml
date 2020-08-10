@@ -131,6 +131,10 @@
                     <groupId>javax.xml.stream</groupId>
                     <artifactId>stax-api</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.jvnet.staxex</groupId>
+                    <artifactId>stax-ex</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -142,6 +146,12 @@
             <groupId>com.sun.net.httpserver</groupId>
             <artifactId>http</artifactId>
             <version>20070405</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jvnet.staxex</groupId>
+            <artifactId>stax-ex</artifactId>
+            <version>${cxf.stax-ex.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
