@@ -263,6 +263,7 @@
         <cxf.xmlresolver.bundle.version>1.2_5</cxf.xmlresolver.bundle.version>
         <cxf.xmlsec.bundle.version>2.1.4</cxf.xmlsec.bundle.version>
         <cxf.xpp3.bundle.version>1.1.4c_6</cxf.xpp3.bundle.version>
+        <cxf.cryptacular.version>1.2.4</cxf.cryptacular.version>
     </properties>
     <build>
         <resources>
@@ -2502,6 +2503,15 @@
                 <artifactId>wss4j-ws-security-policy-stax</artifactId>
                 <version>${cxf.wss4j.version}</version>
             </dependency>
+
+
+            <!-- ENTESB-12980 CVE-2020-7226 cryptacular: excessive memory allocation during a decode operation -->
+            <dependency>
+                <groupId>org.cryptacular</groupId>
+                <artifactId>cryptacular</artifactId>
+                <version>${cxf.cryptacular.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
     <profiles>
