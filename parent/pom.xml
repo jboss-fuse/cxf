@@ -131,6 +131,7 @@
         <cxf.httpcomponents.core.version>4.4.9</cxf.httpcomponents.core.version>
         <cxf.jackson.version>2.9.10</cxf.jackson.version>
         <cxf.jackson.databind.version>2.9.10.4-redhat-00001</cxf.jackson.databind.version>
+        <cxf.jackson.jsonSchema.version>2.9.10-redhat-00005</cxf.jackson.jsonSchema.version>
         <cxf.jacorb.version>3.9</cxf.jacorb.version>
         <cxf.jaeger.version>0.35.5</cxf.jaeger.version>
         <cxf.james.mim4j.version>0.7.2</cxf.james.mim4j.version>
@@ -2073,7 +2074,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>
                 <artifactId>jackson-module-jsonSchema</artifactId>
-                <version>${cxf.jackson.version}</version>
+                <version>${cxf.jackson.jsonSchema.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>
