@@ -258,6 +258,7 @@
         <cxf.servicemix.jsoup.version>1.5.2_2</cxf.servicemix.jsoup.version>
         <cxf.servicemix.specs.jaxb.version>2.3_1</cxf.servicemix.specs.jaxb.version>
         <cxf.servicemix.specs.version>2.9.0</cxf.servicemix.specs.version>
+        <cxf.servicemix.specs.activation.version>1.2.1_2</cxf.servicemix.specs.activation.version>
         <cxf.wsdl4j.bundle.version>1.6.3_1</cxf.wsdl4j.bundle.version>
         <cxf.xalan.bundle.version>2.7.2_3</cxf.xalan.bundle.version>
         <cxf.xerces.bundle.version>2.12.0_1</cxf.xerces.bundle.version>
