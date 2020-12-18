@@ -28,4 +28,5 @@ import org.apache.cxf.systest.Book;
 public interface BookStoreService {
     Collection< Book > getBooks();
     int removeBooks();
+    void addBooks();
 }

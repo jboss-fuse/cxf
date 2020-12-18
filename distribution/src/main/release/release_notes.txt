@@ -1,4 +1,4 @@
-Apache CXF 3.3.5 Release Notes
+Apache CXF 3.3.7 Release Notes
 
 1. Overview
 
@@ -23,7 +23,7 @@ http://cxf.apache.org/docs/33-migration-guide.html
 for further information and requirements for upgrading from earlier
 versions of CXF.
 
-3.3.5 fixes over 32 JIRA issues reported by users and the community.
+3.3.7 fixes over 20 JIRA issues reported by users and the community.
 
 
 
@@ -67,44 +67,31 @@ for caveats when upgrading.
 7. Specific issues, features, and improvements fixed in this version
 
 ** Bug
-    * [CXF-8097] - Equal candidates for handling the current request (HEAD / GET)
-    * [CXF-8130] - Since Spring 5.1.5 Release CXFServlet application listener dissapears by context refresh
-    * [CXF-8137] - Using SecurityConstants.VALIDATE_TOKEN with WSS4JInInterceptor no longer allows skipping validation of token
-    * [CXF-8139] - SecurityToken, parsing the lifetime may cause a NullPointerException
-    * [CXF-8143] - ensure java2wadl-plugin m2e compatible
-    * [CXF-8144] - OpenAPI v3 Feature: duplicated "getOpenApi" methods
-    * [CXF-8153] -  @Path with REGEX in path parameter and checkMethodsForInvalidURITemplates(userType, methods);
-    * [CXF-8158] - @BeanParam arguments not properly translated to OpenApi
-    * [CXF-8161] - Memory Leak/Thread Leak in JMSDestination & PollingMessageListenerContainer
-    * [CXF-8162] - JWE with multiple recipients does not work for AES CBC Encryption
-    * [CXF-8163] - javax.ws.rs.core.Response#getCookies() fails when cookie has no value
-    * [CXF-8169] - CXF opentracing - Span#finish is never called in case of client timeouts
-    * [CXF-8170] - Failure to parse multiple comma separated links in an HTTP Link header on a Jaxrs Response object
-    * [CXF-8171] - SSE Client does not support multiple data fields
-    * [CXF-8174] - Incorrect service method resolution
-    * [CXF-8178] - ECDH KeyAgreement with Key Wrapping is not in line with the specification
-    * [CXF-8179] - JSON Jackson does not handle resource returning CompletionStage<X>
-    * [CXF-8180] - UnsupportedOperationException in AbstractEndpointFactory
-    * [CXF-8181] - CXFNonSpringJaxrsServlet Feature registration fails via javax.ws.rs.Application
-    * [CXF-8185] - Generated Ephemeral Public Key missing in JWE Headers when Json Serialization is used
-    * [CXF-8186] - On connection refused, XSLTOutInterceptor mangles the error
-    * [CXF-8187] - Codegen-Plugin failed when maven is executed on jdk9+ with Toolchains specifying jdk 8
+    * [CXF-5216] - WSDL definition cache issue for web service client when WSDL in service war changed
+    * [CXF-8242] - Stop blocking executor thread on microprofile rest asynchronous call
+    * [CXF-8251] - introduce a new property in http-undertow transport so that can enable http/2 if necessary
+    * [CXF-8254] - NPE in WebFaultOutInterceptor handleMessage method
+    * [CXF-8259] - Blocked thread of JMS transport during jboss shutdown
+    * [CXF-8261] - Exceptions being thrown in a ClientResponseFilter are ignored
+    * [CXF-8267] - Syntax error in wsdl2java.bat
+    * [CXF-8270] - Persistent SSL connection is closed when only URI path was changed
+    * [CXF-8280] - AttachmentId issue
+    * [CXF-8282] - Set read timeout using netty client
+    * [CXF-8296] - Custom Boolean ParamConverter wrong behaviour
+    * [CXF-8298] - An invalid package name is generated
 
 ** Improvement
-    * [CXF-8140] - setAccessible(true) before reflection method java.security.acl.Group#members invocation in DefaultSecurityContext
-    * [CXF-8145] - Need property for suffix-list data file
-    * [CXF-8152] - Add a property so it's possible to build cxf with posix tarLongFileMode
-    * [CXF-8160] - Workaround in the cxf-jackson feature has to be removed
-    * [CXF-8167] - Restrict the URI schemes allowed when importing schemas or WSDLs
-    * [CXF-8177] - JWE API does not support ECDH Direct Encryption/Decryption
-
-** Wish
-    * [CXF-8168] - Wadl2java maven plugin not allows mapping to array types
+    * [CXF-8253] - Provide a way to disable TLS trust verification for the OSGi HttpConduitConfigApplier
+    * [CXF-8269] - Servlet Transport: allow any whitespace character as param-value separator
+    * [CXF-8286] - AbstractStaticFailoverStrategy.getEndpoints() never returns anything for JAX-RS clients (with RetryStrategy)
+    * [CXF-8306] - be able to configure http-undertow worker|threadpool name
 
 ** Task
-    * [CXF-8150] - Update to Spring Boot 2.1.10
-    * [CXF-8155] - Update to Jackson 2.10.1
-    * [CXF-8157] - Update to Jackson Databind 2.9.10.1
+    * [CXF-8078] - Support RxJava 3.0
+    * [CXF-8271] - The async JAX-RS client never completes the response in case of an exception during the interceptor chain processing.
+    * [CXF-8290] - Don't lock by default in org.apache.cxf.jaxrs.model.AbstractResourceInfo#getProxyMap
+    * [CXF-8300] - Swagger2Feature displays cached API when service is redeployed
+
 
 
 

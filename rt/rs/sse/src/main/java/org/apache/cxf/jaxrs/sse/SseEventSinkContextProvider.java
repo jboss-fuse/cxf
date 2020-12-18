@@ -47,6 +47,15 @@ public class SseEventSinkContextProvider implements ContextProvider<SseEventSink
         final AsyncResponse async = new AsyncResponseImpl(message);
         final Integer bufferSize = PropertyUtils.getInteger(message, SseEventSinkImpl.BUFFER_SIZE_PROPERTY);
         
+        final SseEventSink sink = createSseEventSink(request, writer, async, bufferSize);
+        message.put(SseEventSink.class, sink);
+        
+        return sink;
+    }
+
+    protected SseEventSink createSseEventSink(final HttpServletRequest request,
+            final MessageBodyWriter<OutboundSseEvent> writer,
+            final AsyncResponse async, final Integer bufferSize) {
         if (bufferSize != null) {
             return new SseEventSinkImpl(writer, async, request.getAsyncContext(), bufferSize);
         } else {        
