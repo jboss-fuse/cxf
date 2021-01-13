@@ -26,7 +26,7 @@
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
         <artifactId>cxf-samples</artifactId>
-        <version>3.4.1</version>
+        <version>3.4.1.fuse-jdk11-800003</version>
     </parent>
     <build>
         <plugins>
