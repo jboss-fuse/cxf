@@ -34,7 +34,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import javax.ws.rs.ProcessingException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -63,7 +62,6 @@ import io.jaegertracing.internal.JaegerSpanContext;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.spi.Sender;
 import io.opentracing.Scope;
-import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format.Builtin;
 import io.opentracing.propagation.TextMap;
@@ -263,6 +261,7 @@ public class OpenTracingTracingTest extends AbstractBusClientServerTestBase {
         TestSender.setSynchro(synchro);
 
         final WebClient client = createWebClient("/bookstore/books", openTracingClientProvider);
+
         final Future<Response> f = client.async().get();
 
         final Response r = f.get(1, TimeUnit.SECONDS);
@@ -342,8 +341,8 @@ public class OpenTracingTracingTest extends AbstractBusClientServerTestBase {
     public void testThatProvidedSpanIsNotClosedWhenActive() throws MalformedURLException {
         final WebClient client = createWebClient("/bookstore/books", openTracingClientProvider);
 
-        final Span span = tracer.buildSpan("test span").start();
-        try (Scope scope = tracer.scopeManager().activate(span)) {
+        
+        try (Scope span = tracer.buildSpan("test span").startActive(true)) {
             final Response r = client.get();
             assertEquals(Status.OK.getStatusCode(), r.getStatus());
 
@@ -354,10 +353,7 @@ public class OpenTracingTracingTest extends AbstractBusClientServerTestBase {
             assertThat(TestSender.getAllSpans().get(1).getOperationName(), equalTo("GET /bookstore/books"));
             assertThat(TestSender.getAllSpans().get(2).getOperationName(), equalTo("GET " + client.getCurrentURI()));
             assertThat(TestSender.getAllSpans().get(2).getReferences(), not(empty()));
-        } finally {
-            span.finish();
-        }
-
+        } 
         // Await till flush happens, usually every second
         await().atMost(Duration.ofSeconds(1L)).until(()-> TestSender.getAllSpans().size() == 4);
 
@@ -370,16 +366,15 @@ public class OpenTracingTracingTest extends AbstractBusClientServerTestBase {
     public void testThatProvidedSpanIsNotDetachedWhenActiveUsingAsyncClient() throws Exception {
         final WebClient client = createWebClient("/bookstore/books", openTracingClientProvider);
 
-        final Span span = tracer.buildSpan("test span").start();
-        try (Scope scope = tracer.scopeManager().activate(span)) {
+        try (Scope scope = tracer.buildSpan("test span").startActive(true)) {
             final CountDownLatch synchro = new CountDownLatch(3);
             TestSender.setSynchro(synchro);
 
             final Future<Response> f = client.async().get();
-
+ 
             final Response r = f.get(1, TimeUnit.HOURS);
             assertEquals(Status.OK.getStatusCode(), r.getStatus());
-            assertThat(tracer.activeSpan().context(), equalTo(span.context()));
+            assertThat(tracer.activeSpan().context(), equalTo(scope.span().context()));
 
             synchro.await(1, TimeUnit.MINUTES);
             assertThat(TestSender.getAllSpans().size(), equalTo(3));
@@ -389,8 +384,6 @@ public class OpenTracingTracingTest extends AbstractBusClientServerTestBase {
             assertThat(TestSender.getAllSpans().get(1).getReferences(), not(empty()));
             assertThat(TestSender.getAllSpans().get(2).getOperationName(), equalTo("GET " + client.getCurrentURI()));
             assertThat(TestSender.getAllSpans().get(2).getReferences(), not(empty()));
-        } finally {
-            span.finish();
         }
 
         // Await till flush happens, usually every second
@@ -425,7 +418,7 @@ public class OpenTracingTracingTest extends AbstractBusClientServerTestBase {
         httpClientPolicy.setReceiveTimeout(100);
         WebClient.getConfig(client).getHttpConduit().setClient(httpClientPolicy);
 
-        expectedException.expect(ProcessingException.class);
+        expectedException.expect(org.awaitility.core.ConditionTimeoutException.class);
         try {
             client.get();
         } finally {

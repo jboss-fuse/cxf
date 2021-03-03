@@ -50,31 +50,28 @@ public abstract class AbstractOpenTracingClientProvider extends AbstractTracingP
 
         final Span parent = tracer.activeSpan();
         
-        Span activeSpan = null; 
         Scope scope = null; 
         if (parent == null) {
-            activeSpan = tracer.buildSpan(buildSpanDescription(uri.toString(), method)).start(); 
-            scope = tracer.scopeManager().activate(activeSpan);
+            scope = tracer.buildSpan(buildSpanDescription(uri.toString(), method)).startActive(false);
         } else {
-            activeSpan = tracer.buildSpan(buildSpanDescription(uri.toString(), method)).asChildOf(parent).start();
-            scope = tracer.scopeManager().activate(activeSpan);
+            scope = tracer.buildSpan(buildSpanDescription(uri.toString(), method)).asChildOf(parent).startActive(false);
         }
 
         // Set additional tags 
-        activeSpan.setTag(Tags.HTTP_METHOD.getKey(), method);
-        activeSpan.setTag(Tags.HTTP_URL.getKey(), uri.toString());
+        scope.span().setTag(Tags.HTTP_METHOD.getKey(), method);
+        scope.span().setTag(Tags.HTTP_URL.getKey(), uri.toString());
 
-        tracer.inject(activeSpan.context(), Builtin.HTTP_HEADERS, new TextMapInjectAdapter(requestHeaders));
+        tracer.inject(scope.span().context(), Builtin.HTTP_HEADERS, new TextMapInjectAdapter(requestHeaders));
         
         // In case of asynchronous client invocation, the span should be detached as JAX-RS
         // client request / response filters are going to be executed in different threads.
         Span span = null;
         if (isAsyncInvocation()) {
-            span = activeSpan;
+            span = scope.span();
             scope.close();
         }
 
-        return new TraceScopeHolder<TraceScope>(new TraceScope(activeSpan, scope), 
+        return new TraceScopeHolder<TraceScope>(new TraceScope(span, scope), 
                 span != null /* detached */);
     }
 
@@ -95,13 +92,13 @@ public abstract class AbstractOpenTracingClientProvider extends AbstractTracingP
             // If the client invocation was asynchronous , the trace span has been created
             // in another thread and should be re-attached to the current one.
             if (holder.isDetached()) {
-                scope = tracer.scopeManager().activate(span);
+                scope = tracer.scopeManager().activate(span, false);
             }
 
-            span.setTag(Tags.HTTP_STATUS.getKey(), responseStatus);
-            span.setTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
-            span.finish();
-            
+            scope.span().setTag(Tags.HTTP_STATUS.getKey(), responseStatus);
+            scope.span().setTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
+            scope.span().finish();
+                      
             scope.close();
         }
     }
