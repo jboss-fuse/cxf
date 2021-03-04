@@ -51,7 +51,7 @@ public class OpenTracingContext implements TracerContext {
         Scope scope = null;
         
         if (tracer.activeSpan() == null && continuation != null) {
-            scope = tracer.scopeManager().activate(continuation);
+            scope = tracer.scopeManager().activate(continuation, false);
         }
 
         try { //NOPMD
@@ -109,14 +109,12 @@ public class OpenTracingContext implements TracerContext {
     }
     
     private Scope newOrChildSpan(final String description, final Span parent) {
-        Span span = null;
-        
+                
         if (parent == null) {
-            span = tracer.buildSpan(description).start(); 
+            return tracer.buildSpan(description).startActive(true); 
         } else {
-            span = tracer.buildSpan(description).asChildOf(parent).start();
+            return tracer.buildSpan(description).asChildOf(parent).startActive(true);
         }
         
-        return new ScopedSpan(span, tracer.scopeManager().activate(span));
     }
 }

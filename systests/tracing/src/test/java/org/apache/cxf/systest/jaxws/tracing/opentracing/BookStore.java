@@ -32,7 +32,6 @@ import org.apache.cxf.systest.Book;
 import org.apache.cxf.systest.jaxws.tracing.BookStoreService;
 
 import io.opentracing.Scope;
-import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.util.GlobalTracer;
 
@@ -49,15 +48,13 @@ public class BookStore implements BookStoreService {
 
     @WebMethod
     public Collection<Book> getBooks() {
-        final Span span = tracer.buildSpan("Get Books").start();
-        try (Scope scope = tracer.activateSpan(span)) {
+        
+        try (Scope span = tracer.buildSpan("Get Books").startActive(true)) {
             return Arrays.asList(
                     new Book("Apache CXF in Action", UUID.randomUUID().toString()),
                     new Book("Mastering Apache CXF", UUID.randomUUID().toString())
                 );
-        } finally {
-            span.finish();
-        }
+        } 
     }
 
     @WebMethod
