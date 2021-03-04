@@ -288,6 +288,11 @@
         <bundle start-level="35">mvn:com.fasterxml.jackson.jaxrs/jackson-jaxrs-json-provider/${cxf.jackson.version}</bundle>
     </feature>
     <feature name="cxf-jsr-json" version="${project.version}">
+        <bundle dependency="true" start-level="30">mvn:org.ow2.asm/asm/${cxf.asm.version}</bundle>
+        <bundle dependency="true" start-level="30">mvn:org.ow2.asm/asm-util/${cxf.asm.version}</bundle>
+        <bundle dependency="true" start-level="30">mvn:org.ow2.asm/asm-commons/${cxf.asm.version}</bundle>
+        <bundle dependency="true" start-level="30">mvn:org.ow2.asm/asm-tree/${cxf.asm.version}</bundle>
+        <bundle dependency="true" start-level="30">mvn:org.ow2.asm/asm-analysis/${cxf.asm.version}</bundle>
         <bundle dependency="true" start-level="30">mvn:org.apache.aries.spifly/org.apache.aries.spifly.dynamic.bundle/${cxf.aries.fly.version}</bundle>
         <bundle dependency="true" start-level="35">mvn:javax.json/javax.json-api/${cxf.json.api.version}</bundle>
         <bundle dependency="true" start-level="35">mvn:org.apache.geronimo.specs/geronimo-json_1.1_spec/${cxf.geronimo.json.version}</bundle>
