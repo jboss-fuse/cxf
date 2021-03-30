@@ -150,7 +150,7 @@
         <cxf.jetty.osgi.version>[9.2,10)</cxf.jetty.osgi.version>
         <cxf.jetty.version>${cxf.jetty9.version}</cxf.jetty.version>
         <cxf.jexl.version>2.1.1</cxf.jexl.version>
-        <cxf.jetty9.version>9.4.38.v20210224</cxf.jetty9.version>
+        <cxf.jetty9.version>9.4.39.v20210325</cxf.jetty9.version>
         <cxf.joda.time.version>2.9.4</cxf.joda.time.version>
         <cxf.johnzon.version>1.1.13</cxf.johnzon.version>
         <cxf.json.api.version>1.1.4</cxf.json.api.version>
@@ -169,7 +169,7 @@
         <cxf.msv.version>2013.6.1</cxf.msv.version>
         <cxf.neethi.version>3.1.1</cxf.neethi.version>
         <cxf.netty.version.range>[4,5)</cxf.netty.version.range>
-        <cxf.netty.version>4.1.51.Final-redhat-00001</cxf.netty.version>
+        <cxf.netty.version>4.1.60.Final-redhat-00001</cxf.netty.version>
         <cxf.oauth.version>20100527</cxf.oauth.version>
         <cxf.olingo.version>2.0.11</cxf.olingo.version>
         <cxf.openjpa.version>3.1.0</cxf.openjpa.version>
