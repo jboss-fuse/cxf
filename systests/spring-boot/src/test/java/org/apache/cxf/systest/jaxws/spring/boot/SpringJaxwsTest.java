@@ -47,7 +47,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.rule.OutputCapture;
+import org.springframework.boot.test.system.OutputCaptureRule;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -88,7 +88,7 @@ public class SpringJaxwsTest {
     private static final String HELLO_SERVICE_NAME_V3 = "HelloV3";
 
     @Rule
-    public OutputCapture output = new OutputCapture();
+    public OutputCaptureRule output = new OutputCaptureRule();
 
     @Autowired
     private MeterRegistry registry;
