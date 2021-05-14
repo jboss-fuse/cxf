@@ -24,6 +24,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.MediaType;
 
 import org.apache.cxf.jaxrs.reactivestreams.server.AbstractSubscriber;
 import org.apache.cxf.jaxrs.reactivestreams.server.JsonStreamingAsyncSubscriber;
@@ -56,7 +57,20 @@ public class MonoService {
     public void getTextAsync(@Suspended final AsyncResponse ar) {
         Mono.just("Hello, ").map(s -> s + "world!")
                 .subscribe(new StringAsyncSubscriber(ar));
+    }
+    
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/empty")
+    public Mono<HelloWorldBean> empty() { 
+        return Mono.empty(); 
+    }
 
+    @GET
+    @Produces("application/json")
+    @Path("error")
+    public Mono<HelloWorldBean> getError() {
+        return Mono.error(new RuntimeException("Oops"));
     }
 
     private static class StringAsyncSubscriber extends AbstractSubscriber<String> {
