@@ -267,6 +267,7 @@
         <cxf.xmlsec.bundle.version>2.1.6</cxf.xmlsec.bundle.version>
         <cxf.xpp3.bundle.version>1.1.4c_6</cxf.xpp3.bundle.version>
         <cxf.cryptacular.version>1.2.4</cxf.cryptacular.version>
+        <cxf.aopalliance.bundle.version>1.0_6</cxf.aopalliance.bundle.version>
     </properties>
     <build>
         <resources>
@@ -2528,6 +2529,47 @@
                 <groupId>org.cryptacular</groupId>
                 <artifactId>cryptacular</artifactId>
                 <version>${cxf.cryptacular.version}</version>
+            </dependency>
+            
+            <dependency>
+                <groupId>org.apache.servicemix.bundles</groupId>
+                <artifactId>org.apache.servicemix.bundles.aopalliance</artifactId>
+                <version>${cxf.aopalliance.bundle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.servicemix.bundles</groupId>
+                <artifactId>org.apache.servicemix.bundles.wsdl4j</artifactId>
+                <version>${cxf.wsdl4j.bundle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.servicemix.bundles</groupId>
+                <artifactId>org.apache.servicemix.bundles.saaj-impl</artifactId>
+                <version>${cxf.saaj-impl.bundle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.servicemix.bundles</groupId>
+                <artifactId>org.apache.servicemix.bundles.xalan</artifactId>
+                <version>${cxf.xalan.bundle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.servicemix.bundles</groupId>
+                <artifactId>org.apache.servicemix.bundles.xmlresolver</artifactId>
+                <version>${cxf.xmlresolver.bundle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.servicemix.bundles</groupId>
+                <artifactId>org.apache.servicemix.bundles.bcel</artifactId>
+                <version>${cxf.bcel.bundle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.servicemix.bundles</groupId>
+                <artifactId>org.apache.servicemix.bundles.opensaml</artifactId>
+                <version>${cxf.opensaml.osgi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.servicemix.bundles</groupId>
+                <artifactId>org.apache.servicemix.bundles.fastinfoset</artifactId>
+                <version>${cxf.fastinfoset.bundle.version}</version>
             </dependency>
 
         </dependencies>
