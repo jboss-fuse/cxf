@@ -71,7 +71,7 @@
         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
-            <version>1.2</version>
+            <version>1.2.0.redhat-3</version>
         </dependency>
         <dependency>
             <groupId>net.oauth.core</groupId>
@@ -96,10 +96,6 @@
         </dependency>
     </dependencies>
     <repositories>
-        <repository>
-            <id>oauth</id>
-            <name>OAuth Repository</name>
-            <url>https://oauth.googlecode.com/svn/code/maven/</url>
-        </repository>
+        
     </repositories>
 </project>
