@@ -526,7 +526,7 @@
         <feature>aries-blueprint</feature>
         <feature version="${project.version}">cxf-wsn-api</feature>
         <feature version="${project.version}">cxf-http-provider</feature>
-        <bundle dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.aopalliance/1.0_6</bundle>
+        <bundle dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.aopalliance/${cxf.aopalliance.bundle.version}</bundle>
         <bundle dependency="true">mvn:org.apache.geronimo.specs/geronimo-jms_1.1_spec/${cxf.geronimo.jms.version}</bundle>
         <bundle dependency="true">mvn:org.apache.geronimo.specs/geronimo-j2ee-management_1.1_spec/${cxf.geronimo.j2ee.management.version}</bundle>
         <bundle dependency="true">mvn:org.apache.activemq/activemq-osgi/${cxf.activemq.version}</bundle>
