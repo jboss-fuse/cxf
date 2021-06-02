@@ -327,7 +327,7 @@
         <bundle start-level="25" dependency="true">mvn:com.google.guava/failureaccess/${cxf.swagger2.guava.failureaccess.version}</bundle>
         <bundle start-level="35" dependency="true">mvn:io.swagger/swagger-annotations/${cxf.swagger2.version}</bundle>
         <bundle start-level="35" dependency="true">mvn:io.swagger/swagger-models/${cxf.swagger2.version}</bundle>
-        <bundle start-level="35" dependency="true">wrap:mvn:io.swagger/swagger-core/${cxf.swagger2.version}</bundle>
+        <bundle start-level="35" dependency="true">mvn:io.swagger/swagger-core/${cxf.swagger2.version}</bundle>
         <bundle start-level="35" dependency="true">mvn:io.swagger/swagger-jaxrs/${cxf.swagger2.version}</bundle>
     </feature>
     <feature name="cxf-rs-description-openapi-v3" version="${project.version}">
@@ -526,7 +526,7 @@
         <feature>aries-blueprint</feature>
         <feature version="${project.version}">cxf-wsn-api</feature>
         <feature version="${project.version}">cxf-http-provider</feature>
-        <bundle dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.aopalliance/1.0_6</bundle>
+        <bundle dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.aopalliance/${cxf.aopalliance.bundle.version}</bundle>
         <bundle dependency="true">mvn:org.apache.geronimo.specs/geronimo-jms_1.1_spec/${cxf.geronimo.jms.version}</bundle>
         <bundle dependency="true">mvn:org.apache.geronimo.specs/geronimo-j2ee-management_1.1_spec/${cxf.geronimo.j2ee.management.version}</bundle>
         <bundle dependency="true">mvn:org.apache.activemq/activemq-osgi/${cxf.activemq.version}</bundle>
@@ -567,7 +567,7 @@
 
     <feature name="cxf-bean-validation" version="${project.version}">
         <feature version="${project.version}">cxf-bean-validation-core</feature>
-        <bundle start-level="30" dependency="true">mvn:org.apache.servicemix.specs/org.apache.servicemix.specs.javax-el-api-3.0.0/${cxf.servicemix.javax.el.version}</bundle> 
+        <bundle start-level="30" dependency="true">mvn:org.apache.servicemix.specs/org.apache.servicemix.specs.javax-el-api-3.0.0/${cxf.servicemix.javax.el-api.version}</bundle>
         <bundle start-level="30" dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.javax-el-impl/${cxf.servicemix.javax.el.version}</bundle>
     </feature>
 
