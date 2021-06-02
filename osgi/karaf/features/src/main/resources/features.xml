@@ -327,7 +327,7 @@
         <bundle start-level="25" dependency="true">mvn:com.google.guava/failureaccess/${cxf.swagger2.guava.failureaccess.version}</bundle>
         <bundle start-level="35" dependency="true">mvn:io.swagger/swagger-annotations/${cxf.swagger2.version}</bundle>
         <bundle start-level="35" dependency="true">mvn:io.swagger/swagger-models/${cxf.swagger2.version}</bundle>
-        <bundle start-level="35" dependency="true">wrap:mvn:io.swagger/swagger-core/${cxf.swagger2.version}</bundle>
+        <bundle start-level="35" dependency="true">mvn:io.swagger/swagger-core/${cxf.swagger2.version}</bundle>
         <bundle start-level="35" dependency="true">mvn:io.swagger/swagger-jaxrs/${cxf.swagger2.version}</bundle>
     </feature>
     <feature name="cxf-rs-description-openapi-v3" version="${project.version}">
