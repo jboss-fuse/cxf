@@ -222,6 +222,7 @@
         <cxf.xalan.version>2.7.2</cxf.xalan.version>
         <cxf.xerces.version>2.12.0</cxf.xerces.version>
         <cxf.xmlschema.version>2.2.5</cxf.xmlschema.version>
+        <cxf.xnio.version>3.8.4.Final</cxf.xnio.version>
         <cxf.zest.version>2.1</cxf.zest.version>
 
         <!-- various OSGi related versions -->
@@ -2580,9 +2581,14 @@
             </dependency>
 
             <dependency>
-                <groupId>net.sf.ehcache</groupId>
-                <artifactId>ehcache</artifactId>
-                <version>${cxf.ehcache.version}</version>
+                <groupId>org.jboss.xnio</groupId>
+                <artifactId>xnio-api</artifactId>
+                <version>${cxf.xnio.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.xnio</groupId>
+                <artifactId>xnio-nio</artifactId>
+                <version>${cxf.xnio.version}</version>
             </dependency>
 
         </dependencies>
