@@ -28,7 +28,7 @@
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf</artifactId>
         <relativePath>../pom.xml</relativePath>
-        <version>3.4.4</version>
+        <version>3.4.4.fuse-800002</version>
     </parent>
     <modules>
         <module>sts</module>
