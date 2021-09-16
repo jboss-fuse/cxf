@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.apache.cxf.samples</groupId>
         <artifactId>cxf-samples</artifactId>
-        <version>3.3.6.redhat-SNAPSHOT</version>
+        <version>3.3.6.fuse-7_10_0-00006</version>
         <relativePath>..</relativePath>
     </parent>
     <artifactId>spring-boot-sample-ws-cxf</artifactId>
