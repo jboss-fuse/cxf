@@ -29,8 +29,6 @@
         <version>3.3.6.redhat-SNAPSHOT</version>
         <relativePath>../..</relativePath>
     </parent>
-    <properties>
-    </properties>
     <dependencies>
         <dependency>
             <groupId>org.apache.cxf</groupId>

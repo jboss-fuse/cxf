@@ -160,15 +160,6 @@
                 <configuration>
                     <wsdlRoot>${basedir}/src/main/resources/wsdl</wsdlRoot>
                 </configuration>
-                <executions>
-                    <!-- execution>
-                        <id>validate</id>
-                        <phase>validate</phase>
-                        <goals>
-                          <goal>wsdlvalidator</goal>
-                        </goals>
-                    </execution -->
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.cxf</groupId>
