@@ -213,7 +213,7 @@
              with a qualifier. We do want a range. -->
         <cxf.validation.api.package.version>[1.0.0,3)</cxf.validation.api.package.version>
         <cxf.validation.api.version>2.0.1.Final-redhat-1</cxf.validation.api.version>
-        <cxf.velocity.version>2.3</cxf.velocity.version>
+        <cxf.velocity.version>2.3.0.redhat-00001</cxf.velocity.version>
         <cxf.wiremock.version>2.23.2</cxf.wiremock.version>
         <cxf.woodstox.core.version>5.2.1</cxf.woodstox.core.version>
         <cxf.woodstox.stax2-api.version>4.2.1</cxf.woodstox.stax2-api.version>
