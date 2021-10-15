@@ -119,7 +119,7 @@
         <cxf.guava.version>20.0.0.redhat-1</cxf.guava.version>
         <cxf.hamcrest.version>1.3-redhat-1</cxf.hamcrest.version>
         <cxf.hazelcast.version>3.12.7</cxf.hazelcast.version>
-        <cxf.hibernate.em.version>5.3.21.Final-redhat-00001</cxf.hibernate.em.version>
+        <cxf.hibernate.em.version>5.3.23.Final-redhat-00001</cxf.hibernate.em.version>
         <cxf.hibernate.jpa.version>1.0.2.Final-redhat-1</cxf.hibernate.jpa.version>
         <cxf.hibernate.validator.version>6.0.22.Final-redhat-00002</cxf.hibernate.validator.version>
         <cxf.hsqldb.version>2.4.1</cxf.hsqldb.version>
@@ -207,7 +207,7 @@
         <cxf.tomcat.version>8.5.50</cxf.tomcat.version>
         <cxf.tomitribe.http.signature.version>1.3</cxf.tomitribe.http.signature.version>
         <cxf.undertow.osgi.version>[1.4,3.0)</cxf.undertow.osgi.version>
-        <cxf.undertow.version>2.2.9.SP1-redhat-00001</cxf.undertow.version>
+        <cxf.undertow.version>2.2.12.Final-redhat-00001</cxf.undertow.version>
         <!-- the Export-Package is the same as the Maven artifact
              version (with the Final), but we don't want an import package with a version
              with a qualifier. We do want a range. -->
@@ -266,7 +266,7 @@
         <cxf.xalan.bundle.version>2.7.2.3-fuse-redhat-00006</cxf.xalan.bundle.version>
         <cxf.xerces.bundle.version>2.12.1.1-fuse-redhat-00006</cxf.xerces.bundle.version>
         <cxf.xmlresolver.bundle.version>1.2.5.fuse-redhat-00006</cxf.xmlresolver.bundle.version>
-        <cxf.xmlsec.bundle.version>2.1.6</cxf.xmlsec.bundle.version>
+        <cxf.xmlsec.bundle.version>2.1.7.redhat-00001</cxf.xmlsec.bundle.version>
         <cxf.xpp3.bundle.version>1.1.4c_6</cxf.xpp3.bundle.version>
         <cxf.cryptacular.version>1.2.4.redhat-00001</cxf.cryptacular.version>
         <cxf.aopalliance.bundle.version>1.0.6.fuse-redhat-00006</cxf.aopalliance.bundle.version>
