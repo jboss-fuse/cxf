@@ -239,7 +239,7 @@
         <cxf.istack.bundle.version>3.0.7</cxf.istack.bundle.version>
         <cxf.jasypt.bundle.version>1.9.3.2-fuse-redhat-00003</cxf.jasypt.bundle.version>
         <cxf.javax.mail.version>1.4.4</cxf.javax.mail.version>
-        <cxf.jaxb.bundle.version>2.3.1.1-fuse-redhat-00006</cxf.jaxb.bundle.version>
+        <cxf.jaxb.bundle.version>2.3.1.1-fuse-redhat-00007</cxf.jaxb.bundle.version>
         <cxf.jaxb.context.class.property>none</cxf.jaxb.context.class.property>
         <cxf.jdom.bundle.version>1.1_4</cxf.jdom.bundle.version>
         <cxf.karaf.version>4.2.11.fuse-790012</cxf.karaf.version>
