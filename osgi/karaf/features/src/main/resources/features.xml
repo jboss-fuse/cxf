@@ -552,7 +552,7 @@
         <!-- The servicemix bundle for hibernate demands joda-time -->
         <bundle start-level="30" dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.joda-time/${cxf.servicemix.jodatime.version}</bundle>
         <!-- The servicemix bundle for hibernate demands jsoup -->
-        <bundle start-level="30" dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.jsoup/${cxf.servicemix.jsoup.version}</bundle>
+        <bundle start-level="30" dependency="true">mvn:org.jsoup/jsoup/${cxf.jsoup.version}</bundle>
         <!-- hibernate requires jboss-logging -->
         <bundle start-level="30" dependency="true">mvn:org.jboss.logging/jboss-logging/${cxf.jboss.logging.version}</bundle>
         <!-- ditto for classmate -->
