@@ -38,6 +38,9 @@ import org.apache.cxf.message.MessageImpl;
 import org.apache.cxf.phase.PhaseInterceptor;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -47,9 +50,12 @@ import static org.junit.Assert.assertTrue;
 
 public class TruncatedTest {
 
+    public static final Logger LOG = LoggerFactory.getLogger(TruncatedTest.class);
+
     @Test
     public void truncatedOutboundInterceptorOutputStream() throws IOException {
-
+        MDC.put("address", "127.0.0.1");
+        LOG.info("truncatedOutboundInterceptorOutputStream()");
         Message message = new MessageImpl();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         message.setContent(OutputStream.class, outputStream);
