@@ -69,6 +69,7 @@ public class NoAriesBlueprintTest extends OSGiTestSupport {
                 mvnBundle("javax.servlet", "javax.servlet-api"),
                 mvnBundle("org.apache.cxf", "cxf-rt-transports-http"),
                 mvnBundle("org.apache.cxf", "cxf-rt-frontend-jaxws"),
+                mvnBundle("org.apache.felix", "org.apache.felix.configadmin"),
                 junitBundles()
         };
     }
