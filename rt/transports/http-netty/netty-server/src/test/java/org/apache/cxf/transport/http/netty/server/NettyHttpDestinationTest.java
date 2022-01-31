@@ -661,6 +661,8 @@ public class NettyHttpDestinationTest extends Assert {
                 EasyMock.expect(request.getQueryString()).andReturn(query).times(2);    
                 EasyMock.expect(request.getHeader("Accept")).andReturn("*/*");  
                 EasyMock.expect(request.getContentType()).andReturn("text/xml charset=utf8").times(2);
+                EasyMock.expect(request.getHeader(Message.X_FORWARDED_PREFIX)).andReturn(null).anyTimes();
+                EasyMock.expect(request.getHeader(Message.X_FORWARDED_PATH)).andReturn(null).anyTimes();
                 EasyMock.expect(request.getAttribute("org.eclipse.jetty.ajax.Continuation")).andReturn(null);
                 EasyMock.expect(request.getAttribute("http.service.redirection")).andReturn(null).anyTimes();
 

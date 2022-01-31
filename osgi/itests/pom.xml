@@ -85,11 +85,25 @@
                     <groupId>org.apache.sshd</groupId>
                     <artifactId>sshd-core</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.apache.activemq</groupId>
+                    <artifactId>activemq-log4j-appender</artifactId>
+                </exclusion>
             </exclusions>
             <version>${cxf.activemq.version}</version>
             <classifier>features</classifier>
         </dependency>
-        
+        <dependency>
+            <groupId>org.ops4j.pax.logging</groupId>
+            <artifactId>pax-logging-api</artifactId>
+            <version>${cxf.pax.logging.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ops4j.pax.logging</groupId>
+            <artifactId>pax-logging-service</artifactId>
+            <version>${cxf.pax.logging.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.karaf.features</groupId>
             <artifactId>org.apache.karaf.features.core</artifactId>

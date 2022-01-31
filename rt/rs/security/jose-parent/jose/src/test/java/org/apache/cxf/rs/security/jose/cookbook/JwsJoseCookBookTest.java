@@ -41,6 +41,7 @@ import org.apache.cxf.rs.security.jose.jws.JwsJsonProducer;
 import org.apache.cxf.rs.security.jose.jws.JwsUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
