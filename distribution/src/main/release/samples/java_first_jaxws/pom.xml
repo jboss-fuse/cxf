@@ -29,7 +29,7 @@
         <version>3.3.6.redhat-SNAPSHOT</version>
     </parent>
     <properties>
-        <cxf.tomcat.version>8.5.47</cxf.tomcat.version>
+        <cxf.tomcat.version>9.0.58</cxf.tomcat.version>
     </properties>
     <build>
         <plugins>
