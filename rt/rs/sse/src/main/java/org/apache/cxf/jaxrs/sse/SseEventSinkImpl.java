@@ -107,6 +107,14 @@ public class SseEventSinkImpl implements SseEventSink {
 
             @Override
             public void onError(AsyncEvent event) throws IOException {
+                
+                //In case of Undertow 2.2.14 onwards, we way flush ServletOutput Stream
+                //twice,so ignore the error caused by the second time we flush ServletOutput Stream
+                if (event.getAsyncContext().getClass().getName().contains("undertow") 
+                    && event.getThrowable() instanceof IOException
+                    && event.getThrowable().getMessage().equals("Broken pipe")) {
+                    return;
+                }
                 // In case of Tomcat, the context is closed automatically when client closes
                 // the connection.
                 if (throwable.get() != null || throwable.compareAndSet(null, event.getThrowable())) {
@@ -145,7 +153,7 @@ public class SseEventSinkImpl implements SseEventSink {
                         LOG.fine("Completing the AsyncContext");
                         ctx.complete();
                     }
-                } catch (final IllegalStateException ex) {
+                } catch (final Exception ex) {
                     LOG.fine("Failed to close the AsyncContext cleanly: " + ex.getMessage());
                 }
             }
