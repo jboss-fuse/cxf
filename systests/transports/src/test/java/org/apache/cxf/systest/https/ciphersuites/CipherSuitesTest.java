@@ -46,6 +46,7 @@ import org.apache.hello_world.services.SOAPService;
 import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameters;
 
@@ -444,6 +445,7 @@ public class CipherSuitesTest extends AbstractBusClientServerTestBase {
 
     // Both client + server include AES, client is TLSv1.1
     @org.junit.Test
+    @Ignore
     public void testAESIncludedTLSv11() throws Exception {
         // Doesn't work with IBM JDK
         if ("IBM Corporation".equals(System.getProperty("java.vendor"))) {
@@ -490,6 +492,7 @@ public class CipherSuitesTest extends AbstractBusClientServerTestBase {
 
     // Both client + server include AES, client is TLSv1.0
     @org.junit.Test
+    @Ignore
     public void testAESIncludedTLSv10() throws Exception {
         SpringBusFactory bf = new SpringBusFactory();
         URL busFile = CipherSuitesTest.class.getResource("ciphersuites-client-noconfig.xml");
