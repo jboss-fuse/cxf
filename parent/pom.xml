@@ -82,7 +82,7 @@
         <cxf.apacheds.version>2.0.0.AM26</cxf.apacheds.version>
         <cxf.arquillian.version>1.1.14.Final</cxf.arquillian.version>
         <cxf.arquillian.weld.container.version>2.0.1.Final</cxf.arquillian.weld.container.version>
-        <cxf.artemis.version>2.16.0.redhat-00022</cxf.artemis.version>
+        <cxf.artemis.version>2.16.0.redhat-00036</cxf.artemis.version>
         <cxf.aspectj.version>1.9.1</cxf.aspectj.version>
         <cxf.atmosphere.version.range>[2.4,3.0)</cxf.atmosphere.version.range>
         <cxf.atmosphere.version>2.5.15</cxf.atmosphere.version>
@@ -169,7 +169,8 @@
         <cxf.msv.version>2013.6.1</cxf.msv.version>
         <cxf.neethi.version>3.1.1.redhat-1</cxf.neethi.version>
         <cxf.netty.version.range>[4,5)</cxf.netty.version.range>
-        <cxf.netty.version>4.1.68.Final-redhat-00001</cxf.netty.version>
+        <cxf.netty.version>4.1.74.Final</cxf.netty.version>
+        <cxf.netty.tcnative.version>2.0.50.Final</cxf.netty.tcnative.version>
         <cxf.oauth.version>20100527</cxf.oauth.version>
         <cxf.olingo.version>2.0.11</cxf.olingo.version>
         <cxf.openjpa.version>3.1.0</cxf.openjpa.version>
