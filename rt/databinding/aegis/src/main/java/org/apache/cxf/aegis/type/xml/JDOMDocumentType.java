@@ -31,7 +31,7 @@ import org.apache.cxf.aegis.xml.MessageReader;
 import org.apache.cxf.aegis.xml.MessageWriter;
 import org.apache.cxf.aegis.xml.stax.ElementReader;
 import org.apache.cxf.aegis.xml.stax.ElementWriter;
-import org.jdom.Document;
+import org.jdom2.Document;
 
 /**
  * Reads and writes <code>org.w3c.dom.Document</code> types.

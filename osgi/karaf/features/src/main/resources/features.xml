@@ -45,6 +45,7 @@
         <bundle start-level="20">mvn:com.sun.istack/istack-commons-runtime/${cxf.istack.bundle.version}</bundle>
     </feature>
     <!-- Current the abdera bundle is not working as we expect -->
+    <!--
     <feature name="cxf-abdera" version="${project.version}">
         <feature version="${project.version}">cxf-specs</feature>
         <bundle start-level="25" dependency="true">mvn:commons-codec/commons-codec/${cxf.commons-codec.version}</bundle>
@@ -53,11 +54,12 @@
         <bundle start-level="35">mvn:org.apache.abdera/abdera-i18n/${cxf.abdera.version}</bundle>
         <bundle start-level="35">mvn:org.apache.james/apache-mime4j-core/${cxf.james.mim4j.version}</bundle>
         <bundle start-level="35">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.abdera-parser/${cxf.abdera.osgi.version}</bundle>
-        <bundle dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.jdom/${cxf.jdom.bundle.version}</bundle>
+        <bundle dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.jdom/1.1_4</bundle>
         <bundle dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.dom4j/${cxf.dom4j.bundle.version}</bundle>
-        <!--bundle start-level='35'>mvn:org.apache.abdera/abdera-extensions-html/${cxf.abdera.version}</bundle>
-        <bundle start-level='35'>mvn:org.apache.abdera/abdera-extensions-json/${cxf.abdera.version}</bundle>-->
+        <! - - bundle start-level='35'>mvn:org.apache.abdera/abdera-extensions-html/${cxf.abdera.version}</bundle>
+        <bundle start-level='35'>mvn:org.apache.abdera/abdera-extensions-json/${cxf.abdera.version}</bundle> - - >
     </feature>
+    -->
     <feature name="wss4j" version="${cxf.wss4j.version}">
         <feature version="${project.version}">cxf-specs</feature>
         <bundle start-level="25" dependency="true">mvn:joda-time/joda-time/${cxf.joda.time.version}</bundle>
@@ -189,6 +191,7 @@
         <bundle dependency="true" start-level="40">mvn:javax.servlet/javax.servlet-api/${cxf.servlet-api.version}</bundle>
         <bundle start-level="40">mvn:io.netty/netty-common/${cxf.netty.version}</bundle>
         <bundle start-level="40">mvn:io.netty/netty-handler/${cxf.netty.version}</bundle>
+        <bundle start-level="40">mvn:io.netty/netty-tcnative-classes/${cxf.netty.tcnative.version}</bundle>
         <bundle start-level="40">mvn:io.netty/netty-buffer/${cxf.netty.version}</bundle>
         <bundle start-level="40">mvn:io.netty/netty-transport/${cxf.netty.version}</bundle>
         <bundle start-level="40">mvn:io.netty/netty-resolver/${cxf.netty.version}</bundle>
@@ -200,6 +203,7 @@
         <feature version="${project.version}">cxf-http</feature>
         <bundle start-level="40">mvn:io.netty/netty-common/${cxf.netty.version}</bundle>
         <bundle start-level="40">mvn:io.netty/netty-handler/${cxf.netty.version}</bundle>
+        <bundle start-level="40">mvn:io.netty/netty-tcnative-classes/${cxf.netty.tcnative.version}</bundle>
         <bundle start-level="40">mvn:io.netty/netty-buffer/${cxf.netty.version}</bundle>
         <bundle start-level="40">mvn:io.netty/netty-transport/${cxf.netty.version}</bundle>
         <bundle start-level="40">mvn:io.netty/netty-resolver/${cxf.netty.version}</bundle>
@@ -352,6 +356,7 @@
         <feature version="${project.version}">cxf-wsdl</feature>
         <feature version="${project.version}">cxf-bindings-soap</feature>
         <bundle start-level="40">mvn:org.apache.cxf/cxf-rt-databinding-aegis/${project.version}</bundle>
+        <bundle start-level="40">wrap:mvn:org.jdom/jdom2/${cxf.jdom2.version}</bundle>
     </feature>
     <feature name="cxf-databinding-jaxb" version="${project.version}">
         <feature version="${project.version}">cxf-core</feature>

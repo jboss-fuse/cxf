@@ -25,8 +25,8 @@ import java.io.StringReader;
 import org.apache.cxf.aegis.util.jdom.StaxBuilder;
 import org.apache.cxf.aegis.xml.MessageWriter;
 import org.apache.cxf.test.AbstractCXFTest;
-import org.jdom.Document;
-import org.jdom.output.DOMOutputter;
+import org.jdom2.Document;
+import org.jdom2.output.DOMOutputter;
 
 import org.junit.After;
 import org.junit.Before;
