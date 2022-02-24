@@ -65,16 +65,16 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.apache.cxf.staxutils.StaxUtils;
-import org.jdom.Attribute;
-import org.jdom.Content;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMFactory;
-import org.jdom.Namespace;
-import org.jdom.UncheckedJDOMFactory;
+import org.jdom2.Attribute;
+import org.jdom2.Content;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMFactory;
+import org.jdom2.Namespace;
+import org.jdom2.UncheckedJDOMFactory;
 
 /**
- * Builds a JDOM {@link org.jdom.Document org.jdom.Document} using a
+ * Builds a JDOM {@link org.jdom2.Document org.jdom.Document} using a
  * {@link javax.xml.stream.XMLStreamReader}.
  *
  * @author Tatu Saloranta
@@ -89,26 +89,26 @@ public class StaxBuilder {
      */
     private static final Map<String, Integer> ATTR_TYPES = new HashMap<>(32);
     static {
-        ATTR_TYPES.put("CDATA", Integer.valueOf(Attribute.CDATA_TYPE));
-        ATTR_TYPES.put("cdata", Integer.valueOf(Attribute.CDATA_TYPE));
-        ATTR_TYPES.put("ID", Integer.valueOf(Attribute.ID_TYPE));
-        ATTR_TYPES.put("id", Integer.valueOf(Attribute.ID_TYPE));
-        ATTR_TYPES.put("IDREF", Integer.valueOf(Attribute.IDREF_TYPE));
-        ATTR_TYPES.put("idref", Integer.valueOf(Attribute.IDREF_TYPE));
-        ATTR_TYPES.put("IDREFS", Integer.valueOf(Attribute.IDREFS_TYPE));
-        ATTR_TYPES.put("idrefs", Integer.valueOf(Attribute.IDREFS_TYPE));
-        ATTR_TYPES.put("ENTITY", Integer.valueOf(Attribute.ENTITY_TYPE));
-        ATTR_TYPES.put("entity", Integer.valueOf(Attribute.ENTITY_TYPE));
-        ATTR_TYPES.put("ENTITIES", Integer.valueOf(Attribute.ENTITIES_TYPE));
-        ATTR_TYPES.put("entities", Integer.valueOf(Attribute.ENTITIES_TYPE));
-        ATTR_TYPES.put("NMTOKEN", Integer.valueOf(Attribute.NMTOKEN_TYPE));
-        ATTR_TYPES.put("nmtoken", Integer.valueOf(Attribute.NMTOKEN_TYPE));
-        ATTR_TYPES.put("NMTOKENS", Integer.valueOf(Attribute.NMTOKENS_TYPE));
-        ATTR_TYPES.put("nmtokens", Integer.valueOf(Attribute.NMTOKENS_TYPE));
-        ATTR_TYPES.put("NOTATION", Integer.valueOf(Attribute.NOTATION_TYPE));
-        ATTR_TYPES.put("notation", Integer.valueOf(Attribute.NOTATION_TYPE));
-        ATTR_TYPES.put("ENUMERATED", Integer.valueOf(Attribute.ENUMERATED_TYPE));
-        ATTR_TYPES.put("enumerated", Integer.valueOf(Attribute.ENUMERATED_TYPE));
+        ATTR_TYPES.put("CDATA", Attribute.CDATA_TYPE.ordinal());
+        ATTR_TYPES.put("cdata", Attribute.CDATA_TYPE.ordinal());
+        ATTR_TYPES.put("ID", Attribute.ID_TYPE.ordinal());
+        ATTR_TYPES.put("id", Attribute.ID_TYPE.ordinal());
+        ATTR_TYPES.put("IDREF", Attribute.IDREF_TYPE.ordinal());
+        ATTR_TYPES.put("idref", Attribute.IDREF_TYPE.ordinal());
+        ATTR_TYPES.put("IDREFS", Attribute.IDREFS_TYPE.ordinal());
+        ATTR_TYPES.put("idrefs", Attribute.IDREFS_TYPE.ordinal());
+        ATTR_TYPES.put("ENTITY", Attribute.ENTITY_TYPE.ordinal());
+        ATTR_TYPES.put("entity", Attribute.ENTITY_TYPE.ordinal());
+        ATTR_TYPES.put("ENTITIES", Attribute.ENTITIES_TYPE.ordinal());
+        ATTR_TYPES.put("entities", Attribute.ENTITIES_TYPE.ordinal());
+        ATTR_TYPES.put("NMTOKEN", Attribute.NMTOKEN_TYPE.ordinal());
+        ATTR_TYPES.put("nmtoken", Attribute.NMTOKEN_TYPE.ordinal());
+        ATTR_TYPES.put("NMTOKENS", Attribute.NMTOKENS_TYPE.ordinal());
+        ATTR_TYPES.put("nmtokens", Attribute.NMTOKENS_TYPE.ordinal());
+        ATTR_TYPES.put("NOTATION", Attribute.NOTATION_TYPE.ordinal());
+        ATTR_TYPES.put("notation", Attribute.NOTATION_TYPE.ordinal());
+        ATTR_TYPES.put("ENUMERATED", Attribute.ENUMERATED_TYPE.ordinal());
+        ATTR_TYPES.put("enumerated", Attribute.ENUMERATED_TYPE.ordinal());
     }
 
     /**
@@ -160,7 +160,7 @@ public class StaxBuilder {
     }
 
     /**
-     * Returns the current {@link org.jdom.JDOMFactory} in use, if one has been
+     * Returns the current {@link org.jdom2.JDOMFactory} in use, if one has been
      * previously set with {@link #setFactory}, otherwise null.
      *
      * @return the factory builder will use
@@ -442,6 +442,6 @@ public class StaxBuilder {
                 return i.intValue();
             }
         }
-        return Attribute.UNDECLARED_TYPE;
+        return Attribute.UNDECLARED_TYPE.ordinal();
     }
 }

@@ -22,7 +22,7 @@ import javax.xml.namespace.QName;
 
 import org.apache.cxf.aegis.xml.AbstractMessageWriter;
 import org.apache.cxf.aegis.xml.MessageWriter;
-import org.jdom.Attribute;
+import org.jdom2.Attribute;
 
 public class AttributeWriter extends AbstractMessageWriter {
     private Attribute att;

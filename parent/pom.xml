@@ -144,7 +144,7 @@
         <cxf.jboss.logging.version>3.4.1.Final-redhat-00001</cxf.jboss.logging.version>
         <cxf.jboss.weld.version>2.4.8.Final</cxf.jboss.weld.version>
         <cxf.jcache.version>1.1.1</cxf.jcache.version>
-        <cxf.jdom.version>1.0.0.redhat-1</cxf.jdom.version>
+        <cxf.jdom2.version>2.0.6.1</cxf.jdom2.version>
         <cxf.jettison.version>1.4.1</cxf.jettison.version>
         <cxf.jetty.osgi.version>[9.2,10)</cxf.jetty.osgi.version>
         <cxf.jetty.version>${cxf.jetty9.version}</cxf.jetty.version>
@@ -242,7 +242,6 @@
         <cxf.javax.mail.version>1.4.4</cxf.javax.mail.version>
         <cxf.jaxb.bundle.version>2.3.1.1-fuse-redhat-00007</cxf.jaxb.bundle.version>
         <cxf.jaxb.context.class.property>none</cxf.jaxb.context.class.property>
-        <cxf.jdom.bundle.version>1.1_4</cxf.jdom.bundle.version>
         <cxf.karaf.version>4.2.15.fuse-7_11_0-00008</cxf.karaf.version>
         <cxf.jsoup.version>1.14.3</cxf.jsoup.version>
         <cxf.oauth.bundle.version>20100527_1</cxf.oauth.bundle.version>
@@ -2582,6 +2581,12 @@
                 <groupId>org.jboss.xnio</groupId>
                 <artifactId>xnio-nio</artifactId>
                 <version>${cxf.xnio.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jdom</groupId>
+                <artifactId>jdom2</artifactId>
+                <version>${cxf.jdom2.version}</version>
             </dependency>
 
         </dependencies>

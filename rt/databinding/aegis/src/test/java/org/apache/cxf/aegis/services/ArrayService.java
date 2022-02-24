@@ -29,7 +29,7 @@ import javax.jws.WebService;
             serviceName = "arrayService")
 public class ArrayService {
 
-    private org.jdom.Element[] jdomArray;
+    private org.jdom2.Element[] jdomArray;
     private org.w3c.dom.Document[] w3cArray;
     private String beforeValue;
     private String afterValue;
@@ -78,7 +78,7 @@ public class ArrayService {
     }
 
     @WebMethod
-    public void submitJDOMArray(String before, org.jdom.Element[] anything, String after) {
+    public void submitJDOMArray(String before, org.jdom2.Element[] anything, String after) {
         beforeValue = before;
         jdomArray = anything;
         afterValue = after;
@@ -92,7 +92,7 @@ public class ArrayService {
     }
 
     @WebMethod
-    public org.jdom.Element[] getJdomArray() {
+    public org.jdom2.Element[] getJdomArray() {
         return jdomArray;
     }
 

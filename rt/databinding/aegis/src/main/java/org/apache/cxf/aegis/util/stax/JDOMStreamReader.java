@@ -30,15 +30,16 @@ import javax.xml.stream.XMLStreamException;
 
 import org.apache.cxf.staxutils.AbstractDOMStreamReader;
 import org.apache.cxf.staxutils.FastStack;
-import org.jdom.Attribute;
-import org.jdom.CDATA;
-import org.jdom.Comment;
-import org.jdom.Content;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.EntityRef;
-import org.jdom.Namespace;
-import org.jdom.Text;
+import org.jdom2.Attribute;
+import org.jdom2.AttributeType;
+import org.jdom2.CDATA;
+import org.jdom2.Comment;
+import org.jdom2.Content;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.EntityRef;
+import org.jdom2.Namespace;
+import org.jdom2.Text;
 
 /**
  * Facade for DOMStreamReader using JDOM implmentation.
@@ -72,37 +73,37 @@ public class JDOMStreamReader extends AbstractDOMStreamReader<Element, Integer> 
         this(document.getRootElement());
     }
 
-    public static String toStaxType(int jdom) {
+    public static String toStaxType(AttributeType jdom) {
         String val;
         switch (jdom) {
-        case Attribute.CDATA_TYPE:
+        case CDATA:
             val = "CDATA";
             break;
-        case Attribute.ID_TYPE:
+        case ID:
             val = "ID";
             break;
-        case Attribute.IDREF_TYPE:
+        case IDREF:
             val = "IDREF";
             break;
-        case Attribute.IDREFS_TYPE:
+        case IDREFS:
             val = "IDREFS";
             break;
-        case Attribute.ENTITY_TYPE:
+        case ENTITY:
             val = "ENTITY";
             break;
-        case Attribute.ENTITIES_TYPE:
+        case ENTITIES:
             val = "ENTITIES";
             break;
-        case Attribute.ENUMERATED_TYPE:
+        case ENUMERATION:
             val = "ENUMERATED";
             break;
-        case Attribute.NMTOKEN_TYPE:
+        case NMTOKEN:
             val = "NMTOKEN";
             break;
-        case Attribute.NMTOKENS_TYPE:
+        case NMTOKENS:
             val = "NMTOKENS";
             break;
-        case Attribute.NOTATION_TYPE:
+        case NOTATION:
             val = "NOTATION";
             break;
         default:
