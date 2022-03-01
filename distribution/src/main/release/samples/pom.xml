@@ -285,12 +285,12 @@
                 <dependency>
                     <groupId>org.glassfish.jaxb</groupId>
                     <artifactId>jaxb-runtime</artifactId>
-                    <version>${cxf.jaxb.version}</version>
+                    <version>${cxf.jaxb.runtime.version}</version>
                 </dependency>
                 <dependency>
                     <groupId>org.glassfish.jaxb</groupId>
                     <artifactId>jaxb-xjc</artifactId>
-                    <version>${cxf.jaxb.version}</version>
+                    <version>${cxf.jaxb.xjc.version}</version>
                 </dependency>
             </dependencies>
         </profile>
