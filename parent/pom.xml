@@ -264,7 +264,7 @@
         <cxf.servicemix.specs.activation.version>1.2.1_3</cxf.servicemix.specs.activation.version>
         <cxf.wsdl4j.bundle.version>1.6.3.1-fuse-redhat-00006</cxf.wsdl4j.bundle.version>
         <cxf.xalan.bundle.version>2.7.2.3-fuse-redhat-00006</cxf.xalan.bundle.version>
-        <cxf.xerces.bundle.version>2.12.1.1-fuse-redhat-00006</cxf.xerces.bundle.version>
+        <cxf.xerces.bundle.version>2.12.2.1-fuse-redhat-00003</cxf.xerces.bundle.version>
         <cxf.xmlresolver.bundle.version>1.2.5.fuse-redhat-00006</cxf.xmlresolver.bundle.version>
         <cxf.xmlsec.bundle.version>2.1.7.redhat-00001</cxf.xmlsec.bundle.version>
         <cxf.xpp3.bundle.version>1.1.4c_6</cxf.xpp3.bundle.version>
