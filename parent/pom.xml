@@ -128,9 +128,9 @@
         <cxf.httpcomponents.client.version>4.5.13.redhat-00002</cxf.httpcomponents.client.version>
         <cxf.httpcomponents.core.version.range>[4.3,4.5.0)</cxf.httpcomponents.core.version.range>
         <cxf.httpcomponents.core.version>4.4.14.redhat-00001</cxf.httpcomponents.core.version>
-        <cxf.jackson.version>2.12.1</cxf.jackson.version>
-        <cxf.jackson.databind.version>2.12.1</cxf.jackson.databind.version>
-        <cxf.jackson.jsonSchema.version>2.12.1</cxf.jackson.jsonSchema.version>
+        <cxf.jackson.version>2.12.6</cxf.jackson.version>
+        <cxf.jackson.databind.version>2.12.6.1</cxf.jackson.databind.version>
+        <cxf.jackson.jsonSchema.version>2.12.6</cxf.jackson.jsonSchema.version>
         <cxf.jacorb.version>3.9</cxf.jacorb.version>
         <cxf.jaeger.version>0.35.5</cxf.jaeger.version>
         <cxf.james.mim4j.version>0.7.2</cxf.james.mim4j.version>
