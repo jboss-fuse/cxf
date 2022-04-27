@@ -71,6 +71,7 @@ public class BasicSTSIntegrationTest {
                  .useDeployFolder(false),
              systemProperty("java.awt.headless").value("true"),
              systemProperty("BasicSTSIntegrationTest.PORT").value(port),
+             systemProperty("javax.xml.soap.MetaFactory").value("com.sun.xml.messaging.saaj.soap.SAAJMetaFactoryImpl"),
 //             editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg",
 //                 "org.ops4j.pax.url.mvn.repositories", REPOS),
 
@@ -111,7 +112,8 @@ public class BasicSTSIntegrationTest {
                 new VMOption("--add-exports=java.base/sun.net.www.protocol.jar=ALL-UNNAMED"),
                 new VMOption("--add-exports=jdk.naming.rmi/com.sun.jndi.url.rmi=ALL-UNNAMED"),
                 new VMOption("-classpath"),
-                new VMOption("lib/jdk9plus/*" + File.pathSeparator + "lib/boot/*")
+                new VMOption("lib/jdk9plus/*" + File.pathSeparator + "lib/boot/*"
+                        + File.pathSeparator + "lib/endorsed/*")
             );
         }
         return basicOptions;

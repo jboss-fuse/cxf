@@ -52,6 +52,8 @@ public abstract class AbstractTomcatServer extends AbstractBusTestServerBase {
     }
 
     protected void run() {
+        System.setProperty("tomcat.util.scan.StandardJarScanFilter.jarsToSkip", "*");
+
         server = new Tomcat();
         server.setPort(port);
 
@@ -76,6 +78,7 @@ public abstract class AbstractTomcatServer extends AbstractBusTestServerBase {
                 server.addWebapp(contextPath, getClass().getResource(resourcePath).toURI().getPath().toString());
             }
 
+            server.getConnector();
             server.start();
         } catch (final Exception ex) {
             ex.printStackTrace();
