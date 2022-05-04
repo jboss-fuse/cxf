@@ -2589,6 +2589,12 @@
                 <version>${cxf.jdom2.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.apache.santuario</groupId>
+                <artifactId>xmlsec</artifactId>
+                <version>${cxf.xmlsec.bundle.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
     <profiles>
