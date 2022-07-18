@@ -59,7 +59,7 @@ under the License.
     	<dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-rs-client</artifactId>
-            <version>3.4.8</version>
+            <version>3.4.8-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -71,7 +71,7 @@ under the License.
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-features-clustering</artifactId>
-            <version>3.4.8</version>
+            <version>3.4.8-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
