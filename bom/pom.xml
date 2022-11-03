@@ -451,11 +451,6 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.cxf</groupId>
-                <artifactId>cxf-tools-wadlto</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-tools-wadlto-jaxrs</artifactId>
                 <version>${project.version}</version>
             </dependency>
