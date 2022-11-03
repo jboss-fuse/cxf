@@ -451,11 +451,6 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.cxf</groupId>
-                <artifactId>cxf-tools-wadlto</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-tools-wadlto-jaxrs</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -560,12 +555,6 @@
                 <groupId>org.apache.cxf.services.sts</groupId>
                 <artifactId>cxf-services-sts-core</artifactId>
                 <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.cxf.services.sts</groupId>
-                <artifactId>cxf-services-sts-war</artifactId>
-                <version>${project.version}</version>
-                <type>war</type>
             </dependency>
             <dependency>
                 <groupId>org.apache.cxf.services.ws-discovery</groupId>
