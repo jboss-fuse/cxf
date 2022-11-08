@@ -33,7 +33,6 @@
     <properties>
         <maven.test.skip>true</maven.test.skip>
         <cxf.version>${project.version}</cxf.version>
-        <cxf.checkstyle.extension>-corba</cxf.checkstyle.extension>
         <tar.long.file.mode>gnu</tar.long.file.mode>
     </properties>
     <modules>
@@ -68,11 +67,14 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
+<<<<<<< HEAD
             <artifactId>cxf-tools-corba</artifactId>
             <version>4.1.0-rbac-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
+=======
+>>>>>>> 3f348d030fe (remove Corba support from CXF)
             <artifactId>cxf-tools-wsdlto-databinding-jaxb</artifactId>
             <version>4.1.0-rbac-SNAPSHOT</version>
         </dependency>
@@ -227,11 +229,14 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
+<<<<<<< HEAD
             <artifactId>cxf-rt-bindings-corba</artifactId>
             <version>4.1.0-rbac-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
+=======
+>>>>>>> 3f348d030fe (remove Corba support from CXF)
             <artifactId>cxf-rt-bindings-xml</artifactId>
             <version>4.1.0-rbac-SNAPSHOT</version>
         </dependency>
