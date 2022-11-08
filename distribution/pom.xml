@@ -34,7 +34,6 @@
     <properties>
         <maven.test.skip>true</maven.test.skip>
         <cxf.version>${project.version}</cxf.version>
-        <cxf.checkstyle.extension>-corba</cxf.checkstyle.extension>
         <tar.long.file.mode>gnu</tar.long.file.mode>
     </properties>
     <modules>
@@ -65,11 +64,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>cxf-tools-misctools</artifactId>
-            <version>4.0.4.fuse-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-tools-corba</artifactId>
             <version>4.0.4.fuse-SNAPSHOT</version>
         </dependency>
         <dependency>
@@ -224,11 +218,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>cxf-rt-bindings-soap</artifactId>
-            <version>4.0.4.fuse-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-rt-bindings-corba</artifactId>
             <version>4.0.4.fuse-SNAPSHOT</version>
         </dependency>
         <dependency>
