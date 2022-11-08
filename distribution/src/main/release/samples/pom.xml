@@ -73,9 +73,6 @@
         <module>aegis_standalone</module>
         <module>callback</module>
         <module>configuration_interceptor</module>
-        <module>corba/bank</module>
-        <module>corba/bank_ws_addressing</module>
-        <module>corba/hello_world</module>
         <module>groovy_spring_support</module>
         <module>in_jvm_transport</module>
         <module>java_first_jaxws</module>
