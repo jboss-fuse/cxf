@@ -323,12 +323,6 @@
             <version>${cxf.mockito.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.jacorb</groupId>
-            <artifactId>jacorb</artifactId>
-            <version>${cxf.jacorb.version}</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
     <profiles>
         <profile>
