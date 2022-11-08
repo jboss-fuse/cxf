@@ -64,11 +64,6 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-tools-corba</artifactId>
-            <version>4.0.6-rhaf-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>cxf-tools-wsdlto-frontend-jaxws</artifactId>
             <version>4.0.6-rhaf-SNAPSHOT</version>
         </dependency>
@@ -188,11 +183,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>cxf-rt-bindings-xml</artifactId>
-            <version>4.0.6-rhaf-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-rt-bindings-corba</artifactId>
             <version>4.0.6-rhaf-SNAPSHOT</version>
         </dependency>
         <dependency>
