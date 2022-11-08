@@ -23,7 +23,7 @@ import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ComplexException extends org.omg.CORBA.UserException {
+public class ComplexException extends Exception {
 
     private static final long serialVersionUID = -1502387219802227292L;
     private String reason;
