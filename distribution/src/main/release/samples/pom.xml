@@ -118,7 +118,6 @@
         <module>js_browser_client_java_first</module>
         <module>js_browser_client_simple</module>
         <module>js_client</module>
-        <module>js_provider</module>
         <module>mtom</module>
         <module>performance/base</module>
         <module>performance/jaxrs</module>
