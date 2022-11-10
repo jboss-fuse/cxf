@@ -252,11 +252,6 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-rt-frontend-js</artifactId>
-            <version>4.0.5.fuse-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>cxf-rt-frontend-simple</artifactId>
             <version>4.0.5.fuse-SNAPSHOT</version>
         </dependency>
