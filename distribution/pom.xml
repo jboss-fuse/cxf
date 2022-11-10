@@ -277,11 +277,6 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-rt-frontend-js</artifactId>
-            <version>4.0.6-rhaf-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>cxf-rt-frontend-simple</artifactId>
             <version>4.0.6-rhaf-SNAPSHOT</version>
         </dependency>
