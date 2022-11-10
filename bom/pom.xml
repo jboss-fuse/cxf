@@ -76,11 +76,6 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.cxf</groupId>
-                <artifactId>cxf-rt-bindings-corba</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-rt-bindings-soap</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -131,11 +126,6 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.cxf</groupId>
-                <artifactId>cxf-rt-frontend-js</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-rt-frontend-simple</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -167,11 +157,6 @@
             <dependency>
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-rt-rs-extension-providers</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.cxf</groupId>
-                <artifactId>cxf-rt-rs-extension-reactivestreams</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -431,11 +416,6 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.cxf</groupId>
-                <artifactId>cxf-tools-corba</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-tools-java2ws</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -510,11 +490,6 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.cxf</groupId>
-                <artifactId>cxf-corbatools-maven-plugin</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.apache.cxf.archetype</groupId>
                 <artifactId>cxf-jaxws-javafirst</artifactId>
                 <version>${project.version}</version>
@@ -539,16 +514,6 @@
             <dependency>
                 <groupId>org.apache.cxf.benchmark</groupId>
                 <artifactId>cxf-benchmark-soapdoclit</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.cxf.karaf</groupId>
-                <artifactId>apache-cxf</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.cxf.karaf</groupId>
-                <artifactId>cxf-karaf-commands</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -577,11 +542,6 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.cxf.services.wsn</groupId>
-                <artifactId>cxf-services-wsn-osgi</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.apache.cxf.services.xkms</groupId>
                 <artifactId>cxf-services-xkms-client</artifactId>
                 <version>${project.version}</version>
@@ -589,21 +549,6 @@
             <dependency>
                 <groupId>org.apache.cxf.services.xkms</groupId>
                 <artifactId>cxf-services-xkms-common</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.cxf.services.xkms</groupId>
-                <artifactId>cxf-services-xkms-features</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.cxf.services.xkms</groupId>
-                <artifactId>cxf-services-xkms-itests</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.cxf.services.xkms</groupId>
-                <artifactId>cxf-services-xkms-osgi</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
