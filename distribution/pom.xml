@@ -67,14 +67,6 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-<<<<<<< HEAD
-            <artifactId>cxf-tools-corba</artifactId>
-            <version>4.1.0-rbac-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-=======
->>>>>>> 3f348d030fe (remove Corba support from CXF)
             <artifactId>cxf-tools-wsdlto-databinding-jaxb</artifactId>
             <version>4.1.0-rbac-SNAPSHOT</version>
         </dependency>
@@ -229,14 +221,6 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-<<<<<<< HEAD
-            <artifactId>cxf-rt-bindings-corba</artifactId>
-            <version>4.1.0-rbac-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-=======
->>>>>>> 3f348d030fe (remove Corba support from CXF)
             <artifactId>cxf-rt-bindings-xml</artifactId>
             <version>4.1.0-rbac-SNAPSHOT</version>
         </dependency>
@@ -288,11 +272,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>cxf-rt-frontend-jaxws</artifactId>
-            <version>4.1.0-rbac-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-rt-frontend-js</artifactId>
             <version>4.1.0-rbac-SNAPSHOT</version>
         </dependency>
         <dependency>
