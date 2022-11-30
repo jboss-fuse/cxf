@@ -55,7 +55,6 @@
                         <includes>
                             <include>org.apache.cxf:*</include>
                             <include>org.apache.cxf.archetype:*</include>
-                            <include>org.apache.cxf.benchmark:*</include>   
                             <include>org.apache.cxf.services.sts:*</include>
                             <include>org.apache.cxf.services.ws-discovery:*</include>
                             <include>org.apache.cxf.services.wsn:*</include>
