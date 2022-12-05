@@ -232,7 +232,6 @@
         <cxf.aries.fly.version>1.3.2</cxf.aries.fly.version>
         <cxf.aries.parser.version>1.6.0</cxf.aries.parser.version> 
         <cxf.aries.version.range>[1.0,2)</cxf.aries.version.range>
-        <cxf.bcel.bundle.version>5.2.4.fuse-redhat-00006</cxf.bcel.bundle.version>
         <cxf.cglib.osgi.version>[2.2.2,3.3)</cxf.cglib.osgi.version>
         <cxf.dom4j.bundle.version>2.1.3.2-fuse-redhat-00002</cxf.dom4j.bundle.version>
         <cxf.fastinfoset.bundle.version>1.2.16.1-fuse-redhat-00006</cxf.fastinfoset.bundle.version>
@@ -2549,11 +2548,6 @@
                 <groupId>org.apache.servicemix.bundles</groupId>
                 <artifactId>org.apache.servicemix.bundles.xmlresolver</artifactId>
                 <version>${cxf.xmlresolver.bundle.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.servicemix.bundles</groupId>
-                <artifactId>org.apache.servicemix.bundles.bcel</artifactId>
-                <version>${cxf.bcel.bundle.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.servicemix.bundles</groupId>
