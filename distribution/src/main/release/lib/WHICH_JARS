@@ -82,7 +82,7 @@ For WS-Security support:
 - jasypt.jar
 - cxf-rt-security.jar
 - cxf-rt-ws-security.jar
-- bcprov-jdk15on.jar (optional)
+- bcprov-jdk18on.jar (optional)
 
 For SAML support in WS-Security
 - joda-time.jar
