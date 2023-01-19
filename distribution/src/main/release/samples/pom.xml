@@ -32,7 +32,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring.boot.version>2.1.14.RELEASE</spring.boot.version>
         <spring.cloud.eureka.version>2.0.2.RELEASE</spring.cloud.eureka.version>
-        <cxf.jetty9.version>9.4.43.v20210629-redhat-00001</cxf.jetty9.version>
+        <cxf.jetty9.version>9.4.43.v20210629-redhat-00004</cxf.jetty9.version>
         <cxf.httpcomponents.client.version>4.5.8</cxf.httpcomponents.client.version>
         <cxf.swagger.ui.version>3.24.3</cxf.swagger.ui.version>
         <cxf.tika.version>1.24.1</cxf.tika.version>
@@ -241,7 +241,7 @@
         <profile>
             <id>java9-plus</id>
             <properties>
-                    <cxf.jaxb.version>2.3.3.redhat-00001</cxf.jaxb.version>
+                    <cxf.jaxb.version>2.3.3.redhat-00002</cxf.jaxb.version>
             </properties>
             <activation>
                 <jdk>[9,)</jdk>
@@ -265,12 +265,12 @@
                 <dependency>
                     <groupId>javax.activation</groupId>
                     <artifactId>javax.activation-api</artifactId>
-                    <version>1.2.0</version>
+                    <version>1.2.0.redhat-00001</version>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.geronimo.specs</groupId>
                     <artifactId>geronimo-ws-metadata_2.0_spec</artifactId>
-                    <version>1.1.3</version>
+                    <version>1.1.3.redhat-00001</version>
                 </dependency>
                 <dependency>
                     <groupId>com.sun.xml.messaging.saaj</groupId>
@@ -280,7 +280,7 @@
                 <dependency>
                     <groupId>org.apache.geronimo.specs</groupId>
                     <artifactId>geronimo-jta_1.1_spec</artifactId>
-                    <version>1.1.1.redhat-00004</version>
+                    <version>1.1.1.redhat-00008</version>
                 </dependency>
                 <dependency>
                     <groupId>org.glassfish.jaxb</groupId>

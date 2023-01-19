@@ -12,7 +12,7 @@
     </parent>
 
     <properties>
-        <cxf.tomcat.version>9.0.59</cxf.tomcat.version>
+        <cxf.tomcat.version>9.0.59.redhat-00001</cxf.tomcat.version>
     </properties>
 
     <dependencies>
