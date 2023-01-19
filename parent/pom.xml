@@ -118,7 +118,7 @@
         <!-- Guava 20 is required by opensaml bundle and reflections bundle -->
         <cxf.guava.version>20.0.0.redhat-1</cxf.guava.version>
         <cxf.hamcrest.version>1.3-redhat-1</cxf.hamcrest.version>
-        <cxf.hazelcast.version>3.12.7</cxf.hazelcast.version>
+        <cxf.hazelcast.version>3.12.13</cxf.hazelcast.version>
         <cxf.hibernate.em.version>5.3.28.Final-redhat-00001</cxf.hibernate.em.version>
         <cxf.hibernate.jpa.version>1.0.2.Final-redhat-1</cxf.hibernate.jpa.version>
         <cxf.hibernate.validator.version>6.0.23.Final-redhat-00001</cxf.hibernate.validator.version>
