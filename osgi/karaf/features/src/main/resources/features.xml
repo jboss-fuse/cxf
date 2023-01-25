@@ -18,7 +18,7 @@
 -->
 <features xmlns="http://karaf.apache.org/xmlns/features/v1.3.0" name="cxf-${project.version}">
 
-	<repository>mvn:org.ops4j.pax.cdi/pax-cdi-features/1.0.0/xml/features</repository>
+	<repository>mvn:org.ops4j.pax.cdi/pax-cdi-features/1.1.4/xml/features</repository>
 
     <feature name="cxf-specs" version="${project.version}">
         <bundle start-level="9">mvn:org.apache.geronimo.specs/geronimo-osgi-registry/1.1</bundle>
@@ -216,7 +216,7 @@
     </feature>
     <feature name="cxf-http-undertow" version="${project.version}">
         <feature version="${project.version}">cxf-http</feature>
-        <feature>pax-http-undertow</feature>
+        <feature>pax-web-http-undertow</feature>
         <bundle start-level="40">mvn:org.apache.cxf/cxf-rt-transports-http-undertow/${project.version}</bundle>
         <capability>
             cxf.http.provider;name=undertow
@@ -532,6 +532,7 @@
         <feature version="${project.version}">cxf-wsn-api</feature>
         <feature version="${project.version}">cxf-http-provider</feature>
         <bundle dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.aopalliance/${cxf.aopalliance.bundle.version}</bundle>
+        <bundle dependency="true">mvn:org.apache.geronimo.specs/geronimo-jta_1.1_spec/${cxf.geronimo.jta.version}</bundle>
         <bundle dependency="true">mvn:org.apache.geronimo.specs/geronimo-jms_1.1_spec/${cxf.geronimo.jms.version}</bundle>
         <bundle dependency="true">mvn:org.apache.geronimo.specs/geronimo-j2ee-management_1.1_spec/${cxf.geronimo.j2ee.management.version}</bundle>
         <bundle dependency="true">mvn:org.apache.activemq/activemq-osgi/${cxf.activemq.version}</bundle>
