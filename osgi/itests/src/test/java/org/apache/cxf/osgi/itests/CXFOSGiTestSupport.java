@@ -86,8 +86,6 @@ public class CXFOSGiTestSupport {
 //            editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg",
 //                "org.ops4j.pax.url.mvn.repositories", REPOS),
             configureConsole().ignoreLocalConsole().ignoreRemoteShell(),
-            mavenBundle(maven().groupId("org.apache.karaf.itests")
-                .artifactId("servlet-compatibility").versionAsInProject()).noStart(),
             when(localRepo != null)
                 .useOptions(editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg",
                                                      "org.ops4j.pax.url.mvn.localRepository",
