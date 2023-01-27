@@ -105,7 +105,6 @@
         <cxf.dropwizard.version>3.2.6.redhat-00001</cxf.dropwizard.version>
         <cxf.ehcache.version>2.10.9.2</cxf.ehcache.version>
         <cxf.ehcache3.version>3.8.1</cxf.ehcache3.version>
-        <cxf.findbugs.version>3.0.2</cxf.findbugs.version>
         <cxf.geronimo.inject.version>1.1</cxf.geronimo.inject.version>
         <cxf.geronimo.j2ee.management.version>1.0.1.redhat-3</cxf.geronimo.j2ee.management.version>
         <cxf.geronimo.jms.version>1.1.1.redhat-2</cxf.geronimo.jms.version>
@@ -135,9 +134,9 @@
         <cxf.jaeger.version>0.35.5</cxf.jaeger.version>
         <cxf.james.mim4j.version>0.7.2</cxf.james.mim4j.version>
         <cxf.javassist.version>3.27.0.GA-redhat-00001</cxf.javassist.version>
-        <cxf.javax.annotation-api.version>1.3.2</cxf.javax.annotation-api.version>
-        <cxf.javax.el.version>3.0.0.redhat-00001</cxf.javax.el.version>
-        <cxf.javax.ws.rs.version>2.1.6</cxf.javax.ws.rs.version>
+        <cxf.jakarta.annotation-api.version>1.3.5.redhat-00003</cxf.jakarta.annotation-api.version>
+        <cxf.jakarta.el.version>3.0.3.redhat-00002</cxf.jakarta.el.version>
+        <cxf.jakarta.ws.rs.version>2.1.6.redhat-00001</cxf.jakarta.ws.rs.version>
         <cxf.jaxb.runtime.version>2.3.7</cxf.jaxb.runtime.version>
         <cxf.jaxb.version>2.3.3.redhat-00001</cxf.jaxb.version>
         <cxf.jaxb.xjc.version>2.3.7</cxf.jaxb.xjc.version>
@@ -1284,7 +1283,7 @@
             <dependency>
                 <groupId>jakarta.ws.rs</groupId>
                 <artifactId>jakarta.ws.rs-api</artifactId>
-                <version>${cxf.javax.ws.rs.version}</version>
+                <version>${cxf.jakarta.ws.rs.version}</version>
             </dependency>
             <dependency>
                 <groupId>jakarta.xml.bind</groupId>
@@ -2141,9 +2140,9 @@
                 <version>${cxf.jaxb.runtime.version}</version>
             </dependency>
             <dependency>
-                <groupId>javax.annotation</groupId>
-                <artifactId>javax.annotation-api</artifactId>
-                <version>${cxf.javax.annotation-api.version}</version>
+                <groupId>jakarta.annotation</groupId>
+                <artifactId>jakarta.annotation-api</artifactId>
+                <version>${cxf.jakarta.annotation-api.version}</version>
             </dependency>
             <dependency>
                 <groupId>javax.servlet</groupId>
@@ -2925,8 +2924,8 @@
             </build>
             <dependencies>
                 <dependency>
-                    <groupId>javax.annotation</groupId>
-                    <artifactId>javax.annotation-api</artifactId>
+                    <groupId>jakarta.annotation</groupId>
+                    <artifactId>jakarta.annotation-api</artifactId>
                 </dependency>
                 <dependency>
                     <groupId>javax.xml.ws</groupId>
