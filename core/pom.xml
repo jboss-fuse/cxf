@@ -341,7 +341,7 @@
                         <version>${cxf.xjc-utils.version}</version>
                     </dependency>
                     <dependency>
-                        <groupId>com.sun.xml.bind</groupId>
+                        <groupId>org.glassfish.jaxb</groupId>
                         <artifactId>jaxb-xjc</artifactId>
                         <version>${cxf.jaxb.xjc.version}</version>
                     </dependency>
