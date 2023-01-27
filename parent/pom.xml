@@ -189,7 +189,7 @@
         <cxf.servlet-api-2.5.version>1.2.0.redhat-1</cxf.servlet-api-2.5.version>
         <cxf.servlet-api.version>4.0.1</cxf.servlet-api.version>
         <cxf.slf4j.version>1.7.36.redhat-00002</cxf.slf4j.version>
-        <cxf.snakeyaml.version>1.32.0.redhat-00001</cxf.snakeyaml.version>
+        <cxf.snakeyaml.version>1.33.0.redhat-00001</cxf.snakeyaml.version>
         <cxf.specs.jaxws.api.version>1.2</cxf.specs.jaxws.api.version>
         <cxf.spring.boot.version>2.7.7</cxf.spring.boot.version>
         <cxf.spring.ldap.version>2.3.7.RELEASE</cxf.spring.ldap.version>
