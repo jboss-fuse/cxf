@@ -107,7 +107,8 @@ public class JaxRsServiceTest extends CXFOSGiTestSupport {
     public Option[] config() {
         return OptionUtils.combine(
             cxfBaseConfig(),
-            features(cxfUrl, "cxf-core", "cxf-wsdl", "cxf-jaxrs", "cxf-bean-validation-core", "cxf-bean-validation"),
+            features(cxfUrl, "cxf-http-undertow", "cxf-core", "cxf-wsdl", "cxf-jaxrs",
+                    "cxf-bean-validation-core", "cxf-bean-validation"),
             logLevel(LogLevel.INFO),
             streamBundle(serviceBundle()).startLevel(81)
         );

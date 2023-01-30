@@ -85,6 +85,11 @@
     </feature>
     <feature name="cxf-core" version="${project.version}">
         <feature version="${project.version}">cxf-specs</feature>
+        <bundle dependency="true" start-level="30">mvn:org.ow2.asm/asm/${cxf.asm.version}</bundle>
+        <bundle dependency="true" start-level="30">mvn:org.ow2.asm/asm-util/${cxf.asm.version}</bundle>
+        <bundle dependency="true" start-level="30">mvn:org.ow2.asm/asm-commons/${cxf.asm.version}</bundle>
+        <bundle dependency="true" start-level="30">mvn:org.ow2.asm/asm-tree/${cxf.asm.version}</bundle>
+        <bundle dependency="true" start-level="30">mvn:org.ow2.asm/asm-analysis/${cxf.asm.version}</bundle>
         <bundle start-level="30" dependency="true">mvn:org.apache.ws.xmlschema/xmlschema-core/${cxf.xmlschema.version}</bundle>
         <bundle start-level="25" dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.xmlresolver/${cxf.xmlresolver.bundle.version}</bundle>
         <bundle start-level="30" dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.fastinfoset/${cxf.fastinfoset.bundle.version}</bundle>
@@ -582,7 +587,7 @@
     <feature name="cxf-bean-validation" version="${project.version}">
         <feature version="${project.version}">cxf-bean-validation-core</feature>
         <bundle start-level="30" dependency="true">mvn:org.apache.servicemix.specs/org.apache.servicemix.specs.javax-el-api-3.0.0/${cxf.servicemix.javax.el-api.version}</bundle>
-        <bundle start-level="30" dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.javax-el-impl/${cxf.servicemix.javax.el.version}</bundle>
+        <bundle start-level="30">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.javax-el-impl/${cxf.servicemix.javax.el.version}</bundle>
     </feature>
 
     <feature name="cxf-jaxrs-cdi" version="${project.version}">
