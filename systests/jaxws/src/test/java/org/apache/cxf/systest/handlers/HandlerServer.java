@@ -26,7 +26,8 @@ import org.apache.cxf.testutil.common.TestUtil;
 public class HandlerServer extends AbstractBusTestServerBase {
     public static final String PORT1 = TestUtil.getPortNumber(HandlerServer.class, 1);
     public static final String PORT2 = TestUtil.getPortNumber(HandlerServer.class, 2);
-
+    Endpoint ep1;
+    Endpoint ep2;
 
     protected void run() {
         String addNumbersPort = PORT1;
@@ -35,13 +36,19 @@ public class HandlerServer extends AbstractBusTestServerBase {
         Object implementor = new AddNumbersImpl();
         String address = "http://localhost:"
             + addNumbersPort + "/handlers/AddNumbersService/AddNumbersPort";
-        Endpoint.publish(address, implementor);
+        ep1 = Endpoint.publish(address, implementor);
 
         Object implementor1 = new org.apache.hello_world_xml_http.wrapped.GreeterImpl();
         String address1 = "http://localhost:"
             + greeterPort + "/XMLService/XMLDispatchPort";
-        Endpoint.publish(address1, implementor1);
+        ep2 = Endpoint.publish(address1, implementor1);
     }
+    
+    @Override
+    public void tearDown() {
+        ep1.stop();
+        ep2.stop();
+    }    
 
     public static void main(String[] args) {
         try {
