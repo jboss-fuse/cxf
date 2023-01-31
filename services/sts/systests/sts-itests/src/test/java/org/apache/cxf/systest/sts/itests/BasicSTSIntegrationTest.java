@@ -33,7 +33,6 @@ import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 
 import static org.ops4j.pax.exam.CoreOptions.maven;
-import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 import static org.ops4j.pax.exam.CoreOptions.when;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.configureConsole;
@@ -84,8 +83,6 @@ public class BasicSTSIntegrationTest {
                                                       "org.ops4j.pax.url.mvn.localRepository",
                                                       localRepository)),
              features(stsFeatures, "cxf-sts-service"),
-             mavenBundle(maven().groupId("org.apache.karaf.itests")
-                 .artifactId("servlet-compatibility").versionAsInProject()).noStart(),
              configureConsole().ignoreLocalConsole().ignoreRemoteShell(),
         };
         if (JavaVersionUtil.getMajorVersion() >= 9) {

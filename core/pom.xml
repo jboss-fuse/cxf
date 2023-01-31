@@ -176,12 +176,12 @@
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
+            <artifactId>osgi.core</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.compendium</artifactId>
+            <artifactId>osgi.cmpn</artifactId>
             <scope>provided</scope>
             <optional>true</optional>
         </dependency>
@@ -341,7 +341,7 @@
                         <version>${cxf.xjc-utils.version}</version>
                     </dependency>
                     <dependency>
-                        <groupId>com.sun.xml.bind</groupId>
+                        <groupId>org.glassfish.jaxb</groupId>
                         <artifactId>jaxb-xjc</artifactId>
                         <version>${cxf.jaxb.xjc.version}</version>
                     </dependency>
