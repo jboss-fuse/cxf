@@ -100,6 +100,8 @@ public class BasicSTSIntegrationTest {
                 new VMOption("--add-opens"), new VMOption("java.base/java.net=ALL-UNNAMED"),
                 new VMOption("--add-opens"), new VMOption("java.base/java.lang=ALL-UNNAMED"),
                 new VMOption("--add-opens"), new VMOption("java.base/java.util=ALL-UNNAMED"),
+                new VMOption("--add-opens"), 
+                new VMOption("java.xml/com.sun.org.apache.xerces.internal.dom=ALL-UNNAMED"),
                 new VMOption("--add-opens"),
                 new VMOption("java.naming/javax.naming.spi=ALL-UNNAMED"),
                 new VMOption("--add-opens"),
