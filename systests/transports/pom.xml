@@ -21,7 +21,7 @@
     <parent>
         <artifactId>cxf-parent</artifactId>
         <groupId>org.apache.cxf</groupId>
-        <version>3.3.6.redhat-SNAPSHOT</version>
+        <version>3.3.6.fuse-7_12_0-00006</version>
         <relativePath>../../parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -287,5 +287,16 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+    <profiles>
+        <profile>
+            <id>jdk17</id>
+            <activation>
+                <jdk>[17,)</jdk>
+            </activation>
+            <properties>
+                <cxf.surefire.fork.vmargs>--add-opens java.xml/com.sun.org.apache.xerces.internal.dom=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.https=ALL-UNNAMED -Djdk.http.auth.tunneling.disabledSchemes=""</cxf.surefire.fork.vmargs>
+            </properties>
+        </profile>
+    </profiles>
 
 </project>

@@ -85,6 +85,14 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <showDeprecation>${cxf.compile.show.deprecation}</showDeprecation>
+                    <showWarnings>true</showWarnings>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-xjc-plugin</artifactId>
                 <version>${cxf.xjc-utils.version}</version>
