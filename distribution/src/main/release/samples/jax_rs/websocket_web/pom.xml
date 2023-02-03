@@ -31,7 +31,7 @@
     </parent>
     <properties>
         <cxf.version>${project.version}</cxf.version>
-        <cxf.tomcat.version>9.0.59</cxf.tomcat.version>
+        <cxf.tomcat.version>9.0.71</cxf.tomcat.version>
     </properties>
     <build>
         <plugins>
