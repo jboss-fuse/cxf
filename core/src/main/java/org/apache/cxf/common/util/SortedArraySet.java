@@ -224,7 +224,8 @@ public final class SortedArraySet<T> implements SortedSet<T> {
 
         public void remove() {
             if (idx > 0) {
-                SortedArraySet.this.remove((Object)data[idx - 1]);
+                Object o = data[idx - 1]; 
+                SortedArraySet.this.remove(o);
             }
         }
     }
