@@ -73,6 +73,7 @@ public class JaxRsServiceTest extends CXFOSGiTestSupport {
     
     @Test
     public void postWithValidationError() throws Exception {
+        Thread.sleep(1000);
         Book book = new Book(null, -1);
         Response response = wt.path("/books-validate/").request("application/xml").post(Entity.xml(book));
         assertStatus(Status.BAD_REQUEST, response);
