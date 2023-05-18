@@ -327,6 +327,11 @@
       </dependency>
       <dependency>
         <groupId>org.apache.cxf</groupId>
+        <artifactId>cxf-rt-rs-service-description-common-openapi</artifactId>
+        <version>4.0.0.fuse-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-rt-rs-service-description-openapi-v3</artifactId>
         <version>4.0.0.fuse-SNAPSHOT</version>
       </dependency>
@@ -513,6 +518,16 @@
       <dependency>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-tools-wsdlto-test</artifactId>
+        <version>4.0.0.fuse-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.cxf</groupId>
+        <artifactId>cxf-wadl2java-plugin</artifactId>
+        <version>4.0.0.fuse-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.cxf</groupId>
+        <artifactId>cxf-wsdl-validator-plugin</artifactId>
         <version>4.0.0.fuse-SNAPSHOT</version>
       </dependency>
     </dependencies>
