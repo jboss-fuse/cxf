@@ -130,7 +130,7 @@
         <cxf.jboss.weld.version>3.1.7.SP1</cxf.jboss.weld.version>
         <cxf.jcache.version>1.1.1</cxf.jcache.version>
         <cxf.jdom.version>1.0</cxf.jdom.version>
-        <cxf.jettison.version>1.5.0</cxf.jettison.version>
+        <cxf.jettison.version>1.5.4</cxf.jettison.version>
         <cxf.jetty9.version>9.4.48.v20220622</cxf.jetty9.version>
         <cxf.jetty.version>${cxf.jetty9.version}</cxf.jetty.version>
         <cxf.jexl.version>3.2.1</cxf.jexl.version>
@@ -200,7 +200,7 @@
         <cxf.velocity.version>2.3</cxf.velocity.version>
         <cxf.wildfly.common.version>1.5.4.Final</cxf.wildfly.common.version>
         <cxf.wiremock.version>2.27.2</cxf.wiremock.version>
-        <cxf.woodstox.core.version>6.2.8</cxf.woodstox.core.version>
+        <cxf.woodstox.core.version>6.4.0</cxf.woodstox.core.version>
         <cxf.woodstox.stax2-api.version>4.2.1</cxf.woodstox.stax2-api.version>
         <cxf.wsdl4j.version>1.6.3</cxf.wsdl4j.version>
         <cxf.wss4j.version>2.4.1</cxf.wss4j.version>
