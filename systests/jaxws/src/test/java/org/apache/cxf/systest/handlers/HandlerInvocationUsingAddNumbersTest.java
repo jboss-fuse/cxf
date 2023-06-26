@@ -56,13 +56,13 @@ public class HandlerInvocationUsingAddNumbersTest extends AbstractBusClientServe
     static QName portName = new QName("http://apache.org/handlers", "AddNumbersPort");
 
     static String addNumbersAddress
-        = "http://localhost:" + HandlerServer.PORT1
+        = "http://localhost:" + HandlerServer1.PORT1
             + "/handlers/AddNumbersService/AddNumbersPort";
 
     @BeforeClass
     public static void startServers() throws Exception {
         createStaticBus();
-        assertTrue("server did not launch correctly", launchServer(HandlerServer.class, true));
+        assertTrue("server did not launch correctly", launchServer(HandlerServer1.class, true));
     }
 
     @Test
