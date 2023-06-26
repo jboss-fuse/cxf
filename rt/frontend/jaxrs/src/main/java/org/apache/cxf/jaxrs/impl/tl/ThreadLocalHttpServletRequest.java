@@ -318,6 +318,7 @@ public class ThreadLocalHttpServletRequest extends AbstractThreadLocalProxy<Http
         ServletException {
         return get().upgrade(handlerClass);
     }
+    
     @Override
     public String getRequestId() {
         return get().getRequestId();
