@@ -82,7 +82,6 @@ public abstract class AbstractUndertowServer extends AbstractBusTestServerBase {
         }
     }
 
-
     public void tearDown() throws Exception {
         super.tearDown();
 
