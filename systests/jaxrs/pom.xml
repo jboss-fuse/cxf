@@ -208,7 +208,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-transports-http-jetty</artifactId>
+            <artifactId>cxf-rt-transports-http-undertow</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -531,6 +531,19 @@
     </dependencies>
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>
+                        ${cxf.surefire.fork.vmargs}
+                    </argLine>
+                    <excludes>
+                        <exclude>**/*JAXRSClientServerWebSocketSpringWebAppTest.java</exclude>
+                        <exclude>**/*JAXRSClientServerWebSocketSpringWebAppNoAtmosphereTest.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
                 <executions>

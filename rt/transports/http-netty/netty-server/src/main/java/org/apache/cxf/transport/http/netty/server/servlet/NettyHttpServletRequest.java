@@ -544,19 +544,19 @@ public class NettyHttpServletRequest implements HttpServletRequest {
             throws IOException, ServletException {
         throw new IllegalStateException("Method 'upgrade' not yet implemented!");
     }
-
+    
     @Override
     public String getRequestId() {
-        throw new IllegalStateException("Method 'getRequestId' not yet implemented!");
+        throw new IllegalStateException("Method 'upgrade' not yet implemented!");
     }
-
-    @Override
-    public String getProtocolRequestId() {
-        throw new IllegalStateException("Method 'getProtocolRequestId' not yet implemented!");
-    }
-
+    
     @Override
     public ServletConnection getServletConnection() {
-        throw new IllegalStateException("Method 'getServletConnection' not yet implemented!");
+        throw new IllegalStateException("Method 'upgrade' not yet implemented!");
+    }
+    
+    @Override
+    public String getProtocolRequestId() {
+        throw new IllegalStateException("Method 'upgrade' not yet implemented!");
     }
 }
