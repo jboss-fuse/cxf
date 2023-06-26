@@ -81,7 +81,7 @@ public class NettyHttpSession implements HttpSession {
         // TODO do we need to support this
         return null;
     }
-
+    
     @Override
     public void invalidate() {
         if (attributes != null) {
