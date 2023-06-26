@@ -57,7 +57,7 @@ public class ThreadLocalHttpServletResponse extends AbstractThreadLocalProxy<Htt
     public String encodeRedirectURL(String url) {
         return get().encodeRedirectURL(url);
     }
-
+    
     public String encodeURL(String url) {
         return get().encodeURL(url);
     }
