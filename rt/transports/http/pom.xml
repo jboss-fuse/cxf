@@ -157,25 +157,6 @@
                     </extensions>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>com.googlecode.maven-download-plugin</groupId>
-                <artifactId>download-maven-plugin</artifactId>
-                <version>1.13.0</version>
-                <executions>
-                    <execution>
-                        <id>download-public-suffix-list</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>wget</goal>
-                        </goals>
-                        <configuration>
-                            <url>${cxf.public.suffix.list.url}</url>
-                            <outputDirectory>${project.build.outputDirectory}/mozilla</outputDirectory>
-                            <outputFileName>public-suffix-list.txt</outputFileName>
-                        </configuration>
-                    </execution>
-                </executions>
-             </plugin>
         </plugins>
         <pluginManagement>
             <plugins>
