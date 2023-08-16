@@ -86,11 +86,6 @@
       </dependency>
       <dependency>
         <groupId>org.apache.cxf.services.xkms</groupId>
-        <artifactId>cxf-services-xkms-itests</artifactId>
-        <version>4.0.2.fuse-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf.services.xkms</groupId>
         <artifactId>cxf-services-xkms-service</artifactId>
         <version>4.0.2.fuse-SNAPSHOT</version>
       </dependency>
