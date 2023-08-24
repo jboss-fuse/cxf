@@ -881,6 +881,7 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
             Client client = ClientBuilder.newBuilder()
                 .register(cacheControlFeature)
                 .build();
+            client.property("force.urlconnection.http.conduit", true);
             WebTarget target = client.target(endpointAddress);
 
             // First call
