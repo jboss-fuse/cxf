@@ -48,8 +48,11 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.net.http.HttpTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.channels.UnresolvedAddressException;
+import java.security.AccessController;
 import java.security.GeneralSecurityException;
 import java.security.Principal;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.security.cert.Certificate;
 import java.time.Duration;
 import java.util.Arrays;
@@ -330,7 +333,22 @@ public class HttpClientHTTPConduit extends URLConnectionHTTPConduit {
             if (proxy !=  null) {
                 return Arrays.asList(proxy);
             }
-            return ProxySelector.getDefault().select(uri);
+            List<Proxy> listProxy;
+            if (System.getSecurityManager() != null) {
+                try {
+                    listProxy = AccessController.doPrivileged(new PrivilegedExceptionAction<List<Proxy>>() {
+                        @Override
+                        public List<Proxy> run() throws IOException {
+                            return ProxySelector.getDefault().select(uri);
+                        }
+                    });
+                } catch (PrivilegedActionException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                listProxy = ProxySelector.getDefault().select(uri);
+            }
+            return listProxy;
         }
 
         @Override
@@ -533,8 +551,21 @@ public class HttpClientHTTPConduit extends URLConnectionHTTPConduit {
             
             
             final BodyHandler<InputStream> handler =  BodyHandlers.ofInputStream();
-
-            future = cl.sendAsync(request, handler);
+            if (System.getSecurityManager() != null) {
+                try {
+                    future = AccessController.doPrivileged(
+                            new PrivilegedExceptionAction<CompletableFuture<HttpResponse<InputStream>>>() {
+                                @Override
+                                public CompletableFuture<HttpResponse<InputStream>> run() throws IOException {
+                                    return cl.sendAsync(request, handler);
+                                }
+                            });
+                } catch (PrivilegedActionException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                future = cl.sendAsync(request, handler);
+            }
             future.exceptionally(ex -> {
                 if (pout != null) {
                     synchronized (pout) {
