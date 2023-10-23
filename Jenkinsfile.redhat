@@ -23,7 +23,7 @@ pipeline {
     }
 
     tools {
-        jdk 'java-17'
+        jdk 'java-11'
         maven 'maven-latest'
     }
 
