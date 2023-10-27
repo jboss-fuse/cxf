@@ -19,7 +19,7 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-parent</artifactId>
-        <version>3.3.6.redhat-SNAPSHOT</version>
+        <version>3.3.6.fuse-7_12_1-00007</version>
         <relativePath>../../../parent/pom.xml</relativePath>
     </parent>
     <properties>
