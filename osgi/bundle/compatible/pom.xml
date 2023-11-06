@@ -27,7 +27,7 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-bundle-parent</artifactId>
-        <version>3.3.6.redhat-SNAPSHOT</version>
+        <version>3.3.6.fuse-7_12_1-00008</version>
     </parent>
     <properties>
         <cxf.osgi.symbolic.name>${project.groupId}.bundle</cxf.osgi.symbolic.name>
