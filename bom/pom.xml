@@ -81,11 +81,6 @@
       </dependency>
       <dependency>
         <groupId>org.apache.cxf.services.xkms</groupId>
-        <artifactId>cxf-services-xkms-features</artifactId>
-        <version>4.0.4.fuse-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf.services.xkms</groupId>
         <artifactId>cxf-services-xkms-service</artifactId>
         <version>4.0.4.fuse-SNAPSHOT</version>
       </dependency>
@@ -103,11 +98,6 @@
       <dependency>
         <groupId>org.apache.cxf.services.xkms</groupId>
         <artifactId>cxf-services-xkms-x509-repo-ldap</artifactId>
-        <version>4.0.4.fuse-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf</groupId>
-        <artifactId>cxf-bundle-compatible</artifactId>
         <version>4.0.4.fuse-SNAPSHOT</version>
       </dependency>
       <dependency>
@@ -157,11 +147,6 @@
       </dependency>
       <dependency>
         <groupId>org.apache.cxf</groupId>
-        <artifactId>cxf-java2swagger-plugin</artifactId>
-        <version>4.0.4.fuse-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-java2wadl-plugin</artifactId>
         <version>4.0.4.fuse-SNAPSHOT</version>
       </dependency>
@@ -193,16 +178,6 @@
       <dependency>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-rt-databinding-jaxb</artifactId>
-        <version>4.0.4.fuse-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf</groupId>
-        <artifactId>cxf-rt-databinding-jibx</artifactId>
-        <version>4.0.4.fuse-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf</groupId>
-        <artifactId>cxf-rt-databinding-sdo</artifactId>
         <version>4.0.4.fuse-SNAPSHOT</version>
       </dependency>
       <dependency>
@@ -382,21 +357,6 @@
       </dependency>
       <dependency>
         <groupId>org.apache.cxf</groupId>
-        <artifactId>cxf-rt-security-sso-oidc</artifactId>
-        <version>4.0.4.fuse-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf</groupId>
-        <artifactId>cxf-rt-security-sso-saml</artifactId>
-        <version>4.0.4.fuse-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf</groupId>
-        <artifactId>cxf-rt-security-xml</artifactId>
-        <version>4.0.4.fuse-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-rt-transports-http</artifactId>
         <version>4.0.4.fuse-SNAPSHOT</version>
       </dependency>
@@ -478,11 +438,6 @@
       <dependency>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-rt-ws-security</artifactId>
-        <version>4.0.4.fuse-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf</groupId>
-        <artifactId>cxf-rt-ws-security-oauth2</artifactId>
         <version>4.0.4.fuse-SNAPSHOT</version>
       </dependency>
       <dependency>
