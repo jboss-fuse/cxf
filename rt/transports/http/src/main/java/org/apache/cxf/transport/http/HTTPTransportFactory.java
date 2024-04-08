@@ -70,7 +70,7 @@ public class HTTPTransportFactory
         ));
 
     private static boolean forceURLConnectionConduit
-        = Boolean.valueOf(SystemPropertyAction.getProperty("org.apache.cxf.transport.http.forceURLConnection"));
+        = Boolean.valueOf(SystemPropertyAction.getProperty("org.apache.cxf.transport.http.forceURLConnection", "true"));
 
 
     private static final Logger LOG = LogUtils.getL7dLogger(HTTPTransportFactory.class);
