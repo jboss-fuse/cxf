@@ -87,7 +87,7 @@ public class HTTPTransportFactory
     private final Lock w = lock.writeLock();
     
     private boolean forceURLConnectionConduit 
-        = Boolean.valueOf(SystemPropertyAction.getProperty("org.apache.cxf.transport.http.forceURLConnection"));
+        = Boolean.valueOf(SystemPropertyAction.getProperty("org.apache.cxf.transport.http.forceURLConnection", "true"));
 
     public HTTPTransportFactory() {
         this(new DestinationRegistryImpl());
