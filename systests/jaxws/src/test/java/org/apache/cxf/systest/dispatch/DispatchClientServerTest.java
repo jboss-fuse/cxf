@@ -224,15 +224,12 @@ public class DispatchClientServerTest extends AbstractBusClientServerTestBase {
             disp.invoke(soapReqMsg);
             fail("Should have faulted");
         } catch (SOAPFaultException ex) {
-            fail("should not be a SOAPFaultException");
-        } catch (WebServiceException ex) {
-            //expected
-            assertTrue(ex.getCause().getClass().getName(),
-                       ex.getCause() instanceof java.net.ConnectException
-                       || ex.getCause() instanceof java.net.SocketTimeoutException
-                       || ex.getCause()  instanceof HttpConnectTimeoutException);
-        }
-        
+            Throwable cause = ex.getCause().getCause().getCause();
+            assertTrue(cause.getClass().getName(),
+                       cause instanceof java.net.ConnectException
+                       || cause instanceof java.net.SocketTimeoutException
+                       || cause  instanceof HttpConnectTimeoutException);
+        } 
         dispImpl.close();
 
     }
