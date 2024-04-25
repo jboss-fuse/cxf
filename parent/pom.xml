@@ -155,7 +155,7 @@
         <cxf.msv.version>2013.6.1</cxf.msv.version>
         <cxf.neethi.version>3.2.0</cxf.neethi.version>
         <cxf.netty.version.range>[4,5)</cxf.netty.version.range>
-        <cxf.netty.version>4.1.100.Final</cxf.netty.version>
+        <cxf.netty.version>4.1.108.Final</cxf.netty.version>
         <cxf.netty.tcnative.version>2.0.46.Final</cxf.netty.tcnative.version>
         <cxf.olingo.version>2.0.12</cxf.olingo.version>
         <cxf.openjpa.version>3.2.2</cxf.openjpa.version>
@@ -180,8 +180,8 @@
         <cxf.spring.boot.version>2.7.18</cxf.spring.boot.version>
         <cxf.spring.ldap.version>2.4.1</cxf.spring.ldap.version>
         <cxf.spring.mock>spring-test</cxf.spring.mock>
-        <cxf.spring.security.version>5.7.11</cxf.spring.security.version>
-        <cxf.spring.version>5.3.31</cxf.spring.version>
+        <cxf.spring.security.version>5.7.12</cxf.spring.security.version>
+        <cxf.spring.version>5.3.34</cxf.spring.version>
         <cxf.stax-ex.version>1.8.3</cxf.stax-ex.version>
         <cxf.swagger.ui.version>4.15.5</cxf.swagger.ui.version>
         <cxf.swagger.v3.version>2.1.13</cxf.swagger.v3.version>
