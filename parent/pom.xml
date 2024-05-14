@@ -20,7 +20,7 @@
     <parent>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf</artifactId>
-        <version>3.3.6.redhat-SNAPSHOT</version>
+        <version>3.3.6.fuse-7_13_0-00015</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>cxf-parent</artifactId>
@@ -242,7 +242,7 @@
         <cxf.jaxb.bundle.version>2.3.2_3</cxf.jaxb.bundle.version>
         <cxf.jaxb.xjc.bundle.version>2.3.2_2</cxf.jaxb.xjc.bundle.version>
         <cxf.jaxb.context.class.property>none</cxf.jaxb.context.class.property>
-        <cxf.karaf.version>4.2.15.fuse-7_11_1-00017-redhat-00001</cxf.karaf.version>
+        <cxf.karaf.version>4.4.3.fuse-7_13_0-00012</cxf.karaf.version>
         <cxf.jsoup.version>1.14.3</cxf.jsoup.version>
         <cxf.oauth.bundle.version>20100527_1</cxf.oauth.bundle.version>
         <cxf.oro.bundle.version>2.0.8_6</cxf.oro.bundle.version>
