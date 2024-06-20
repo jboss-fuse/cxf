@@ -110,7 +110,7 @@
         <cxf.derby.version>10.16.1.1</cxf.derby.version>
         <cxf.dom4j.version>2.1.4</cxf.dom4j.version>
         <cxf.dropwizard3.version>3.2.6</cxf.dropwizard3.version>
-        <cxf.dropwizard4.version>4.2.25</cxf.dropwizard4.version>
+        <cxf.dropwizard4.version>4.2.26</cxf.dropwizard4.version>
         <cxf.ehcache3.version>3.10.8</cxf.ehcache3.version>
         <cxf.el-api.version>3.0.3</cxf.el-api.version>
         <cxf.findbugs.version>3.0.2</cxf.findbugs.version>
@@ -124,7 +124,7 @@
         <cxf.hazelcast.version>5.3.7</cxf.hazelcast.version>
         <cxf.hibernate.em.version>6.1.7.Final</cxf.hibernate.em.version>
         <cxf.hibernate.validator.version>8.0.1.Final</cxf.hibernate.validator.version>
-        <cxf.hsqldb.version>2.7.2</cxf.hsqldb.version>
+        <cxf.hsqldb.version>2.7.3</cxf.hsqldb.version>
         <cxf.httpcomponents.asyncclient.version.range>[4.0,4.2)</cxf.httpcomponents.asyncclient.version.range>
         <cxf.httpcomponents.asyncclient.version>4.1.5</cxf.httpcomponents.asyncclient.version>
         <cxf.httpcomponents.client.version>4.5.14</cxf.httpcomponents.client.version>
@@ -177,8 +177,8 @@
         <cxf.logback.classic.version>1.5.1</cxf.logback.classic.version>
         <cxf.lucene.version>9.10.0</cxf.lucene.version>
         <cxf.maven.core.version>3.9.6</cxf.maven.core.version>
-        <cxf.micrometer.version>1.10.13</cxf.micrometer.version>
-        <cxf.micrometer-tracing.version>1.0.12</cxf.micrometer-tracing.version>
+        <cxf.micrometer.version>1.12.7</cxf.micrometer.version>
+        <cxf.micrometer-tracing.version>1.2.7</cxf.micrometer-tracing.version>
         <cxf.microprofile.config.version>3.0.3</cxf.microprofile.config.version>
         <cxf.microprofile.rest.client.version>3.0.1</cxf.microprofile.rest.client.version>
         <cxf.microprofile.openapi.version>3.0</cxf.microprofile.openapi.version>
