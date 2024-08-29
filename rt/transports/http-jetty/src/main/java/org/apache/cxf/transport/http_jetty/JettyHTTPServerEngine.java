@@ -759,7 +759,7 @@ public class JettyHTTPServerEngine implements ServerEngine, HttpServerEngineSupp
     }
     protected SSLContext createSSLContext(SslContextFactory scf) throws Exception  {
         String proto = tlsServerParameters.getSecureSocketProtocol() == null
-            ? "TLS" : tlsServerParameters.getSecureSocketProtocol();
+            ? "TLSv1.3" : tlsServerParameters.getSecureSocketProtocol();
 
         // Jetty 9 excludes SSLv3 by default. So if we want it then we need to
         // remove it from the default excluded protocols
