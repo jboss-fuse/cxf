@@ -513,7 +513,7 @@ public class UndertowHTTPServerEngine implements ServerEngine, HttpServerEngineS
 
     protected SSLContext createSSLContext() throws Exception  {
         String proto = tlsServerParameters.getSecureSocketProtocol() == null
-            ? "TLS" : tlsServerParameters.getSecureSocketProtocol();
+            ? "TLSv1.3" : tlsServerParameters.getSecureSocketProtocol();
 
         SSLContext context = tlsServerParameters.getJsseProvider() == null
             ? SSLContext.getInstance(proto)
