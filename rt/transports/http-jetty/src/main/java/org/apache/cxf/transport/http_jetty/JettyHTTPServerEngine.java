@@ -861,7 +861,7 @@ public class JettyHTTPServerEngine implements ServerEngine, HttpServerEngineSupp
         }
 
         String proto = tlsServerParameters.getSecureSocketProtocol() == null
-            ? "TLS" : tlsServerParameters.getSecureSocketProtocol();
+            ? "TLSv1.3" : tlsServerParameters.getSecureSocketProtocol();
 
         // Jetty 9 excludes SSLv3 by default. So if we want it then we need to
         // remove it from the default excluded protocols
