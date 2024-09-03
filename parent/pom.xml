@@ -191,7 +191,7 @@
         <cxf.netty.tcnative.version>2.0.46.Final</cxf.netty.tcnative.version>
         <cxf.olingo.version>2.0.12</cxf.olingo.version>
         <cxf.openjpa.version>3.2.2</cxf.openjpa.version>
-        <cxf.opentelemetry.version>1.34.1</cxf.opentelemetry.version>
+        <cxf.opentelemetry.version>1.37.0</cxf.opentelemetry.version>
         <cxf.opentelemetry.semconv.version>1.26.0-alpha</cxf.opentelemetry.semconv.version>
         <cxf.opentracing.version>0.33.0</cxf.opentracing.version>
         <cxf.openwebbeans.version>2.0.27</cxf.openwebbeans.version>
@@ -208,19 +208,19 @@
         <cxf.servlet-api.artifact>jakarta.servlet-api</cxf.servlet-api.artifact>
         <cxf.servlet-api.group>jakarta.servlet</cxf.servlet-api.group>
         <cxf.servlet-api.version>6.0.0</cxf.servlet-api.version>
-        <cxf.slf4j.version>2.0.13</cxf.slf4j.version>
+        <cxf.slf4j.version>2.0.16</cxf.slf4j.version>
         <cxf.snakeyaml.version>2.2</cxf.snakeyaml.version>
         <cxf.specs.jaxws.api.version>2.3_2</cxf.specs.jaxws.api.version>
-        <cxf.spring.boot.version>3.0.13</cxf.spring.boot.version>
-        <cxf.spring.ldap.version>3.0.6</cxf.spring.ldap.version>
+        <cxf.spring.boot.version>3.3.3</cxf.spring.boot.version>
+        <cxf.spring.ldap.version>3.2.6</cxf.spring.ldap.version>
         <cxf.spring.mock>spring-test</cxf.spring.mock>
-        <cxf.spring.security.version>6.1.8</cxf.spring.security.version>
-        <cxf.spring.version>6.0.22</cxf.spring.version>
+        <cxf.spring.security.version>6.3.3</cxf.spring.security.version>
+        <cxf.spring.version>6.1.12</cxf.spring.version>
         <cxf.stax-ex.version>1.8.3</cxf.stax-ex.version>
         <cxf.swagger.ui.version>5.17.14</cxf.swagger.ui.version>
         <cxf.swagger.v3.version>2.2.22</cxf.swagger.v3.version>
         <cxf.tika.version>2.9.1</cxf.tika.version>
-        <cxf.tomcat.version>10.1.25</cxf.tomcat.version>
+        <cxf.tomcat.version>10.1.28</cxf.tomcat.version>
         <cxf.tomitribe.http.signature.version>1.8</cxf.tomitribe.http.signature.version>
         <cxf.undertow.version>2.3.16.SP1-redhat-00001</cxf.undertow.version>
         <!-- the Export-Package is the same as the Maven artifact
