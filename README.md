@@ -3,6 +3,7 @@
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/apache/cxf/badge)](https://api.securityscorecards.dev/projects/github.com/apache/cxf)
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/6978/badge)](https://bestpractices.coreinfrastructure.org/projects/6978)
 
+
 Welcome to Apache CXF!
 ======================
 Apache CXF is an open source services framework. CXF helps you build and 
