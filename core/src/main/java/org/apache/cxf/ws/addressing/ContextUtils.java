@@ -549,6 +549,7 @@ public final class ContextUtils {
      * @return the Method from the BindingOperationInfo
      */
     public static Message createMessage(Exchange exchange) {
+        System.out.println();
         Endpoint ep = exchange.getEndpoint();
         Message msg = null;
         if (ep != null) {
