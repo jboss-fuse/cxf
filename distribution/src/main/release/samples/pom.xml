@@ -31,10 +31,8 @@
         <!-- don't deploy the samples, kind of pointless -->
         <maven.deploy.skip>true</maven.deploy.skip>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <cxf.spring.boot.version>4.0.2</cxf.spring.boot.version>
-        <cxf.spring.cloud.eureka.version>5.0.1</cxf.spring.cloud.eureka.version>
-        <cxf.jetty12.version>12.1.6</cxf.jetty12.version>
-        <cxf.netty.version>4.2.10.Final</cxf.netty.version>
+            <artifactId>cxf-rt-transports-http-undertow</artifactId>
+            <version>4.2.0-rhbac-SNAPSHOT</version>
         <cxf.httpcomponents.client.version>4.5.14</cxf.httpcomponents.client.version>
         <cxf.swagger.ui.version>5.31.0</cxf.swagger.ui.version>
         <cxf.tika.version>3.2.3</cxf.tika.version>
@@ -50,8 +48,8 @@
         <cxf.activemq.artemis.version>2.31.0</cxf.activemq.artemis.version>
         <cxf.h2.version>2.4.240</cxf.h2.version>
         <cxf.jboss.narayana.version>5.13.1.Final</cxf.jboss.narayana.version>
-        <cxf.narayana.spring.boot.version>2.6.7</cxf.narayana.spring.boot.version>
-        <cxf.camel.version>4.17.0</cxf.camel.version>
+            <artifactId>cxf-rt-transports-http-undertow</artifactId>
+            <version>4.2.0-rhbac-SNAPSHOT</version>
         <cxf.openfeign.version>13.6</cxf.openfeign.version>
     </properties>
     <dependencies>

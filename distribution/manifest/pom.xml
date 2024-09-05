@@ -138,7 +138,7 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-rt-transports-http-jetty</artifactId>
+            <artifactId>cxf-rt-transports-http-undertow</artifactId>
             <version>4.2.0-rhbac-SNAPSHOT</version>
         </dependency>
         <dependency>

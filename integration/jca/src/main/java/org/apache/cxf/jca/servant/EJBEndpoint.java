@@ -38,9 +38,8 @@ import org.apache.cxf.common.util.PackageUtils;
 import org.apache.cxf.endpoint.Server;
 import org.apache.cxf.frontend.ServerFactoryBean;
 import org.apache.cxf.jaxws.JaxWsServerFactoryBean;
-import org.apache.cxf.jca.cxf.WorkManagerThreadPool;
-import org.apache.cxf.transport.http_jetty.JettyHTTPServerEngine;
-import org.apache.cxf.transport.http_jetty.JettyHTTPServerEngineFactory;
+import org.apache.cxf.transport.http_undertow.UndertowHTTPServerEngine;
+import org.apache.cxf.transport.http_undertow.UndertowHTTPServerEngineFactory;
 
 
 public class EJBEndpoint {
@@ -91,7 +90,7 @@ public class EJBEndpoint {
         }
 
         if (getWorkManager() != null) {
-            setWorkManagerThreadPoolToJetty(factory.getBus(), baseAddress);
+            setWorkManagerThreadPoolToUndertow(factory.getBus(), baseAddress);
         }
 
         Server server = factory.create();
@@ -101,17 +100,16 @@ public class EJBEndpoint {
     }
 
 
-    protected void setWorkManagerThreadPoolToJetty(Bus bus, String baseAddress) {
-        JettyHTTPServerEngineFactory engineFactory = bus.getExtension(JettyHTTPServerEngineFactory.class);
+    protected void setWorkManagerThreadPoolToUndertow(Bus bus, String baseAddress) {
+        UndertowHTTPServerEngineFactory engineFactory = bus.getExtension(UndertowHTTPServerEngineFactory.class);
         int port = getAddressPort(baseAddress);
-        if (engineFactory.retrieveJettyHTTPServerEngine(port) != null) {
+        if (engineFactory.retrieveUndertowHTTPServerEngine(port) != null) {
             return;
         }
-        JettyHTTPServerEngine engine = new JettyHTTPServerEngine();
-        engine.setThreadPool(new WorkManagerThreadPool(getWorkManager()));
+        UndertowHTTPServerEngine engine = new UndertowHTTPServerEngine();
         engine.setPort(port);
 
-        List<JettyHTTPServerEngine> engineList = new ArrayList<>();
+        List<UndertowHTTPServerEngine> engineList = new ArrayList<>();
         engineList.add(engine);
         engineFactory.setEnginesList(engineList);
     }

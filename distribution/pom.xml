@@ -68,6 +68,7 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
 <<<<<<< HEAD
+<<<<<<< HEAD
             <artifactId>cxf-tools-corba</artifactId>
             <version>4.2.0-rhbac-SNAPSHOT</version>
         </dependency>
@@ -75,6 +76,8 @@
             <groupId>${project.groupId}</groupId>
 =======
 >>>>>>> 3f348d030fe (remove Corba support from CXF)
+=======
+>>>>>>> b4234aa1f03 ([CSB-4978]remove cxf-http-jetty transport)
             <artifactId>cxf-tools-wsdlto-databinding-jaxb</artifactId>
             <version>4.2.0-rhbac-SNAPSHOT</version>
         </dependency>
@@ -170,11 +173,14 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
+<<<<<<< HEAD
             <artifactId>cxf-rt-transports-http-jetty</artifactId>
             <version>4.2.0-rhbac-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
+=======
+>>>>>>> b4234aa1f03 ([CSB-4978]remove cxf-http-jetty transport)
             <artifactId>cxf-rt-transports-http-netty-server</artifactId>
             <version>4.2.0-rhbac-SNAPSHOT</version>
             <exclusions>
@@ -235,6 +241,7 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
 <<<<<<< HEAD
+<<<<<<< HEAD
             <artifactId>cxf-rt-bindings-corba</artifactId>
             <version>4.2.0-rhbac-SNAPSHOT</version>
         </dependency>
@@ -242,6 +249,8 @@
             <groupId>${project.groupId}</groupId>
 =======
 >>>>>>> 3f348d030fe (remove Corba support from CXF)
+=======
+>>>>>>> b4234aa1f03 ([CSB-4978]remove cxf-http-jetty transport)
             <artifactId>cxf-rt-bindings-xml</artifactId>
             <version>4.2.0-rhbac-SNAPSHOT</version>
         </dependency>
