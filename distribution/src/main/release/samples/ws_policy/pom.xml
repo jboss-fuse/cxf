@@ -133,7 +133,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-transports-http-jetty</artifactId>
+            <artifactId>cxf-rt-transports-http-undertow</artifactId>
             <version>4.1.7-rhbac-SNAPSHOT</version>
         </dependency>
         <dependency>
