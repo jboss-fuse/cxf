@@ -115,7 +115,7 @@
             <dependencies>
                 <dependency>
                     <groupId>org.apache.cxf</groupId>
-                    <artifactId>cxf-rt-transports-http-jetty</artifactId>
+                    <artifactId>cxf-rt-transports-http-undertow</artifactId>
                     <version>4.0.5.fuse-SNAPSHOT</version>
                 </dependency>
             </dependencies>
@@ -145,8 +145,13 @@
             <dependencies>
                 <dependency>
                     <groupId>org.apache.cxf</groupId>
+<<<<<<< HEAD
                     <artifactId>cxf-rt-transports-http-jetty</artifactId>
                     <version>4.0.5.fuse-SNAPSHOT</version>
+=======
+                    <artifactId>cxf-rt-transports-http-undertow</artifactId>
+                    <version>4.0.4.fuse-SNAPSHOT</version>
+>>>>>>> e5da92f173d (remove cxf-http-jetty transport)
                 </dependency>
             </dependencies>
         </profile>

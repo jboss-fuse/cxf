@@ -36,7 +36,7 @@ import org.junit.jupiter.api.AfterEach;
 
 public class ObservationIntegrationTest extends SampleTestRunner {
 
-    private static final String ADDRESS = "http://localhost:9282";
+    private static final String ADDRESS = "http://localhost:9282/test";
     private Server server;
     private ObservationFeature logging;
     private ObservationClientFeature clientLogging;
