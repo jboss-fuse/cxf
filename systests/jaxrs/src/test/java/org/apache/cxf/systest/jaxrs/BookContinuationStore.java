@@ -273,7 +273,10 @@ public class BookContinuationStore implements BookAsyncInterface {
 
         @Override
         public void handleTimeout(AsyncResponse asyncResponse) {
-            if (!resumeOnly && timeoutExtendedCounter.addAndGet(1) <= 2) {
+            //the Continuation timeout will cause continuation resume which
+            //means the AsyncContext return to the Container per Servlet 3.0
+            //API this means can't reset the timeout anymore
+            if (timeoutExtendedCounter.addAndGet(1) <= 2) {
                 asyncResponse.setTimeout(1, TimeUnit.SECONDS);
             } else {
                 asyncResponse.resume(books.get(id));
