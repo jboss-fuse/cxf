@@ -287,14 +287,10 @@ public class STSRESTTest extends AbstractBusClientServerTestBase {
             .path("saml2.0")
             .query("appliesTo", "https://localhost:8081/tripleit/")
             .accept(MediaType.APPLICATION_XML);
-
         Response response = client.get();
-        try {
-            response.readEntity(Document.class);
-            fail("Failure expected on an unknown AppliesTo address");
-        } catch (Exception ex) {
-            // expected
-        }
+        String ret = response.readEntity(String.class);
+        assertTrue(ret.contains("The specified request failed"));
+        
     }
 
     @org.junit.Test

@@ -32,7 +32,6 @@
     <modules>
         <module>local</module>
         <module>http</module>
-        <module>http-jetty</module>
         <module>http-undertow</module>
         <module>http-hc</module>
         <module>http-hc5</module>
