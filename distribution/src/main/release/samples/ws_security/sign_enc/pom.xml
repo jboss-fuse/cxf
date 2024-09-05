@@ -175,8 +175,13 @@
         <!-- Jetty is needed if you're using the CXFServlet -->
         <dependency>
             <groupId>org.apache.cxf</groupId>
+<<<<<<< HEAD
             <artifactId>cxf-rt-transports-http-jetty</artifactId>
             <version>4.1.1-rbac-SNAPSHOT</version>
+=======
+            <artifactId>cxf-rt-transports-http-undertow</artifactId>
+            <version>4.1.1-rbac-SNAPSHOT</version>
+>>>>>>> f97b6cef1d6 ([CSB-4978]remove cxf-http-jetty transport)
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>

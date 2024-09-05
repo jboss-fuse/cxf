@@ -19,23 +19,23 @@
 -->
 <beans xmlns="http://www.springframework.org/schema/beans"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:http-jetty="http://cxf.apache.org/transports/http-jetty/configuration"
+    xmlns:http-undertow="http://cxf.apache.org/transports/http-undertow/configuration"
     xmlns:sec="http://cxf.apache.org/configuration/security"
-    xsi:schemaLocation="http://cxf.apache.org/transports/http-jetty/configuration 
-        http://cxf.apache.org/schemas/configuration/http-jetty.xsd 
+    xsi:schemaLocation="http://cxf.apache.org/transports/http-undertow/configuration 
+        http://cxf.apache.org/schemas/configuration/http-undertow.xsd 
         http://www.springframework.org/schema/beans 
         http://www.springframework.org/schema/beans/spring-beans.xsd
         http://cxf.apache.org/configuration/security 
         http://cxf.apache.org/schemas/configuration/security.xsd">
     <bean class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer"/>
-    <http-jetty:engine-factory bus="cxf">
-        <http-jetty:engine port="${testutil.ports.org.apache.cxf.systest.hc5.http2.BookServerHttp2}">
-            <http-jetty:tlsServerParameters>
+    <http-undertow:engine-factory bus="cxf">
+        <http-undertow:engine port="${testutil.ports.org.apache.cxf.systest.hc5.http2.BookServerHttp2}">
+            <http-undertow:tlsServerParameters>
                 <sec:keyManagers keyPassword="password">
                     <sec:keyStore type="jks" password="password" resource="keys/Bethal.jks"/>
                 </sec:keyManagers>
                 <sec:clientAuthentication want="false" required="false"/>
-            </http-jetty:tlsServerParameters>
-        </http-jetty:engine>
-    </http-jetty:engine-factory>
+            </http-undertow:tlsServerParameters>
+        </http-undertow:engine>
+    </http-undertow:engine-factory>
 </beans>

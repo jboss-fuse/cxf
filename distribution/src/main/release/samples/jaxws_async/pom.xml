@@ -91,7 +91,7 @@
                 <!-- Jetty is needed if you're using the CXFServlet -->
                 <dependency>
                     <groupId>org.apache.cxf</groupId>
-                    <artifactId>cxf-rt-transports-http-jetty</artifactId>
+                    <artifactId>cxf-rt-transports-http-undertow</artifactId>
                     <version>4.1.1-rbac-SNAPSHOT</version>
                 </dependency>
             </dependencies>
@@ -148,7 +148,7 @@
             <!-- container, the async methods should still work fine -->
             <!-- Not needed if deploying to a Servlet 3 based container or non-jetty container -->
             <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-transports-http-jetty</artifactId>
+            <artifactId>cxf-rt-transports-http-undertow</artifactId>
             <version>4.1.1-rbac-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
