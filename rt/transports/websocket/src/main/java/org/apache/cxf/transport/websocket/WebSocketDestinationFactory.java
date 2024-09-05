@@ -31,24 +31,18 @@ import org.apache.cxf.transport.http.AbstractHTTPDestination;
 import org.apache.cxf.transport.http.DestinationRegistry;
 import org.apache.cxf.transport.http.HTTPTransportFactory;
 import org.apache.cxf.transport.http.HttpDestinationFactory;
-import org.apache.cxf.transport.http_jetty.JettyHTTPServerEngineFactory;
 import org.apache.cxf.transport.http_undertow.UndertowHTTPServerEngineFactory;
 import org.apache.cxf.transport.websocket.atmosphere.AtmosphereWebSocketServletDestination;
-//import org.apache.cxf.transport.websocket.jetty.JettyWebSocketServletDestination;
 
 @NoJSR250Annotations()
 public class WebSocketDestinationFactory implements HttpDestinationFactory {
     private static final boolean ATMOSPHERE_AVAILABLE = probeClass("org.atmosphere.cpr.ApplicationConfig");
-    private static final boolean JETTY_AVAILABLE = 
-        probeClass("org.apache.cxf.transport.http_jetty.JettyHTTPServerEngineFactory");
     private static final boolean UNDERTOW_AVAILABLE = 
         probeClass("org.apache.cxf.transport.http_undertow.UndertowHTTPServerEngineFactory");
-    private static final Constructor<?> JETTY12_WEBSOCKET_DESTINATION_CTR =
-        probeConstructor("org.apache.cxf.transport.websocket.jetty12.Jetty12WebSocketDestination");
+            <artifactId>cxf-rt-transports-http-undertow</artifactId>
+            <version>4.2.0-rhbac-SNAPSHOT</version>
     private static final Constructor<?> UNDERTOW_WEBSOCKET_DESTINATION_CTR =
         probeUndertowConstructor("org.apache.cxf.transport.websocket.undertow.UndertowWebSocketDestination");
-    private static final Constructor<?> ATMOSPHERE_WEBSOCKET_JETTY_DESTINATION_CTR =
-        probeConstructor("org.apache.cxf.transport.websocket.atmosphere.AtmosphereWebSocketJettyDestination");
     private static final Constructor<?> ATMOSPHERE_WEBSOCKET_UNDERTOW_DESTINATION_CTR =
         probeUndertowConstructor(
             "org.apache.cxf.transport.websocket.atmosphere.AtmosphereWebSocketUndertowDestination");
@@ -65,15 +59,6 @@ public class WebSocketDestinationFactory implements HttpDestinationFactory {
         }
     }
 
-    private static Constructor<?> probeConstructor(String name) {
-        try {
-            Class<?> clz = Class.forName(name, true, WebSocketDestinationFactory.class.getClassLoader());
-            return clz.getConstructor(Bus.class, DestinationRegistry.class, EndpointInfo.class,
-                                      JettyHTTPServerEngineFactory.class);
-        } catch (Throwable t) {
-            return null;
-        }
-    }
 
     private static Constructor<?> probeUndertowConstructor(String name) {
         try {
@@ -91,13 +76,7 @@ public class WebSocketDestinationFactory implements HttpDestinationFactory {
 
             if (ATMOSPHERE_AVAILABLE && !atmosphereDisabled) {
                 // use atmosphere if available
-                if (JETTY_AVAILABLE) {
-                    // for the embedded mode, we stick to jetty
-                    JettyHTTPServerEngineFactory serverEngineFactory = bus
-                        .getExtension(JettyHTTPServerEngineFactory.class);
-                    return createJettyHTTPDestination(ATMOSPHERE_WEBSOCKET_JETTY_DESTINATION_CTR, bus,
-                                                      registry, endpointInfo, serverEngineFactory);
-                } else if (UNDERTOW_AVAILABLE) {
+                if (UNDERTOW_AVAILABLE) {
                     // use AtmosphereWebSocketUndertowDestination
                     UndertowHTTPServerEngineFactory undertowServerEngineFactory = bus
                         .getExtension(UndertowHTTPServerEngineFactory.class);
@@ -106,13 +85,8 @@ public class WebSocketDestinationFactory implements HttpDestinationFactory {
                 }
                 return null;
             }
-            if (JETTY_AVAILABLE) {
-            // for the embedded mode, we stick to jetty if jetty is available
-                JettyHTTPServerEngineFactory serverEngineFactory = bus
-                    .getExtension(JettyHTTPServerEngineFactory.class);
-                return createJettyHTTPDestination(JETTY12_WEBSOCKET_DESTINATION_CTR, bus, registry,
-                                              endpointInfo, serverEngineFactory);
-            } else if (UNDERTOW_AVAILABLE) {
+            <artifactId>cxf-rt-transports-http-undertow</artifactId>
+            <version>4.2.0-rhbac-SNAPSHOT</version>
                 // use UndertowWebSocketDestination
                 UndertowHTTPServerEngineFactory undertowServerEngineFactory = bus
                     .getExtension(UndertowHTTPServerEngineFactory.class);
@@ -125,15 +99,14 @@ public class WebSocketDestinationFactory implements HttpDestinationFactory {
         // destination?
         registry = getDestinationRegistry(bus);
 
-        // choose atmosphere if available, otherwise assume jetty is available
+        // choose atmosphere if available, otherwise assume undertow is available
         if (ATMOSPHERE_AVAILABLE && !atmosphereDisabled) {
             // use atmosphere if available
             return new AtmosphereWebSocketServletDestination(bus, registry, endpointInfo,
                                                              endpointInfo.getAddress());
         }
-        // use jetty-websocket
-        return createJettyHTTPDestination(JETTY12_WEBSOCKET_DESTINATION_CTR, bus, registry,
-                                          endpointInfo, null);
+            <artifactId>cxf-rt-transports-http-undertow</artifactId>
+            <version>4.2.0-rhbac-SNAPSHOT</version>
     }
 
     private static DestinationRegistry getDestinationRegistry(Bus bus) {
@@ -151,20 +124,6 @@ public class WebSocketDestinationFactory implements HttpDestinationFactory {
         return null;
     }
 
-    private AbstractHTTPDestination createJettyHTTPDestination(Constructor<?> ctr, Bus bus,
-                                                               DestinationRegistry registry, EndpointInfo ei,
-                                                               JettyHTTPServerEngineFactory jhsef)
-                                                                   throws IOException {
-        if (ctr != null) {
-            try {
-                return (AbstractHTTPDestination)ctr.newInstance(bus, registry, ei, jhsef);
-            } catch (Throwable t) {
-                // log
-                t.printStackTrace();
-            }
-        }
-        return null;
-    }
 
     private AbstractHTTPDestination createUndertowHTTPDestination(Constructor<?> ctr, Bus bus,
                                                                   DestinationRegistry registry,
