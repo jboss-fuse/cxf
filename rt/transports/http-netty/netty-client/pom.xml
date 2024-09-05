@@ -94,10 +94,10 @@
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
-        <!-- Need to run some integration with http-jetty -->
+        <!-- Need to run some integration with http-undertow -->
         <dependency>
             <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-transports-http-jetty</artifactId>
+            <artifactId>cxf-rt-transports-http-undertow</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
