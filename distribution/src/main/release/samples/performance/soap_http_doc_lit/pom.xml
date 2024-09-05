@@ -121,8 +121,8 @@
             <dependencies>
                 <dependency>
                     <groupId>org.apache.cxf</groupId>
-                    <artifactId>cxf-rt-transports-http-jetty</artifactId>
-                    <version>${project.version}</version>
+                    <artifactId>cxf-rt-transports-http-undertow</artifactId>
+                    <version>${cxf.version}</version>
                 </dependency>
             </dependencies>
             <properties>
@@ -212,8 +212,8 @@
             <dependencies>
                 <dependency>
                     <groupId>org.apache.cxf</groupId>
-                    <artifactId>cxf-rt-transports-http-jetty</artifactId>
-                    <version>${project.version}</version>
+                    <artifactId>cxf-rt-transports-http-undertow</artifactId>
+                    <version>${cxf.version}</version>
                 </dependency>
             </dependencies>
             <properties>

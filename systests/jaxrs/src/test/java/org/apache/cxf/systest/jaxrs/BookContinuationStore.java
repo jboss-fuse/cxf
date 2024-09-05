@@ -26,6 +26,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
@@ -262,6 +263,7 @@ public class BookContinuationStore implements BookAsyncInterface {
     private class TimeoutHandlerImpl implements TimeoutHandler {
         private boolean resumeOnly;
         private String id;
+        private AtomicInteger timeoutExtendedCounter = new AtomicInteger();
 
         TimeoutHandlerImpl(String id, boolean resumeOnly) {
             this.id = id;
@@ -273,7 +275,11 @@ public class BookContinuationStore implements BookAsyncInterface {
             //the Continuation timeout will cause continuation resume which
             //means the AsyncContext return to the Container per Servlet 3.0
             //API this means can't reset the timeout anymore
-            asyncResponse.resume(books.get(id));
+            if (!resumeOnly && timeoutExtendedCounter.addAndGet(1) <= 2) {
+                asyncResponse.setTimeout(1, TimeUnit.SECONDS);
+            } else {
+                asyncResponse.resume(books.get(id));
+            }
         }
 
     }
