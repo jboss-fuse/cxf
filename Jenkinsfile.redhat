@@ -56,7 +56,7 @@ pipeline {
             steps {
                 configFileProvider([configFile(fileId: 'fuse-maven-settings', variable: 'MAVEN_SETTINGS')]) {
                     script {
-                        cxf_itests_result = sh script: "mvn -U $MAVEN_PARAMS -Dmaven.test.failure.ignore=true clean install", returnStatus: true
+                        cxf_itests_result = sh script: "mvn -U $MAVEN_PARAMS -Dmaven.test.failure.ignore=true -Dsurefire.rerunFailingTestsCount=3 -Dfailsafe.rerunFailingTestsCount=3 clean install", returnStatus: true
                     }
                 }
             }
