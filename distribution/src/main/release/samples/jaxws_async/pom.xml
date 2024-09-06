@@ -148,23 +148,8 @@
             <!-- container, the async methods should still work fine -->
             <!-- Not needed if deploying to a Servlet 3 based container or non-jetty container -->
             <groupId>org.apache.cxf</groupId>
-<<<<<<< HEAD
-            <artifactId>cxf-rt-transports-http-jetty</artifactId>
-            <version>4.0.5.fuse-SNAPSHOT</version>
-=======
             <artifactId>cxf-rt-transports-http-undertow</artifactId>
-            <version>4.0.4.fuse-SNAPSHOT</version>
->>>>>>> e5da92f173d (remove cxf-http-jetty transport)
-            <exclusions>
-                <exclusion>
-                    <groupId>org.eclipse.jetty</groupId>
-                    <artifactId>jetty-server</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.eclipse.jetty</groupId>
-                    <artifactId>jetty-security</artifactId>
-                </exclusion>
-            </exclusions>
+            <version>4.0.5.fuse-SNAPSHOT</version>
         </dependency>
     </dependencies>
 </project>
