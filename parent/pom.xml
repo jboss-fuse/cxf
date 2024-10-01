@@ -222,7 +222,7 @@
         <cxf.tika.version>2.9.1</cxf.tika.version>
         <cxf.tomcat.version>10.1.28</cxf.tomcat.version>
         <cxf.tomitribe.http.signature.version>1.8</cxf.tomitribe.http.signature.version>
-        <cxf.undertow.version>2.3.16.SP1-redhat-00001</cxf.undertow.version>
+        <cxf.undertow.version>2.3.17.Final</cxf.undertow.version>
         <!-- the Export-Package is the same as the Maven artifact
              version (with the Final), but we don't want an import package with a version
              with a qualifier. We do want a range. -->
