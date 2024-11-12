@@ -70,7 +70,7 @@ public class HTTPTransportFactory
         ));
 
     private static boolean forceURLConnectionConduit
-        = Boolean.valueOf(SystemPropertyAction.getProperty("org.apache.cxf.transport.http.forceURLConnection", "true"));
+        = Boolean.valueOf(SystemPropertyAction.getProperty("org.apache.cxf.transport.http.forceURLConnection"));
 
 
     private static final Logger LOG = LogUtils.getL7dLogger(HTTPTransportFactory.class);
@@ -89,7 +89,7 @@ public class HTTPTransportFactory
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Lock r = lock.readLock();
     private final Lock w = lock.writeLock();
-    
+
 
     public HTTPTransportFactory() {
         this(new DestinationRegistryImpl());
@@ -303,7 +303,7 @@ public class HTTPTransportFactory
             r.unlock();
         }
     }
-    
+
     public static boolean isForceURLConnectionConduit() {
         return forceURLConnectionConduit;
     }
