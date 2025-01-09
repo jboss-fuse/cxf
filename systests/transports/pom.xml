@@ -103,14 +103,6 @@
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
-                    <execution>
-                        <id>default-test</id>
-                        <configuration>
-                            <systemPropertyVariables>
-                                <org.apache.cxf.transport.http.forceURLConnection>false</org.apache.cxf.transport.http.forceURLConnection>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </execution>
                 </executions>
             </plugin>
         </plugins>
