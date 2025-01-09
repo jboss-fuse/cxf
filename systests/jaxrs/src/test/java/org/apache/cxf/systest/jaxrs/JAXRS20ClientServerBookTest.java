@@ -87,6 +87,7 @@ import org.apache.cxf.jaxrs.provider.JAXBElementProvider;
 import org.apache.cxf.jaxrs.utils.JAXRSUtils;
 import org.apache.cxf.systest.jaxrs.BookStore.BookInfo;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
+import org.apache.cxf.transport.http.HTTPTransportFactory;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -155,6 +156,10 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
 
     @Test
     public void testGetGenericBookManyClientsInParallel() throws InterruptedException {
+        if (HTTPTransportFactory.isForceURLConnectionConduit()) {
+            return;
+        }
+
         final ExecutorService pool = Executors.newFixedThreadPool(100);
         final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
         final AtomicLong httpClientThreads = new AtomicLong(); 

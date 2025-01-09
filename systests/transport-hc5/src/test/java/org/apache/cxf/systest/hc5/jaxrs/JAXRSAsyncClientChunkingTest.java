@@ -104,6 +104,10 @@ public class JAXRSAsyncClientChunkingTest extends AbstractBusClientServerTestBas
 
     @Test
     public void testStreamChunking() throws IOException {
+        if (org.apache.cxf.transport.http.HTTPTransportFactory.isForceURLConnectionConduit()) {
+            return;
+        }
+
         final String url = "http://localhost:" + PORT + "/file-store/stream";
         final WebClient webClient = WebClient.create(url).query("chunked", chunked);
         
