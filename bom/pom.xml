@@ -86,12 +86,6 @@
       </dependency>
       <dependency>
         <groupId>org.apache.cxf.services.xkms</groupId>
-        <artifactId>cxf-services-xkms-war</artifactId>
-        <version>4.0.6-rbac-SNAPSHOT</version>
-        <type>war</type>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf.services.xkms</groupId>
         <artifactId>cxf-services-xkms-x509-handlers</artifactId>
         <version>4.0.6-rbac-SNAPSHOT</version>
       </dependency>
