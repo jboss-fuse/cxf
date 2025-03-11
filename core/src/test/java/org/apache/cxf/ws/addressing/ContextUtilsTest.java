@@ -70,6 +70,7 @@ public class ContextUtilsTest {
 
     @Test
     public void testIsFault() {
+
         assertThat(isFault(null), is(false));
 
         MessageImpl message = new MessageImpl();
