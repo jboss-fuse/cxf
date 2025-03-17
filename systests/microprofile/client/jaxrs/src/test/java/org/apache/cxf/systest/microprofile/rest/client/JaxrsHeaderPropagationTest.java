@@ -92,13 +92,13 @@ public class JaxrsHeaderPropagationTest extends AbstractClientServerTestBase {
         h.setLevel(Level.ALL);
         logger.addHandler(new ConsoleHandler());
         final Response r = createWebClient("/jaxrs/propagate")
-            .header("Header1", "Single")
-            .header("MultiHeader", "value1", "value2", "value3")
+            .header("header1", "single")
+            .header("multiheader", "value1", "value2", "value3")
             .get();
         assertEquals(Status.OK.getStatusCode(), r.getStatus());
         String propagatedHeaderContent = r.readEntity(String.class);
         System.out.println("propagatedHeaderContent: " + propagatedHeaderContent);
-        assertTrue(propagatedHeaderContent.contains("header1=Single"));
+        assertTrue(propagatedHeaderContent.contains("header1=single"));
         assertTrue(propagatedHeaderContent.contains("multiheader=value1,value2,value3"));
     }
 

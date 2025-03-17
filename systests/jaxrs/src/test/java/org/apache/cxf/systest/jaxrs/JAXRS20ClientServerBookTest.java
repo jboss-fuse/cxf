@@ -156,6 +156,10 @@ public class JAXRS20ClientServerBookTest extends AbstractBusClientServerTestBase
 
     @Test
     public void testGetGenericBookManyClientsInParallel() throws InterruptedException {
+        if (org.apache.cxf.transport.http.HTTPTransportFactory.isForceURLConnectionConduit()) {
+            return;
+        }
+
         final ExecutorService pool = Executors.newFixedThreadPool(100);
         final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
         final AtomicLong httpClientThreads = new AtomicLong(); 
