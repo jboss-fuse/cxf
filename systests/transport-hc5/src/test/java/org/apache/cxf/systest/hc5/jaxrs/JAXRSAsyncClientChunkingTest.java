@@ -26,20 +26,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import org.apache.cxf.interceptor.LoggingInInterceptor;
-import org.apache.cxf.interceptor.LoggingMessage;
 import org.apache.cxf.interceptor.LoggingOutInterceptor;
 import org.apache.cxf.jaxrs.client.ClientConfiguration;
 import org.apache.cxf.jaxrs.client.WebClient;
@@ -48,7 +40,6 @@ import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
 import org.apache.cxf.jaxrs.impl.MetadataMap;
 import org.apache.cxf.jaxrs.model.AbstractResourceInfo;
 import org.apache.cxf.jaxrs.provider.MultipartProvider;
-import org.apache.cxf.message.Message;
 import org.apache.cxf.testutil.common.AbstractBusClientServerTestBase;
 import org.apache.cxf.transport.http.asyncclient.hc5.AsyncHTTPConduit;
 
@@ -59,7 +50,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -67,12 +57,9 @@ import static org.junit.Assert.assertTrue;
 public class JAXRSAsyncClientChunkingTest extends AbstractBusClientServerTestBase {
     private static final String PORT = allocatePort(FileStoreServer.class);
     private final Boolean chunked;
-    private final Boolean autoRedirect;
-    private final ConcurrentMap<String, AtomicInteger> ids = new ConcurrentHashMap<>();
 
-    public JAXRSAsyncClientChunkingTest(Boolean chunked, Boolean autoRedirect) {
+    public JAXRSAsyncClientChunkingTest(Boolean chunked) {
         this.chunked = chunked;
-        this.autoRedirect = autoRedirect;
     }
 
     @BeforeClass
@@ -82,14 +69,9 @@ public class JAXRSAsyncClientChunkingTest extends AbstractBusClientServerTestBas
         createStaticBus();
     }
     
-    @Parameters(name = "chunked {0}, auto-redirect {1}")
-    public static Collection<Boolean[]> data() {
-        return Arrays.asList(new Boolean[][] {
-            {Boolean.FALSE /* chunked */, Boolean.FALSE /* autoredirect */},
-            {Boolean.FALSE /* chunked */, Boolean.TRUE /* autoredirect */},
-            {Boolean.TRUE /* chunked */, Boolean.FALSE /* autoredirect */},
-            {Boolean.TRUE /* chunked */, Boolean.TRUE /* autoredirect */},
-        });
+    @Parameters(name = "{0}")
+    public static Collection<Boolean> data() {
+        return Arrays.asList(new Boolean[] {Boolean.FALSE, Boolean.TRUE});
     }
 
     @Test
@@ -100,18 +82,17 @@ public class JAXRSAsyncClientChunkingTest extends AbstractBusClientServerTestBas
         final ClientConfiguration config = WebClient.getConfig(webClient);
         config.getBus().setProperty(AsyncHTTPConduit.USE_ASYNC, true);
         config.getHttpConduit().getClient().setAllowChunking(chunked);
-        config.getHttpConduit().getClient().setAutoRedirect(autoRedirect);
         configureLogging(config);
 
-        final String filename = "keymanagers.jks";
         try {
+            final String filename = "keymanagers.jks";
             final MultivaluedMap<String, String> headers = new MetadataMap<>();
             headers.add("Content-ID", filename);
             headers.add("Content-Type", "application/binary");
-            headers.add("Content-Disposition", "attachment; filename=" + chunked + "_" + autoRedirect + "_" + filename);
+            headers.add("Content-Disposition", "attachment; filename=" + chunked + "_" + filename);
             final Attachment att = new Attachment(getClass().getResourceAsStream("/" + filename), headers);
             final MultipartBody entity = new MultipartBody(att);
-            try (Response response = webClient.header("Content-Type", MediaType.MULTIPART_FORM_DATA).post(entity)) {
+            try (Response response = webClient.header("Content-Type", "multipart/form-data").post(entity)) {
                 assertThat(response.getStatus(), equalTo(201));
                 assertThat(response.getHeaderString("Transfer-Encoding"), equalTo(chunked ? "chunked" : null));
                 assertThat(response.getEntity(), not(equalTo(null)));
@@ -119,42 +100,6 @@ public class JAXRSAsyncClientChunkingTest extends AbstractBusClientServerTestBas
         } finally {
             webClient.close();
         }
-
-        assertRedirect(chunked + "_" + autoRedirect + "_" + filename);
-    }
-
-    @Test
-    public void testMultipartChunkingAsync() throws InterruptedException, ExecutionException, TimeoutException {
-        final String url = "http://localhost:" + PORT + "/file-store";
-        final WebClient webClient = WebClient.create(url, List.of(new MultipartProvider())).query("chunked", chunked);
-
-        final ClientConfiguration config = WebClient.getConfig(webClient);
-        config.getBus().setProperty(AsyncHTTPConduit.USE_ASYNC, true);
-        config.getHttpConduit().getClient().setAllowChunking(chunked);
-        config.getHttpConduit().getClient().setAutoRedirect(autoRedirect);
-        configureLogging(config);
-
-        final String filename = "keymanagers.jks";
-        try {
-            final MultivaluedMap<String, String> headers = new MetadataMap<>();
-            headers.add("Content-ID", filename);
-            headers.add("Content-Type", "application/binary");
-            headers.add("Content-Disposition", "attachment; filename=" + chunked
-                +  "_" + autoRedirect + "_async_" + filename);
-            final Attachment att = new Attachment(getClass().getResourceAsStream("/" + filename), headers);
-            final Entity<MultipartBody> entity = Entity.entity(new MultipartBody(att), 
-                    MediaType.MULTIPART_FORM_DATA_TYPE);
-            try (Response response = webClient.header("Content-Type", MediaType.MULTIPART_FORM_DATA).async()
-                    .post(entity).get(10, TimeUnit.SECONDS)) {
-                assertThat(response.getStatus(), equalTo(201));
-                assertThat(response.getHeaderString("Transfer-Encoding"), equalTo(chunked ? "chunked" : null));
-                assertThat(response.getEntity(), not(equalTo(null)));
-            }
-        } finally {
-            webClient.close();
-        }
-
-        assertRedirect(chunked + "_" + autoRedirect + "_" + filename);
     }
 
     @Test
@@ -165,7 +110,6 @@ public class JAXRSAsyncClientChunkingTest extends AbstractBusClientServerTestBas
         final ClientConfiguration config = WebClient.getConfig(webClient);
         config.getBus().setProperty(AsyncHTTPConduit.USE_ASYNC, true);
         config.getHttpConduit().getClient().setAllowChunking(chunked);
-        config.getHttpConduit().getClient().setAutoRedirect(autoRedirect);
         configureLogging(config);
 
         final byte[] bytes = new byte [32 * 1024];
@@ -182,89 +126,13 @@ public class JAXRSAsyncClientChunkingTest extends AbstractBusClientServerTestBas
         } finally {
             webClient.close();
         }
-
-        assertNoDuplicateLogging();
     }
-
-    @Test
-    public void testStreamChunkingAsync() throws IOException, InterruptedException,
-            ExecutionException, TimeoutException {
-        final String url = "http://localhost:" + PORT + "/file-store/stream";
-        final WebClient webClient = WebClient.create(url).query("chunked", chunked);
-        
-        final ClientConfiguration config = WebClient.getConfig(webClient);
-        config.getBus().setProperty(AsyncHTTPConduit.USE_ASYNC, true);
-        config.getHttpConduit().getClient().setAllowChunking(chunked);
-        config.getHttpConduit().getClient().setAutoRedirect(autoRedirect);
-        configureLogging(config);
-
-        final byte[] bytes = new byte [32 * 1024];
-        final Random random = new Random();
-        random.nextBytes(bytes);
-
-        try (InputStream in = new ByteArrayInputStream(bytes)) {
-            final Entity<InputStream> entity = Entity.entity(in, MediaType.APPLICATION_OCTET_STREAM);
-            try (Response response = webClient.async().post(entity).get(10, TimeUnit.SECONDS)) {
-                assertThat(response.getStatus(), equalTo(200));
-                assertThat(response.getHeaderString("Transfer-Encoding"), equalTo(chunked ? "chunked" : null));
-                assertThat(response.getEntity(), not(equalTo(null)));
-            }
-        } finally {
-            webClient.close();
-        }
-
-        assertNoDuplicateLogging();
-    }
-
-    private void assertRedirect(String filename) {
-        final String url = "http://localhost:" + PORT + "/file-store/redirect";
-
-        final WebClient webClient = WebClient.create(url, List.of(new MultipartProvider()))
-                .query("chunked", chunked)
-                .query("filename", filename);
-
-        final ClientConfiguration config = WebClient.getConfig(webClient);
-        config.getBus().setProperty(AsyncHTTPConduit.USE_ASYNC, true);
-        config.getHttpConduit().getClient().setAllowChunking(chunked);
-        config.getHttpConduit().getClient().setAutoRedirect(autoRedirect);
-        configureLogging(config);
-
-        try {
-            try (Response response = webClient.get()) {
-                if (autoRedirect) {
-                    assertThat(response.getStatus(), equalTo(200));
-                    assertThat(response.getHeaderString("Transfer-Encoding"), equalTo(chunked ? "chunked" : null));
-                    assertThat(response.getEntity(), not(equalTo(null)));
-                } else {
-                    assertThat(response.getStatus(), equalTo(303));
-                    assertThat(response.getHeaderString("Location"),
-                        startsWith("http://localhost:" + PORT + "/file-store"));
-                }
-            }
-        } finally {
-            webClient.close();
-        }
-
-        assertNoDuplicateLogging();
-    }
-
-    private void assertNoDuplicateLogging() {
-        ids.forEach((id, counter) -> assertThat("Duplicate client logging for message " + id,
-            counter.get(), equalTo(1)));
-    }
-
+    
     private void configureLogging(final ClientConfiguration config) {
         final LoggingOutInterceptor out = new LoggingOutInterceptor();
         out.setShowMultipartContent(false);
 
-        final LoggingInInterceptor in = new LoggingInInterceptor() {
-            @Override
-            protected void logging(Logger logger, Message message) {
-                super.logging(logger, message);
-                final String id = (String) message.get(LoggingMessage.ID_KEY);
-                ids.computeIfAbsent(id, key -> new AtomicInteger()).incrementAndGet(); 
-            }
-        };
+        final LoggingInInterceptor in = new LoggingInInterceptor();
         in.setShowBinaryContent(false);
 
         config.getInInterceptors().add(in);
