@@ -18,9 +18,6 @@
  */
 package org.apache.cxf.transport.http;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -534,11 +531,11 @@ public class HttpClientHTTPConduit extends URLConnectionHTTPConduit {
     static class HttpClientPipedOutputStream extends PipedOutputStream {
         HttpClientWrappedOutputStream stream;
         HTTPClientPolicy csPolicy;
-        CloseableBodyPublisher publisher;
-        HttpClientPipedOutputStream(HttpClientWrappedOutputStream s, 
+        HttpClientBodyPublisher publisher;
+        HttpClientPipedOutputStream(HttpClientWrappedOutputStream s,
                                     PipedInputStream pin,
                                     HTTPClientPolicy cp,
-                                    CloseableBodyPublisher bp) throws IOException {
+                                    HttpClientBodyPublisher bp) throws IOException {
             super(pin);
             stream = s;
             csPolicy = cp;
@@ -609,27 +606,26 @@ public class HttpClientHTTPConduit extends URLConnectionHTTPConduit {
             }
         }
     }
+    private static final class InputStreamSupplier implements Supplier<InputStream> {
+        final InputStream in;
+        InputStreamSupplier(InputStream i) {
+            in = i;
+        }
 
-    /**
-     * The interface for {@link BodyPublisher}s that implement {@link Closeable} as well.
-     */
-    private interface CloseableBodyPublisher extends BodyPublisher, Closeable {
+        public InputStream get() {
+            return in;
+        }
     }
-    
-    /**
-     * The {@link BodyPublisher} that wraps around the output stream.
-     */
-    private static final class HttpClientBodyPublisher implements CloseableBodyPublisher {
-        private Supplier<InputStream> pin;
-        private HttpClientWrappedOutputStream stream;
-        private long contentLen;
+    private static final class HttpClientBodyPublisher implements BodyPublisher {
+        PipedInputStream pin;
+        HttpClientWrappedOutputStream  stream;
+        long contentLen;
 
-        private HttpClientBodyPublisher(HttpClientWrappedOutputStream s, Supplier<InputStream> pin) {
+        private HttpClientBodyPublisher(HttpClientWrappedOutputStream s, PipedInputStream pin) {
             this.stream = s;
             this.pin = pin;
         }
-
-        public synchronized void close() {
+        synchronized void close() {
             if (stream != null) {
                 contentLen = stream.contentLen;
                 stream = null;
@@ -648,7 +644,7 @@ public class HttpClientHTTPConduit extends URLConnectionHTTPConduit {
                     if (stream != null) {
                         contentLen = stream.contentLen;
                     }
-                    BodyPublishers.ofInputStream(pin).subscribe(subscriber);
+                    BodyPublishers.ofInputStream(new InputStreamSupplier(pin)).subscribe(subscriber);
                     stream = null;
                     pin = null;
                     return;
@@ -665,155 +661,7 @@ public class HttpClientHTTPConduit extends URLConnectionHTTPConduit {
             return contentLen;
         }
     }
-
-    /**
-     * The {@link BodyPublisher} that awaits for the output stream to be fully flushed (closed) 
-     * so the content length becomes known (sized). It is used when the chunked transfer is not allowed
-     * but the content length is not specified up-front.
-     */
-    private static final class HttpClientSizedBodyPublisher implements CloseableBodyPublisher {
-        private HTTPClientPolicy csPolicy;
-        private Supplier<ByteArrayInputStream> pin;
-        private HttpClientWrappedOutputStream stream;
-        private long contentLen;
-
-        private HttpClientSizedBodyPublisher(HttpClientWrappedOutputStream s, HTTPClientPolicy cs,
-                Supplier<ByteArrayInputStream> pin) {
-            this.stream = s;
-            this.csPolicy = cs;
-            this.pin = pin;
-        }
-
-        public synchronized void close() {
-            if (stream != null) {
-                contentLen = stream.contentLen;
-                stream = null;
-            }
-        }
-
-        @Override
-        public synchronized void subscribe(Subscriber<? super ByteBuffer> subscriber) {
-            if (stream != null) {
-                stream.connectionComplete = true;
-                if (stream.pout != null) {
-                    synchronized (stream.pout) {
-                        stream.pout.notifyAll();
-                    }
-
-                    BodyPublishers.ofInputStream(pin).subscribe(subscriber);
-                    stream = null;
-                    pin = null;
-                    return;
-                }
-            }
-            BodyPublishers.noBody().subscribe(subscriber);
-        }
-
-        @Override
-        public long contentLength() {
-            if (stream != null && stream.pout != null) {
-                final CloseableByteArrayOutputStream baos = (CloseableByteArrayOutputStream) stream.pout;
-
-                try {
-                    synchronized (baos) {
-                        if (!baos.closed) {
-                            baos.wait(csPolicy.getConnectionTimeout());
-                        }
-                    }
-                    contentLen = (int) baos.size();
-                } catch (InterruptedException e) {
-                    //ignore
-                }
-            }
-
-            return contentLen;
-        }
-    }
-
-    /**
-     * The {@link ByteArrayOutputStream} implementation that tracks the closeability state.
-     */
-    private static final class CloseableByteArrayOutputStream extends ByteArrayOutputStream {
-        private boolean closed;
-
-        /**
-         * Creates a new output stream for user data
-         */
-        CloseableByteArrayOutputStream() {
-            super(4096);
-        }
-
-        /**
-         * Writes the specified byte to this output stream.
-         *
-         * @param   b   the byte to be written.
-         */
-        public synchronized void write(int b) {
-            if (closed) {
-                return;
-            }
-            super.write(b);
-        }
-
-        /**
-         * Writes <code>len</code> bytes from the specified byte array
-         * starting at offset <code>off</code> to this output stream.
-         *
-         * @param   b     the data.
-         * @param   off   the start offset in the data.
-         * @param   len   the number of bytes to write.
-         */
-        public synchronized void write(byte[] b, int off, int len) {
-            if (closed) {
-                return;
-            }
-            super.write(b, off, len);
-        }
-
-        /**
-         * Resets the <code>count</code> field of this output
-         * stream to zero, so that all currently accumulated output in the
-         * output stream is discarded. The output stream can be used again,
-         * reusing the already allocated buffer space. If the output stream
-         * has been closed, then this method has no effect.
-         *
-         * @see     java.io.ByteArrayInputStream#count
-         */
-        public synchronized void reset() {
-            if (closed) {
-                return;
-            }
-            super.reset();
-        }
-
-        /**
-         * After close() has been called, it is no longer possible to write
-         * to this stream. Further calls to write will have no effect.
-         */
-        public synchronized void close() throws IOException {
-            closed = true;
-            super.close();
-            notifyAll();
-        }
-
-        /**
-         * Returns new instance of the {@link ByteArrayInputStream} that uses the same underlying buffer as 
-         * this stream. The steam must be closed in order to ensure no further modifications could happen. 
-         * @return new instance of the {@link ByteArrayInputStream}
-         */
-        public ByteArrayInputStream getInputStream() {
-            if (!closed) {
-                throw new IllegalStateException("The stream is not closed and underlying buffer "
-                        + "could still be changed");
-            }
-
-            // Creates new ByteArrayInputStream instance that respects the current state of the buffer 
-            // (since ByteArrayInputStream::toByteArray() does array copy).
-            return new ByteArrayInputStream(this.buf, 0, this.count);
-        }
-    }
-
-    class HttpClientWrappedOutputStream extends WrappedOutputStream {  
+    class HttpClientWrappedOutputStream extends WrappedOutputStream {
 
         List<Flow.Subscriber<? super ByteBuffer>> subscribers = new LinkedList<>();
         CompletableFuture<HttpResponse<InputStream>> future;
@@ -821,8 +669,8 @@ public class HttpClientHTTPConduit extends URLConnectionHTTPConduit {
         int rtimeout;
         volatile Throwable exception;
         volatile boolean connectionComplete;
-        OutputStream pout;
-        CloseableBodyPublisher publisher;
+        PipedOutputStream pout;
+        HttpClientBodyPublisher publisher;
         HttpRequest request;
 
 
@@ -980,20 +828,12 @@ public class HttpClientHTTPConduit extends URLConnectionHTTPConduit {
                 contentLen = 0;
             }
 
-            if (csPolicy.isAllowChunking() || contentLen >= 0) {
-                final PipedInputStream pin = new PipedInputStream(csPolicy.getChunkLength() <= 0
-                        ? 4096 : csPolicy.getChunkLength());
-                this.publisher = new HttpClientBodyPublisher(this, () -> pin);
-                if (contentLen != 0) {
-                    pout = new HttpClientPipedOutputStream(this, pin, csPolicy, publisher);
-                }
-            } else if (contentLen != 0) {
-                // If chunking is not allowed but the contentLen is unknown (-1), we need to
-                // buffer the request body stream until it is fully flushed by the client and only
-                // than send the request.
-                final CloseableByteArrayOutputStream baos = new CloseableByteArrayOutputStream();
-                this.publisher = new HttpClientSizedBodyPublisher(this, csPolicy, baos::getInputStream);
-                pout = baos;
+            final PipedInputStream pin = new PipedInputStream(csPolicy.getChunkLength() <= 0
+                ? 4096 : csPolicy.getChunkLength());
+
+            this.publisher = new HttpClientBodyPublisher(this, pin);
+            if (contentLen != 0) {
+                pout = new HttpClientPipedOutputStream(this, pin, csPolicy, publisher);
             }
 
             HttpRequest.Builder rb = HttpRequest.newBuilder()
