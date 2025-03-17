@@ -63,7 +63,6 @@ import org.apache.cxf.message.ExchangeImpl;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageImpl;
 import org.apache.cxf.message.MessageUtils;
-import org.apache.cxf.phase.AbortedInvocationException;
 import org.apache.cxf.policy.PolicyDataEngine;
 import org.apache.cxf.security.SecurityContext;
 import org.apache.cxf.security.transport.TLSSessionInfo;
@@ -263,17 +262,8 @@ public abstract class AbstractHTTPDestination
         copyKnownRequestAttributes(req, inMessage);
 
         try {
-            try {
-                incomingObserver.onMessage(inMessage);
-                invokeComplete(context, req, resp, inMessage);
-            } catch (AbortedInvocationException ex) {
-                maybeResetAndCloseResponseOutputStream(resp);
-                if (ex.getRuntimeException() != null) {
-                    throw ex.getRuntimeException();
-                } else {
-                    throw ex;
-                }
-            } 
+            incomingObserver.onMessage(inMessage);
+            invokeComplete(context, req, resp, inMessage);
         } catch (SuspendedInvocationException ex) {
             if (ex.getRuntimeException() != null) {
                 throw ex.getRuntimeException();
@@ -700,21 +690,6 @@ public abstract class AbstractHTTPDestination
             outMessage.remove(HTTP_RESPONSE);
         }
         return responseStream;
-    }
-
-    private void maybeResetAndCloseResponseOutputStream(HttpServletResponse response) throws IOException {
-        try {
-            // The Servlet API does not provide means to abort the response, the best
-            // we could do is reset buffers (only partial data is going to be sent) and close
-            // the connection.
-            if (!response.isCommitted()) {
-                response.setHeader(HttpHeaderHelper.CONNECTION, HttpHeaderHelper.CLOSE);
-                response.resetBuffer();
-                response.getOutputStream().close();
-            }
-        } catch (IllegalStateException ex) {
-            // response.getWriter() has already been called
-        }
     }
 
     private void closeResponseOutputStream(HttpServletResponse response) throws IOException {
