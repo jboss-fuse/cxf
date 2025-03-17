@@ -699,10 +699,7 @@ public class URLConnectionAsyncHTTPConduit extends URLConnectionHTTPConduit {
         }
 
         protected void handleResponseAsync() throws IOException {
-            // The response hasn't been handled yet, should be handled asynchronously
-            if (httpResponse == null) {
-                isAsync = true;
-            }
+            isAsync = true;
         }
 
         protected void closeInputStream() throws IOException {
