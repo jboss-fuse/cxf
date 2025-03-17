@@ -38,7 +38,6 @@ import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageUtils;
-import org.apache.cxf.phase.AbortedInvocationException;
 import org.apache.cxf.phase.Phase;
 import org.apache.cxf.staxutils.StaxUtils;
 
@@ -72,12 +71,7 @@ public class Soap12FaultOutInterceptor extends AbstractSoapInterceptor {
             // have been streaming some data already and may not be able to inject a fault in the middle 
             // of the data transfer.
             if (MessageUtils.getContextualBoolean(message, Message.PARTIAL_ATTACHMENTS_MESSAGE, false)) {
-                // Signal that response has to be aborted midway
-                if (MessageUtils.getContextualBoolean(message, Message.MTOM_ENABLED, false)) {
-                    throw new AbortedInvocationException(f);
-                } else {
-                    throw f;
-                }
+                throw f;
             }
 
             XMLStreamWriter writer = message.getContent(XMLStreamWriter.class);
