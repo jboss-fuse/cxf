@@ -719,11 +719,7 @@ public class HttpClientHTTPConduit extends URLConnectionHTTPConduit {
                     pout = null;
                 }
                 if (publisher != null) {
-                    try {
-                        publisher.close();
-                    } catch (Exception e) {
-                        logStackTrace(e);
-                    }
+                    publisher.close();
                     publisher = null;
                 }
                 request = null;
