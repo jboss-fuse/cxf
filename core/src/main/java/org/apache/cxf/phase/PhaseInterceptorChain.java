@@ -325,9 +325,6 @@ public class PhaseInterceptorChain implements InterceptorChain {
                     }
                     pause();
                     throw ex;
-                } catch (AbortedInvocationException ex) {
-                    abort();
-                    throw ex;
                 } catch (RuntimeException ex) {
                     if (!faultOccurred) {
                         faultOccurred = true;
