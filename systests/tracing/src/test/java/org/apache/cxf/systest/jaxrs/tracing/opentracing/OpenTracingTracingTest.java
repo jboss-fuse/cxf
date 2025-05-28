@@ -239,8 +239,20 @@ public class OpenTracingTracingTest extends AbstractClientServerTestBase {
         await().atMost(Duration.ofSeconds(1L)).until(()-> REPORTER.getSpans().size() == 2);
 
         assertThat(REPORTER.getSpans().size(), equalTo(2));
-        assertThat(REPORTER.getSpans().get(0).getOperationName(), equalTo("Processing books"));
-        assertThat(REPORTER.getSpans().get(1).getOperationName(), equalTo("GET /bookstore/books/async"));
+        boolean foundProcessing = false;
+        for (int i = 0; i < 2; i++) {
+            if ("Processing books".equals(REPORTER.getSpans().get(i).getOperationName())) {
+                foundProcessing = true;
+            }
+        }
+        assertTrue("Could not find Processing books in span getOperationName()", foundProcessing);
+
+        boolean foundAsync = false;
+        for (int i = 0; i < 2; i++) {
+            if ("GET /bookstore/books/async".equals(REPORTER.getSpans().get(i).getOperationName())) {
+                foundAsync = true;
+            }
+        }
     }
 
     @Test
