@@ -268,14 +268,16 @@ public class OpenTelemetryTracingTest extends AbstractClientServerTestBase {
             assertTrue("Could not find Processing books in span getOperationName()", foundProcessing);
 
             boolean foundAsync = false;
+            int getIndex = -1;
             for (int i = 0; i < 2; i++) {
                 if ("GET /bookstore/books/async".equals(otelRule.getSpans().get(i).getName())) {
                     foundAsync = true;
+                    getIndex = i;
                 }
             }
 
-            assertThat(otelRule.getSpans().get(1).getParentSpanContext().isValid(), equalTo(true));
-            assertThat(otelRule.getSpans().get(1).getParentSpanId(),
+            assertThat(otelRule.getSpans().get(getIndex).getParentSpanContext().isValid(), equalTo(true));
+            assertThat(otelRule.getSpans().get(getIndex).getParentSpanId(),
                        equalTo(Span.current().getSpanContext().getSpanId()));
         }
     }
