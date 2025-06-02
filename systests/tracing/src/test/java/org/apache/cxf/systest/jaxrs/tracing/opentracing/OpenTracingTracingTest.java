@@ -199,22 +199,8 @@ public class OpenTracingTracingTest extends AbstractClientServerTestBase {
         await().atMost(Duration.ofSeconds(1L)).until(()-> REPORTER.getSpans().size() == 2);
 
         assertThat(REPORTER.getSpans().size(), equalTo(2));
-        boolean foundProcessing = false;
-        for (int i = 0; i < 2; i++) {
-            if ("Processing books".equals(REPORTER.getSpans().get(i).getOperationName())) {
-                foundProcessing = true;
-            }
-        }
-        assertTrue("Could not find Processing books in span getOperationName()", foundProcessing);
-
-        boolean foundAsync = false;
-        for (int i = 0; i < 2; i++) {
-            if ("GET /bookstore/books/async".equals(REPORTER.getSpans().get(i).getOperationName())) {
-                foundAsync = true;
-            }
-        }
-        assertTrue("Could not find GET /bookstore/books/async in span getOperationName()", foundAsync);
-
+        assertEquals("Processing books", REPORTER.getSpans().get(0).getOperationName());
+        assertEquals("GET /bookstore/books/async", REPORTER.getSpans().get(1).getOperationName());
         assertThat(REPORTER.getSpans().get(1).getReferences(), not(empty()));
         assertThat(REPORTER.getSpans().get(1).getReferences().get(0).getSpanContext().getSpanId(),
             equalTo(spanId.getSpanId()));
@@ -239,20 +225,8 @@ public class OpenTracingTracingTest extends AbstractClientServerTestBase {
         await().atMost(Duration.ofSeconds(1L)).until(()-> REPORTER.getSpans().size() == 2);
 
         assertThat(REPORTER.getSpans().size(), equalTo(2));
-        boolean foundProcessing = false;
-        for (int i = 0; i < 2; i++) {
-            if ("Processing books".equals(REPORTER.getSpans().get(i).getOperationName())) {
-                foundProcessing = true;
-            }
-        }
-        assertTrue("Could not find Processing books in span getOperationName()", foundProcessing);
-
-        boolean foundAsync = false;
-        for (int i = 0; i < 2; i++) {
-            if ("GET /bookstore/books/async".equals(REPORTER.getSpans().get(i).getOperationName())) {
-                foundAsync = true;
-            }
-        }
+        assertThat(REPORTER.getSpans().get(0).getOperationName(), equalTo("Processing books"));
+        assertThat(REPORTER.getSpans().get(1).getOperationName(), equalTo("GET /bookstore/books/async"));
     }
 
     @Test
