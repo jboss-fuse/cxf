@@ -100,6 +100,7 @@
         <cxf.cdi.api.version>4.0.1</cxf.cdi.api.version>
         <cxf.classgraph.version>4.8.25</cxf.classgraph.version>
         <cxf.classmate.version>1.5.1</cxf.classmate.version>
+        <cxf.commons-beanutils.version>1.11.0</cxf.commons-beanutils.version>
         <cxf.commons-codec.version>1.17.2</cxf.commons-codec.version>
         <cxf.commons-io.version>2.16.1</cxf.commons-io.version>
         <cxf.commons-jcs-jcache.version>2.2.1</cxf.commons-jcs-jcache.version>
@@ -1723,6 +1724,11 @@
                 <groupId>jakarta.ejb</groupId>
                 <artifactId>jakarta.ejb-api</artifactId>
                 <version>${cxf.jakarta.ejb.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-beanutils</groupId>
+                <artifactId>commons-beanutils</artifactId>
+                <version>${cxf.commons-beanutils.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.activemq</groupId>
