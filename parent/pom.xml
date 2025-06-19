@@ -129,7 +129,7 @@
         <cxf.httpcomponents.client.version>4.5.14</cxf.httpcomponents.client.version>
         <cxf.httpcomponents.core.version.range>[4.3,4.5.0)</cxf.httpcomponents.core.version.range>
         <cxf.httpcomponents.core.version>4.4.16</cxf.httpcomponents.core.version>
-        <cxf.httpcomponents.client5.version>5.4.3</cxf.httpcomponents.client5.version>
+        <cxf.httpcomponents.client5.version>5.4.4</cxf.httpcomponents.client5.version>
         <cxf.httpcomponents.core5.version>5.3.3</cxf.httpcomponents.core5.version>
         <cxf.jackson.version>2.18.2.redhat-00004</cxf.jackson.version>
         <cxf.jackson.databind.version>2.18.2.redhat-00004</cxf.jackson.databind.version>
@@ -160,7 +160,7 @@
         <cxf.jcache.version>1.1.1</cxf.jcache.version>
         <cxf.jdom.version>1.0</cxf.jdom.version>
         <cxf.jettison.version>1.5.4</cxf.jettison.version>
-        <cxf.jetty12.version>12.0.19</cxf.jetty12.version>
+        <cxf.jetty12.version>12.0.22</cxf.jetty12.version>
         <cxf.jetty.version>${cxf.jetty12.version}</cxf.jetty.version>
         <cxf.jexl.version>3.3</cxf.jexl.version>
         <cxf.joda.time.version>2.10.10</cxf.joda.time.version>
@@ -173,11 +173,11 @@
         <cxf.kerby.version>2.0.3</cxf.kerby.version>
         <cxf.ldapsdk.version>7.0.2</cxf.ldapsdk.version>
         <cxf.littleproxy.version>1.1.2</cxf.littleproxy.version>
-        <cxf.logback.classic.version>1.5.16</cxf.logback.classic.version>
+        <cxf.logback.classic.version>1.5.18</cxf.logback.classic.version>
         <cxf.lucene.version>9.12.1</cxf.lucene.version>
         <cxf.maven.core.version>3.9.8</cxf.maven.core.version>
-        <cxf.micrometer.version>1.14.4</cxf.micrometer.version>
-        <cxf.micrometer-tracing.version>1.4.5</cxf.micrometer-tracing.version>
+        <cxf.micrometer.version>1.14.8</cxf.micrometer.version>
+        <cxf.micrometer-tracing.version>1.4.7</cxf.micrometer-tracing.version>
         <cxf.microprofile.config.version>3.1</cxf.microprofile.config.version>
         <cxf.microprofile.rest.client.version>3.0.1</cxf.microprofile.rest.client.version>
         <cxf.microprofile.openapi.version>3.1.2</cxf.microprofile.openapi.version>
@@ -199,7 +199,7 @@
         <cxf.plexus-archiver.version>4.10.0</cxf.plexus-archiver.version>
         <cxf.plexus-utils.version>3.5.1</cxf.plexus-utils.version>
         <cxf.reactivestreams.version>1.0.4</cxf.reactivestreams.version>
-        <cxf.reactor.version>3.7.5</cxf.reactor.version>
+        <cxf.reactor.version>3.7.7</cxf.reactor.version>
         <cxf.rhino.version>1.7.15</cxf.rhino.version>
         <cxf.rxjava.version>1.3.8</cxf.rxjava.version>
         <cxf.rxjava2.version>2.2.21</cxf.rxjava2.version>
@@ -211,16 +211,16 @@
         <cxf.slf4j.version>2.0.17</cxf.slf4j.version>
         <cxf.snakeyaml.version>2.4</cxf.snakeyaml.version>
         <cxf.specs.jaxws.api.version>2.3_2</cxf.specs.jaxws.api.version>
-        <cxf.spring.boot.version>3.4.6</cxf.spring.boot.version>
-        <cxf.spring.ldap.version>3.2.12</cxf.spring.ldap.version>
+        <cxf.spring.boot.version>3.4.7</cxf.spring.boot.version>
+        <cxf.spring.ldap.version>3.2.13</cxf.spring.ldap.version>
         <cxf.spring.mock>spring-test</cxf.spring.mock>
-        <cxf.spring.security.version>6.4.6</cxf.spring.security.version>
-        <cxf.spring.version>6.2.7</cxf.spring.version>
+        <cxf.spring.security.version>6.4.7</cxf.spring.security.version>
+        <cxf.spring.version>6.2.8</cxf.spring.version>
         <cxf.stax-ex.version>1.8.3</cxf.stax-ex.version>
         <cxf.swagger.ui.version>5.18.3</cxf.swagger.ui.version>
         <cxf.swagger.v3.version>2.2.28</cxf.swagger.v3.version>
         <cxf.tika.version>3.0.0</cxf.tika.version>
-        <cxf.tomcat.version>10.1.41</cxf.tomcat.version>
+        <cxf.tomcat.version>10.1.42</cxf.tomcat.version>
         <cxf.tomitribe.http.signature.version>1.8</cxf.tomitribe.http.signature.version>
         <cxf.undertow.version>2.3.18.SP1-redhat-00001</cxf.undertow.version>
         <cxf.yasson.version>3.0.4</cxf.yasson.version>
@@ -850,7 +850,7 @@
             <dependency>
                 <groupId>org.apache.maven.plugin-tools</groupId>
                 <artifactId>maven-plugin-annotations</artifactId>
-                <version>3.8.2</version>
+                <version>3.13.1</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
