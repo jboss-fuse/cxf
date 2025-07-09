@@ -604,7 +604,6 @@
                                     
                                     <fileset dir="../../services">
                                         <include name="**/src/main/java/**/*.java" />
-                                        <exclude name="**/wsn-osgi/**" />
                                         <exclude name="**/systests/**" />
                                         <exclude name="**/sts-war/**" />
                                         <exclude name="**/xkms-war/**" />
