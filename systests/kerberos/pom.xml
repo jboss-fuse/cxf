@@ -222,6 +222,12 @@
             <artifactId>kerb-simplekdc</artifactId>
             <version>${cxf.kerby.version}</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.nimbusds</groupId>
+                    <artifactId>nimbus-jose-jwt</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
     </dependencies>
