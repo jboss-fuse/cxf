@@ -115,6 +115,12 @@
             <artifactId>jakarta.inject-api</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${cxf.guava.version}</version>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.eclipse.microprofile.rest.client</groupId>
@@ -127,6 +133,18 @@
                 <exclusion>
                     <groupId>org.eclipse.jetty</groupId>
                     <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>net.minidev</groupId> 
+                    <artifactId>json-smart</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>           
+                    <artifactId>guava</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-fileupload</groupId>      
+                    <artifactId>commons-fileupload</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
