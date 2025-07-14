@@ -210,16 +210,16 @@
         <cxf.slf4j.version>2.0.17</cxf.slf4j.version>
         <cxf.snakeyaml.version>2.4</cxf.snakeyaml.version>
         <cxf.specs.jaxws.api.version>2.3_2</cxf.specs.jaxws.api.version>
-        <cxf.spring.boot.version>3.4.5</cxf.spring.boot.version>
-        <cxf.spring.ldap.version>3.2.12</cxf.spring.ldap.version>
+        <cxf.spring.boot.version>3.4.7</cxf.spring.boot.version>
+        <cxf.spring.ldap.version>3.2.13</cxf.spring.ldap.version>
         <cxf.spring.mock>spring-test</cxf.spring.mock>
-        <cxf.spring.security.version>6.4.5</cxf.spring.security.version>
-        <cxf.spring.version>6.2.7</cxf.spring.version>
+        <cxf.spring.security.version>6.4.7</cxf.spring.security.version>
+        <cxf.spring.version>6.2.8</cxf.spring.version>
         <cxf.stax-ex.version>1.8.3</cxf.stax-ex.version>
         <cxf.swagger.ui.version>5.21.0</cxf.swagger.ui.version>
         <cxf.swagger.v3.version>2.2.32</cxf.swagger.v3.version>
         <cxf.tika.version>3.0.0</cxf.tika.version>
-        <cxf.tomcat.version>10.1.41</cxf.tomcat.version>
+        <cxf.tomcat.version>10.1.42</cxf.tomcat.version>
         <cxf.tomitribe.http.signature.version>1.8</cxf.tomitribe.http.signature.version>
         <cxf.undertow.version>2.3.18.SP1-redhat-00001</cxf.undertow.version>
         <cxf.yasson.version>3.0.4</cxf.yasson.version>
