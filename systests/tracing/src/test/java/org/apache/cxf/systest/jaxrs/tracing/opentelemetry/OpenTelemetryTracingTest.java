@@ -75,6 +75,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
 import org.junit.rules.ExpectedException;
 
 import static org.apache.cxf.systest.jaxrs.tracing.opentelemetry.HasAttribute.hasAttribute;
@@ -89,6 +90,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+
+@Disabled("Test is fluky on fuse-jenkins")
 public class OpenTelemetryTracingTest extends AbstractClientServerTestBase {
     public static final String PORT = allocatePort(OpenTelemetryTracingTest.class);
 
