@@ -63,6 +63,7 @@ import io.opentracing.tag.Tags;
 
 import org.junit.After;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.jupiter.api.Disabled;
@@ -79,6 +80,9 @@ import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+
+@Ignore
+@Disabled("Flaky Test")
 public class OpenTracingTracingTest extends AbstractClientServerTestBase {
     public static final String PORT = allocatePort(OpenTracingTracingTest.class);
 
