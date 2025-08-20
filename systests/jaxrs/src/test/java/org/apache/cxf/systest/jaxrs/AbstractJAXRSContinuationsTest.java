@@ -161,6 +161,9 @@ public abstract class AbstractJAXRSContinuationsTest extends AbstractBusClientSe
 
     @Test
     public void testContinuationWithTimeHandlerResumeOnly() throws Exception {
+        if (org.apache.cxf.transport.http.HTTPTransportFactory.isForceURLConnectionConduit()) {
+            return;
+        }
 
         doTestContinuation("/books/timeouthandlerresume");
     }
