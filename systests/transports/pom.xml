@@ -347,9 +347,21 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.2.4.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>io.github.littleproxy</groupId>
             <artifactId>littleproxy</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-all</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
