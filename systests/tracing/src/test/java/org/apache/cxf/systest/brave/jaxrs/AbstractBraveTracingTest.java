@@ -47,7 +47,6 @@ import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.jupiter.api.Disabled;
 import org.junit.rules.ExpectedException;
 
 import static org.apache.cxf.systest.HasSize.hasSize;
@@ -181,7 +180,6 @@ public abstract class AbstractBraveTracingTest extends AbstractClientServerTestB
         assertThat(TestSpanHandler.getAllSpans().get(0).name(), equalTo("Processing books"));
     }
 
-    @Disabled("Test is fluky on fuse-jenkins")
     @Test
     public void testThatNewSpanIsCreatedWhenNotProvidedUsingAsyncClient() throws Exception {
         final WebClient client = createWebClient("/bookstore/books", getClientProvider(brave));
@@ -196,7 +194,6 @@ public abstract class AbstractBraveTracingTest extends AbstractClientServerTestB
         assertThat(TestSpanHandler.getAllSpans().get(2).name(), equalTo("GET " + client.getCurrentURI()));
     }
 
-    @Disabled("Test is fluky on fuse-jenkins")
     @Test
     public void testThatNewSpansAreCreatedWhenNotProvidedUsingMultipleAsyncClients() throws Exception {
         final WebClient client = createWebClient("/bookstore/books", getClientProvider(brave));
