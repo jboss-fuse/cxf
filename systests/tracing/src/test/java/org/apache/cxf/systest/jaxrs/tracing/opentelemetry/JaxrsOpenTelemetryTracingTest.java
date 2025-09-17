@@ -75,9 +75,9 @@ import io.opentelemetry.semconv.UserAgentAttributes;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.jupiter.api.Disabled;
+import org.junit.rules.ExpectedException;
 
 import static org.apache.cxf.systest.HasSize.hasSize;
 import static org.apache.cxf.systest.jaxrs.tracing.opentelemetry.HasAttribute.hasAttribute;
@@ -93,8 +93,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
-@Ignore
-@Disabled("Test is fluky on fuse-jenkins")
 public class JaxrsOpenTelemetryTracingTest extends AbstractClientServerTestBase {
     public static final String PORT = allocatePort(JaxrsOpenTelemetryTracingTest.class);
 
@@ -102,6 +100,9 @@ public class JaxrsOpenTelemetryTracingTest extends AbstractClientServerTestBase 
     public static OpenTelemetryRule otelRule = OpenTelemetryRule.create();
 
     private static final AtomicLong RANDOM = new AtomicLong();
+
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
     @BeforeClass
     public static void startServers() {
@@ -250,7 +251,6 @@ public class JaxrsOpenTelemetryTracingTest extends AbstractClientServerTestBase 
         assertThat(serverSpan.getInstrumentationScopeInfo().getName(), equalTo("jaxrs-server-test"));
     }
 
-    @Disabled
     @Test
     public void testThatNewInnerSpanIsCreatedUsingAsyncInvocation() throws InterruptedException {
         final Context parentContext = fromRandom();
@@ -270,8 +270,6 @@ public class JaxrsOpenTelemetryTracingTest extends AbstractClientServerTestBase 
         }
     }
 
-
-    @Disabled
     @Test
     public void testThatOuterSpanIsCreatedUsingAsyncInvocation() {
         final Context parentContext = fromRandom();
@@ -285,7 +283,6 @@ public class JaxrsOpenTelemetryTracingTest extends AbstractClientServerTestBase 
         }
     }
 
-    @Disabled
     @Test
     public void testThatNewSpanIsCreatedUsingAsyncInvocation() throws InterruptedException {
         final Response r = createWebClient("/bookstore/books/async").get();
@@ -298,7 +295,6 @@ public class JaxrsOpenTelemetryTracingTest extends AbstractClientServerTestBase 
         assertThat(spans.get(1).getName(), equalTo("GET /bookstore/books/async"));
     }
 
-    @Disabled
     @Test
     public void testThatNewSpanIsCreatedWhenNotProvidedUsingAsyncClient() throws Exception {
         final WebClient client = createWebClient("/bookstore/books",
@@ -316,7 +312,6 @@ public class JaxrsOpenTelemetryTracingTest extends AbstractClientServerTestBase 
         assertThat(otelRule.getSpans().get(2).getKind(), equalTo(SpanKind.CLIENT));
     }
 
-    @Disabled
     @Test
     public void testThatNewSpansAreCreatedWhenNotProvidedUsingMultipleAsyncClients() throws Exception {
         final WebClient client = createWebClient("/bookstore/books",
@@ -383,7 +378,6 @@ public class JaxrsOpenTelemetryTracingTest extends AbstractClientServerTestBase 
         assertThat(otelRule.getSpans().get(3).getParentSpanContext().isValid(), equalTo(false));
     }
 
-    @Disabled
     @Test
     public void testThatProvidedSpanIsNotDetachedWhenActiveUsingAsyncClient() throws Exception {
         final WebClient client = createWebClient("/bookstore/books",
