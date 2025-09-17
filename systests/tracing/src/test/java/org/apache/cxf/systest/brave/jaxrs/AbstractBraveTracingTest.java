@@ -45,8 +45,9 @@ import org.apache.cxf.testutil.common.AbstractClientServerTestBase;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 
 import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.jupiter.api.Disabled;
+import org.junit.rules.ExpectedException;
 
 import static org.apache.cxf.systest.HasSize.hasSize;
 import static org.apache.cxf.systest.brave.BraveTestSupport.PARENT_SPAN_ID_NAME;
@@ -69,6 +70,9 @@ import static org.junit.Assert.assertThrows;
 public abstract class AbstractBraveTracingTest extends AbstractClientServerTestBase {
 
     private static final AtomicLong RANDOM = new AtomicLong();
+
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
     private final Tracing brave = Tracing.newBuilder()
         .addSpanHandler(new TestSpanHandler())
@@ -177,7 +181,6 @@ public abstract class AbstractBraveTracingTest extends AbstractClientServerTestB
         assertThat(TestSpanHandler.getAllSpans().get(0).name(), equalTo("Processing books"));
     }
 
-    @Disabled("Test is fluky on fuse-jenkins")
     @Test
     public void testThatNewSpanIsCreatedWhenNotProvidedUsingAsyncClient() throws Exception {
         final WebClient client = createWebClient("/bookstore/books", getClientProvider(brave));
@@ -192,7 +195,6 @@ public abstract class AbstractBraveTracingTest extends AbstractClientServerTestB
         assertThat(TestSpanHandler.getAllSpans().get(2).name(), equalTo("GET " + client.getCurrentURI()));
     }
 
-    @Disabled("Test is fluky on fuse-jenkins")
     @Test
     public void testThatNewSpansAreCreatedWhenNotProvidedUsingMultipleAsyncClients() throws Exception {
         final WebClient client = createWebClient("/bookstore/books", getClientProvider(brave));
