@@ -66,10 +66,8 @@ import io.opentracing.tag.Tags;
 
 import org.junit.After;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.jupiter.api.Disabled;
 import org.junit.rules.ExpectedException;
 
 import static org.apache.cxf.systest.HasSize.hasSize;
@@ -85,12 +83,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 <<<<<<< HEAD:systests/tracing/src/test/java/org/apache/cxf/systest/jaxrs/tracing/opentracing/JaxrsOpenTracingTracingTest.java
+<<<<<<< HEAD:systests/tracing/src/test/java/org/apache/cxf/systest/jaxrs/tracing/opentracing/JaxrsOpenTracingTracingTest.java
 public class JaxrsOpenTracingTracingTest extends AbstractClientServerTestBase {
     public static final String PORT = allocatePort(JaxrsOpenTracingTracingTest.class);
 =======
 
 @Ignore
 @Disabled("Flaky Test")
+=======
+>>>>>>> f014caa5f86 (Revert "Disable OpenTelemetryTracingTest (span order failing still) (#692)" - draft a PR to trigger CI):systests/tracing/src/test/java/org/apache/cxf/systest/jaxrs/tracing/opentracing/OpenTracingTracingTest.java
 public class OpenTracingTracingTest extends AbstractClientServerTestBase {
     public static final String PORT = allocatePort(OpenTracingTracingTest.class);
 >>>>>>> 98ebba983f1 (Disable OpenTelemetryTracingTest (span order failing still) (#692)):systests/tracing/src/test/java/org/apache/cxf/systest/jaxrs/tracing/opentracing/OpenTracingTracingTest.java
@@ -203,7 +204,6 @@ public class OpenTracingTracingTest extends AbstractClientServerTestBase {
         assertThat(REPORTER.getSpans().get(0).getReferences(), not(empty()));
     }
 
-    @Disabled("Test is fluky on fuse-jenkins")
     @Test
     public void testThatNewInnerSpanIsCreatedUsingAsyncInvocation() throws InterruptedException {
         final JaegerSpanContext spanId = fromRandom();
@@ -221,7 +221,6 @@ public class OpenTracingTracingTest extends AbstractClientServerTestBase {
             equalTo(spanId.getSpanId()));
     }
 
-    @Disabled("Test is fluky on fuse-jenkins")
     @Test
     public void testThatOuterSpanIsCreatedUsingAsyncInvocation() {
         final JaegerSpanContext spanId = fromRandom();
@@ -233,7 +232,6 @@ public class OpenTracingTracingTest extends AbstractClientServerTestBase {
         assertThat(REPORTER.getSpans().get(0).getOperationName(), equalTo("GET /bookstore/books/async/notrace"));
     }
 
-    @Disabled("Test is fluky on fuse-jenkins")
     @Test
     public void testThatNewSpanIsCreatedUsingAsyncInvocation() throws InterruptedException {
         final Response r = createWebClient("/bookstore/books/async").get();
@@ -246,7 +244,6 @@ public class OpenTracingTracingTest extends AbstractClientServerTestBase {
         assertThat(spans.get(1).getOperationName(), equalTo("GET /bookstore/books/async"));
     }
 
-    @Disabled("Test is fluky on fuse-jenkins")
     @Test
     public void testThatNewSpanIsCreatedWhenNotProvidedUsingAsyncClient() throws Exception {
         final WebClient client = createWebClient("/bookstore/books", new OpenTracingClientProvider(tracer));
@@ -263,7 +260,6 @@ public class OpenTracingTracingTest extends AbstractClientServerTestBase {
         assertThat(REPORTER.getSpans().get(2).getTags(), hasItem(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT));
     }
 
-    @Disabled("Test is fluky on fuse-jenkins")
     @Test
     public void testThatNewSpansAreCreatedWhenNotProvidedUsingMultipleAsyncClients() throws Exception {
         final WebClient client = createWebClient("/bookstore/books", new OpenTracingClientProvider(tracer));
@@ -344,7 +340,6 @@ public class OpenTracingTracingTest extends AbstractClientServerTestBase {
         assertThat(REPORTER.getSpans().get(3).getReferences(), empty());
     }
 
-    @Disabled("Test is fluky on fuse-jenkins")
     @Test
     public void testThatProvidedSpanIsNotDetachedWhenActiveUsingAsyncClient() throws Exception {
         final WebClient client = createWebClient("/bookstore/books", new OpenTracingClientProvider(tracer));
@@ -374,7 +369,6 @@ public class OpenTracingTracingTest extends AbstractClientServerTestBase {
         assertThat(REPORTER.getSpans().get(3).getReferences(), empty());
     }
 
-    @Disabled("Test is fluky on fuse-jenkins")
     @Test
     public void testThatInnerSpanIsCreatedUsingPseudoAsyncInvocation() {
         final JaegerSpanContext spanId = fromRandom();
