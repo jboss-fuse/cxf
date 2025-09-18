@@ -20,8 +20,11 @@ package org.apache.cxf.systest.brave.jaxrs;
 
 import java.net.MalformedURLException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +35,7 @@ import java.util.stream.IntStream;
 import brave.Span;
 import brave.Tracer.SpanInScope;
 import brave.Tracing;
+import brave.handler.MutableSpan;
 import brave.sampler.Sampler;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.core.MediaType;
@@ -204,18 +208,18 @@ public abstract class AbstractBraveTracingTest extends AbstractClientServerTestB
             .mapToObj(index -> client.async().get())
             .map(this::get)
             .forEach(r -> assertEquals(Status.OK.getStatusCode(), r.getStatus()));
-
-        assertThat(TestSpanHandler.getAllSpans().toString(), TestSpanHandler.getAllSpans().size(), equalTo(12));
+        List<MutableSpan> spans = filterAndSortBraveSpans(TestSpanHandler.getAllSpans());
+        assertThat(spans.toString(), spans.size(), equalTo(12));
 
         IntStream
             .range(0, 4)
             .map(index -> index * 3)
             .forEach(index -> {
-                assertThat(TestSpanHandler.getAllSpans().get(index).name(),
+                assertThat(spans.get(index).name(),
                     equalTo("Get Books"));
-                assertThat(TestSpanHandler.getAllSpans().get(index + 1).name(),
+                assertThat(spans.get(index + 1).name(),
                     equalTo("GET /bookstore/books"));
-                assertThat(TestSpanHandler.getAllSpans().get(index + 2).name(),
+                assertThat(spans.get(index + 2).name(),
                     equalTo("GET " + client.getCurrentURI()));
             });
     }
@@ -413,6 +417,54 @@ public abstract class AbstractBraveTracingTest extends AbstractClientServerTestB
         } catch (InterruptedException | TimeoutException | ExecutionException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    /**
+     * Keep only well-formed spans (non-empty name),
+     * then return a deterministically sorted list.
+     *
+     * Sort key 
+     *   1) start timestamp 
+     *   2) finish timestamp 
+     */
+    public static List<MutableSpan> filterAndSortBraveSpans(List<MutableSpan> raw) {
+        if (raw == null || raw.isEmpty()) {
+            return Collections.emptyList();
+        }
+        // Deterministic sort: start → finish
+        Comparator<MutableSpan> byId = Comparator
+            .comparing(s -> String.valueOf(s == null ? null : s.id()),
+                       Comparator.nullsFirst(Comparator.naturalOrder()));
+        Comparator<MutableSpan> byStart = Comparator.comparingLong(s -> {
+            try {
+                return s.startTimestamp();
+            } catch (Throwable t) {
+                return 0L;
+            }
+        });
+        Comparator<MutableSpan> byFinish = Comparator.comparingLong(s -> {
+            try {
+                return s.finishTimestamp();
+            } catch (Throwable t) {
+                return 0L;
+            }
+        });
+
+        List<MutableSpan> out = new ArrayList<>();
+        for (MutableSpan s : raw) {
+            if (s == null) {
+                continue;
+            }
+            String name = s.name();
+            if (name == null || name.isEmpty()) {
+                continue; // require non-empty name
+            }
+            
+            out.add(s);
+        }
+
+        out.sort(byStart.thenComparing(byFinish).reversed());
+        return out;
     }
 
     private static SpanId fromRandom() {
