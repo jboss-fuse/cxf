@@ -50,8 +50,8 @@
         <cxf.activemq.artemis.version>2.40.0.redhat-00008</cxf.activemq.artemis.version>
         <cxf.h2.version>2.3.232</cxf.h2.version>
         <cxf.jboss.narayana.version>5.13.1.Final</cxf.jboss.narayana.version>
-        <cxf.narayana.spring.boot.version>2.6.7</cxf.narayana.spring.boot.version>
-        <cxf.camel.version>4.10.6</cxf.camel.version>
+        <cxf.narayana.spring.boot.version>3.3.1</cxf.narayana.spring.boot.version>
+        <cxf.camel.version>4.10.7</cxf.camel.version>
         <cxf.openfeign.version>13.6</cxf.openfeign.version>
     </properties>
     <dependencies>
