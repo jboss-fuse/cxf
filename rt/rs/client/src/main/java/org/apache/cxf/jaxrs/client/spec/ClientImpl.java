@@ -79,8 +79,8 @@ public class ClientImpl implements Client {
 
     @Override
     public void close() {
-        if (!closed) {
-            synchronized (baseClientsLock) {
+        synchronized (baseClientsLock) {
+            if (!closed) {
                 for (WebClient wc : baseClients) {
                     wc.close();
                 }
@@ -88,7 +88,6 @@ public class ClientImpl implements Client {
                 closed = true;
             }
         }
-
     }
 
     @Override
