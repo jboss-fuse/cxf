@@ -142,6 +142,13 @@
                 <configuration>
                     <goalPrefix>cxf-java2wadl</goalPrefix>
                 </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>commons-io</groupId>
+                        <artifactId>commons-io</artifactId>
+                        <version>${cxf.commons-io.version}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
