@@ -102,7 +102,7 @@
         <cxf.classgraph.version>4.8.25</cxf.classgraph.version>
         <cxf.classmate.version>1.5.1</cxf.classmate.version>
         <cxf.commons-codec.version>1.17.1</cxf.commons-codec.version>
-        <cxf.commons-io.version>2.16.1</cxf.commons-io.version>
+        <cxf.commons-io.version>2.20.0</cxf.commons-io.version>
         <cxf.commons-jcs-jcache.version>2.2.1</cxf.commons-jcs-jcache.version>
         <cxf.commons-lang3.version>3.18.0</cxf.commons-lang3.version>
         <cxf.commons-logging.version>1.2</cxf.commons-logging.version>
@@ -131,7 +131,7 @@
         <cxf.httpcomponents.core.version>4.4.16</cxf.httpcomponents.core.version>
         <cxf.httpcomponents.client5.version>5.4.4</cxf.httpcomponents.client5.version>
         <cxf.httpcomponents.core5.version>5.3.6</cxf.httpcomponents.core5.version>
-        <cxf.jackson.version>2.20.1</cxf.jackson.version>
+        <cxf.jackson.version>2.19.2</cxf.jackson.version>
         <cxf.jackson.databind.version>2.20.1</cxf.jackson.databind.version>
         <cxf.jackson.annotations.version>2.20</cxf.jackson.annotations.version>
         <cxf.jacorb.version>3.9</cxf.jacorb.version>
@@ -212,10 +212,10 @@
         <cxf.slf4j.version>2.0.17</cxf.slf4j.version>
         <cxf.snakeyaml.version>2.5</cxf.snakeyaml.version>
         <cxf.specs.jaxws.api.version>2.3_2</cxf.specs.jaxws.api.version>
-        <cxf.spring.boot.version>3.4.11</cxf.spring.boot.version>
-        <cxf.spring.ldap.version>3.2.15</cxf.spring.ldap.version>
+        <cxf.spring.boot.version>3.5.7</cxf.spring.boot.version>
+        <cxf.spring.ldap.version>3.3.4</cxf.spring.ldap.version>
         <cxf.spring.mock>spring-test</cxf.spring.mock>
-        <cxf.spring.security.version>6.4.12</cxf.spring.security.version>
+        <cxf.spring.security.version>6.5.5</cxf.spring.security.version>
         <cxf.spring.version>6.2.12</cxf.spring.version>
         <cxf.stax-ex.version>1.8.3</cxf.stax-ex.version>
         <cxf.swagger.ui.version>5.30.2</cxf.swagger.ui.version>
