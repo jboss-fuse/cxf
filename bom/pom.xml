@@ -381,11 +381,6 @@
       </dependency>
       <dependency>
         <groupId>org.apache.cxf</groupId>
-        <artifactId>cxf-rt-transports-http-jetty</artifactId>
-        <version>4.1.4-rhbac-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-rt-transports-http-netty-client</artifactId>
         <version>4.1.4-rhbac-SNAPSHOT</version>
       </dependency>
