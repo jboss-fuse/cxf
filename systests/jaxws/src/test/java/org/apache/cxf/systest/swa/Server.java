@@ -33,6 +33,7 @@ public class Server extends AbstractBusTestServerBase {
         String address = "http://localhost:" + port + "/swa";
         EndpointImpl ep;
         try {
+            System.setProperty("org.apache.cxf.transports.http_undertow.MultiPartMaxEntitySize", "-1");
             ep = (EndpointImpl) Endpoint.create(new SwANoMimeServiceImpl());
             ep.setWsdlLocation("classpath:wsdl/swa-mime-nomime.wsdl");
             ep.publish(address + "-nomime");
