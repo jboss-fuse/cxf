@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.apache.cxf.systest.swa;
+package org.apache.cxf.systest.http_undertow.multipart;
 
 import jakarta.xml.ws.Endpoint;
 import org.apache.cxf.attachment.AttachmentDeserializer;
