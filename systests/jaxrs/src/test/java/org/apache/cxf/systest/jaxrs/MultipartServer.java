@@ -37,6 +37,7 @@ public class MultipartServer extends AbstractServerTestServerBase {
     @Override
     protected Server createServer(Bus bus) throws Exception {
         bus.setProperty(ProviderFactory.SKIP_JAKARTA_JSON_PROVIDERS_REGISTRATION, true);
+        bus.setProperty(AttachmentDeserializer.ATTACHMENT_MAX_SIZE, -1);
         bus.getInInterceptors().add(new LoggingInInterceptor());
 
         JAXRSServerFactoryBean sf = new JAXRSServerFactoryBean();
