@@ -20,9 +20,8 @@
 package org.apache.cxf.systest.swa;
 
 import jakarta.xml.ws.Endpoint;
-
-import org.apache.cxf.jaxws.EndpointImpl;
 import org.apache.cxf.attachment.AttachmentDeserializer;
+import org.apache.cxf.jaxws.EndpointImpl;
 import org.apache.cxf.testutil.common.AbstractBusTestServerBase;
 import org.apache.cxf.testutil.common.TestUtil;
 
