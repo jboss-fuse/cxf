@@ -190,7 +190,7 @@
         <cxf.neethi.version>3.2.1</cxf.neethi.version>
         <cxf.netty.version.range>[4,5)</cxf.netty.version.range>
         <cxf.netty.version>4.1.131.Final</cxf.netty.version>
-        <cxf.netty.tcnative.version>2.0.69.Final</cxf.netty.tcnative.version>
+        <cxf.netty.tcnative.version>2.0.74.Final</cxf.netty.tcnative.version>
         <cxf.olingo.version>2.0.13</cxf.olingo.version>
         <cxf.openjpa.version>3.2.2</cxf.openjpa.version>
         <cxf.opentelemetry.version>1.59.0</cxf.opentelemetry.version>
@@ -214,11 +214,11 @@
         <cxf.slf4j.version>2.0.17</cxf.slf4j.version>
         <cxf.snakeyaml.version>2.5</cxf.snakeyaml.version>
         <cxf.specs.jaxws.api.version>2.3_2</cxf.specs.jaxws.api.version>
-        <cxf.spring.boot.version>3.4.13</cxf.spring.boot.version>
-        <cxf.spring.ldap.version>3.2.16</cxf.spring.ldap.version>
+        <cxf.spring.boot.version>3.5.11</cxf.spring.boot.version>
+        <cxf.spring.ldap.version>3.3.6</cxf.spring.ldap.version>
         <cxf.spring.mock>spring-test</cxf.spring.mock>
-        <cxf.spring.security.version>6.4.13</cxf.spring.security.version>
-        <cxf.spring.version>6.2.15</cxf.spring.version>
+        <cxf.spring.security.version>6.5.8</cxf.spring.security.version>
+        <cxf.spring.version>6.2.16</cxf.spring.version>
         <cxf.stax-ex.version>1.8.3</cxf.stax-ex.version>
         <cxf.swagger.ui.version>5.31.0</cxf.swagger.ui.version>
         <cxf.swagger.v3.version>2.2.42</cxf.swagger.v3.version>
