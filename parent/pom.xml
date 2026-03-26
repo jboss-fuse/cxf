@@ -162,7 +162,7 @@
         <cxf.jcache.version>1.1.1</cxf.jcache.version>
         <cxf.jdom.version>1.0</cxf.jdom.version>
         <cxf.jettison.version>1.5.4</cxf.jettison.version>
-        <cxf.jetty12.version>12.0.32</cxf.jetty12.version>
+        <cxf.jetty12.version>12.0.33</cxf.jetty12.version>
         <cxf.jetty.version>${cxf.jetty12.version}</cxf.jetty.version>
         <cxf.jexl.version>3.3</cxf.jexl.version>
         <cxf.joda.time.version>2.10.10</cxf.joda.time.version>
@@ -214,11 +214,11 @@
         <cxf.slf4j.version>2.0.17</cxf.slf4j.version>
         <cxf.snakeyaml.version>2.5</cxf.snakeyaml.version>
         <cxf.specs.jaxws.api.version>2.3_2</cxf.specs.jaxws.api.version>
-        <cxf.spring.boot.version>3.5.11</cxf.spring.boot.version>
+        <cxf.spring.boot.version>3.5.12</cxf.spring.boot.version>
         <cxf.spring.ldap.version>3.3.6</cxf.spring.ldap.version>
         <cxf.spring.mock>spring-test</cxf.spring.mock>
-        <cxf.spring.security.version>6.5.8</cxf.spring.security.version>
-        <cxf.spring.version>6.2.16</cxf.spring.version>
+        <cxf.spring.security.version>6.5.9</cxf.spring.security.version>
+        <cxf.spring.version>6.2.17</cxf.spring.version>
         <cxf.stax-ex.version>1.8.3</cxf.stax-ex.version>
         <cxf.swagger.ui.version>5.31.0</cxf.swagger.ui.version>
         <cxf.swagger.v3.version>2.2.42</cxf.swagger.v3.version>
