@@ -81,24 +81,8 @@
       </dependency>
       <dependency>
         <groupId>org.apache.cxf.services.xkms</groupId>
-        <artifactId>cxf-services-xkms-features</artifactId>
-        <version>4.1.5-rhbac-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf.services.xkms</groupId>
-        <artifactId>cxf-services-xkms-itests</artifactId>
-        <version>4.1.5-rhbac-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf.services.xkms</groupId>
         <artifactId>cxf-services-xkms-service</artifactId>
         <version>4.1.5-rhbac-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf.services.xkms</groupId>
-        <artifactId>cxf-services-xkms-war</artifactId>
-        <version>4.1.5-rhbac-SNAPSHOT</version>
-        <type>war</type>
       </dependency>
       <dependency>
         <groupId>org.apache.cxf.services.xkms</groupId>
@@ -108,11 +92,6 @@
       <dependency>
         <groupId>org.apache.cxf.services.xkms</groupId>
         <artifactId>cxf-services-xkms-x509-repo-ldap</artifactId>
-        <version>4.1.5-rhbac-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf</groupId>
-        <artifactId>cxf-bundle-compatible</artifactId>
         <version>4.1.5-rhbac-SNAPSHOT</version>
       </dependency>
       <dependency>
@@ -163,11 +142,6 @@
       <dependency>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-integration-tracing-opentracing</artifactId>
-        <version>4.1.5-rhbac-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf</groupId>
-        <artifactId>cxf-java2swagger-plugin</artifactId>
         <version>4.1.5-rhbac-SNAPSHOT</version>
       </dependency>
       <dependency>
@@ -233,11 +207,6 @@
       <dependency>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-rt-frontend-jaxws</artifactId>
-        <version>4.1.5-rhbac-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf</groupId>
-        <artifactId>cxf-rt-frontend-js</artifactId>
         <version>4.1.5-rhbac-SNAPSHOT</version>
       </dependency>
       <dependency>
