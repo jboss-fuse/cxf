@@ -38,7 +38,7 @@
             <plugin>
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-codegen-plugin</artifactId>
-                <version>4.2.0</version>
+                <version>4.2.0-rhbac-SNAPSHOT</version>
                 <executions>
                     <execution>
                         <id>generate-sources</id>
