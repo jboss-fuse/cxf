@@ -71,8 +71,11 @@
             <optional>true</optional>
         </dependency>
         <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>cxf-rt-transports-http-undertow</artifactId>
             <version>4.2.0-rhbac-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>org.atmosphere</groupId>
             <artifactId>atmosphere-runtime</artifactId>
             <version>${cxf.atmosphere.version}</version>
