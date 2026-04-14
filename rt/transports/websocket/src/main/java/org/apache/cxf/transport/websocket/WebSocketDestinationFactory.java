@@ -39,8 +39,6 @@ public class WebSocketDestinationFactory implements HttpDestinationFactory {
     private static final boolean ATMOSPHERE_AVAILABLE = probeClass("org.atmosphere.cpr.ApplicationConfig");
     private static final boolean UNDERTOW_AVAILABLE = 
         probeClass("org.apache.cxf.transport.http_undertow.UndertowHTTPServerEngineFactory");
-            <artifactId>cxf-rt-transports-http-undertow</artifactId>
-            <version>4.2.0-rhbac-SNAPSHOT</version>
     private static final Constructor<?> UNDERTOW_WEBSOCKET_DESTINATION_CTR =
         probeUndertowConstructor("org.apache.cxf.transport.websocket.undertow.UndertowWebSocketDestination");
     private static final Constructor<?> ATMOSPHERE_WEBSOCKET_UNDERTOW_DESTINATION_CTR =
@@ -85,8 +83,7 @@ public class WebSocketDestinationFactory implements HttpDestinationFactory {
                 }
                 return null;
             }
-            <artifactId>cxf-rt-transports-http-undertow</artifactId>
-            <version>4.2.0-rhbac-SNAPSHOT</version>
+            if (UNDERTOW_AVAILABLE) {
                 // use UndertowWebSocketDestination
                 UndertowHTTPServerEngineFactory undertowServerEngineFactory = bus
                     .getExtension(UndertowHTTPServerEngineFactory.class);
@@ -105,8 +102,9 @@ public class WebSocketDestinationFactory implements HttpDestinationFactory {
             return new AtmosphereWebSocketServletDestination(bus, registry, endpointInfo,
                                                              endpointInfo.getAddress());
         }
-            <artifactId>cxf-rt-transports-http-undertow</artifactId>
-            <version>4.2.0-rhbac-SNAPSHOT</version>
+        // use undertow-websocket
+        return createUndertowHTTPDestination(UNDERTOW_WEBSOCKET_DESTINATION_CTR, bus,
+                                                     registry, endpointInfo, null);
     }
 
     private static DestinationRegistry getDestinationRegistry(Bus bus) {
