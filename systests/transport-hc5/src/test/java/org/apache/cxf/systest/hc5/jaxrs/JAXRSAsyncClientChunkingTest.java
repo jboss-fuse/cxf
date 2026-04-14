@@ -31,8 +31,8 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
-import org.apache.cxf.interceptor.LoggingInInterceptor;
-import org.apache.cxf.interceptor.LoggingOutInterceptor;
+import org.apache.cxf.ext.logging.LoggingInInterceptor;
+import org.apache.cxf.ext.logging.LoggingOutInterceptor;
 import org.apache.cxf.jaxrs.client.ClientConfiguration;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
@@ -130,10 +130,10 @@ public class JAXRSAsyncClientChunkingTest extends AbstractBusClientServerTestBas
     
     private void configureLogging(final ClientConfiguration config) {
         final LoggingOutInterceptor out = new LoggingOutInterceptor();
-        out.setShowMultipartContent(false);
+        out.setLogMultipart(false);
 
         final LoggingInInterceptor in = new LoggingInInterceptor();
-        in.setShowBinaryContent(false);
+        in.setLogBinary(false);
 
         config.getInInterceptors().add(in);
         config.getOutInterceptors().add(out);
