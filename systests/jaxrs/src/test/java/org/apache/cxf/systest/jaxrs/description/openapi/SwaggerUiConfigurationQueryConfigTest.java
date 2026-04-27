@@ -86,7 +86,8 @@ public class SwaggerUiConfigurationQueryConfigTest extends AbstractClientServerT
         try (Response response = uiClient.get()) {
             String html = response.readEntity(String.class);
             assertThat(html, containsString("<!-- HTML"));
-            assertThat(response.getMediaType(), equalTo(MediaType.TEXT_HTML_TYPE.withCharset("utf-8")));
+            //Undertow doesn't add charset in content-type if not specified from restful resource
+            assertThat(response.getMediaType(), equalTo(MediaType.TEXT_HTML_TYPE));
         }
     }
 
