@@ -209,8 +209,6 @@
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-transports-http-undertow</artifactId>
             <version>4.2.0-rhbac-SNAPSHOT</version>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
