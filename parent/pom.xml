@@ -97,7 +97,7 @@
         <cxf.atmosphere.version.range>[3.0, 4.0)</cxf.atmosphere.version.range>
         <cxf.atmosphere.version>3.0.15</cxf.atmosphere.version>
         <cxf.bcprov.version>1.81</cxf.bcprov.version>
-        <cxf.brave.version>6.3.0</cxf.brave.version>
+        <cxf.brave.version>6.3.1</cxf.brave.version>
         <cxf.cdi.api.version>4.1.0</cxf.cdi.api.version>
         <cxf.classgraph.version>4.8.25</cxf.classgraph.version>
         <cxf.classmate.version>1.5.1</cxf.classmate.version>
@@ -164,7 +164,7 @@
         <cxf.jcache.version>1.1.1</cxf.jcache.version>
         <cxf.jdom.version>1.0</cxf.jdom.version>
         <cxf.jettison.version>1.5.4</cxf.jettison.version>
-        <cxf.jetty12.version>12.1.6</cxf.jetty12.version>
+        <cxf.jetty12.version>12.1.8</cxf.jetty12.version>
         <cxf.jetty.version>${cxf.jetty12.version}</cxf.jetty.version>
         <cxf.jexl.version>3.6.1</cxf.jexl.version>
         <cxf.joda.time.version>2.10.10</cxf.joda.time.version>
@@ -182,8 +182,8 @@
         <cxf.logback.classic.version>1.5.27</cxf.logback.classic.version>
         <cxf.lucene.version>10.3.2</cxf.lucene.version>
         <cxf.maven.core.version>3.9.12</cxf.maven.core.version>
-        <cxf.micrometer.version>1.16.3</cxf.micrometer.version>
-        <cxf.micrometer-tracing.version>1.6.3</cxf.micrometer-tracing.version>
+        <cxf.micrometer.version>1.16.5</cxf.micrometer.version>
+        <cxf.micrometer-tracing.version>1.6.5</cxf.micrometer-tracing.version>
         <cxf.microprofile.config.version>3.1</cxf.microprofile.config.version>
         <cxf.microprofile.rest.client.version>4.0</cxf.microprofile.rest.client.version>
         <cxf.microprofile.openapi.version>4.1.1</cxf.microprofile.openapi.version>
@@ -217,16 +217,16 @@
         <cxf.slf4j.version>2.0.17</cxf.slf4j.version>
         <cxf.snakeyaml.version>2.5</cxf.snakeyaml.version>
         <cxf.specs.jaxws.api.version>2.3_2</cxf.specs.jaxws.api.version>
-        <cxf.spring.boot.version>4.0.2</cxf.spring.boot.version>
-        <cxf.spring.ldap.version>4.0.1</cxf.spring.ldap.version>
+        <cxf.spring.boot.version>4.0.6</cxf.spring.boot.version>
+        <cxf.spring.ldap.version>4.0.3</cxf.spring.ldap.version>
         <cxf.spring.mock>spring-test</cxf.spring.mock>
-        <cxf.spring.security.version>7.0.2</cxf.spring.security.version>
-        <cxf.spring.version>7.0.3</cxf.spring.version>
+        <cxf.spring.security.version>7.0.5</cxf.spring.security.version>
+        <cxf.spring.version>7.0.7</cxf.spring.version>
         <cxf.stax-ex.version>1.8.3</cxf.stax-ex.version>
         <cxf.swagger.ui.version>5.31.0</cxf.swagger.ui.version>
         <cxf.swagger.v3.version>2.2.42</cxf.swagger.v3.version>
         <cxf.tika.version>3.2.3</cxf.tika.version>
-        <cxf.tomcat.version>11.0.18</cxf.tomcat.version>
+        <cxf.tomcat.version>11.0.21</cxf.tomcat.version>
         <cxf.tomitribe.http.signature.version>1.8</cxf.tomitribe.http.signature.version>
         <cxf.undertow.version>2.4.0.Alpha1</cxf.undertow.version>
         <cxf.undertow.ee.version>2.0.0.Alpha2</cxf.undertow.ee.version>
@@ -246,7 +246,7 @@
         <cxf.xmlschema.version>2.3.2</cxf.xmlschema.version>
         <cxf.xnio.version>3.8.17.Final-redhat-00001</cxf.xnio.version>
         <cxf.zest.version>2.1</cxf.zest.version>
-        <cxf.zipkin-reporter.version>3.5.1</cxf.zipkin-reporter.version>
+        <cxf.zipkin-reporter.version>3.5.3</cxf.zipkin-reporter.version>
 
         <!-- various OSGi related versions -->
         <cxf.aries.api.version>1.0.1</cxf.aries.api.version>
