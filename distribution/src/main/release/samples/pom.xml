@@ -37,7 +37,7 @@
         <cxf.spring.boot.version>4.0.6</cxf.spring.boot.version>
         <cxf.spring.cloud.eureka.version>5.0.1</cxf.spring.cloud.eureka.version>
         <cxf.tika.version>3.2.3</cxf.tika.version>
-        <cxf.tomcat.version>11.0.21</cxf.tomcat.version>
+        <cxf.tomcat.version>11.0.22</cxf.tomcat.version>
         <cxf.jboss.weld.version>6.0.4.Final</cxf.jboss.weld.version>
         <cxf.gson.version>2.13.2</cxf.gson.version>
         <cxf.lucene.version>10.3.2</cxf.lucene.version>
