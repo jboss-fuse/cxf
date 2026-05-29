@@ -29,6 +29,7 @@ pipeline {
 
     environment {
         MAVEN_OPTS = '-Xmx3g'
+        MVNW_REPOURL = 'https://nexus.corp.redhat.com/repository/maven-central/'
     }
 
     options {
