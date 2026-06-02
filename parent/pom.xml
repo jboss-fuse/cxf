@@ -96,7 +96,7 @@
         <cxf.assertj.version>4.0.0-M1</cxf.assertj.version>
         <cxf.atmosphere.version.range>[3.0, 4.0)</cxf.atmosphere.version.range>
         <cxf.atmosphere.version>3.0.15</cxf.atmosphere.version>
-        <cxf.bcprov.version>1.81</cxf.bcprov.version>
+        <cxf.bcprov.version>1.84</cxf.bcprov.version>
         <cxf.brave.version>6.3.1</cxf.brave.version>
         <cxf.cdi.api.version>4.1.0</cxf.cdi.api.version>
         <cxf.classgraph.version>4.8.25</cxf.classgraph.version>
@@ -192,7 +192,7 @@
         <cxf.msv.version>2022.7</cxf.msv.version>
         <cxf.neethi.version>3.2.2</cxf.neethi.version>
         <cxf.netty.version.range>[4,5)</cxf.netty.version.range>
-        <cxf.netty.version>4.2.10.Final</cxf.netty.version>
+        <cxf.netty.version>4.2.14.Final</cxf.netty.version>
         <cxf.netty.tcnative.version>2.0.69.Final</cxf.netty.tcnative.version>
         <cxf.olingo.version>2.0.13</cxf.olingo.version>
         <cxf.openjpa.version>4.1.1</cxf.openjpa.version>
