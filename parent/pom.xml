@@ -2036,6 +2036,10 @@
                         <groupId>org.glassfish.jaxb</groupId>
                         <artifactId>*</artifactId>
                      </exclusion>
+                    <exclusion>
+                        <groupId>org.terracotta</groupId>
+                        <artifactId>offheap-store</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
         </dependencies>
