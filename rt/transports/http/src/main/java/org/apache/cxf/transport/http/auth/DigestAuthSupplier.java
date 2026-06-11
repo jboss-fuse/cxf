@@ -101,6 +101,9 @@ public class DigestAuthSupplier implements HttpAuthSupplier {
 
     private static String getAuthURI(URI currentURI) {
         String authURI = currentURI.getRawPath();
+        if (authURI == null || authURI.isEmpty()) {
+            authURI = "/";
+        }
         if (currentURI.getRawQuery() != null) {
             authURI += '?' + currentURI.getRawQuery();
         }

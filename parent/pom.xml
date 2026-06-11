@@ -101,8 +101,8 @@
         <cxf.brave.version>6.3.1</cxf.brave.version>
         <cxf.cdi.api.version>4.0.1</cxf.cdi.api.version>
         <cxf.classgraph.version>4.8.25</cxf.classgraph.version>
-        <cxf.classmate.version>1.5.1</cxf.classmate.version>
-        <cxf.commons-codec.version>1.17.1</cxf.commons-codec.version>
+        <cxf.classmate.version>1.7.3</cxf.classmate.version>
+        <cxf.commons-codec.version>1.18.0</cxf.commons-codec.version>
         <cxf.commons-io.version>2.16.1</cxf.commons-io.version>
         <cxf.commons-jcs-jcache.version>2.2.1</cxf.commons-jcs-jcache.version>
         <cxf.commons-lang3.version>3.18.0</cxf.commons-lang3.version>
@@ -112,7 +112,7 @@
         <cxf.dom4j.version>2.2.0</cxf.dom4j.version>
         <cxf.dropwizard3.version>3.2.6</cxf.dropwizard3.version>
         <cxf.dropwizard4.version>4.2.39</cxf.dropwizard4.version>
-        <cxf.ehcache3.version>3.10.8</cxf.ehcache3.version>
+        <cxf.ehcache3.version>3.10.9</cxf.ehcache3.version>
         <cxf.el-api.version>5.0.1</cxf.el-api.version>
         <cxf.findbugs.version>3.0.2</cxf.findbugs.version>
         <cxf.jvnet.jaxb.version>4.0.16</cxf.jvnet.jaxb.version>
@@ -123,7 +123,7 @@
         <cxf.guava.version>33.4.8-jre</cxf.guava.version>
         <cxf.hamcrest.version>3.0</cxf.hamcrest.version>
         <cxf.hazelcast.version>5.7.0</cxf.hazelcast.version>
-        <cxf.hibernate.em.version>6.6.49.Final</cxf.hibernate.em.version>
+        <cxf.hibernate.em.version>6.6.53.Final</cxf.hibernate.em.version>
         <cxf.hibernate.validator.version>8.0.3.Final</cxf.hibernate.validator.version>
         <cxf.hsqldb.version>2.7.4</cxf.hsqldb.version>
         <cxf.httpcomponents.asyncclient.version.range>[4.0,4.2)</cxf.httpcomponents.asyncclient.version.range>
@@ -131,7 +131,7 @@
         <cxf.httpcomponents.client.version>4.5.14</cxf.httpcomponents.client.version>
         <cxf.httpcomponents.core.version.range>[4.3,4.5.0)</cxf.httpcomponents.core.version.range>
         <cxf.httpcomponents.core.version>4.4.16</cxf.httpcomponents.core.version>
-        <cxf.httpcomponents.client5.version>5.4.4</cxf.httpcomponents.client5.version>
+        <cxf.httpcomponents.client5.version>5.5.2</cxf.httpcomponents.client5.version>
         <cxf.httpcomponents.core5.version>5.3.6</cxf.httpcomponents.core5.version>
         <cxf.jackson.version>2.22.1</cxf.jackson.version>
         <cxf.jackson.databind.version>2.22.1</cxf.jackson.databind.version>
@@ -215,10 +215,10 @@
         <cxf.slf4j.version>2.0.18</cxf.slf4j.version>
         <cxf.snakeyaml.version>2.6</cxf.snakeyaml.version>
         <cxf.specs.jaxws.api.version>2.3_2</cxf.specs.jaxws.api.version>
-        <cxf.spring.boot.version>3.4.13</cxf.spring.boot.version>
-        <cxf.spring.ldap.version>3.2.16</cxf.spring.ldap.version>
+        <cxf.spring.boot.version>3.5.15</cxf.spring.boot.version>
+        <cxf.spring.ldap.version>3.3.8</cxf.spring.ldap.version>
         <cxf.spring.mock>spring-test</cxf.spring.mock>
-        <cxf.spring.security.version>6.4.13</cxf.spring.security.version>
+        <cxf.spring.security.version>6.5.11</cxf.spring.security.version>
         <cxf.spring.version>6.2.19</cxf.spring.version>
         <cxf.stax-ex.version>1.8.3</cxf.stax-ex.version>
         <cxf.swagger.ui.version>5.32.8</cxf.swagger.ui.version>
@@ -226,7 +226,7 @@
         <cxf.tika.version>3.3.1</cxf.tika.version>
         <cxf.tomcat.version>10.1.57</cxf.tomcat.version>
         <cxf.tomitribe.http.signature.version>1.8</cxf.tomitribe.http.signature.version>
-        <cxf.undertow.version>2.3.23.Final</cxf.undertow.version>
+        <cxf.undertow.version>2.3.24.Final</cxf.undertow.version>
         <cxf.yasson.version>3.0.4</cxf.yasson.version>
         <!-- the Export-Package is the same as the Maven artifact
              version (with the Final), but we don't want an import package with a version
