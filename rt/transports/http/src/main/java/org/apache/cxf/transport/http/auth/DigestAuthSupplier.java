@@ -30,8 +30,6 @@ import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.configuration.security.AuthorizationPolicy;
 import org.apache.cxf.message.Message;
 
-import static java.nio.charset.StandardCharsets.US_ASCII;
-
 /**
  *
  */
@@ -101,6 +99,9 @@ public class DigestAuthSupplier implements HttpAuthSupplier {
 
     private static String getAuthURI(URI currentURI) {
         String authURI = currentURI.getRawPath();
+        if (authURI == null || authURI.isEmpty()) {
+            authURI = "/";
+        }
         if (currentURI.getRawQuery() != null) {
             authURI += '?' + currentURI.getRawQuery();
         }
@@ -124,19 +125,20 @@ public class DigestAuthSupplier implements HttpAuthSupplier {
         synchronized String generateAuth(String uri, String username, String password) {
             try {
                 String digAlg = algorithm;
-                if ("MD5-sess".equalsIgnoreCase(digAlg)) {
-                    digAlg = "MD5";
+                boolean isSess = digAlg.regionMatches(true, digAlg.length() - 5, "-sess", 0, 5);
+                if (isSess) {
+                    digAlg = digAlg.substring(0, digAlg.length() - 5);
                 }
                 final MessageDigest digester = MessageDigest.getInstance(digAlg);
                 String cnonce = createCnonce();
                 String a1 = username + ':' + realm + ':' + password;
-                if ("MD5-sess".equalsIgnoreCase(algorithm)) {
+                if (isSess) {
                     String tmp2 = StringUtils.toHexString(digester.digest(a1.getBytes(charset)));
                     a1 = tmp2 + ':' + nonce + ':' + cnonce;
                 }
                 String hasha1 = StringUtils.toHexString(digester.digest(a1.getBytes(charset)));
                 String a2 = method + ':' + uri;
-                String hasha2 = StringUtils.toHexString(digester.digest(a2.getBytes(US_ASCII)));
+                String hasha2 = StringUtils.toHexString(digester.digest(a2.getBytes(charset)));
                 final String serverDigestValue;
                 final String ncstring;
                 if (qop == null) {
@@ -147,7 +149,7 @@ public class DigestAuthSupplier implements HttpAuthSupplier {
                     serverDigestValue = hasha1 + ':' + nonce + ':' + ncstring + ':' + cnonce + ':'
                         + qop + ':' + hasha2;
                 }
-                String response = StringUtils.toHexString(digester.digest(serverDigestValue.getBytes(US_ASCII)));
+                String response = StringUtils.toHexString(digester.digest(serverDigestValue.getBytes(charset)));
                 Map<String, String> outParams = new HashMap<>();
                 if (qop != null) {
                     outParams.put("qop", "auth");

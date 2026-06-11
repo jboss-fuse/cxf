@@ -80,14 +80,14 @@ public class DigestAuthSupplierTest {
 
         Map<String, String> params = authHeader.getParams();
         Map<String, String> expectedParams = new HashMap<>();
-        expectedParams.put("response", "28e616b6868f60aaf9b19bb5b172f076");
+        expectedParams.put("response", "a63e6b2c94722a54779e83ec35b7d3be");
         expectedParams.put("cnonce", "27db039b76362f3d55da10652baee38c");
         expectedParams.put("username", "testUser");
         expectedParams.put("nc", "00000001");
         expectedParams.put("nonce", origNonce);
         expectedParams.put("realm", "MyCompany realm.");
         expectedParams.put("qop", "auth");
-        expectedParams.put("uri", "");
+        expectedParams.put("uri", "/");
         expectedParams.put("algorithm", "MD5");
         assertEquals(expectedParams, params);
     }
