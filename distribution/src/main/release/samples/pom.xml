@@ -33,15 +33,15 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <cxf.httpcomponents.client.version>4.5.14</cxf.httpcomponents.client.version>
         <cxf.swagger.ui.version>5.31.0</cxf.swagger.ui.version>
-        <cxf.jetty12.version>12.1.8</cxf.jetty12.version>
-        <cxf.spring.boot.version>4.0.6</cxf.spring.boot.version>
+        <cxf.jetty12.version>12.1.10</cxf.jetty12.version>
+        <cxf.spring.boot.version>4.0.7</cxf.spring.boot.version>
         <cxf.spring.cloud.eureka.version>5.0.1</cxf.spring.cloud.eureka.version>
         <cxf.tika.version>3.2.3</cxf.tika.version>
         <cxf.tomcat.version>11.0.22</cxf.tomcat.version>
         <cxf.jboss.weld.version>6.0.4.Final</cxf.jboss.weld.version>
         <cxf.gson.version>2.13.2</cxf.gson.version>
         <cxf.lucene.version>10.3.2</cxf.lucene.version>
-        <cxf.netty.version>4.2.12.Final</cxf.netty.version>
+        <cxf.netty.version>4.2.15.Final</cxf.netty.version>
         <cxf.olingo.server.version>5.0.0</cxf.olingo.server.version>
         <cxf.aspectj.version>1.9.25.1</cxf.aspectj.version>
         <cxf.brave.version>6.3.1</cxf.brave.version>
