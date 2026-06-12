@@ -301,11 +301,6 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.cxf</groupId>
-                <artifactId>cxf-rt-transports-http-jetty</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-rt-transports-http-netty-client</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -475,11 +470,6 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.cxf</groupId>
-                <artifactId>cxf-java2swagger-plugin</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.apache.cxf.archetype</groupId>
                 <artifactId>cxf-jaxws-javafirst</artifactId>
                 <version>${project.version}</version>
@@ -531,16 +521,6 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.cxf.services.xkms</groupId>
-                <artifactId>cxf-services-xkms-features</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.cxf.services.xkms</groupId>
-                <artifactId>cxf-services-xkms-itests</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.cxf.services.xkms</groupId>
                 <artifactId>cxf-services-xkms-service</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -554,12 +534,5 @@
                 <artifactId>cxf-services-xkms-x509-repo-ldap</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.apache.cxf.services.xkms</groupId>
-                <artifactId>cxf-services-xkms-war</artifactId>
-                <version>${project.version}</version>
-                <type>war</type>
-            </dependency>
         </dependencies>
-    </dependencyManagement>
-</project>
+    </dependencyManagement></project>
