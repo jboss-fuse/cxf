@@ -88,7 +88,7 @@
         <cxf.osgi.jakarta.transaction.version>[2,3)</cxf.osgi.jakarta.transaction.version>
 
         <!-- please maintain alphabetical order here -->
-        <cxf.activemq.artemis.version>2.54.0</cxf.activemq.artemis.version>
+        <cxf.activemq.artemis.version>2.53.0.redhat-00003</cxf.activemq.artemis.version>
         <cxf.ahc.version>3.0.10</cxf.ahc.version>
         <cxf.arquillian.version>1.8.1.Final</cxf.arquillian.version>
         <cxf.arquillian.weld.container.version>3.0.2.Final</cxf.arquillian.weld.container.version>
@@ -101,7 +101,7 @@
         <cxf.cdi.api.version>4.0.1</cxf.cdi.api.version>
         <cxf.classgraph.version>4.8.25</cxf.classgraph.version>
         <cxf.classmate.version>1.7.3</cxf.classmate.version>
-        <cxf.commons-codec.version>1.18.0</cxf.commons-codec.version>
+        <cxf.commons-codec.version>1.21.0</cxf.commons-codec.version>
         <cxf.commons-io.version>2.16.1</cxf.commons-io.version>
         <cxf.commons-jcs-jcache.version>2.2.1</cxf.commons-jcs-jcache.version>
         <cxf.commons-lang3.version>3.18.0</cxf.commons-lang3.version>
@@ -225,7 +225,7 @@
         <cxf.tika.version>3.3.1</cxf.tika.version>
         <cxf.tomcat.version>10.1.55</cxf.tomcat.version>
         <cxf.tomitribe.http.signature.version>1.8</cxf.tomitribe.http.signature.version>
-        <cxf.undertow.version>2.3.24.Final</cxf.undertow.version>
+        <cxf.undertow.version>2.3.24.SP2-redhat-00001</cxf.undertow.version>
         <cxf.yasson.version>3.0.4</cxf.yasson.version>
         <!-- the Export-Package is the same as the Maven artifact
              version (with the Final), but we don't want an import package with a version
