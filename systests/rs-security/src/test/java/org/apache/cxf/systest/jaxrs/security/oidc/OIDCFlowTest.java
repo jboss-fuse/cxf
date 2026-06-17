@@ -716,7 +716,7 @@ public class OIDCFlowTest extends AbstractBusClientServerTestBase {
             assertTrue(accessToken.getApprovedScope().contains("openid"));
             assertEquals(OidcUtils.CODE_ID_TOKEN_RESPONSE_TYPE,
                          accessToken.getParameters().get(OAuthConstants.RESPONSE_TYPE));
-    
+
             // Check id_token from the token endpoint
             idToken = accessToken.getParameters().get("id_token");
             assertNotNull(idToken);
@@ -725,7 +725,7 @@ public class OIDCFlowTest extends AbstractBusClientServerTestBase {
             JwsJwtCompactConsumer jwtConsumer = new JwsJwtCompactConsumer(idToken);
             JwtToken jwt = jwtConsumer.getJwtToken();
             assertNotNull(jwt.getClaims().getClaim(IdToken.AUTH_CODE_HASH_CLAIM));
-    
+
             if (isAccessTokenInJWTFormat()) {
                 validateAccessToken(accessToken.getTokenKey());
             }
