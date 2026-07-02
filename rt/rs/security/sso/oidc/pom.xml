@@ -36,6 +36,9 @@
     <cxf.osgi.import>
         jakarta.annotation*;version="${cxf.osgi.jakarta.annotation.version}"
     </cxf.osgi.import>
+    <!-- this configures the surefire plugin to run your tests with the javaagent enabled -->
+    <!-- (openJPA loadtime weaving) -->
+    <cxf.surefire.fork.vmargs.extra>-javaagent:${org.apache.openjpa:openjpa:jar} -javaagent:${org.mockito:mockito-core:jar}</cxf.surefire.fork.vmargs.extra>
   </properties>
   <dependencies>
     <dependency>
@@ -59,6 +62,12 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>${cxf.mockito.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
