@@ -33,7 +33,7 @@ import org.apache.cxf.configuration.jsse.TLSServerParameters;
 import org.apache.cxf.configuration.security.ClientAuthentication;
 import org.apache.cxf.systest.hc5.GreeterImpl;
 import org.apache.cxf.testutil.common.AbstractBusTestServerBase;
-import org.apache.cxf.transport.http_jetty.JettyHTTPServerEngineFactory;
+import org.apache.cxf.transport.http_undertow.UndertowHTTPServerEngineFactory;
 
 public class TrustServerNoSpring extends AbstractBusTestServerBase {
 
@@ -68,10 +68,10 @@ public class TrustServerNoSpring extends AbstractBusTestServerBase {
             Map<String, TLSServerParameters> map = new HashMap<>();
             map.put("tlsId", tlsParams);
 
-            JettyHTTPServerEngineFactory factory =
-                busLocal.getExtension(JettyHTTPServerEngineFactory.class);
+            UndertowHTTPServerEngineFactory factory =
+                busLocal.getExtension(UndertowHTTPServerEngineFactory.class);
             factory.setTlsServerParametersMap(map);
-            factory.createJettyHTTPServerEngine("localhost", Integer.parseInt(TrustManagerTest.PORT3),
+            factory.createUndertowHTTPServerEngine("localhost", Integer.parseInt(TrustManagerTest.PORT3),
                                                 "https", "tlsId");
 
             factory.initComplete();
