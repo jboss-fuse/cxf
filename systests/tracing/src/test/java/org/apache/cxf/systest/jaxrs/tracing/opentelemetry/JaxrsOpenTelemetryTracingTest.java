@@ -92,18 +92,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-<<<<<<< HEAD:systests/tracing/src/test/java/org/apache/cxf/systest/jaxrs/tracing/opentelemetry/JaxrsOpenTelemetryTracingTest.java
-<<<<<<< HEAD:systests/tracing/src/test/java/org/apache/cxf/systest/jaxrs/tracing/opentelemetry/JaxrsOpenTelemetryTracingTest.java
 public class JaxrsOpenTelemetryTracingTest extends AbstractClientServerTestBase {
     public static final String PORT = allocatePort(JaxrsOpenTelemetryTracingTest.class);
-=======
-@Ignore
-@Disabled("Test is fluky on fuse-jenkins")
-=======
->>>>>>> f014caa5f86 (Revert "Disable OpenTelemetryTracingTest (span order failing still) (#692)" - draft a PR to trigger CI):systests/tracing/src/test/java/org/apache/cxf/systest/jaxrs/tracing/opentelemetry/OpenTelemetryTracingTest.java
-public class OpenTelemetryTracingTest extends AbstractClientServerTestBase {
-    public static final String PORT = allocatePort(OpenTelemetryTracingTest.class);
->>>>>>> 98ebba983f1 (Disable OpenTelemetryTracingTest (span order failing still) (#692)):systests/tracing/src/test/java/org/apache/cxf/systest/jaxrs/tracing/opentelemetry/OpenTelemetryTracingTest.java
 
     @ClassRule
     public static OpenTelemetryRule otelRule = OpenTelemetryRule.create();

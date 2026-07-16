@@ -82,19 +82,8 @@ import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-<<<<<<< HEAD:systests/tracing/src/test/java/org/apache/cxf/systest/jaxrs/tracing/opentracing/JaxrsOpenTracingTracingTest.java
-<<<<<<< HEAD:systests/tracing/src/test/java/org/apache/cxf/systest/jaxrs/tracing/opentracing/JaxrsOpenTracingTracingTest.java
 public class JaxrsOpenTracingTracingTest extends AbstractClientServerTestBase {
     public static final String PORT = allocatePort(JaxrsOpenTracingTracingTest.class);
-=======
-
-@Ignore
-@Disabled("Flaky Test")
-=======
->>>>>>> f014caa5f86 (Revert "Disable OpenTelemetryTracingTest (span order failing still) (#692)" - draft a PR to trigger CI):systests/tracing/src/test/java/org/apache/cxf/systest/jaxrs/tracing/opentracing/OpenTracingTracingTest.java
-public class OpenTracingTracingTest extends AbstractClientServerTestBase {
-    public static final String PORT = allocatePort(OpenTracingTracingTest.class);
->>>>>>> 98ebba983f1 (Disable OpenTelemetryTracingTest (span order failing still) (#692)):systests/tracing/src/test/java/org/apache/cxf/systest/jaxrs/tracing/opentracing/OpenTracingTracingTest.java
 
     private static final AtomicLong RANDOM = new AtomicLong();
 
