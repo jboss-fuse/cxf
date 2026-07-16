@@ -83,7 +83,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-transports-http-jetty</artifactId>
+            <artifactId>cxf-rt-transports-http-undertow</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -118,12 +118,6 @@
             <artifactId>jboss-rmi-api_1.0_spec</artifactId>
             <version>1.0.6.Final</version>
             <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.jacorb</groupId>
-            <artifactId>jacorb</artifactId>
-            <version>${cxf.jacorb.version}</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

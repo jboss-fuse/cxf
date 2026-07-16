@@ -468,9 +468,9 @@
             <artifactId>jetty-alpn-server</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.jacorb</groupId>
-            <artifactId>jacorb</artifactId>
-            <version>${cxf.jacorb.version}</version>
+            <groupId>org.eclipse.jetty.ee10.websocket</groupId>
+            <artifactId>jetty-ee10-websocket-jetty-server</artifactId>
+            <version>${cxf.jetty12.version}</version>
         </dependency>
         <dependency>
           <groupId>io.reactivex.rxjava3</groupId>
@@ -611,7 +611,6 @@
                                     
                                     <fileset dir="../../services">
                                         <include name="**/src/main/java/**/*.java" />
-                                        <exclude name="**/wsn-osgi/**" />
                                         <exclude name="**/systests/**" />
                                         <exclude name="**/sts-war/**" />
                                         <exclude name="**/xkms-war/**" />
@@ -624,9 +623,6 @@
                                         <include name="**/src/main/generated/**/*.java" />
                                     </fileset>
                                     <fileset dir="../../rt/frontend/jaxws">
-                                        <include name="**/src/main/generated/**/*.java" />
-                                    </fileset>
-                                    <fileset dir="../../tools/corba">
                                         <include name="**/src/main/generated/**/*.java" />
                                     </fileset>
                                     <regexpmapper from="^(.*)/main/generated/(.*)$$" to="\2" />

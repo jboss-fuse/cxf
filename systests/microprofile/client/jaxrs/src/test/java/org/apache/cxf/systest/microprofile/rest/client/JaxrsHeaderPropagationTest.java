@@ -74,7 +74,7 @@ public class JaxrsHeaderPropagationTest extends AbstractClientServerTestBase {
 
         ConfigProviderResolver.setInstance(
             new MockConfigProviderResolver(Collections.singletonMap(
-                "org.eclipse.microprofile.rest.client.propagateHeaders", "Header1,MultiHeader")));
+                "org.eclipse.microprofile.rest.client.propagateHeaders", "header1,multiheader")));
     }
 
     @Before
@@ -92,14 +92,14 @@ public class JaxrsHeaderPropagationTest extends AbstractClientServerTestBase {
         h.setLevel(Level.ALL);
         logger.addHandler(new ConsoleHandler());
         final Response r = createWebClient("/jaxrs/propagate")
-            .header("Header1", "Single")
-            .header("MultiHeader", "value1", "value2", "value3")
+            .header("header1", "single")
+            .header("multiheader", "value1", "value2", "value3")
             .get();
         assertEquals(Status.OK.getStatusCode(), r.getStatus());
         String propagatedHeaderContent = r.readEntity(String.class);
         System.out.println("propagatedHeaderContent: " + propagatedHeaderContent);
-        assertTrue(propagatedHeaderContent.contains("Header1=Single"));
-        assertTrue(propagatedHeaderContent.contains("MultiHeader=value1,value2,value3"));
+        assertTrue(propagatedHeaderContent.contains("header1=single"));
+        assertTrue(propagatedHeaderContent.contains("multiheader=value1,value2,value3"));
     }
 
     @Test

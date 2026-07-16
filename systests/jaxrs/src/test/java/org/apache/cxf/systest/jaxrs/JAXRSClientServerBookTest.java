@@ -348,7 +348,8 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
         WebClient wc = WebClient.create(address);
         WebClient.getConfig(wc).getInInterceptors().add(new LoggingInInterceptor());
         Response r = wc.get();
-        assertEquals("text/plain;charset=iso-8859-1", r.getMediaType().toString());
+        //Undertow doesn't add charset in content-type if not specified from restful resource
+        assertEquals("text/plain", r.getMediaType().toString());
         assertEquals("Good Book", r.readEntity(String.class));
     }
 
@@ -880,6 +881,7 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
             Client client = ClientBuilder.newBuilder()
                 .register(cacheControlFeature)
                 .build();
+            client.property("force.urlconnection.http.conduit", true);
             WebTarget target = client.target(endpointAddress);
 
             // First call
@@ -2175,16 +2177,18 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
 
     @Test
     public void testGetBookByHeader() throws Exception {
+        //Undertow doesn't add charset in content-type if not specified from restful resource
         getAndCompareAsStrings("http://localhost:" + PORT + "/bookstore/bookheaders",
                                "resources/expected_get_book123.txt",
-                               "application/xml;q=0.5,text/xml", "text/xml;charset=utf-8", 200);
+                               "application/xml;q=0.5,text/xml", "text/xml", 200);
     }
 
     @Test
     public void testGetBookByHeaderPerRequest() throws Exception {
+        //Undertow doesn't add charset in content-type if not specified from restful resource
         getAndCompareAsStrings("http://localhost:" + PORT + "/bookstore2/bookheaders",
                                "resources/expected_get_book123.txt",
-                               "application/xml;q=0.5,text/xml", "text/xml;charset=utf-8", 200);
+                               "application/xml;q=0.5,text/xml", "text/xml", 200);
     }
 
     @Test
@@ -2232,9 +2236,10 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
 
     @Test
     public void testGetBookByHeaderDefault() throws Exception {
+        //Undertow doesn't add charset in content-type if not specified from restful resource
         getAndCompareAsStrings("http://localhost:" + PORT + "/bookstore/bookheaders2",
                                "resources/expected_get_book123.txt",
-                               "application/xml;q=0.5,text/xml", "text/xml;charset=utf-8", 200);
+                               "application/xml;q=0.5,text/xml", "text/xml", 200);
     }
 
     @Test
@@ -2463,9 +2468,10 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
 
     @Test
     public void testGetBook123ReturnString() throws Exception {
+        //Undertow doesn't add charset in content-type if not specified from restful resource
         getAndCompareAsStrings("http://localhost:" + PORT + "/bookstore/booknames/123",
                                "resources/expected_get_book123_returnstring.txt",
-                               "text/plain", "text/plain;charset=iso-8859-1", 200);
+                               "text/plain", "text/plain", 200);
     }
 
     @Test
@@ -2773,33 +2779,36 @@ public class JAXRSClientServerBookTest extends AbstractBusClientServerTestBase {
 
     @Test
     public void testUriInfoMatchedResources() throws Exception {
+        //Undertow doesn't add charset in content-type if not specified from restful resource
         getAndCompare("http://localhost:" + PORT + "/bookstore/"
                       + "booksubresource/123/chapters/sub/1/matched-resources",
                       "[class org.apache.cxf.systest.jaxrs.Chapter, "
                       + "class org.apache.cxf.systest.jaxrs.Book, "
                       + "class org.apache.cxf.systest.jaxrs.BookStore]",
-                      "text/plain", "text/plain;charset=iso-8859-1", 200);
+                      "text/plain", "text/plain", 200);
     }
 
     @Test
     public void testUriInfoMatchedResourcesWithObject() throws Exception {
+        //Undertow doesn't add charset in content-type if not specified from restful resource
         getAndCompare("http://localhost:" + PORT + "/bookstore/"
                       + "booksubresource/123/chaptersobject/sub/1/matched-resources",
                       "[class org.apache.cxf.systest.jaxrs.Chapter, "
                       + "class org.apache.cxf.systest.jaxrs.Book, "
                       + "class org.apache.cxf.systest.jaxrs.BookStore]",
-                      "text/plain", "text/plain;charset=iso-8859-1", 200);
+                      "text/plain", "text/plain", 200);
     }
 
     @Test
     public void testUriInfoMatchedUrisDecode() throws Exception {
+        //Undertow doesn't add charset in content-type if not specified from restful resource
         String expected = "[bookstore/booksubresource/123/chapters/sub/1/matched!uris, "
                           + "bookstore/booksubresource/123/chapters/sub/1/, "
                           + "bookstore/booksubresource/123/, "
                           + "bookstore]";
         getAndCompare("http://localhost:" + PORT + "/bookstore/"
                       + "booksubresource/123/chapters/sub/1/matched!uris?decode=true",
-                      expected, "text/plain", "text/plain;charset=iso-8859-1", 200);
+                      expected, "text/plain", "text/plain", 200);
     }
 
     @Test

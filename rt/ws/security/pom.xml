@@ -95,6 +95,12 @@
             <artifactId>ehcache</artifactId>
             <version>${cxf.ehcache3.version}</version>
             <classifier>jakarta</classifier>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.glassfish.jaxb</groupId>
+                    <artifactId>jaxb-runtime</artifactId>
+                </exclusion>
+            </exclusions>
             <scope>compile</scope>
         </dependency>
         <dependency>

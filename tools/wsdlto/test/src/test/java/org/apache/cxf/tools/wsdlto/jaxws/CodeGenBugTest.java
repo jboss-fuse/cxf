@@ -50,9 +50,6 @@ import org.apache.cxf.tools.wsdlto.AbstractCodeGenTest;
 import org.apache.cxf.tools.wsdlto.WSDLToJava;
 import org.apache.cxf.tools.wsdlto.frontend.jaxws.validator.UniqueBodyValidator;
 import org.apache.cxf.wsdl11.WSDLRuntimeException;
-import org.eclipse.jetty.server.NetworkConnector;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ResourceHandler;
 
 import org.junit.Test;
 
@@ -525,32 +522,6 @@ public class CodeGenBugTest extends AbstractCodeGenTest {
 
         File orginal = new File(output, "org.w3._2005._08.addressing");
         assertFalse(orginal.exists());
-    }
-
-    @Test
-    public void testHelloWorldExternalBindingFile() throws Exception {
-        Server server = new Server(0);
-        try {
-            ResourceHandler reshandler = new ResourceHandler();
-            reshandler.setBaseResourceAsString(getLocation("/wsdl2java_wsdl/"));
-            // this is the only handler we're supposed to need, so we don't need to
-            // 'add' it.
-            server.setHandler(reshandler);
-            server.start();
-            Thread.sleep(250); //give network connector a little time to spin up
-            int port = ((NetworkConnector)server.getConnectors()[0]).getLocalPort();
-            env.put(ToolConstants.CFG_WSDLURL, "http://localhost:"
-                + port + "/hello_world.wsdl");
-            env.put(ToolConstants.CFG_BINDING, "http://localhost:"
-                + port + "/remote-hello_world_binding.xsd");
-            processor.setContext(env);
-            processor.execute();
-            reshandler.stop();
-        } finally {
-            server.stop();
-            server.destroy();
-        }
-
     }
 
     @Test

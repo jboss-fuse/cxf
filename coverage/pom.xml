@@ -296,7 +296,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-transports-http-jetty</artifactId>
+            <artifactId>cxf-rt-transports-http-undertow</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -472,11 +472,6 @@
         <dependency>
             <groupId>org.apache.cxf.services.wsn</groupId>
             <artifactId>cxf-services-wsn-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.cxf.services.wsn</groupId>
-            <artifactId>cxf-services-wsn-osgi</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

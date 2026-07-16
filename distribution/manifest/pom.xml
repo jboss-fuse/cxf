@@ -63,11 +63,6 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-tools-corba</artifactId>
-            <version>4.2.2</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>cxf-tools-wsdlto-frontend-jaxws</artifactId>
             <version>4.2.2</version>
         </dependency>
@@ -143,7 +138,7 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-rt-transports-http-jetty</artifactId>
+            <artifactId>cxf-rt-transports-http-undertow</artifactId>
             <version>4.2.2</version>
         </dependency>
         <dependency>
@@ -187,11 +182,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>cxf-rt-bindings-xml</artifactId>
-            <version>4.2.2</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>cxf-rt-bindings-corba</artifactId>
             <version>4.2.2</version>
         </dependency>
         <dependency>
