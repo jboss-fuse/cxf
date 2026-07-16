@@ -63,7 +63,7 @@ import org.springframework.web.servlet.mvc.Controller;
  * control the data binding.
  *
  * Note that this class uses {@link org.apache.cxf.transport.servlet#CXFServlet} from the
- * cxf-rt-transports-http-jetty library, which is not part of
+ * cxf-rt-transports-http-undertow library, which is not part of
  * the standard dependencies of the JAX-WS front
  * end.
  *
