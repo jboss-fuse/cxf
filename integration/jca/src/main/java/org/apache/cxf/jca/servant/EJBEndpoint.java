@@ -38,6 +38,8 @@ import org.apache.cxf.common.util.PackageUtils;
 import org.apache.cxf.endpoint.Server;
 import org.apache.cxf.frontend.ServerFactoryBean;
 import org.apache.cxf.jaxws.JaxWsServerFactoryBean;
+import org.apache.cxf.jca.core.resourceadapter.JndiNameValidator;
+import org.apache.cxf.jca.cxf.WorkManagerThreadPool;
 import org.apache.cxf.transport.http_undertow.UndertowHTTPServerEngine;
 import org.apache.cxf.transport.http_undertow.UndertowHTTPServerEngineFactory;
 
