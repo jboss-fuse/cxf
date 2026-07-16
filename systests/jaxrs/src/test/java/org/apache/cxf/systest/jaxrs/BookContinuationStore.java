@@ -262,13 +262,11 @@ public class BookContinuationStore implements BookAsyncInterface {
     }
 
     private class TimeoutHandlerImpl implements TimeoutHandler {
-        private boolean resumeOnly;
         private String id;
         private AtomicInteger timeoutExtendedCounter = new AtomicInteger();
 
         TimeoutHandlerImpl(String id, boolean resumeOnly) {
             this.id = id;
-            this.resumeOnly = resumeOnly;
         }
 
         @Override
