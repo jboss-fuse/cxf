@@ -55,8 +55,6 @@ import static org.junit.Assert.assertTrue;
  *
  * <p>The server is configured via {@code bcjsse-server.xml} using
  * {@code jsseProvider="BCJSSE"} on {@code httpj:tlsServerParameters}.
- * HTTP/2 is supported via {@link BCJsseServerALPNProcessor}, which bridges
- * BC JSSE's {@code ProvSSLEngine} into Jetty's ALPN negotiation framework.
  * The client is configured via {@code bcjsse-client.xml}.
  *
  * <p>On JDK 27+, {@code PQCTLSTest} provides coverage via SunJSSE (JEP 527).
@@ -94,10 +92,9 @@ public class BCJssePQCTest extends AbstractBusClientServerTestBase {
     // ------------------------------------------------------------------ server
 
     /**
-     * CXF/Jetty server configured via {@code bcjsse-server.xml}: uses
+     * CXF/Undertow server configured via {@code bcjsse-server.xml}: uses
      * {@code jsseProvider="BCJSSE"} on {@code httpj:tlsServerParameters} so that
-     * CXF builds the SSLContext from BC JSSE rather than SunJSSE.  HTTP/2 is
-     * enabled via {@link BCJsseServerALPNProcessor}.
+     * CXF builds the SSLContext from BC JSSE rather than SunJSSE.
      */
     public static class BCJsseJettyServer extends AbstractBusTestServerBase {
         @Override
