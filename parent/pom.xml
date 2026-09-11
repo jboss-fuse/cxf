@@ -243,6 +243,7 @@
         <cxf.xmlschema.version>2.3.2</cxf.xmlschema.version>
         <cxf.xnio.version>3.8.17.Final-redhat-00001</cxf.xnio.version>
         <cxf.zest.version>2.1</cxf.zest.version>
+        <cxf.zstd-jni.version>1.5.7-16</cxf.zstd-jni.version>
         <cxf.zipkin-reporter.version>3.5.3</cxf.zipkin-reporter.version>
 
         <!-- various OSGi related versions -->
@@ -2036,6 +2037,12 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.12.0</version>
+            </dependency>
+            <!-- Override the transitive zstd-jni version used by CXF Maven plugins. -->
+            <dependency>
+                <groupId>com.github.luben</groupId>
+                <artifactId>zstd-jni</artifactId>
+                <version>${cxf.zstd-jni.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.ehcache</groupId>
