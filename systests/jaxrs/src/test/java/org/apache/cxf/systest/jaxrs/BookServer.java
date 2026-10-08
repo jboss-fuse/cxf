@@ -48,6 +48,7 @@ import jakarta.ws.rs.ext.ParamConverter;
 import jakarta.ws.rs.ext.ParamConverterProvider;
 import jakarta.ws.rs.ext.Providers;
 import org.apache.cxf.Bus;
+import org.apache.cxf.attachment.AttachmentDeserializer;
 import org.apache.cxf.common.util.PropertyUtils;
 import org.apache.cxf.endpoint.Server;
 import org.apache.cxf.ext.logging.LoggingInInterceptor;
@@ -91,6 +92,7 @@ public class BookServer extends AbstractServerTestServerBase {
         bus.setProperty(ExceptionMapper.class.getName(), new BusMapperExceptionMapper());
         // Make sure default JSON-P/JSON-B providers are not loaded
         bus.setProperty(ProviderFactory.SKIP_JAKARTA_JSON_PROVIDERS_REGISTRATION, true);
+        bus.setProperty(AttachmentDeserializer.ATTACHMENT_MAX_SIZE, -1);
 
         JAXRSServerFactoryBean sf = new JAXRSServerFactoryBean();
         sf.setResourceClasses(BookStore.class, SimpleBookStore.class, BookStorePerRequest.class, BookStoreRegex.class);
