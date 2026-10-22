@@ -67,8 +67,6 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-=======
-=======
             <artifactId>cxf-tools-wsdlto-databinding-jaxb</artifactId>
             <version>4.1.9-rhbac-SNAPSHOT</version>
         </dependency>
@@ -164,7 +162,6 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-=======
             <artifactId>cxf-rt-transports-http-netty-server</artifactId>
             <version>4.1.9-rhbac-SNAPSHOT</version>
             <exclusions>
@@ -224,8 +221,6 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-=======
-=======
             <artifactId>cxf-rt-bindings-xml</artifactId>
             <version>4.1.9-rhbac-SNAPSHOT</version>
         </dependency>
