@@ -123,7 +123,7 @@
         <cxf.glassfish.el.version>4.0.2</cxf.glassfish.el.version>
         <cxf.glassfish.json.version>2.0.1</cxf.glassfish.json.version>
         <cxf.grizzly.version>5.0.2</cxf.grizzly.version>
-        <cxf.guava.version>33.4.8-jre</cxf.guava.version>
+        <cxf.guava.version>33.7.2-jre</cxf.guava.version>
         <cxf.hamcrest.version>3.0</cxf.hamcrest.version>
         <cxf.hazelcast.version>5.7.0</cxf.hazelcast.version>
         <cxf.hibernate.em.version>7.4.13.Final</cxf.hibernate.em.version>
@@ -781,6 +781,11 @@
                 <version>${cxf.xjc-utils.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${cxf.guava.version}</version>
+            </dependency>
             <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
