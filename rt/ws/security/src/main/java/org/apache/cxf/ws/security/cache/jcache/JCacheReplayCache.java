@@ -104,6 +104,24 @@ class JCacheReplayCache implements ReplayCache {
     }
 
     /**
+     * Add the given identifier to the cache if, and only if, it is not already contained in it, as a
+     * single atomic operation. This overrides ReplayCache.addIfAbsent, whose default implementation is
+     * only atomic within a single JVM, whereas a JCache provider may be distributed.
+     * @param identifier The identifier to be added
+     * @param expiry A custom expiry time for the identifier. Can be null in which case, the default
+     *               expiry is used.
+     * @return true if the identifier was added, false if it was already contained in the cache or is
+     *         null or empty
+     */
+    public boolean addIfAbsent(String identifier, Instant expiry) {
+        if (identifier == null || identifier.length() == 0) {
+            return false;
+        }
+
+        return cache.putIfAbsent(identifier, new EHCacheValue(identifier, expiry));
+    }
+
+    /**
      * Return true if the given identifier is contained in the cache
      * @param identifier The identifier to check
      */
@@ -113,6 +131,16 @@ class JCacheReplayCache implements ReplayCache {
         }
         EHCacheValue element = cache.get(identifier);
         return element != null;
+    }
+
+    /**
+     * Return the maximum time for which this cache holds an identifier. WSS4J uses this to reject a
+     * SAML OneTimeUse Assertion that is valid for longer, as it could be replayed once its identifier
+     * had expired from the cache. This implements ReplayCache.getMaxTTL() in versions of WSS4J that
+     * define it, so it is declared without @Override.
+     */
+    public java.time.Duration getMaxTTL() {
+        return java.time.Duration.ofSeconds(EHCacheExpiry.DEFAULT_TTL);
     }
 
     // Only exposed for testing
